@@ -1,0 +1,33 @@
+› 請完整閱讀 doc 下的文件以及檢視架構圖
+
+• Viewed image fodex-01a16f6c-722c-7da3-816c-caae933504f8-inline-image1.png
+
+• 已完成，未修改任何檔案。
+
+  我已完整閱讀：
+
+  • Markdown 技術指南 (doc/Fodex Agent 框架技術指南.md)：正文第 1–485 行；第 486 行為內嵌架構圖 Base64，已解碼檢視。
+  • DOCX 技術指南：186 個段落、3 個表格及內嵌架構圖均已抽取閱讀。doc/Fodex Agent 框架技術指南.docx
+  • 獨立架構圖 (doc/research/00001_20261025.png)：已以原始解析度檢視。
+  • HELPER.txt 第 50–268 行 (G:/PulseTrade.fs/notes_new2/HELPER.txt:50)：後續 shell 操作會直接使用 Read-CodexStdout，優先採用 rg、sed、awk、head、tail 及
+    compact projection。
+
+  我目前對架構的理解是：
+
+  • Cli → PL.parseLine FSM → IAgent<'T> 構成輸入與型別化解析路徑。
+  • IAgent<'T> 以 IActorRef 封裝狀態；第一人稱 Self-Tell 與第三人稱 Tell 都經過 Actor mailbox。
+  • Wrapper Agent 內含 ReActLoop，一個 Wrapper 可扇出多個 Native Agents。
+  • VersionRegistry<'T>、ConcurrentDictionary、SimpleFun/FeasibleFun 與 Quotations.Evaluator 組成行為熱抽換層，向 IAgent 和 Wrapper 注入 F# expression。
+  • Native Agent 透過 stdin/stdout JSONL 執行 codex exec --json 或 Claude headless mode；Wrapper 接收 session/thread 與完成事件。
+  • 長時程設計再以 Akka.Persistence 保存 session identity，並用 Akka.Streams back-pressure 處理大量事件。
+
+  閱讀時也發現幾個文件問題：
+
+  • 第 3.2 節引用不存在的「2.4 節」。
+  • 第二段 F# 範例前殘留 googleusercontent.com/visual_element_1fsharp。
+  • UniContext 表格最後的範例在 Markdown 與 DOCX 中都截斷於 "[init 附近。
+  • research/00001_20261025.png 實際是 JPEG 編碼，只是副檔名為 .png。
+  • Markdown、DOCX 與獨立圖的架構圖內容一致，但解析度及編碼不同。
+  • 本機沒有 LibreOffice，因此沒有進行 DOCX 全頁渲染版面 QA；正文抽取閱讀及所有架構圖的視覺檢視已完成。
+
+  Worked for 4m 37s • 3:44 AM

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doc>
+<assembly><name>Fodex.Supervisor.Contracts</name></assembly>
+<members>
+<member name="M:LoggerUtil.UniversalLogger`1.warnf``1(Microsoft.FSharp.Core.PrintfFormat{``0,Microsoft.FSharp.Core.Unit,System.String,Microsoft.FSharp.Core.Unit})">
+<summary>
+ Warn 等級
+</summary>
+</member>
+<member name="M:LoggerUtil.UniversalLogger`1.errorf``1(Microsoft.FSharp.Core.PrintfFormat{``0,Microsoft.FSharp.Core.Unit,System.String,Microsoft.FSharp.Core.Unit})">
+<summary>
+ Error 等級
+</summary>
+</member>
+<member name="M:LoggerUtil.UniversalLogger`1.debugf``1(Microsoft.FSharp.Core.PrintfFormat{``0,Microsoft.FSharp.Core.Unit,System.String,Microsoft.FSharp.Core.Unit})">
+<summary>
+ Debug 等級
+</summary>
+</member>
+<member name="M:LoggerUtil.Logger.fDebugf``2(NLog.Logger,Microsoft.FSharp.Core.PrintfFormat{``0,Microsoft.FSharp.Core.Unit,System.String,``1})">
+<summary>
+ Debug / Warn / Error + failwith
+</summary>
+</member>
+<member name="M:LoggerUtil.Logger.fInfof``2(NLog.Logger,Microsoft.FSharp.Core.PrintfFormat{``0,Microsoft.FSharp.Core.Unit,System.String,``1})">
+<summary>
+ Info 等級 + log 完直接 failwith
+</summary>
+</member>
+<member name="M:LoggerUtil.Logger.pDebugf``1(NLog.Logger,Microsoft.FSharp.Core.PrintfFormat{``0,Microsoft.FSharp.Core.Unit,System.String,Microsoft.FSharp.Core.Unit})">
+<summary>
+ Debug / Warn / Error + printfn
+</summary>
+</member>
+<member name="M:LoggerUtil.Logger.pInfof``1(NLog.Logger,Microsoft.FSharp.Core.PrintfFormat{``0,Microsoft.FSharp.Core.Unit,System.String,Microsoft.FSharp.Core.Unit})">
+<summary>
+ Info 等級 + 同時 printfn
+</summary>
+</member>
+<member name="M:LoggerUtil.Logger.tracef``1(NLog.Logger,Microsoft.FSharp.Core.PrintfFormat{``0,Microsoft.FSharp.Core.Unit,System.String,Microsoft.FSharp.Core.Unit})">
+<summary>
+ 如果你也想順便補 trace / fatal：
+</summary>
+</member>
+<member name="M:LoggerUtil.Logger.debugf``1(NLog.Logger,Microsoft.FSharp.Core.PrintfFormat{``0,Microsoft.FSharp.Core.Unit,System.String,Microsoft.FSharp.Core.Unit})">
+<summary>
+ 其它等級順便一起補（對應 Debug / Warn / Error）
+</summary>
+</member>
+<member name="M:LoggerUtil.Logger.infof``1(NLog.Logger,Microsoft.FSharp.Core.PrintfFormat{``0,Microsoft.FSharp.Core.Unit,System.String,Microsoft.FSharp.Core.Unit})">
+<summary>
+ Info 等級，型別安全的 printf 風格
+</summary>
+</member>
+<member name="M:LoggerUtil.ILoggingAdapter.fDebugf``2(Akka.Event.ILoggingAdapter,Microsoft.FSharp.Core.PrintfFormat{``0,Microsoft.FSharp.Core.Unit,System.String,``1})">
+<summary>
+ 其它等級順便一起補
+</summary>
+</member>
+<member name="M:LoggerUtil.ILoggingAdapter.fInfof``2(Akka.Event.ILoggingAdapter,Microsoft.FSharp.Core.PrintfFormat{``0,Microsoft.FSharp.Core.Unit,System.String,``1})">
+<summary>
+ Info 等級，型別安全的 printf 風格
+</summary>
+</member>
+<member name="M:LoggerUtil.ILoggingAdapter.pDebugf``1(Akka.Event.ILoggingAdapter,Microsoft.FSharp.Core.PrintfFormat{``0,Microsoft.FSharp.Core.Unit,System.String,Microsoft.FSharp.Core.Unit})">
+<summary>
+ 其它等級順便一起補
+</summary>
+</member>
+<member name="M:LoggerUtil.ILoggingAdapter.pInfof``1(Akka.Event.ILoggingAdapter,Microsoft.FSharp.Core.PrintfFormat{``0,Microsoft.FSharp.Core.Unit,System.String,Microsoft.FSharp.Core.Unit})">
+<summary>
+ Info 等級，型別安全的 printf 風格
+</summary>
+</member>
+<member name="M:LoggerUtil.ILoggingAdapter.debugf``1(Akka.Event.ILoggingAdapter,Microsoft.FSharp.Core.PrintfFormat{``0,Microsoft.FSharp.Core.Unit,System.String,Microsoft.FSharp.Core.Unit})">
+<summary>
+ 其它等級順便一起補
+</summary>
+</member>
+<member name="M:LoggerUtil.ILoggingAdapter.infof``1(Akka.Event.ILoggingAdapter,Microsoft.FSharp.Core.PrintfFormat{``0,Microsoft.FSharp.Core.Unit,System.String,Microsoft.FSharp.Core.Unit})">
+<summary>
+ Info 等級，型別安全的 printf 風格
+</summary>
+</member>
+</members>
+</doc>
