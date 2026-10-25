@@ -31,3 +31,904 @@
   • 本機沒有 LibreOffice，因此沒有進行 DOCX 全頁渲染版面 QA；正文抽取閱讀及所有架構圖的視覺檢視已完成。
 
   Worked for 4m 37s • 3:44 AM
+
+
+
+
+
+
+
+
+
+
+› 根據你目前的認知補全 F:\fodex\Fodex.Supervisor.Contract\concepts.fsx
+  1. 記得，這是 contract 專案，不是實作專案，更像實際 spec 的規範 (規範的規範???)
+  2. 請仔細看我的註解，我是人類，後續維護無法用矽基生物的速度進行開發，所以我需要犧牲部分效能以及增加高度抽象性減輕未來維護成本
+  3. 請每個小段小段與我討論精修，大致上我現在想不出還缺什麼大型的 規範中的規範。如果有，請一定要討論再說
+  4. 說說你的計劃以及我們從哪邊開始精修
+
+• 目前最關鍵的訊號是：檔內已有兩層內容混在一起——「contract 應保證什麼」與「預設實作怎麼做」。我不會立刻補 failwith；先要辨認哪些是刻意留給 implementation
+  project 的洞、哪些是 contract 自身尚未封閉的型別規範。下一步只看專案編譯邊界與最近版本演進。
+
+
+• 我建議先不要碰 Start/Stop/Send 的 failwith。目前真正需要先釐清的是：這個檔案同時混有「契約」、「預設策略」和「實作機制」。如果直接補完，很容易把
+  implementation 固化進 contract。
+
+  我建議先確立以下 contract meta-spec：
+
+  1. Contract 可以包含：
+      • 型別與判別聯合
+      • 可觀察行為
+      • 不變量
+      • abstract member／port
+      • 無副作用、確定性的轉換與驗證
+
+  2. Contract 不負責：
+      • 建立 Actor 或 OS process
+      • DB 載入
+      • 啟動背景工作
+      • 維護實體 queue
+      • 決定具體 retry、fallback 或版本清理策略
+
+  3. IActorRef 可以保留為明確架構邊界，因為「一切操作必須經 Actor mailbox」是核心規範；但 System.Diagnostics.Process 應該是實作資源，不宜出現在 Native Agent
+     的邏輯身分中。
+
+  4. 預設實作只保留純函式且沒有政策選擇的部分。像註冊 1.0.0、printfn、讀 DB、選最新版，都應交由 implementation project。
+
+  這是我目前看到最重要、也確實需要先討論的「規範中的規範」。
+
+  後續我會用小批次進行：
+
+  1. 基礎語彙
+     精修 concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx:133) 的 Feasible、AgentPrompt、AgentResponse、識別型別。這是所有後續契約的地基。
+
+  2. 版本化契約
+     處理 Versioned／VersionRegistry (Fodex.Supervisor.Contract/concepts.fsx:152)。保留版本解析、查詢、註冊、清理的抽象能力，但把 ConcurrentDictionary、DB
+     初始化與最新版選擇政策拆開。
+
+  3. Agent 身分與拓樸
+     精修 Agent／ReActParticipant (Fodex.Supervisor.Contract/concepts.fsx:255)，明確分開：
+      • 穩定的 logical identity
+      • 可變的 Actor/location binding
+      • Native process resource
+      • main／auxiliary participant role
+
+  4. ReAct 訊息規範
+     精修 ReActData／ReActDataStream (Fodex.Supervisor.Contract/concepts.fsx:275)，討論 sender、receiver、turn/session、順序、唯一 AgentEnd 與 append-only
+     flow。
+
+  5. 能力介面
+     最後才處理 IAgent (Fodex.Supervisor.Contract/concepts.fsx:317)、ReActLoop (Fodex.Supervisor.Contract/concepts.fsx:355) 與 FodexAgent
+     (Fodex.Supervisor.Contract/concepts.fsx:365)。這裡應補的是能力簽章和約束，不是在 contract 裡建立 actor/process。
+
+  每個小段會依序：
+
+  • 先討論語意與取捨
+  • 你確認後只修改該段
+  • 執行目標 build
+  • 展示小型 diff
+  • 再進入下一段
+
+  第一個實際精修點，我建議從第 133–152 行開始。目前有一個確定缺口：
+
+  type AgentResponse =
+      | JsonList of JsonStr list
+      | Json
+
+  Json 沒有承載資料。我的最小修正方向是：
+
+  type AgentResponse =
+      | JsonList of JsonStr list
+      | Json of JsonStr
+
+  同一小段中，我建議暫時保留 Result<_, exn> 和字串 alias，先不引入完整 domain-error hierarchy，以符合你「提高抽象、但降低人類維護成本」的優先順序。
+
+  開始前只需要你確認一個核心方向：是否同意「Contract 保留 IActorRef 作為架構不變量，但移除對具體 Process、DB、queue 與全域 mutable registry 實作的責任」？目前
+  尚未修改任何檔案。
+
+  Worked for 2m 4s • 8:05 AM
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1. System.Diagnostics.Process 應該是實作資源，不宜出現在 Native Agent 的邏輯身分中: 現在有出現在 Native Agent 的邏輯身分中嗎?
+2. 註冊 1.0.0、printfn、讀 DB、選最新版，都應交由 implementation project: 我必須做一小部分 demo 給你看人類要的樣子，你可以把它移到實作專案當中
+3. 但把 ConcurrentDictionary、DB 初始化與最新版選擇政策拆開: 現在有啥問題嗎? 目前的 CD 都是 STATIC 你要搬也可以，但是對於 CONTRACT 專案開發，靜態的這些東西放在這可能好開發一點
+4. 
+  type AgentResponse =
+      | JsonList of JsonStr list
+      | Json of JsonStr
+	  
+看起來行，我已改
+5. Contract 保留 IActorRef 作為架構不變量，但移除對具體 Process、DB、queue 與全域 mutable registry 實作的責任 -> 你想怎樣
+6. 暫時保留 Result<_, exn> 和字串 alias，先不引入完整 domain-error hierarchy -> 不懂  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+• 1. 有，但我上一句不夠精準。
+
+  Process 沒有放在 ReActParticipant 的邏輯 ID 裡；它出現在公開的 Agent runtime binding：
+
+  type Agent =
+      | Native of IActorRef * Process
+      | Wrapper of IActorRef
+
+  而 IAgent.Instance、LookupParticipantIActorRef 都會暴露這個 Agent。所以更精確的說法是：
+
+  > Process 目前是 contract 公開的 Native Agent 操作句柄之一，不是 participant 的邏輯身分。
+
+  見 concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx:265)。
+
+  2. 你的 demo 應保留。
+
+  我會把它視為「人類提供的 executable specification」：
+
+  • 先理解它要表達的使用方式。
+  • Contract 留下必要型別、能力簽章及規範註解。
+  • 涉及 Actor/process 建立、DB 存取的示範，再原意搬到 Fodex.Supervisor 實作專案。
+  • 不會直接刪掉後重新發明一套。
+
+  3. Static ConcurrentDictionary 本身沒有問題。
+
+  你說得合理：開發 contract 時保留一個可立即操作的 in-memory registry，確實比較容易理解、測試和示範。我收回「現在就應該搬掉 CD」這個過早的結論。
+
+  目前真正的問題是實作尚未閉合：
+
+  • static let init 一旦初始化就會執行 failwithf，可能讓整個泛型型別進入 TypeInitializationException。
+  • Versioned.Registry 直接用 RegistryCD[target]，target 尚未建立時會丟例外。
+  • Instance 尚未明定空 registry 的結果。
+  • UpsertVersioned 遇到相同版本要覆寫還是拒絕，規範尚未寫清楚。
+  • 「最新版」目前只有註解語意，尚未正式定義為最大 System.Version、最新啟用版或其他政策。
+
+  我的修正版建議是：
+
+  • Static CD 暫時保留在 contract，作為簡單、可執行的 reference implementation。
+  • DB I/O 放在實作專案；讀完 DB 後呼叫 contract 的 UpsertVersioned。
+  • Contract 明確規範 lookup、upsert、latest、clean 的行為。
+
+  4. 已確認你的修改。
+
+  目前 concepts.fsx 的唯一 Git diff 就是：
+
+  | Json of JsonStr
+
+  我不會覆蓋它。
+
+  5. 我原本想做的事情，具體來說是：
+
+  type Agent =
+      | Native of IActorRef
+      | Wrapper of IActorRef
+
+  Native actor 自己持有、監管 OS Process；外界只透過 IActorRef 操作它。原因是你的註解已經說 Native 可能由遠端 Proc Supervisor 啟動，此時本機未必能持有有效的
+  Process 物件。
+
+  但這不是現在要直接改的項目。需要先討論：
+
+  • Agent 是邏輯 handle，還是刻意設計成「Actor 加上其本機資源」？
+  • Wrapper 是否需要直接取得 Process，還是只能 Tell Native actor？
+  • 遠端 Native 要以什麼取代 Process？
+
+  另外，我不再主張現在就移除 ConcurrentQueue 或 static registry。它們是否屬於規範的一部分，應逐段依你的使用情境判斷。真正明確應搬出的只有 DB I/O、OS process
+  建立及 Actor 建立。
+
+  6. Result<_, exn> 和字串 alias 的意思如下。
+
+  目前：
+
+  Result<int, exn>
+
+  表示成功時回傳 int，失敗時直接放一個普通的 .NET exception：
+
+  Ok 0
+  Error (exn "version not found")
+
+  更複雜的作法會是自行建立錯誤分類：
+
+  type AgentError =
+      | VersionNotFound of Version
+      | ParticipantNotFound of ReActParticipantId
+      | TransportFailed of string
+
+  然後改成：
+
+  Result<int, AgentError>
+
+  這會更精確，但每增加一種錯誤都要維護 DU、pattern matching、序列化和相容性。我先建議保留 exn，就是暫時不要增加這份人類維護負擔。
+
+  「字串 alias」指的是：
+
+  type JsonStr = string
+  type NativeAgentMessage = string
+  type TargetName = string
+
+  它們只是讓程式碼更容易閱讀，不會強迫你一直拆裝單一 case DU。這同樣是偏向低維護成本的選擇。
+
+  下一個小段我建議精修 Versioned／VersionRegistry (Fodex.Supervisor.Contract/concepts.fsx:152)，仍然保留 static CD，先約定：
+
+  • 讀寫 target 時自動 GetOrAdd。
+  • 空 registry 的 Instance 回傳 None。
+  • Instance 取最大的 System.Version。
+  • 相同版本再次 Upsert 時，以新值覆蓋舊值。
+  • Clean 只刪指定版本；即使清空也保留外層 target。
+  • DB 載入由實作專案完成後呼叫 Upsert。
+
+  如果這六條符合你的意思，我們就只精修這一小段。
+
+  Worked for 56s • 8:22 AM
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1. IAgent.Instance、LookupParticipantIActorRef 都會暴露這個 Agent: 啥毛病?
+2. static let init 一旦初始化就會執行 failwithf -> 這主要還是要做 LIB 用的專案，更何況這部分我們要實作阿
+3. VersionRegistry<'T>.RegistryCD[target] 給你修
+4. this.Instance = 後面要實作吧
+5. UpsertVersioned 遇到相同版本要覆寫還是拒絕 -> 覆寫
+6. Native actor 自己持有、監管 OS Process；外界只透過 IActorRef 操作它 -> 其實我更希望能交給 PROC SUPERVISOR 管理，使用或不使用 (參考 PROC SUPERVISOR LIB) WINDOWS SERVICE 目前的 INSTANCE 我覺得都可以
+當然如果以一個 .EXE 輕量工具，來說，可能不用比較好，如果你實作 PROCESS 相關的東西請確保使用 FeasibleT [] 表示操作 SOP 之類我好維護，當然未來你要更改邏輯，請使用多個 .FS/.fsx 檔，把不同版本的實作程式碼都保留，反正用不同版本註冊進去就行(我的 runtime 物件/函數版本管理策略你有懂嗎?)
+程式碼中保留所有的函數實作，使用 type 跟 literal name 跟版本取來用， argstring 要指定版本
+7. Agent 是邏輯 handle，還是刻意設計成「Actor 加上其本機資源」 -> 兩者不懂差異
+8. actor 與process 最好 composable，畢竟前者是有可能 restart 的
+9. Instance 取最大的 System.Version -> argstring 不指定版本才用最大的
+
+• 我先修正一點：IAgent.Instance／LookupParticipantIActorRef 暴露 Agent 本身沒有毛病；只有在我們錯把 Agent 當成永久身分時才會混淆。你現在補充的重點是「Actor、
+  local Process、Proc Supervisor managed process 都要可組合，而且 runtime binding 可因 restart 改變」。我會先查本機現有 Proc Supervisor library/API 與目前專案
+  用法，再把這個模型和版本選擇規則說精確；暫時不改檔。Shell 仍採受控、局部搜尋。
+
+
+• 本機確實另有 FAkka.Proc.Supervisor 套件；它的版本字串帶 -winN，不能直接轉成 System.Version。我改以套件目錄的修改時間選目前版本，只讀 README/XML 公開契約。
+
+• 我已確認 Proc Supervisor 的現行契約：ProcSupervisorActor → ProcNodeActor → OS Process resource，而且 Supervisor 與 child process 的生命週期必須解耦。這支持
+  你的「Actor 與 Process 可組合、可各自 restart」方向。為了不重寫你原本的版本策略，我再看一下三份 concepts 快照中 VersionRegistry 曾經想表達的初始化方式。
+
+• 你的版本策略我理解成三層 key：封閉泛型型別 'T、literal TargetName、System.Version。所有版本的來源碼都保留並註冊；argString 有版本就精確取該版，沒指定才取最
+  大版本；指定不存在必須失敗，不能偷偷 fallback；同版再次註冊則覆寫。CleanVersioned 只清 runtime entry，不代表刪除來源實作。
+
+  這些已足夠完成第一小段。我現在只會精修 Versioned/VersionRegistry：保留 static CD，實作 GetOrAdd、exact get/set、latest、overwrite-upsert 與 clean；不碰
+  Agent／Process 模型，也保留你剛改的 AgentResponse。先確認 encoding，再套最小 patch。
+
+• 第一小段已完成：保留 static registry，沒有搬走；RegistryCD[target] 已改為安全建立，exact get/set、最大版本 fallback、覆寫式 Upsert、指定版本 Clean 都已補
+  上。你的 AgentResponse 修改仍原樣保留。現在只跑 Contract 專案的 --no-restore build，確認這個小段可編譯。
+
+
+
+
+
+
+
+
+
+
+• 先講結論：你的模型其實已經接近「logical participant → current runtime binding」，沒有我先前說的暴露問題。我收回那個判斷。
+
+  1. IAgent.Instance 暴露 Agent 沒毛病
+
+  目前：
+
+  ReActParticipant -> Agent
+
+  其中：
+
+  • ReActParticipant 用來識別參與者。
+  • Agent 保存目前可操作的 Actor／Process binding。
+  • LookupParticipantIActorRef 負責解析目前 binding。
+
+  只要不拿 Agent 本身當永久 identity 或 dictionary key，公開它完全合理。現在 CD<ReActParticipant, Agent> 的方向反而符合這種分離。
+
+  2. static let init
+
+  同意。它是待完成的 library 行為，不能因為現在是 failwithf 就推論應搬走。
+
+  本輪我完成的是 static in-memory registry 的初始化與基本操作；DB 載入尚未假裝實作，因為目前還沒有 loader contract。原註解意圖已保留並修成：
+
+  (* to agent who develop this
+  正常來說多數的功能程式碼中會有最原始的一個版本。
+  其他由 DB 讀出的版本，讀取完成後透過 UpsertVersioned 注入 registry。
+  *)
+
+  3–5. VersionRegistry 已完成第一小段
+
+  已在 concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx:152) 實作：
+
+  • RegistryCD[target] 改成 GetOrAdd。
+  • 指定版本 lookup 回傳 Some value／None。
+  • 指定版本 set 會覆寫同版。
+  • Instance 在 registry 為空時回傳 None。
+  • Instance 取最大的 System.Version。
+  • GetVersioned 保證 target registry 存在。
+  • UpsertVersioned 同版覆寫。
+  • CleanVersioned 只清指定 runtime versions，保留外層 target。
+  • 你修改的 Json of JsonStr 已保留。
+
+  Contract build 已成功：0 errors。現在有兩個 warning：
+
+  • ParseLine.fsx 原有的不完整 pattern warning。
+  • Versioned.Item getter 是 'T option、setter 是 'T，F# 提醒 property getter/setter 型別不一致。
+
+  第二個是這一小段尚待你確認的設計點。我的建議是保留 option getter，但把 setter 改成語意更明確的方法：
+
+  member this.Item
+      with get (version: Version) : 'T option = ...
+
+  member this.Register(version: Version, value: 'T) =
+      ...
+
+  這樣消除 warning，也更符合「註冊一個實作版本」的語意。相同版本的 Register 仍然覆寫。
+
+  6–8. Actor 與 Process 的組合方式
+
+  我查看了本機 FAkka.Proc.Supervisor 1.572.5 的 README (C:/Users/Administrator/.nuget/packages/fakka.proc.supervisor/1.572.5/README.md:13)。它的邊界是：
+
+  ProcSupervisorActor
+    → ProcNodeActor
+      → OS Process resource
+
+  ProcNodeActor 才是 Actor supervisee；OS Process 是它管理的資源。Supervisor restart 與 child process lifecycle 也必須解耦。
+
+  因此我現在建議的概念模型不是移除 Process，而是讓 binding 可組合：
+
+  type ProcessBinding =
+      | NoProcess
+      | LocalProcess of Process
+      | ProcSupervisorManaged of processId:string
+
+  type AgentBinding =
+      {
+          Actor: IActorRef
+          Process: ProcessBinding
+      }
+
+  這只是概念草案，尚未修改程式碼。三種情境分別對應：
+
+  • 純 Actor，不需要 .exe。
+  • 輕量工具，由 Actor 直接持有本機 Process。
+  • 正式服務，只保存 Proc Supervisor process identity，由 ProcNodeActor 管理實際 process。
+
+  Actor restart 與 Process restart 可各自發生；ReActParticipant 維持識別，lookup 回傳最新 AgentBinding。這正是「logical handle」與「Actor 加目前資源」的差異：
+
+  • logical handle：我是誰，跨 restart 應保持穩定。
+  • runtime binding：現在去哪裡 Tell、目前 process 由誰管理，可隨 restart/rebind 更新。
+
+  Process SOP 之後可依你的要求建模成：
+
+  type ProcessSopStep<'State> =
+      FeasibleT<'State, 'State, exn>
+
+  type ProcessSop<'State> =
+      ProcessSopStep<'State> array
+
+  不同 local／Proc Supervisor 實作再以 type、literal target、version 註冊。這部分尚未動手。
+
+  9. 版本選擇規則已理解
+
+  正式規則應是：
+
+  match argString 指定的版本 with
+  | Some version -> 只做 exact lookup；不存在就 Error
+  | None -> 使用 Versioned.Instance，也就是最大 System.Version
+
+  不能在「明確指定但不存在」時偷偷 fallback。
+
+  你的 runtime version strategy，我現在理解為：
+
+  closed generic type 'T
+    + literal TargetName
+    + System.Version
+    → runtime object/function/SOP implementation
+
+  • 所有歷史版本的 .fs／.fsx 實作都保留。
+  • 每個版本明確註冊。
+  • 相同版本再次註冊時覆寫 runtime value。
+  • CleanVersioned 只清 runtime registry，不刪來源碼。
+  • argString 決定 exact version；未指定才取最新版。
+  • 未來邏輯改版是新增版本實作檔與註冊，不直接抹掉舊邏輯。
+
+  下一個最小決定是：是否把有 warning 的 indexer setter 改成 Register(version, value)？確認後我只處理這一點，然後再討論 registry 的 DB/bootstrap loader
+  contract。
+
+  Worked for 4m 3s • 8:40 AM
+
+
+
+
+
+
+
+
+
+
+
+
+
+1. FAkka.Proc.Supervisor 最新版: 1.572.3
+2. ProcessSopStep<'State> -> 這樣搞是希望 Railway-Oriented Programming (ROP)
+3. indexer setter 改成 Register(version, value)
+4. 你先把這波全部你想改的用 + - 呈現一下 (你也可以先 COMIIT 開始改，然後 SHOW DIFF 給我看)  
+
+
+
+
+
+
+
+• 收到：Proc Supervisor 以你指定的 1.572.3 為準；ProcessSopStep 的目的就是讓每一步以 Result 串成 ROP，而不是單純把 callback 放進陣列。
+
+  這一波我先只落實已定案的 Version Registry 小段：把不一致的 indexer setter 改成 Register(version, value)，保留 option getter與覆寫語意；不先加入尚未定型的
+  Process binding／SOP 型別，也不 commit。完成 build 後，我會用完整 +/- diff 分開標出你的修改與我的修改。Shell 仍依 output guard 執行。
+
+• 這波已完成，未 commit。範圍只包含 Versioned／VersionRegistry (Fodex.Supervisor.Contract/concepts.fsx:152)，沒有先動 Process／Agent 模型。
+
+  • FAkka.Proc.Supervisor 後續以 1.572.3 為準。
+  • Register(version, value) 已取代 indexer setter。
+  • Build 成功：0 errors。
+  • 剩下 1 個既存的 ParseLine.fsx pattern warning。
+  • git diff --check 通過。
+
+  ProcessSopStep<'State> 的意圖也已理解：每一步是 State -> Result<State, exn> 的 Kleisli arrow，之後以 Result.bind 串接，第一個 Error 即停止 SOP；不是普通
+  callback array。這部分尚未套用。
+
+  完整 working-tree diff 如下；AgentResponse 是你的修改，其餘是我這波的修改：
+
+   type AgentResponse =
+       | JsonList of JsonStr list
+  -    | Json
+  +    | Json of JsonStr
+
+   type VersionedTarget<'T> = { Version: Version; Value: 'T }
+
+   type Versioned<'T> (target:TargetName) =
+  +    member this.Registry: CD<Version, VersionedTarget<'T>> =
+  +        VersionRegistry<'T>.RegistryCD.GetOrAdd(
+  +            target,
+  +            fun _ -> CD<Version, VersionedTarget<'T>>()
+  +        )
+  +
+       member this.Item
+           with get (version: Version) : 'T option =
+  -            failwithf "Not implemented: get %A from VersionRegistry<'T>" version
+  -        and set (version: Version) (value: 'T) =
+  -            failwithf "Not implemented: set %A in VersionRegistry<'T>" version
+  +            match this.Registry.TryGetValue version with
+  +            | true, versioned -> Some versioned.Value
+  +            | false, _ -> None
+  +
+  +    // 註冊相同版本時覆寫 runtime value；來源碼中的舊版本實作仍應保留。
+  +    member this.Register(version: Version, value: 'T) : unit =
+  +        this.Registry[version] <- { Version = version; Value = value }
+
+  -    member this.Instance =
+  -        failwithf "Not implemented: Instance of latest version 'T"
+  -    member this.Registry: CD<Version, VersionedTarget<'T>> =
+  -        VersionRegistry<'T>.RegistryCD[target]
+  +    // 未指定版本時使用目前註冊的最大 System.Version；沒有任何版本時回傳 None。
+  +    member this.Instance : 'T option =
+  +        this.Registry.Values
+  +        |> Seq.sortByDescending (fun versioned -> versioned.Version)
+  +        |> Seq.tryHead
+  +        |> Option.map (fun versioned -> versioned.Value)
+
+   and VersionRegistry<'T> =
+  +    (* to agent who develop this
+  +    正常來說多數的功能程式碼中會有最原始的一個版本。
+  +    其他由 DB 讀出的版本，讀取完成後透過 UpsertVersioned 注入 registry。
+  +    *)
+       static let registry = CD<TargetName, CD<Version, VersionedTarget<'T>>>()
+  -    static let init =
+  -        printfn "Initializing VersionRegistry<'T> for %s" typeof<'T>.FullName
+  -        do
+  -            failwithf "Not implemented: init VersionRegistry<'T>"
+  +
+       static member RegistryCD =
+           registry
+  +
+       static member GetVersioned: TargetName -> Versioned<'T> =
+  -        failwithf "Not implemented: GetVersioned for %s"
+  +        fun target ->
+  +            registry.GetOrAdd(
+  +                target,
+  +                fun _ -> CD<Version, VersionedTarget<'T>>()
+  +            )
+  +            |> ignore
+  +            Versioned<'T>(target)
+  +
+       static member UpsertVersioned: TargetName -> Versioned<'T> -> unit =
+  -        failwithf "Not implemented: UpsertVersioned for %s"
+  +        fun target versioned ->
+  +            let targetRegistry =
+  +                registry.GetOrAdd(
+  +                    target,
+  +                    fun _ -> CD<Version, VersionedTarget<'T>>()
+  +                )
+  +            for KeyValue(version, versionedTarget) in versioned.Registry do
+  +                targetRegistry[version] <- versionedTarget
+  +
+       static member CleanVersioned: TargetName -> (unit -> Version []) -> unit =
+  -        failwithf "Not implemented: CleanVersioned for %s"
+  +        fun target versionsToRemoveProvider ->
+  +            match registry.TryGetValue target with
+  +            | true, targetRegistry ->
+  +                for version in versionsToRemoveProvider () do
+  +                    targetRegistry.TryRemove version |> ignore
+  +            | false, _ -> ()
+
+  我先停在這裡讓你 review；Process ROP 與 Agent/Process composability 留到下一小波。
+
+  Worked for 1m 7s • 8:49 AM
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 先 commit，看起來 ok
+
+• 已提交：
+
+  • Commit：75ad2cc Complete version registry contract
+  • 僅包含 concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx)
+  • staged allowlist、diff --check、敏感字串掃描皆通過
+  • bin/obj、.vs、notes 等既有變更均未納入
+  • 尚未 push
+
+  Worked for 1m 4s • 8:52 AM
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1. 你有沒有整體評估過，這樣的架構對於目標來說有沒有缺漏什麼? 有沒有嚴重腦洞?
+2. 請繼續
+
+
+
+
+• 有，已做整體評估。結論是：核心拓樸可行，不需要推倒重來；但目前有幾個重要不變量尚未寫進 Contract。
+
+  ### 整體方向成立
+
+  這幾個核心決策是合理的：
+
+  • CLI → Main Wrapper → ReActLoop → Participants 的階層模型。
+  • IActorRef 作為操作 Agent 的 capability。
+  • TargetName + 型別 + System.Version 管理不同函數／物件版本。
+  • OS Process 交給 Proc Supervisor；Fodex Native Agent 只負責 actor 層互動。
+  • 使用 FeasibleT 與 SOP array，優先維護性及 ROP 組合。
+
+  ### 真正需要補的規範
+
+  1. 動態程式碼的信任邊界
+
+     DB 載入 Quotation 等同載入可執行程式碼。目前缺少來源、hash、核准者、啟用及 rollback 規範。這是最大的安全與維運缺口，需要另外討論，不能順手補。
+
+  2. 版本執行需要 pinning
+
+     同版本允許覆寫沒有問題，但同一個 ReAct turn 必須在開始時 resolve 一次並固定使用，不能執行到一半重新取得同版本的新內容。將來還應記錄 implementation hash/
+     generation，否則同一個 1.0.0 無法重現。
+
+  3. Registry 是 process-local
+
+     靜態泛型 registry 很適合 runtime cache，但不是 cluster-wide authority。需要明訂：DB 是來源、每個執行節點各自載入，函數在哪個節點 resolve 就在哪裡執行。
+
+  4. Collect 暴露中央 ConcurrentQueue
+
+     呼叫者與 DB actor 都能 dequeue，會產生資料所有權競爭。應改成 immutable snapshot、cursor/page 或 subscription receipt。這屬於較大的資料流契約，先不碰。
+
+  5. ReAct event envelope 不完整
+
+     尚缺 turn/correlation/causation、完整 sender/receiver、failure/cancel/timeout，以及每個 turn terminal event 恰好一次的規範。AgentCot 也不應要求或保存模型
+     隱藏思維，應改成可觀測的 AgentProgress 或 AgentTrace。
+
+  6. FeasibleFun 現在多吃了一次 input
+
+     現況實際型別是：
+
+     'Input -> ('Input -> Result<...>)
+
+     對 message converter 來說應該是：
+
+     'Input -> Result<...>
+
+     這是明確的型別設計錯誤，適合當下一個小段修正。
+
+  ### 本輪已繼續完成第一小段
+
+  在 concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx:132)：
+
+  - open System.Diagnostics
+
+  + type ProcessSopStep<'State> = FeasibleT<'State, 'State, exn>
+  + type ProcessSop<'State> = ProcessSopStep<'State> []
+
+  在 concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx:295)：
+
+  - | Native of IActorRef * Process
+  + | Native of IActorRef
+
+  現在 Agent 是 actor capability；Process 是背後可替換、可重綁的資源。這也符合本機 FAkka.Proc.Supervisor 1.572.3 文件所定義的生命週期分離方向。
+
+  驗證結果：
+
+  • Contract build 成功，0 errors。
+  • 保留既有 ParseLine.fsx:155 的一個 pattern-match warning。
+  • encoding、NUL、U+FFFD 與 git diff --check 均通過。
+  • 尚未 commit。
+
+  下一小段建議只修 FeasibleFun 的雙重 input；之後再處理「未指定版本取最新版」的 command/version resolution。Shell 檢查全程依 output guard 限制輸出，沒有讀取無
+  界 build log。
+
+  Worked for 4m 9s • 8:57 AM
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 1. DB 載入 Quotation 等同載入可執行程式碼。目前缺少來源、hash、核准者、啟用 -> 這部分先不考慮，只考慮版本就好
+  2. 如果 argstring 有指定版本就用指定版本直到重起，如果沒有，那就 pin 使用起動時的最大版本，不過還是要留 api 可 hot load 指定版本
+  3. 函數在哪個節點 resolve 就在哪裡執行 -> 什麼意思?
+  4. Collect 應該是撈 db 的吧? ReActLoop 本身其實應該要是一個 message hub，畢竟一堆 agent 就是高層的丟 msg 給週邊的，生成完之後全部收回，高層再讀再生成，再丟
+  給週邊的，過程中 user 一樣會不斷丟 prompt，一直 loop直到user 沒有新 prompt 且 native agent 回合結束 -> 照理來說一邊讀一邊寫不應該有你說的問題?
+  5. AgentCot 不是模型隱藏思維 -> 這玩意模型又不會吐出來，我說的是像是你收到 prompt 之後會生成很多東西，扣除 tool calling 的但不是回合最終訊息的東西對 user
+  對 wrapper 來說都是 cot
+  6. FeasibleFun 現在多吃了一次 input -> 最早只有 unit->out，沒有 'T ->out，是後來才加上後者的
+     SimpleFun 會將 input 送進 input -> result (如果你覺得沒道理，你先說一下打算怎麼改)
+
+
+• 你的修正合理。我更新後的理解如下；這輪先不改程式。
+
+  1. Quotation 先只管版本
+
+  同意。來源、hash、核准與安全模型暫不納入本階段 Contract，只保留：
+
+  • TargetName
+  • System.Version
+  • runtime value
+  • exact/latest 選擇
+  • hot load／覆寫
+
+  2. Pinning 規則
+
+  我建議明文化成：
+
+  建立 Agent incarnation
+      argString 有版本  -> resolve Exact version 並 pin
+      argString 無版本  -> resolve 當時最大版本並 pin
+
+  Register(version, value)
+      只更新 registry
+      不改變既有 incarnation 已 pin 的 value
+
+  重新建立 Agent incarnation
+      重新 resolve
+
+  因此相同版本 hot overwrite 後：
+
+  • 現有 Agent 繼續使用舊 value。
+  • 重起後，指定相同版本的 Agent 會取得新 value。
+  • 未指定版本的 Agent 重起後取得當時最大版本。
+
+  API 會保留：
+
+  Register : Version * 'T -> unit
+  ResolveExact : Version -> Result<VersionedTarget<'T>, exn>
+  ResolveLatest : unit -> Result<VersionedTarget<'T>, exn>
+
+  Resolve 應回傳完整 VersionedTarget<'T>，不能只回傳 value，否則 log 不知道實際 pin 到哪一版。
+
+  這裡我暫時把「重起」定義為重新建立 IAgent／Agent incarnation；不是單純重送 Start，也不是 Proc Supervisor 自己重啟。
+
+  3. 「在哪個節點 resolve」的意思
+
+  靜態 VersionRegistry<'T> 只存在於目前 .NET process 的記憶體。
+
+  例如：
+
+  Process A：Wrapper actor + Registry A
+  Process B：Native actor  + Registry B
+
+  在 A 執行：
+
+  Versioned<MyFun>("X").Register(...)
+
+  不會自動讓 B 的 Registry 也出現該函數。
+
+  所以我的意思只是：
+
+  • 若函數由 Wrapper 執行，就在 Wrapper 所在 process resolve。
+  • 若函數由 Native actor 執行，就必須在 Native 所在 process 已經註冊並 resolve。
+  • 不要嘗試把 closure／compiled function 經由 IActorRef 傳到另一個 process。
+
+  如果目前全部在同一 process，這點完全不構成問題；也不需要現在增加 distributed registry。
+
+  4. Collect 與 DB
+
+  你說得對：DB 一邊寫、一邊查沒有我先前描述的問題。
+
+  我擔心的是目前這個型別：
+
+  type WrappedReActDataFlow<'T> =
+      ConcurrentQueue<ReActDataDirection * ReActDataStream<'T>>
+
+  以及：
+
+  Collect : unit -> Result<ConcurrentQueue<...>, exn>
+
+  它會把內部 queue 本身交給 caller。caller 若 dequeue，就可能和 DB writer 搶同一份資料。
+
+  照你補充的架構，應該是：
+
+  Agents
+    ↓ messages
+  ReActLoop / Message Hub
+    ↓ internal write queue
+  DB
+    ↑ cursor/page query
+  Collect
+    ↑
+  Wrapper / User
+
+  也就是：
+
+  • ConcurrentQueue 可以存在 implementation。
+  • 只有 DB writer 消費 write queue。
+  • Collect 從 DB 查詢，不碰 write queue。
+  • Collect 回傳 immutable array/page，而不是可變 queue。
+  • 新 prompt 和 Agent 回應可以持續並行寫入。
+  • Wrapper 透過 cursor/watermark 反覆 Collect，再生成、再派送。
+
+  後續可考慮：
+
+  type CollectRequest =
+      {
+          Session: ReActParticipantSessionId
+          After: StreamId option
+          Limit: int
+      }
+
+  type CollectedReActData<'T> =
+      {
+          Items: ReActDataStream<'T> []
+          Next: StreamId option
+          IsCaughtUp: bool
+      }
+
+  但這會決定 DB paging、session 與 turn 行為，先討論完再改。
+
+  另外，「目前沒有新 prompt」不能等同 session 結束；比較合理的是：
+
+  • 一個 dispatch cycle 在目前 prompt watermark 已處理、所有已派出的 Native 都結束後完成。
+  • ReAct session 仍可保持開啟，等待使用者下一個 prompt。
+  • 真正結束 session 需要明確 close 或 idle policy。
+
+  5. AgentCot
+
+  了解，是我誤會你的詞義。
+
+  你的 AgentCot 是：
+
+  > Native Agent 已實際輸出的可觀測中間內容，排除 tool calling，也排除該回合最終訊息。
+
+  那可以保留 AgentCot，只需要在 Contract 註解中明確寫：
+
+  // Agent 實際輸出的非 tool、非 final 中間內容；
+  // 不表示或要求取得模型未輸出的 hidden reasoning。
+
+  6. FeasibleFun 要怎麼改
+
+  現在的型別實際展開是：
+
+  type FeasibleFun<'Input, 'Success, 'Error> =
+      SimpleFun<
+          'Input,
+          ('Input -> Result<'Success, 'Error>)
+      >
+
+  所以 SimpleFun.f.Value 的真正型別是：
+
+  'Input -> 'Input -> Result<'Success, 'Error>
+
+  它不會自動把第一個 input 再送進內層函數；目前必須這樣呼叫：
+
+  funValue input1 input2
+
+  我的修改方案是完全不動 SimpleFun，只改 alias：
+
+   type FeasibleFun<'Input, 'OutputSuccess, 'TError> =
+  -    SimpleFun<'Input, FeasibleT<'Input, 'OutputSuccess, 'TError>>
+  +    SimpleFun<'Input, Result<'OutputSuccess, 'TError>>
+
+  效果是：
+
+  FeasibleFun<unit, 'Success, 'Error>
+  // unit -> Result<'Success, 'Error>
+
+  FeasibleFun<'Input, 'Success, 'Error>
+  // 'Input -> Result<'Success, 'Error>
+
+  也就是舊的 unit -> output 仍然保留，而後來增加的 'T -> output 也成立，只是不再重複輸入兩次。
+
+  若你本意真的是「先用 config 產生函數，再送入 input」，那應另外明確定義：
+
+  type FeasibleFunFactory<'Config, 'Input, 'Success, 'Error> =
+      SimpleFun<'Config, FeasibleT<'Input, 'Success, 'Error>>
+
+  不能讓兩層都叫 'Input。
+
+  我建議下一小段只做這件事：
+
+  - SimpleFun<'Input, FeasibleT<'Input, 'OutputSuccess, 'TError>>
+  + SimpleFun<'Input, Result<'OutputSuccess, 'TError>>
+
+  其餘 pinning、Collect 與 AgentCot 先只補規範，不和這個型別修正混在同一批。
+
+  Worked for 1m 9s • 10:23 AM

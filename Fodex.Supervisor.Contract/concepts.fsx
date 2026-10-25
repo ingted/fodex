@@ -1,7 +1,6 @@
 namespace Fodex.Supervisor.Contracts
 
 open LoggerUtil
-open System.Diagnostics
 
 #if INTERACTIVE
 #r "nuget: FAkka.FSharp.Quotations.Evaluator, 2.2.1"
@@ -132,6 +131,11 @@ module Concepts =
 
     type FeasibleT<'T, 'TSuccess, 'TError> = 'T -> Result<'TSuccess, 'TError>
     type Feasible<'TSuccess, 'TError> = FeasibleT<unit, 'TSuccess, 'TError>
+
+    // Process 操作在 Contract 中只規範可組合的 ROP 形狀；
+    // start/stop/monitor 與資源生命週期由 implementation（例如 Proc Supervisor adapter）負責。
+    type ProcessSopStep<'State> = FeasibleT<'State, 'State, exn>
+    type ProcessSop<'State> = ProcessSopStep<'State> []
 
     type FAkkaArguArguStringArray = string []
 
@@ -288,8 +292,10 @@ module CoreMod =
         而對 user 來說也只有 main wrapper 的 AgentEnd 才是
         多個 Wrapper 參與同一個 ReActLoop，各自角度都有唯一的 AgentEnd
     *)
+    // Agent 是 actor capability；OS Process 是 Native actor 背後可替換、可重綁的實作資源，
+    // 不屬於 Agent 的邏輯／通訊身分。
     type Agent = 
-    | Native of IActorRef * Process
+    | Native of IActorRef
     | Wrapper of IActorRef
 
     type ReActParticipantId = int64
