@@ -144,7 +144,7 @@ module Concepts =
 
     type AgentResponse = 
         | JsonList of JsonStr list
-        | Json
+        | Json of JsonStr
 
     type NativeAgentMessage = string
     type TargetName = string
@@ -152,34 +152,60 @@ module Concepts =
     type VersionedTarget<'T> = { Version: Version; Value: 'T }
 
     type Versioned<'T> (target:TargetName) =
+        member this.Registry: CD<Version, VersionedTarget<'T>> =
+            VersionRegistry<'T>.RegistryCD.GetOrAdd(
+                target,
+                fun _ -> CD<Version, VersionedTarget<'T>>()
+            )
+
         member this.Item
             with get (version: Version) : 'T option =
-                failwithf "Not implemented: get %A from VersionRegistry<'T>" version
-            and set (version: Version) (value: 'T) =
-                failwithf "Not implemented: set %A in VersionRegistry<'T>" version
+                match this.Registry.TryGetValue version with
+                | true, versioned -> Some versioned.Value
+                | false, _ -> None
 
-        member this.Instance = 
-            failwithf "Not implemented: Instance of latest version 'T"
-        member this.Registry: CD<Version, VersionedTarget<'T>> = 
-            VersionRegistry<'T>.RegistryCD[target]
+        // 註冊相同版本時覆寫 runtime value；來源碼中的舊版本實作仍應保留。
+        member this.Register(version: Version, value: 'T) : unit =
+            this.Registry[version] <- { Version = version; Value = value }
+
+        // 未指定版本時使用目前註冊的最大 System.Version；沒有任何版本時回傳 None。
+        member this.Instance : 'T option =
+            this.Registry.Values
+            |> Seq.sortByDescending (fun versioned -> versioned.Version)
+            |> Seq.tryHead
+            |> Option.map (fun versioned -> versioned.Value)
 
     and VersionRegistry<'T> = 
+        (* to agent who develop this
+        正常來說多數的功能程式碼中會有最原始的一個版本。
+        其他由 DB 讀出的版本，讀取完成後透過 UpsertVersioned 注入 registry。
+        *)
         static let registry = CD<TargetName, CD<Version, VersionedTarget<'T>>>()
-        static let init =
-            printfn "Initializing VersionRegistry<'T> for %s" typeof<'T>.FullName
-            do
-            (* to agent who develop this
-            正常來說多數的功能程式碼中會有最原始的一個版本
-            這段就是從 DB 讀出來後注入 registry
-            *)
-                failwithf "Not implemented: init VersionRegistry<'T>"
         static member RegistryCD : CD<TargetName, CD<Version, VersionedTarget<'T>>> = registry
         static member GetVersioned: TargetName -> Versioned<'T> =
-            failwithf "Not implemented: GetVersioned for %s"
+            fun target ->
+                registry.GetOrAdd(
+                    target,
+                    fun _ -> CD<Version, VersionedTarget<'T>>()
+                )
+                |> ignore
+                Versioned<'T>(target)
         static member UpsertVersioned: TargetName -> Versioned<'T> -> unit =
-            failwithf "Not implemented: UpsertVersioned for %s"
+            fun target versioned ->
+                let targetRegistry =
+                    registry.GetOrAdd(
+                        target,
+                        fun _ -> CD<Version, VersionedTarget<'T>>()
+                    )
+                for KeyValue(version, versionedTarget) in versioned.Registry do
+                    targetRegistry[version] <- versionedTarget
         static member CleanVersioned: TargetName -> (unit -> Version []) -> unit =
-            failwithf "Not implemented: CleanVersioned for %s"
+            fun target versionsToRemoveProvider ->
+                match registry.TryGetValue target with
+                | true, targetRegistry ->
+                    for version in versionsToRemoveProvider () do
+                        targetRegistry.TryRemove version |> ignore
+                | false, _ -> ()
         
 
     type SimpleFun<'Input, 'Output> (q:Expr<'Input -> 'Output>) = 
