@@ -19,6 +19,28 @@ module LiteralsMod =
     let targetIAgentStop = "IAgentStop"
     [<Literal>]
     let targetIAgentSend = "IAgentSend"
+    [<Literal>]
+    let targetWrapperAgent = "WrapperAgent"
+    [<Literal>]
+    let targetReActLoopHandler = "ReActLoopHandler"
+    [<Literal>]
+    let targetReActLoopUpsertParticipant = "ReActLoopUpsertParticipant"
+    [<Literal>]
+    let targetReActLoopRemoveParticipant = "ReActLoopRemoveParticipant"
+    [<Literal>]
+    let targetReActLoopResolveParticipant = "ReActLoopResolveParticipant"
+    [<Literal>]
+    let targetReActLoopListParticipants = "ReActLoopListParticipants"
+    [<Literal>]
+    let targetReActLoopPostHumanPrompt = "ReActLoopPostHumanPrompt"
+    [<Literal>]
+    let targetReActLoopDispatchToParticipant = "ReActLoopDispatchToParticipant"
+    [<Literal>]
+    let targetReActLoopRouteReActDataStream = "ReActLoopRouteReActDataStream"
+    [<Literal>]
+    let targetReActLoopCollect = "ReActLoopCollect"
+    [<Literal>]
+    let targetReActLoopGetStatus = "ReActLoopGetStatus"
 
 
 
@@ -64,8 +86,19 @@ module CommandMod =
     | Reset of CommandVersion
     | Heartbeat of CommandVersion
     | Send of CommandVersion * string
+    | WrapperAgent of CommandVersion
+    | ReActLoopHandler of CommandVersion
+    | ReActLoopUpsertParticipant of CommandVersion
+    | ReActLoopRemoveParticipant of CommandVersion
+    | ReActLoopResolveParticipant of CommandVersion
+    | ReActLoopListParticipants of CommandVersion
+    | ReActLoopPostHumanPrompt of CommandVersion
+    | ReActLoopDispatchToParticipant of CommandVersion
+    | ReActLoopRouteReActDataStream of CommandVersion
+    | ReActLoopCollect of CommandVersion
+    | ReActLoopGetStatus of CommandVersion
     | Clear
-        //codex cli exec mode 無法下 /clear 所以如果 wrapper 收到 /clear 則等於 stop 對應的 main parcipant (native) process 不再使用
+        // Clear 是 runtime-independent 語意；exec adapter 可停止目前 process，app-server adapter 可 interrupt／切換 thread。
         interface IArgParserTemplate with
             member cmd.Usage =
                 match cmd with
@@ -268,7 +301,9 @@ module Concepts =
     type MsgConvert<'T> = WrapperAgentMessageConvert<'T>
 
 module TypesMod =
+    open Akka.Actor
     open Concepts
+    open CommandMod
     
     //type of Cli starts
     type TCliStart        = string [] -> unit
@@ -278,6 +313,38 @@ module TypesMod =
     type TIAgentStop      = Feasible<int, exn>
     //type of IAgent sends
     type TIAgentSend<'T>  = FeasibleT<'T, int, exn>
+
+    // Versioned ReActLoop implementation 可在同一 node 內共用；建立 ReActLoop 時
+    // 才綁定該 instance 的 physical handler。
+    type TReActLoopRuntime<'TOperation> =
+        FodexNode -> IActorRef -> 'TOperation
+
+    type TReActLoopUpsertParticipant<'TParticipant, 'TAgent> =
+        FeasibleT<'TParticipant * 'TAgent, unit, exn>
+
+    type TReActLoopRemoveParticipant<'TParticipant> =
+        FeasibleT<'TParticipant, unit, exn>
+
+    type TReActLoopResolveParticipant<'TParticipant, 'TAgent> =
+        FeasibleT<'TParticipant, 'TAgent, exn>
+
+    type TReActLoopListParticipants<'TSessionId, 'TParticipant> =
+        FeasibleT<'TSessionId, 'TParticipant [], exn>
+
+    type TReActLoopPostHumanPrompt<'TParticipant, 'TPrompt> =
+        FeasibleT<'TParticipant * 'TPrompt, int, exn>
+
+    type TReActLoopDispatchToParticipant<'TParticipant, 'TMessage> =
+        FeasibleT<'TParticipant * 'TMessage, int, exn>
+
+    type TReActLoopRouteReActDataStream<'TStream> =
+        FeasibleT<'TStream, int, exn>
+
+    type TReActLoopCollect<'TSessionId, 'TStream> =
+        FeasibleT<'TSessionId, 'TStream [], exn>
+
+    type TReActLoopGetStatus<'TSessionId, 'TStatus> =
+        FeasibleT<'TSessionId, 'TStatus, exn>
 
     
 module CoreMod =
@@ -292,6 +359,45 @@ module CoreMod =
     open LiteralsMod
     open CommandMod
     open LoggingMod
+
+    // Runtime object 由 implementation project 註冊；Contract factory 只依
+    // node + type + literal target + argString version resolve，不自行建立實作資源。
+    let resolveVersionedRuntime<'TRuntime>
+        (node: FodexNode)
+        (target: TargetName)
+        (versionCase: CommandVersion -> CommonCommand)
+        (argString: string)
+        (ctx: UniContext)
+        : Result<'TRuntime, exn> =
+        let mutable versionLabel = "max-at-creation"
+        try
+            let cmd = FodexCommanddHelper.ParseStr ctx argString
+            let versionText = cmd.TryGetResult versionCase
+            versionLabel <- defaultArg versionText versionLabel
+
+            let versioned = Versioned<'TRuntime>(node, target)
+            let runtime =
+                match versionText with
+                | Some version -> versioned[getVersion version]
+                | None -> versioned.Instance
+
+            match runtime with
+            | Some value ->
+                info (ctx, target, versionLabel, "runtime resolved")
+                Ok value
+            | None ->
+                Error (
+                    exn (
+                        sprintf
+                            "%s runtime object for version %s was not found"
+                            target
+                            versionLabel
+                    )
+                )
+                |> fun err -> errorT (ctx, target, versionLabel, err)
+        with ex ->
+            Error ex
+            |> fun err -> errorT (ctx, target, versionLabel, err)
 
     (*
     描述一下 cli 的底層行為，基本上處理 
@@ -327,8 +433,10 @@ module CoreMod =
     (* 一次 ReActLoop 代表至少一個起始 user prompt 與至少一個 natives 的回應 (codex 開啟 --json 則為 jsonl，不開啟則是 string)
        ，該回應有可能經過 wrapper 的轉換，輸出會是 typed data 'T
        ，簡單講就是一個超大 graph fold:
-            let resp1 = llmGen prompt1
-            let cot1 = llmGenSelf (hidden cot + resp1 + prompt1 ...)
+            let cotInput = 歷史或最新的 ReActData
+            let cotParticipant = mainWrapper IAgent 取得並交給 ReActLoop binding
+            cotParticipant 逐筆產生 ReActDataStream，再以 SteerTurn 交給仍在執行的 mainParticipant
+        Main wrapper COT 是上述可觀測、可保存的 orchestration 過程，不表示模型未輸出的 hidden reasoning。
         Wrapper 主要會對應一個主要的 agent，一次 ReActLoop 可能會有多個 agent/wrapper 參與，但是對每個 wrapper 來說只有主要 agent 的最終回合結束輸出才是 AgentEnd
         而對 user 來說也只有 main wrapper 的 AgentEnd 才是
         多個 Wrapper 參與同一個 ReActLoop，各自角度都有唯一的 AgentEnd
@@ -345,10 +453,16 @@ module CoreMod =
     type ReActParticipantSessionId = Guid * IPAddress option 
     type ReActParticipant = ReActParticipantId * ReActParticipantSessionId //actor 位置可能會變，但是 main wrapper
 
+    // StartTurn 可由 exec --json 或 app-server turn/start 實作。
+    // SteerTurn 表示對 active turn 插入輸入；app-server 可映射 turn/steer，不能支援的 adapter 必須明確回傳 Error 或採已宣告的延後政策。
+    type ReActTurnInputMode =
+    | StartTurn
+    | SteerTurn
+
     type ReActData<'TypedCmdToWrapper> =
     | HumanPromptToWrapper of 'TypedCmdToWrapper
-    | WrapperToNatives of msg:string * toParticiapnt: ReActParticipant * fromWrapper: ReActParticipant //ReActLoop 會負責傳遞，所以必須要給出 ReActParticipant，另外也要讓 wrapper 能收回，所以要提供 reply back 路徑
-    | NativeToNative of msg:string * toParticiapnt: ReActParticipant //ReActLoop 會負責傳遞，所以必須要給出 ReActParticipant
+    | WrapperToNatives of inputMode: ReActTurnInputMode * msg:string * toParticipant: ReActParticipant * fromWrapper: ReActParticipant //ReActLoop 負責傳遞，fromWrapper 是 reply back 路徑
+    | NativeToNative of inputMode: ReActTurnInputMode * msg:string * toParticipant: ReActParticipant //COT participant 可用 SteerTurn 將逐筆輸出送進 active main participant
     | NativeToWrapper of msg:string 
     | MainWrapperToHuman of msg:string 
     | MainWrapperToWrapper of msg:string * toWrapper: ReActParticipant //非智慧小鎮，禁止 非 main wrapper 對 非 main wrapper 通訊
@@ -368,23 +482,39 @@ module CoreMod =
     
         由於這並非小鎮智慧，所以都是階層結構，不假設 codex cli 會使用 comm mcp tool 去主動溝通
         所以正常來說就是 user send 'TypedCmdToWrapper 給 main wrapper (後面就是 wrapper 跟 participant 的事了)
-        ReActLoop 要正確維護 WrappedReActDataFlow<'TypedCmdToWrapper> 當 user collect 時將 WrappedReActDataFlow<'TypedCmdToWrapper> 轉為 user 指定的資料型態
+        ReActLoop 是 ReActDataStream 的 routing hub；user collect 時由 ReActLoop 從 DB 取得該 session 已保存的 stream。
+
+        /wrapper_cot 的 routing:
+            HumanPromptToWrapper
+            -> main wrapper IAgent AcquireParticipant
+            -> ReActLoop UpsertParticipant
+            -> WrapperToNatives(StartTurn, ...)
+            -> NativeToNative(SteerTurn, ..., mainParticipant)
     *)
 
 
     type ProgressAndStatus = string
 
-    type StreamId = int64 //main participant session 中 ReActData 的順序編號
+    type StreamId = int64 //ReActLoop session 中每個 ReActDataStream event 的順序編號
     type ReActDataStream<'TypedCmdToWrapper> = 
-    | HumanInit of ReActData<'TypedCmdToWrapper>
-    | AgentCot of StreamId * ReActData<'TypedCmdToWrapper> []
-    | AgentWork of StreamId * ReActData<'TypedCmdToWrapper> []
-    | StdOut of StreamId * String
-    | StdErr of StreamId * ProgressAndStatus
-    | AgentEnd of ReActParticipant * ReActData<'TypedCmdToWrapper> //main participant 回應
+    | HumanInit of streamId: StreamId * data: ReActData<'TypedCmdToWrapper>
+    // Agent 實際輸出的非 tool、非 final 中間內容；不表示模型未輸出的 hidden reasoning。
+    | AgentCot of streamId: StreamId * causedBy: StreamId * data: ReActData<'TypedCmdToWrapper> []
+    | AgentWork of streamId: StreamId * causedBy: StreamId * data: ReActData<'TypedCmdToWrapper> []
+    | StdOut of streamId: StreamId * causedBy: StreamId * text: String
+    | StdErr of streamId: StreamId * causedBy: StreamId * progressAndStatus: ProgressAndStatus
+    | AgentEnd of streamId: StreamId * causedBy: StreamId * participant: ReActParticipant * data: ReActData<'TypedCmdToWrapper> //該 participant 回合的終止事件
 
-    type ReActDataDirection = | In | Out
-    type WrappedReActDataFlow<'TypedCmdToWrapper> = ConcurrentQueue<ReActDataDirection * ReActDataStream<'TypedCmdToWrapper>> //中央保存，要有一個 actor 不斷 dequeue 存到 db
+    type ReActLoopStatus = {
+        PendingHumanPromptCount: int
+        ActiveParticipantTurnCount: int
+        IsWrapperGenerating: bool
+    }
+        with
+            member this.IsQuiescent =
+                this.PendingHumanPromptCount = 0
+                && this.ActiveParticipantTurnCount = 0
+                && not this.IsWrapperGenerating
 
 
     [<AbstractClass>]
@@ -406,7 +536,9 @@ module CoreMod =
         abstract member Start: TIAgentStart
         abstract member Stop: TIAgentStop
         abstract member Send: TIAgentSend<'TAgentCommMsg>
-        abstract member Collect: Feasible<WrappedReActDataFlow<'TypedCmdToWrapper>, exn>
+        // Contract 不規定新建或重用；argString 選擇 participant 的版本化 runtime abilities。
+        abstract member AcquireParticipant:
+            FeasibleT<ReActParticipant * string, IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>, exn>
         //請完成其他幾個
         default this.Start = 
             fun () ->
@@ -425,13 +557,199 @@ module CoreMod =
 
 
 
+    type ReActLoop<'TypedCmdToWrapper, 'TAgentCommMsg>
+        (node: FodexNode, reActLoopHandler: IActorRef, argString: string, ctx: UniContext) =
 
-    [<AbstractClass>]
-    type ReActLoop<'TypedCmdToWrapper, 'TAgentCommMsg> (iAgent:IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>, reActLoopHandler:IActorRef, argString: string, ctx: UniContext) =
-        abstract member CreatParticipant: FeasibleT<ReActParticipant, Agent, exn>
-        abstract member CreatParticipantIActorRefMap: FeasibleT<ReActParticipant, CD<ReActParticipant, Agent>, exn>  
-        abstract member LookupParticipantIActorRef: FeasibleT<ReActParticipant, Agent, exn>  //使用邏輯不變資料取得持續維護的 physical (會變動) Agent
-        abstract member EnQueueDataFlow: FeasibleT<ReActParticipant * ReActDataStream<'TypedCmdToWrapper>, Agent, exn>
+        let cmd = FodexCommanddHelper.ParseStr ctx argString
+
+        let upsertParticipantVersion =
+            cmd.TryGetResult CommonCommand.ReActLoopUpsertParticipant
+        let removeParticipantVersion =
+            cmd.TryGetResult CommonCommand.ReActLoopRemoveParticipant
+        let resolveParticipantVersion =
+            cmd.TryGetResult CommonCommand.ReActLoopResolveParticipant
+        let listParticipantsVersion =
+            cmd.TryGetResult CommonCommand.ReActLoopListParticipants
+        let postHumanPromptVersion =
+            cmd.TryGetResult CommonCommand.ReActLoopPostHumanPrompt
+        let dispatchToParticipantVersion =
+            cmd.TryGetResult CommonCommand.ReActLoopDispatchToParticipant
+        let routeReActDataStreamVersion =
+            cmd.TryGetResult CommonCommand.ReActLoopRouteReActDataStream
+        let collectVersion =
+            cmd.TryGetResult CommonCommand.ReActLoopCollect
+        let getStatusVersion =
+            cmd.TryGetResult CommonCommand.ReActLoopGetStatus
+
+        let versionedUpsertParticipant =
+            Versioned<TReActLoopRuntime<TReActLoopUpsertParticipant<ReActParticipant, IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>>>>
+                (node, targetReActLoopUpsertParticipant)
+        let versionedRemoveParticipant =
+            Versioned<TReActLoopRuntime<TReActLoopRemoveParticipant<ReActParticipant>>>
+                (node, targetReActLoopRemoveParticipant)
+        let versionedResolveParticipant =
+            Versioned<TReActLoopRuntime<TReActLoopResolveParticipant<ReActParticipant, IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>>>>
+                (node, targetReActLoopResolveParticipant)
+        let versionedListParticipants =
+            Versioned<TReActLoopRuntime<TReActLoopListParticipants<ReActParticipantSessionId, ReActParticipant>>>
+                (node, targetReActLoopListParticipants)
+        let versionedPostHumanPrompt =
+            Versioned<TReActLoopRuntime<TReActLoopPostHumanPrompt<ReActParticipant, 'TypedCmdToWrapper>>>
+                (node, targetReActLoopPostHumanPrompt)
+        let versionedDispatchToParticipant =
+            Versioned<TReActLoopRuntime<TReActLoopDispatchToParticipant<ReActParticipant, 'TAgentCommMsg>>>
+                (node, targetReActLoopDispatchToParticipant)
+        let versionedRouteReActDataStream =
+            Versioned<TReActLoopRuntime<TReActLoopRouteReActDataStream<ReActDataStream<'TypedCmdToWrapper>>>>
+                (node, targetReActLoopRouteReActDataStream)
+        let versionedCollect =
+            Versioned<TReActLoopRuntime<TReActLoopCollect<ReActParticipantSessionId, ReActDataStream<'TypedCmdToWrapper>>>>
+                (node, targetReActLoopCollect)
+        let versionedGetStatus =
+            Versioned<TReActLoopRuntime<TReActLoopGetStatus<ReActParticipantSessionId, ReActLoopStatus>>>
+                (node, targetReActLoopGetStatus)
+
+        // argString 指定版，或當下已註冊的最大版，只在這裡 resolve 一次。
+        // 後續 hot-load 只更新 registry，不會替換既有 loop 已 pin 的 operation。
+        let pinAtStartup
+            (versionText: string option)
+            (versioned: Versioned<TReActLoopRuntime<'TOperation>>)
+            : 'TOperation option =
+            let runtime =
+                match versionText with
+                | Some version -> versioned[getVersion version]
+                | None -> versioned.Instance
+            runtime
+            |> Option.map (fun createOperation -> createOperation node reActLoopHandler)
+
+        let upsertParticipant = pinAtStartup upsertParticipantVersion versionedUpsertParticipant
+        let removeParticipant = pinAtStartup removeParticipantVersion versionedRemoveParticipant
+        let resolveParticipant = pinAtStartup resolveParticipantVersion versionedResolveParticipant
+        let listParticipants = pinAtStartup listParticipantsVersion versionedListParticipants
+        let postHumanPrompt = pinAtStartup postHumanPromptVersion versionedPostHumanPrompt
+        let dispatchToParticipant = pinAtStartup dispatchToParticipantVersion versionedDispatchToParticipant
+        let routeReActDataStream = pinAtStartup routeReActDataStreamVersion versionedRouteReActDataStream
+        let collect = pinAtStartup collectVersion versionedCollect
+        let getStatus = pinAtStartup getStatusVersion versionedGetStatus
+
+        let runPinned target versionText operation input =
+            let versionLabel = defaultArg versionText "max-at-startup"
+            match operation with
+            | Some f ->
+                match f input with
+                | Ok _ as ok -> infoT (ctx, target, versionLabel, ok)
+                | Error _ as err -> errorT (ctx, target, versionLabel, err)
+            | None ->
+                let err =
+                    Error (
+                        exn (
+                            sprintf
+                                "%s function for version %s was not pinned at ReActLoop startup"
+                                target
+                                versionLabel
+                        )
+                    )
+                errorT (ctx, target, versionLabel, err)
+
+        member this.Node = node
+        member this.ReActLoopHandler = reActLoopHandler
+
+        // 將 logical participant 加入 Fodex-wide topology；同一 logical identity 會覆寫目前的 IAgent。
+        // 首次出現、actor restart／重新定位與 runtime 重新 pin 都使用同一個 operation。
+        abstract member UpsertParticipant:
+            TReActLoopUpsertParticipant<ReActParticipant, IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>>
+        default this.UpsertParticipant =
+            fun input ->
+                runPinned
+                    targetReActLoopUpsertParticipant
+                    upsertParticipantVersion
+                    upsertParticipant
+                    input
+
+        abstract member RemoveParticipant:
+            TReActLoopRemoveParticipant<ReActParticipant>
+        default this.RemoveParticipant =
+            fun participant ->
+                runPinned
+                    targetReActLoopRemoveParticipant
+                    removeParticipantVersion
+                    removeParticipant
+                    participant
+
+        // 使用 logical participant resolve 目前持續維護、可能已被 upsert 的 IAgent。
+        abstract member ResolveParticipant:
+            TReActLoopResolveParticipant<ReActParticipant, IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>>
+        default this.ResolveParticipant =
+            fun participant ->
+                runPinned
+                    targetReActLoopResolveParticipant
+                    resolveParticipantVersion
+                    resolveParticipant
+                    participant
+
+        abstract member ListParticipants:
+            TReActLoopListParticipants<ReActParticipantSessionId, ReActParticipant>
+        default this.ListParticipants =
+            fun sessionId ->
+                runPinned
+                    targetReActLoopListParticipants
+                    listParticipantsVersion
+                    listParticipants
+                    sessionId
+
+        // User 可在既有 participant turn 尚未結束時繼續送入 prompt。
+        abstract member PostHumanPrompt:
+            TReActLoopPostHumanPrompt<ReActParticipant, 'TypedCmdToWrapper>
+        default this.PostHumanPrompt =
+            fun input ->
+                runPinned
+                    targetReActLoopPostHumanPrompt
+                    postHumanPromptVersion
+                    postHumanPrompt
+                    input
+
+        abstract member DispatchToParticipant:
+            TReActLoopDispatchToParticipant<ReActParticipant, 'TAgentCommMsg>
+        default this.DispatchToParticipant =
+            fun input ->
+                runPinned
+                    targetReActLoopDispatchToParticipant
+                    dispatchToParticipantVersion
+                    dispatchToParticipant
+                    input
+
+        // 單一 routing 入口。MainWrapperToHuman 必須先成功保存至 DB，才可成為 user-visible output。
+        // Output sink 可由 actor mailbox、channel 或其他 implementation 提供；Contract 不指定 queue 型別。
+        abstract member RouteReActDataStream:
+            TReActLoopRouteReActDataStream<ReActDataStream<'TypedCmdToWrapper>>
+        default this.RouteReActDataStream =
+            fun stream ->
+                runPinned
+                    targetReActLoopRouteReActDataStream
+                    routeReActDataStreamVersion
+                    routeReActDataStream
+                    stream
+
+        // Collect 是整個 ReActLoop session 的 persisted stream read，不屬於單一 IAgent。
+        abstract member Collect:
+            TReActLoopCollect<ReActParticipantSessionId, ReActDataStream<'TypedCmdToWrapper>>
+        default this.Collect =
+            fun sessionId ->
+                runPinned
+                    targetReActLoopCollect
+                    collectVersion
+                    collect
+                    sessionId
+
+        abstract member GetStatus:
+            TReActLoopGetStatus<ReActParticipantSessionId, ReActLoopStatus>
+        default this.GetStatus =
+            fun sessionId ->
+                runPinned
+                    targetReActLoopGetStatus
+                    getStatusVersion
+                    getStatus
+                    sessionId
 
 
                      
@@ -439,20 +757,49 @@ module CoreMod =
     //Wrapped agent (簡稱 Native Agent，natives) 與 agents wrapper (簡稱 wrapper) 都是一種 Agent
     [<AbstractClass>]
     type FodexAgent<'TypedCmdToWrapper, 'TAgentCommMsg> () =
-        static member createWrapper (node: FodexNode, argString: string, ctx: UniContext) =
-            let iarefAgent : Agent = failwithf "havent yet implemented" //請在 Fodex.Supervisor 專案中規劃，不要寫在這
-            {
-                new IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>(node, iarefAgent, argString, ctx) with
-                    member this.Stop = fun () ->
-                        printfn "Stopping agent of type %s" typeof<'TAgentCommMsg>.FullName
-                        Error (exn "Haven't implemented")
-                    member this.Send = fun (msg: 'TAgentCommMsg) ->
-                        printfn "Sending message to wrapper agent of type %s: %A" typeof<'TAgentCommMsg>.FullName msg
-                        Error (exn "Haven't implemented")
-                    member this.Collect = fun () ->
-                        printfn "Collecting messages from wrapper agent of type %s" typeof<'TAgentCommMsg>.FullName
-                        Error (exn "Haven't implemented")
-            }
+        static member createWrapper
+            (node: FodexNode, argString: string, ctx: UniContext)
+            : Result<IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>, exn> =
+            match
+                resolveVersionedRuntime<Agent>
+                    node
+                    targetWrapperAgent
+                    CommonCommand.WrapperAgent
+                    argString
+                    ctx
+            with
+            | Error err -> Error err
+            | Ok iarefAgent ->
+                let wrapper =
+                    {
+                        new IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>(node, iarefAgent, argString, ctx) with
+                            member this.Stop = fun () ->
+                                printfn "Stopping agent of type %s" typeof<'TAgentCommMsg>.FullName
+                                Error (exn "Haven't implemented")
+                            member this.Send = fun (msg: 'TAgentCommMsg) ->
+                                printfn "Sending message to wrapper agent of type %s: %A" typeof<'TAgentCommMsg>.FullName msg
+                                Error (exn "Haven't implemented")
+                            member this.AcquireParticipant = fun _participantRequest ->
+                                Error (exn "Haven't implemented")
+                    }
+                Ok wrapper
+
+        static member createReActLoop
+            (node: FodexNode, argString: string, ctx: UniContext)
+            : Result<ReActLoop<'TypedCmdToWrapper, 'TAgentCommMsg>, exn> =
+            match
+                resolveVersionedRuntime<IActorRef>
+                    node
+                    targetReActLoopHandler
+                    CommonCommand.ReActLoopHandler
+                    argString
+                    ctx
+            with
+            | Error err -> Error err
+            | Ok reActLoopHandler ->
+                ReActLoop<'TypedCmdToWrapper, 'TAgentCommMsg>
+                    (node, reActLoopHandler, argString, ctx)
+                |> Ok
 
 
 
