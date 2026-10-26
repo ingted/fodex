@@ -178,16 +178,12 @@ module Concepts =
 
     type VersionedTarget<'T> = { Version: Version; Value: 'T }
 
-    type Versioned<'T> internal
+    type Versioned<'T>
         (registry: CD<TargetName, CD<Version, VersionedTarget<'T>>>, target: TargetName) =
 
         // 多 ActorSystem 的正式路徑：registry 依 node reference 分區。
         new (node: FodexNode, target: TargetName) =
             Versioned<'T>(VersionRegistry<'T>.RegistryFor node, target)
-
-        // [待刪除] 讓尚未注入 FodexNode 的舊 demo 先保持可編譯。
-        new (target: TargetName) =
-            Versioned<'T>(VersionRegistry<'T>.ProcessDefaultRegistry, target)
 
         member this.Target = target
 
@@ -224,21 +220,13 @@ module Concepts =
                 FodexNode,
                 CD<TargetName, CD<Version, VersionedTarget<'T>>>>()
 
-        // [待刪除] 尚未注入 FodexNode 的舊 demo 暫時使用；正式路徑不可使用此 process-wide registry。
-        static let processDefaultRegistry =
-            CD<TargetName, CD<Version, VersionedTarget<'T>>>()
-
-        static member internal RegistryFor
+        static member RegistryFor
             (node: FodexNode)
             : CD<TargetName, CD<Version, VersionedTarget<'T>>> =
             registriesByNode.GetValue(
                 node,
                 fun _ -> CD<TargetName, CD<Version, VersionedTarget<'T>>>()
             )
-
-        static member internal ProcessDefaultRegistry
-            : CD<TargetName, CD<Version, VersionedTarget<'T>>> =
-            processDefaultRegistry
 
         member this.Node = node
 
@@ -313,7 +301,7 @@ module CoreMod =
     *)
     
     [<AbstractClass>]
-    type Cli () =
+    type Cli (node: FodexNode) =
         //entrypoint 會吃 cli arguments 起動 cli process
         abstract member CliStart: TCliStart
         default this.CliStart = 
@@ -321,7 +309,7 @@ module CoreMod =
                 printfn "Starting CLI with arguments: %A" args
                 // 這裡可以加入更多的邏輯來處理 CLI 啟動
                 let v100 = getVersion "1.0.0"
-                let versionedCliStart = new Versioned<TCliStart> (targetCliStart)
+                let versionedCliStart = new Versioned<TCliStart> (node, targetCliStart)
                 let f = 
                     match versionedCliStart[v100] with
                     | Some v -> v
@@ -400,15 +388,16 @@ module CoreMod =
 
 
     [<AbstractClass>]
-    type IAgent<'TypedCmdToWrapper, 'TAgentCommMsg> (instance: Agent, argString: string, ctx: UniContext) = 
+    type IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
+        (node: FodexNode, instance: Agent, argString: string, ctx: UniContext) =
         let cmd =  FodexCommanddHelper.ParseStr ctx argString
         let startVersion = cmd.TryGetResult CommonCommand.Start
         let stopVersion = cmd.TryGetResult CommonCommand.Stop
         let sendVersion = cmd.TryGetResult CommonCommand.Send
 
-        let versionedIAgentStart = new Versioned<TIAgentStart> (targetIAgentStart)
-        let versionedIAgentStop = new Versioned<TIAgentStop> (targetIAgentStop)
-        let versionedIAgentSend = new Versioned<TIAgentSend<'TAgentCommMsg>> (targetIAgentSend)
+        let versionedIAgentStart = new Versioned<TIAgentStart> (node, targetIAgentStart)
+        let versionedIAgentStop = new Versioned<TIAgentStop> (node, targetIAgentStop)
+        let versionedIAgentSend = new Versioned<TIAgentSend<'TAgentCommMsg>> (node, targetIAgentSend)
         (*
             1. 所有對 agent 的操作，皆由該 agent tell 自己的 instance (IActorRef) 來進行，所以 agent 的能力封裝都在 actor 中
             2. 無論是以第一人稱視角進行(也就是 agent 自身)或者是以第三人稱視角進行(也就是 agent 自身之外的使用者)，都必須透過 IAgent<'T> 來操作 agent instance (基本上就是 tell message)
@@ -450,10 +439,10 @@ module CoreMod =
     //Wrapped agent (簡稱 Native Agent，natives) 與 agents wrapper (簡稱 wrapper) 都是一種 Agent
     [<AbstractClass>]
     type FodexAgent<'TypedCmdToWrapper, 'TAgentCommMsg> () =
-        static member createWrapper (argString: string, ctx: UniContext) = 
+        static member createWrapper (node: FodexNode, argString: string, ctx: UniContext) =
             let iarefAgent : Agent = failwithf "havent yet implemented" //請在 Fodex.Supervisor 專案中規劃，不要寫在這
             {
-                new IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>(iarefAgent, argString, ctx) with
+                new IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>(node, iarefAgent, argString, ctx) with
                     member this.Stop = fun () ->
                         printfn "Stopping agent of type %s" typeof<'TAgentCommMsg>.FullName
                         Error (exn "Haven't implemented")
