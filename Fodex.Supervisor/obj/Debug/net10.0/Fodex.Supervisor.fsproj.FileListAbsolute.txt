@@ -186,3 +186,4 @@ F:\fodex\Fodex.Supervisor\obj\Debug\net10.0\Fodex.Supervisor.dll
 F:\fodex\Fodex.Supervisor\obj\Debug\net10.0\refint\Fodex.Supervisor.dll
 F:\fodex\Fodex.Supervisor\obj\Debug\net10.0\Fodex.Supervisor.xml
 F:\fodex\Fodex.Supervisor\obj\Debug\net10.0\ref\Fodex.Supervisor.dll
+F:\fodex\Fodex.Supervisor\obj\Debug\net10.0\Fodex.Supervisor.sourcelink.json

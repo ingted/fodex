@@ -932,3 +932,43 @@
   其餘 pinning、Collect 與 AgentCot 先只補規範，不和這個型別修正混在同一批。
 
   Worked for 1m 9s • 10:23 AM
+
+
+
+
+
+
+
+
+
+
+
+
+
+• 已修到 Contract 專案可編譯。
+
+  主要修改在 concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx:181)：
+
+  let registry = VersionRegistry<MyType>(actorSystem)
+  let versioned = registry.GetVersioned targetName
+  versioned.Register(version, value)
+
+  目前語意：
+
+  • 同一 ActorSystem、同一 'T：共享 registry。
+  • 不同 ActorSystem：registry 隔離。
+  • ActorSystem 消失後，ConditionalWeakTable 不會永久綁住它。
+  • UpsertVersioned、CleanVersioned 已改為 instance member。
+  • 移除了 RegistryAccessor = failwithf；否則首次初始化泛型型別就可能直接失敗。
+  • 暫時保留無 node 的舊 constructor，讓尚未完成 node injection 的 Cli/IAgent demo 能編譯；正式路徑應使用 (node, target)，後續再刪除相容層。
+
+  驗證：
+
+  • Fodex.Supervisor.Contracts.fsproj：成功，0 errors。
+  • 保留既有 ParseLine.fsx:155 warning。
+  • diff --check、UTF-8、NUL／U+FFFD 檢查通過。
+  • 尚未 commit。
+
+  整個 solution 仍有一個無關的既有錯誤：main.fsx (Fodex.Supervisor/main.fsx:23) 沒有開啟 CoreMod，因此找不到 Cli。這次沒有順手修改它。
+
+  Worked for 5m 9s • 11:20 AM

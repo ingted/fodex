@@ -46,8 +46,17 @@ module VersionMod =
 
 module CommandMod =
     open Argu
+    open Akka.Actor
+    open System.Net
     type CommandVersion = string
+    type FodexNode = ActorSystem
+    type FodexNodeRole =
+    | MainWrapper
+    | Participant of IPAddress option
+        //假設要使用 proc supervisor windows service 調用遠端節點的 fodex 則需要相關設定
+        //目前已經有請 asteer (一個 agent) 調整我們環境中的 cluster 部署服務，後續皆假定 wrapper 能夠被正常遠端起動
     type CommonCommand =
+    | NodeRole of FodexNodeRole
     | Start of CommandVersion
     | Stop of CommandVersion
     | Status of CommandVersion
@@ -55,6 +64,8 @@ module CommandMod =
     | Reset of CommandVersion
     | Heartbeat of CommandVersion
     | Send of CommandVersion * string
+    | Clear
+        //codex cli exec mode 無法下 /clear 所以如果 wrapper 收到 /clear 則等於 stop 對應的 main parcipant (native) process 不再使用
         interface IArgParserTemplate with
             member cmd.Usage =
                 match cmd with
@@ -95,6 +106,18 @@ module LoggingMod =
     let debug<'T> = debugT<'T> >> ignore
     let error<'T> = errorT<'T> >> ignore
 
+module AkkaMod =
+    open Akka
+    open Akka.Actor
+    open CommandMod
+    let createFodexNode ctx (argString:string) : FodexNode = //本 process的 akka 節點
+        let args = FodexCommanddHelper.ParseStr ctx argString
+        failwithf "haven't implemented"
+
+    let getFodexNodeRole (node:FodexNode) : FodexNodeRole =
+        failwithf "haven't implemented"
+
+
 module Concepts =
     open System
     
@@ -104,7 +127,7 @@ module Concepts =
     open FAkka.FSharp.Quotations.Evaluator
     open Akka.Actor
     open LoggingMod
-   
+    open AkkaMod
     open LiteralsMod
     open VersionMod
     open AliasMod
@@ -155,9 +178,21 @@ module Concepts =
 
     type VersionedTarget<'T> = { Version: Version; Value: 'T }
 
-    type Versioned<'T> (target:TargetName) =
+    type Versioned<'T> internal
+        (registry: CD<TargetName, CD<Version, VersionedTarget<'T>>>, target: TargetName) =
+
+        // 多 ActorSystem 的正式路徑：registry 依 node reference 分區。
+        new (node: FodexNode, target: TargetName) =
+            Versioned<'T>(VersionRegistry<'T>.RegistryFor node, target)
+
+        // [待刪除] 讓尚未注入 FodexNode 的舊 demo 先保持可編譯。
+        new (target: TargetName) =
+            Versioned<'T>(VersionRegistry<'T>.ProcessDefaultRegistry, target)
+
+        member this.Target = target
+
         member this.Registry: CD<Version, VersionedTarget<'T>> =
-            VersionRegistry<'T>.RegistryCD.GetOrAdd(
+            registry.GetOrAdd(
                 target,
                 fun _ -> CD<Version, VersionedTarget<'T>>()
             )
@@ -179,38 +214,57 @@ module Concepts =
             |> Seq.tryHead
             |> Option.map (fun versioned -> versioned.Value)
 
-    and VersionRegistry<'T> = 
+    and VersionRegistry<'T> (node: FodexNode) =
         (* to agent who develop this
         正常來說多數的功能程式碼中會有最原始的一個版本。
         其他由 DB 讀出的版本，讀取完成後透過 UpsertVersioned 注入 registry。
         *)
-        static let registry = CD<TargetName, CD<Version, VersionedTarget<'T>>>()
-        static member RegistryCD : CD<TargetName, CD<Version, VersionedTarget<'T>>> = registry
-        static member GetVersioned: TargetName -> Versioned<'T> =
-            fun target ->
-                registry.GetOrAdd(
+        static let registriesByNode =
+            System.Runtime.CompilerServices.ConditionalWeakTable<
+                FodexNode,
+                CD<TargetName, CD<Version, VersionedTarget<'T>>>>()
+
+        // [待刪除] 尚未注入 FodexNode 的舊 demo 暫時使用；正式路徑不可使用此 process-wide registry。
+        static let processDefaultRegistry =
+            CD<TargetName, CD<Version, VersionedTarget<'T>>>()
+
+        static member internal RegistryFor
+            (node: FodexNode)
+            : CD<TargetName, CD<Version, VersionedTarget<'T>>> =
+            registriesByNode.GetValue(
+                node,
+                fun _ -> CD<TargetName, CD<Version, VersionedTarget<'T>>>()
+            )
+
+        static member internal ProcessDefaultRegistry
+            : CD<TargetName, CD<Version, VersionedTarget<'T>>> =
+            processDefaultRegistry
+
+        member this.Node = node
+
+        member this.Registry = VersionRegistry<'T>.RegistryFor node
+
+        member this.GetVersioned(target: TargetName) : Versioned<'T> =
+            Versioned<'T>(this.Registry, target)
+
+        member this.UpsertVersioned(target: TargetName, versioned: Versioned<'T>) : unit =
+            let targetRegistry =
+                this.Registry.GetOrAdd(
                     target,
                     fun _ -> CD<Version, VersionedTarget<'T>>()
                 )
-                |> ignore
-                Versioned<'T>(target)
-        static member UpsertVersioned: TargetName -> Versioned<'T> -> unit =
-            fun target versioned ->
-                let targetRegistry =
-                    registry.GetOrAdd(
-                        target,
-                        fun _ -> CD<Version, VersionedTarget<'T>>()
-                    )
-                for KeyValue(version, versionedTarget) in versioned.Registry do
-                    targetRegistry[version] <- versionedTarget
-        static member CleanVersioned: TargetName -> (unit -> Version []) -> unit =
-            fun target versionsToRemoveProvider ->
-                match registry.TryGetValue target with
-                | true, targetRegistry ->
-                    for version in versionsToRemoveProvider () do
-                        targetRegistry.TryRemove version |> ignore
-                | false, _ -> ()
-        
+            for KeyValue(version, versionedTarget) in versioned.Registry do
+                targetRegistry[version] <- versionedTarget
+
+        member this.CleanVersioned(
+            target: TargetName,
+            versionsToRemoveProvider: unit -> Version []
+        ) : unit =
+            match this.Registry.TryGetValue target with
+            | true, targetRegistry ->
+                for version in versionsToRemoveProvider () do
+                    targetRegistry.TryRemove version |> ignore
+            | false, _ -> ()
 
     type SimpleFun<'Input, 'Output> (q:Expr<'Input -> 'Output>) = 
         member this.q = q
@@ -277,7 +331,6 @@ module CoreMod =
                         let cliStartFun =
                             fun args -> printfn "Default CLI Start for version 1.0.0 with args: %A" args 
                         r[v100] <- { Version = v100; Value = cliStartFun}
-                        VersionRegistry<TCliStart>.UpsertVersioned targetCliStart versionedCliStart
                         cliStartFun
 
                 f args
