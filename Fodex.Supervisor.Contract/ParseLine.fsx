@@ -8,7 +8,7 @@ type ParsingState = {
     mutable fieldNoQuoteNow : bool
     result : System.Collections.Generic.List<string>
 }
-    with 
+    with
         static member Identity () = {
             inQuotes        = false
             wasEscaped      = false
@@ -31,14 +31,14 @@ let parseLine (ctx:UniContext) (delimiters: char[]) (quoteChar: char option) (es
     let appendEmpty () = currentField.Append "" |> ignore
     let seek (c:char) = seekQuote.Append c |> ignore
     let seekNotEmpty () = seekQuote.ToString().Trim() <> ""
-    let clear () = currentField.Clear() |> ignore    
+    let clear () = currentField.Clear() |> ignore
     let ifSpaceDelimiter = Array.contains ' ' delimiters
 
     //let line = seq {for i in 0..(inputLine.Length - 1) do yield inputLine.[i] } |> Seq.toArray
-     
+
     //let lineQ = new Queue<char>(line)
 
-    //let next() = 
+    //let next() =
     //    if lineQ.Count = 0 then
     //        None
     //    else
@@ -60,15 +60,15 @@ let parseLine (ctx:UniContext) (delimiters: char[]) (quoteChar: char option) (es
         else
             None
     //------------------------------v.1
-    
+
     let reset () =
         s.fieldStarted <- true
         s.inQuotes <- false
         s.fieldNoQuoteNow <- true
         s.wasEscaped <- false
-        
-    let add () = 
-        let sqStr = 
+
+    let add () =
+        let sqStr =
             if s.fieldNoQuoteNow then
                 let sqStr = seekQuote.ToString()
                 //appendStr sqStr
@@ -93,13 +93,13 @@ let parseLine (ctx:UniContext) (delimiters: char[]) (quoteChar: char option) (es
         reset ()
 
     //line |> Seq.iter (fun c -> lineQ.Enqueue c)
-    
+
     let rec inQuote (co:char option) =
         if co.IsNone then
             logger.pErrorf "quote not finished"
 
         else
-            let c = co.Value       
+            let c = co.Value
             match c, s.fieldStarted, s.wasEscaped with
             | _, _, false when c = escapeChar -> //escape
 #if DEBUG
@@ -118,8 +118,8 @@ let parseLine (ctx:UniContext) (delimiters: char[]) (quoteChar: char option) (es
                 clear ()
                 s.fieldNoQuoteNow <- true
                 s.fieldStarted <- false
-                exitQuote (next())  
-            
+                exitQuote (next())
+
             | _, _, _ when Array.exists ((=) c) delimiters ->
 #if DEBUG
 //#else
@@ -152,7 +152,7 @@ let parseLine (ctx:UniContext) (delimiters: char[]) (quoteChar: char option) (es
 #endif
         else
             let c = co.Value
-            match c, s.fieldStarted, s.fieldNoQuoteNow with      
+            match c, s.fieldStarted, s.fieldNoQuoteNow with
             | _, _, _ when c = escapeChar ->
 #if DEBUG
 //#else
@@ -171,7 +171,7 @@ let parseLine (ctx:UniContext) (delimiters: char[]) (quoteChar: char option) (es
                 if ifMergeDelimiters && ifSpaceDelimiter && c = ' ' then
                     let rec skipSpaces (co: char option) =
                         match co with
-                        | Some ' ' -> 
+                        | Some ' ' ->
 #if DEBUG
 //#else
                             logger.debugf  "cur is ' ' and if next is ' ' then skip it"
@@ -196,7 +196,7 @@ let parseLine (ctx:UniContext) (delimiters: char[]) (quoteChar: char option) (es
                     notInQuote (skipSpaces (next()))
                 else
                     notInQuote (next())
-            | ' ', true, _ -> 
+            | ' ', true, _ ->
 #if DEBUG
 //#else
                 logger.debugf "%O notInQuote %c empty character, %A" s c s.result
@@ -204,14 +204,14 @@ let parseLine (ctx:UniContext) (delimiters: char[]) (quoteChar: char option) (es
                 seek ' '
                 s.fieldStarted <- false
                 notInQuote (next())
-            | _, _, true when Some c = quoteChar -> 
+            | _, _, true when Some c = quoteChar ->
                 if seekNotEmpty () then
                     //printfn $"seekNotEmpty {inputLine}"
-                    failwith "Invalid quote occurance"
+                    failwith "Invalid quote occurrence"
                 else
 #if DEBUG
 //#else
-                    printfn "%O notInQuote %c quote character -> inQuote" s c
+                    logger.debugf "%O notInQuote %c quote character -> inQuote" s c
 #endif
                     s.fieldStarted <- true
                     s.fieldNoQuoteNow <- false
@@ -228,15 +228,17 @@ let parseLine (ctx:UniContext) (delimiters: char[]) (quoteChar: char option) (es
             | _, false, true ->
 #if DEBUG
 //#else
-                printfn "%O notInQuote %c -> seek -> notInQuote, fieldStarted: false" s c
+                logger.debugf "%O notInQuote %c -> seek -> notInQuote, fieldStarted: false" s c
 #endif
                 seek c
                 notInQuote (next())
+            | _, true, false ->
+                logger.fErrorf "%O invalid parser state before %c" s c
             | _, false, _ ->
                 s.fieldStarted <- false
 #if DEBUG
 //#else
-                printfn "%O notInQuote %c -> added -> notInQuote" s c
+                logger.debugf "%O notInQuote %c -> added -> notInQuote" s c
 #endif
                 add ()
                 notInQuote (next())
@@ -257,7 +259,7 @@ let parseLine (ctx:UniContext) (delimiters: char[]) (quoteChar: char option) (es
             | _, _, false when c = escapeChar ->
 #if DEBUG
 //#else
-                printfn "%O escape %c append" s c
+                logger.debugf "%O escape %c append" s c
 #endif
                 s.wasEscaped <- false
                 append c
@@ -340,8 +342,8 @@ let parseLine (ctx:UniContext) (delimiters: char[]) (quoteChar: char option) (es
                 s.wasEscaped <- false
                 append '\n'
                 inQuote (next())
-            
-            | _ -> 
+
+            | _ ->
                 logger.pfErrorf "%O invalid inQuoteEscape %c " s c
 
     and exitQuote (co:char option) = //leaveQuote
@@ -356,17 +358,17 @@ let parseLine (ctx:UniContext) (delimiters: char[]) (quoteChar: char option) (es
         else
             let c = co.Value
             match c, s.fieldStarted, s.fieldNoQuoteNow with
-            | _, true, _ 
+            | _, true, _
             | _, _, false ->
                 failwithf "%O exitQuote should be end of a field %c" s c
-            | ' ', _, _ when Array.contains ' ' delimiters -> 
+            | ' ', _, _ when Array.contains ' ' delimiters ->
 #if DEBUG
 //#else
                 logger.debugf "%O exitQuote '%c' exitQuote" s c
 #endif
                 reset ()
                 notInQuote (next())
-            | ' ', _, _ -> 
+            | ' ', _, _ ->
 #if DEBUG
 //#else
                 logger.debugf "%O exitQuote '%c' exitQuote" s c
@@ -381,11 +383,8 @@ let parseLine (ctx:UniContext) (delimiters: char[]) (quoteChar: char option) (es
                 //add ()
                 reset ()
                 notInQuote (next())
-            | _ -> 
+            | _ ->
                 logger.pfErrorf "Field already closed"
-         
+
     notInQuote (next())
     s.result |> Seq.toArray
-
-
-

@@ -28,26 +28,26 @@ type ILoggingAdapter with
 
     /// Info 等級，型別安全的 printf 風格
     member inline x.pInfof (format: Printf.StringFormat<'T,unit>) : 'T =
-        Printf.kprintf (fun msg -> 
+        Printf.kprintf (fun msg ->
             x.Info msg
             printfn "%s" msg
         ) format
 
     /// 其它等級順便一起補
     member inline x.pDebugf (format: Printf.StringFormat<'T,unit>) : 'T =
-        Printf.kprintf (fun msg -> 
+        Printf.kprintf (fun msg ->
             x.Debug msg
             printfn "%s" msg
         ) format
 
     member inline x.pWarnf (format: Printf.StringFormat<'T,unit>) : 'T =
-        Printf.kprintf (fun msg -> 
+        Printf.kprintf (fun msg ->
             x.Warning msg
             printfn "%s" msg
         ) format
 
     member inline x.pErrorf (format: Printf.StringFormat<'T,unit>) : 'T =
-        Printf.kprintf (fun msg -> 
+        Printf.kprintf (fun msg ->
             x.Error msg
             printfn "%s" msg
         ) format
@@ -55,26 +55,26 @@ type ILoggingAdapter with
 
         /// Info 等級，型別安全的 printf 風格
     member inline x.fInfof format =
-        Printf.kprintf (fun msg -> 
+        Printf.kprintf (fun msg ->
             x.Info msg
             failwith msg
         ) format
 
     /// 其它等級順便一起補
     member inline x.fDebugf format =
-        Printf.kprintf (fun msg -> 
+        Printf.kprintf (fun msg ->
             x.Debug msg
             failwith msg
         ) format
 
     member inline x.fWarnf format =
-        Printf.kprintf (fun msg -> 
+        Printf.kprintf (fun msg ->
             x.Warning msg
             failwith msg
         ) format
 
     member inline x.fErrorf format =
-        Printf.kprintf (fun msg -> 
+        Printf.kprintf (fun msg ->
             x.Error msg
             failwith msg
         ) format
@@ -346,14 +346,14 @@ and UniContext = {
     usage:string list
     caller:string list
 }
-    with 
+    with
         member this.next(nextUsage:string, [<CallerMemberName; Optional; DefaultParameterValue("")>] caller:string) = {
             this
                 with
                     usage = this.usage @ [nextUsage]
                     caller = this.caller @ [caller]
         }
-            
+
         member this.next([<CallerMemberName; Optional; DefaultParameterValue("")>] caller:string) = {
             this
                 with
@@ -362,7 +362,7 @@ and UniContext = {
         }
 
         member this.usages = "[" + System.String.Join("|", this.usage) + "]"
-            
+
 
 
 let inline uvl2ul (uvl: UniversalLogger< ^L>) = UniLogger.toUL< ^L> uvl
@@ -370,8 +370,3 @@ let inline uvl2ul (uvl: UniversalLogger< ^L>) = UniLogger.toUL< ^L> uvl
 if false then
     let uvl = uvl2ul <| UniversalLogger<_>(NLog.LogManager.GetCurrentClassLogger())
     ()
-
-
-
-
-

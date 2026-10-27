@@ -80,7 +80,8 @@ module CommandMod =
         //假設要使用 proc supervisor windows service 調用遠端節點的 fodex 則需要相關設定
         //目前已經有請 asteer (一個 agent) 調整我們環境中的 cluster 部署服務，後續皆假定 wrapper 能夠被正常遠端起動
     type CommonCommand =
-    | NodeRole of FodexNodeRole
+    // Argu 的 union case 欄位必須先使用 primitive；FodexNodeRole 由 implementation post-process。
+    | NodeRole of string
     | CliStart of CommandVersion
     | PromptConvert of CommandVersion
     | Start of CommandVersion
@@ -109,13 +110,10 @@ module CommandMod =
                 | _ -> ""
 
     type FodexCommanddHelper =
-        static member val parser = (ArgumentParser.Create<CommonCommand>("Fodex.exe")) with get, set
-        static member Parser 
-            with get() = 
-                if box FodexCommanddHelper.parser = null then
-                    FodexCommanddHelper.parser <- ArgumentParser.Create<CommonCommand>("Fodex.exe")
-                FodexCommanddHelper.parser
-            //and set(value) = FodexCommanddHelper.parser <- value
+        static member val Parser =
+            ArgumentParser.Create<CommonCommand>("Fodex.exe")
+            with get
+
         static member ParseArr = fun (ctx:UniContext) (args:string []) ->
             FodexCommanddHelper.Parser.Parse(args, ignoreMissing=true, ignoreUnrecognized=true)
         static member ParseStr = fun (ctx:UniContext) (argsString:string) ->
@@ -145,7 +143,7 @@ module LoggingMod =
 
 module Concepts =
     open System
-    
+
     open System.Collections.Concurrent
     open FSharp.Quotations
     open FAkka.FSharp.Quotations.Evaluator
@@ -168,12 +166,12 @@ module Concepts =
 
     type JsonStr = string
 
-    //首先: agents wrapper 吃一個 prompt 可以叫 1 或多個 agents 來做事 
-    type AgentPrompt = 
+    //首先: agents wrapper 吃一個 prompt 可以叫 1 或多個 agents 來做事
+    type AgentPrompt =
         | Prompt of string
         | PromptWithArgs of string * FAkkaArguArguStringArray
 
-    type AgentResponse = 
+    type AgentResponse =
         | JsonList of JsonStr list
         | Json of JsonStr
 
@@ -258,13 +256,13 @@ module Concepts =
                     targetRegistry.TryRemove version |> ignore
             | false, _ -> ()
 
-    type SimpleFun<'Input, 'Output> (q:Expr<'Input -> 'Output>) = 
+    type SimpleFun<'Input, 'Output> (q:Expr<'Input -> 'Output>) =
         member this.q = q
         member val f:Lazy<'Input -> 'Output> = lazy (QuotationEvaluator.Evaluate q)
         member this.Invoke(input: 'Input) : 'Output =
             this.f.Value input
 
-    type FeasibleFun<'Input, 'OutputSuccess, 'TError> = 
+    type FeasibleFun<'Input, 'OutputSuccess, 'TError> =
         SimpleFun<'Input, FeasibleT<'Input, 'OutputSuccess, 'TError>>
 
     type FodexFun<'Input, 'OutputSuccess, 'TError> = Versioned<FeasibleFun<'Input, 'OutputSuccess, 'TError>>
@@ -283,18 +281,21 @@ module Concepts =
             (fodexFun: FodexFun<'Input, 'OutputSuccess, 'TError>)
             : FeasibleFun<'Input, 'OutputSuccess, 'TError> option =
             match versionText with
-            | Some version -> fodexFun[getVersion version]
+            | Some version ->
+                match Version.TryParse version with
+                | true, parsed -> fodexFun[parsed]
+                | false, _ -> None
             | None -> fodexFun.Instance
 
     type WrapperAgentMessageConvert<'T> = FodexFun<'T, JsonStr, exn>
-        
+
     type MsgConvert<'T> = WrapperAgentMessageConvert<'T>
 
 module TypesMod =
     open Akka.Actor
     open Concepts
     open CommandMod
-    
+
     //type of Cli starts
     type TCliStart        = FeasibleT<string [], unit, exn>
     //type of IAgent starts
@@ -345,7 +346,7 @@ module TypesMod =
     type TReActLoopGetParticipantCapabilities<'TParticipant, 'TCapability> =
         FeasibleT<'TParticipant, 'TCapability [], exn>
 
-    
+
 module CoreMod =
     open System
     open System.Collections.Concurrent
@@ -364,14 +365,15 @@ module CoreMod =
     let resolveVersionedRuntime<'TRuntime>
         (node: FodexNode)
         (target: TargetName)
-        (versionCase: CommandVersion -> CommonCommand)
+        (versionSelector:
+            Argu.ParseResults<CommonCommand> -> CommandVersion option)
         (argString: string)
         (ctx: UniContext)
         : Result<'TRuntime, exn> =
         let mutable versionLabel = "max-at-creation"
         try
             let cmd = FodexCommanddHelper.ParseStr ctx argString
-            let versionText = cmd.TryGetResult versionCase
+            let versionText = versionSelector cmd
             versionLabel <- defaultArg versionText versionLabel
 
             let versioned = Versioned<'TRuntime>(node, target)
@@ -413,9 +415,14 @@ module CoreMod =
             let versionLabel = defaultArg cliStartVersion "max-at-creation"
             match pinnedCliStart with
             | Some feasibleFun ->
-                match FeasibleFun.invoke (node, args) feasibleFun with
-                | Ok _ as ok -> infoT (ctx, targetCliStart, versionLabel, ok)
-                | Error _ as err -> errorT (ctx, targetCliStart, versionLabel, err)
+                try
+                    match FeasibleFun.invoke (node, args) feasibleFun with
+                    | Ok _ as ok -> infoT (ctx, targetCliStart, versionLabel, ok)
+                    | Error _ as err -> errorT (ctx, targetCliStart, versionLabel, err)
+                with ex ->
+                    Error ex
+                    |> fun err ->
+                        errorT (ctx, targetCliStart, versionLabel, err)
             | None ->
                 Error (
                     exn (
@@ -445,14 +452,14 @@ module CoreMod =
     *)
     // Agent 是 actor capability；OS Process 是 Native actor 背後可替換、可重綁的實作資源，
     // 不屬於 Agent 的邏輯／通訊身分。
-    type Agent = 
+    type Agent =
     | Native of IActorRef
     | Wrapper of IActorRef
 
     type ReActParticipantId = int64
     //遠端 codex process，靠 proc supervisor windows service host 起動
     //這不是多 agent 各自的獨立的智慧小鎮模型，基本上是個單機 user 正常 main wrapper 對應一個 main participant (Native) 為主，其他 participant 與 wrapper 為輔
-    type ReActParticipantSessionId = Guid * IPAddress option 
+    type ReActParticipantSessionId = Guid * IPAddress option
     type ReActParticipant = ReActParticipantId * ReActParticipantSessionId //actor 位置可能會變，但是 main wrapper
 
     type CodexSessionId = string
@@ -490,15 +497,15 @@ module CoreMod =
     | HumanPromptToWrapper of 'TypedCmdToWrapper
     | WrapperToNatives of inputMode: ReActTurnInputMode * msg:string * toParticipant: ReActParticipant * fromWrapper: ReActParticipant //ReActLoop 負責傳遞，fromWrapper 是 reply back 路徑
     | NativeToNative of inputMode: ReActTurnInputMode * msg:string * toParticipant: ReActParticipant //COT participant 可用 SteerTurn 將逐筆輸出送進 active main participant
-    | NativeToWrapper of msg:string 
-    | MainWrapperToHuman of msg:string 
+    | NativeToWrapper of msg:string
+    | MainWrapperToHuman of msg:string
     | MainWrapperToWrapper of msg:string * toWrapper: ReActParticipant //非智慧小鎮，禁止 非 main wrapper 對 非 main wrapper 通訊
 
     (* Topology:
-    
+
         user <= IAgent => actor(main wrapper)
         IAgent(actor(main wrapper)) <= ReActLoop => IAgent(actor(participant))
-            
+
         1. IAgent(actor(main wrapper)): 表示 actor(main wrapper) 會用於建立一個 IAgent 來控制/與該 akka actor 互動
            其中 wrapper 可由 FodexAgent<'TAgentCommMsg>.createWrapper 建立
         2. <= ReActLoop => : 表示 wrapper actor 是透過 ReActLoop 完成與 participant actor 交互的過程
@@ -506,7 +513,7 @@ module CoreMod =
         3. IAgent(actor(participant)): 表示 actor(participant) 會用於:
             a. 當 participant 是 native: 建立一個 IAgent 來控制/與該 akka actor 互動
             b. 當 participant 是 非 main wrapper: 建立一個 IAgent 來控制/與該 akka actor 互動
-    
+
         由於這並非小鎮智慧，所以都是階層結構，不假設 codex cli 會使用 comm mcp tool 去主動溝通
         所以正常來說就是 user send 'TypedCmdToWrapper 給 main wrapper (後面就是 wrapper 跟 participant 的事了)
         ReActLoop 是 ReActDataStream 的 routing hub；user collect 時由 ReActLoop 從 DB 取得該 session 已保存的 stream。
@@ -530,7 +537,7 @@ module CoreMod =
     type ProgressAndStatus = string
 
     type StreamId = int64 //ReActLoop session 中每個 ReActDataStream event 的順序編號
-    type ReActDataStream<'TypedCmdToWrapper> = 
+    type ReActDataStream<'TypedCmdToWrapper> =
     | HumanInit of streamId: StreamId * data: ReActData<'TypedCmdToWrapper>
     // Agent 實際輸出的非 tool、非 final 中間內容；不表示模型未輸出的 hidden reasoning。
     | AgentCot of streamId: StreamId * causedBy: StreamId * data: ReActData<'TypedCmdToWrapper> []
@@ -598,9 +605,13 @@ module CoreMod =
             let versionLabel = defaultArg versionText "max-at-creation"
             match pinned with
             | Some feasibleFun ->
-                match FeasibleFun.invoke input feasibleFun with
-                | Ok _ as ok -> infoT (ctx, target, versionLabel, ok)
-                | Error _ as err -> errorT (ctx, target, versionLabel, err)
+                try
+                    match FeasibleFun.invoke input feasibleFun with
+                    | Ok _ as ok -> infoT (ctx, target, versionLabel, ok)
+                    | Error _ as err -> errorT (ctx, target, versionLabel, err)
+                with ex ->
+                    Error ex
+                    |> fun err -> errorT (ctx, target, versionLabel, err)
             | None ->
                 Error (
                     exn (
@@ -786,9 +797,13 @@ module CoreMod =
             match operation with
             | Some feasibleFun ->
                 let input = node, reActLoopHandler, operationInput
-                match FeasibleFun.invoke input feasibleFun with
-                | Ok _ as ok -> infoT (ctx, target, versionLabel, ok)
-                | Error _ as err -> errorT (ctx, target, versionLabel, err)
+                try
+                    match FeasibleFun.invoke input feasibleFun with
+                    | Ok _ as ok -> infoT (ctx, target, versionLabel, ok)
+                    | Error _ as err -> errorT (ctx, target, versionLabel, err)
+                with ex ->
+                    Error ex
+                    |> fun err -> errorT (ctx, target, versionLabel, err)
             | None ->
                 let err =
                     Error (
@@ -927,76 +942,81 @@ module CoreMod =
             let rec createIAgent
                 (agentInstance: Agent)
                 (agentArgString: string)
-                : IAgent<'TypedCmdToWrapper, 'TAgentCommMsg> =
-                let cmd = FodexCommanddHelper.ParseStr ctx agentArgString
-                let acquireVersion =
-                    cmd.TryGetResult CommonCommand.AcquireParticipant
-                let versionedAcquire =
-                    IAgentFodexFun<ReActParticipant * string, Agent>
-                        (node, targetIAgentAcquireParticipant)
-                let pinnedAcquire =
-                    FodexFun.pin acquireVersion versionedAcquire
+                : Result<IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>, exn> =
+                try
+                    let cmd = FodexCommanddHelper.ParseStr ctx agentArgString
+                    let acquireVersion =
+                        cmd.TryGetResult CommonCommand.AcquireParticipant
+                    let versionedAcquire =
+                        IAgentFodexFun<ReActParticipant * string, Agent>
+                            (node, targetIAgentAcquireParticipant)
+                    let pinnedAcquire =
+                        FodexFun.pin acquireVersion versionedAcquire
 
-                {
-                    new IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
-                        (node, agentInstance, agentArgString, ctx) with
-                        member this.AcquireParticipant =
-                            fun ((_, participantArgString) as request) ->
-                                let versionLabel =
-                                    defaultArg acquireVersion "max-at-creation"
-                                let result =
-                                    match pinnedAcquire with
-                                    | Some feasibleFun ->
-                                        match
-                                            FeasibleFun.invoke
-                                                (node, agentInstance, request)
-                                                feasibleFun
-                                        with
-                                        | Ok participantAgent ->
-                                            createIAgent
-                                                participantAgent
-                                                participantArgString
-                                            |> Ok
-                                        | Error err -> Error err
-                                    | None ->
-                                        Error (
-                                            exn (
-                                                sprintf
-                                                    "%s function for version %s was not pinned at IAgent creation"
-                                                    targetIAgentAcquireParticipant
-                                                    versionLabel
-                                            )
+                    {
+                        new IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
+                            (node, agentInstance, agentArgString, ctx) with
+                            member _.AcquireParticipant =
+                                fun ((_, participantArgString) as request) ->
+                                    let versionLabel =
+                                        defaultArg acquireVersion "max-at-creation"
+                                    let result =
+                                        try
+                                            match pinnedAcquire with
+                                            | Some feasibleFun ->
+                                                match
+                                                    FeasibleFun.invoke
+                                                        (node, agentInstance, request)
+                                                        feasibleFun
+                                                with
+                                                | Ok participantAgent ->
+                                                    createIAgent
+                                                        participantAgent
+                                                        participantArgString
+                                                | Error err -> Error err
+                                            | None ->
+                                                Error (
+                                                    exn (
+                                                        sprintf
+                                                            "%s function for version %s was not pinned at IAgent creation"
+                                                            targetIAgentAcquireParticipant
+                                                            versionLabel
+                                                    )
+                                                )
+                                        with ex ->
+                                            Error ex
+
+                                    match result with
+                                    | Ok _ as ok ->
+                                        infoT (
+                                            ctx,
+                                            targetIAgentAcquireParticipant,
+                                            versionLabel,
+                                            ok
                                         )
-
-                                match result with
-                                | Ok _ as ok ->
-                                    infoT (
-                                        ctx,
-                                        targetIAgentAcquireParticipant,
-                                        versionLabel,
-                                        ok
-                                    )
-                                | Error _ as err ->
-                                    errorT (
-                                        ctx,
-                                        targetIAgentAcquireParticipant,
-                                        versionLabel,
-                                        err
-                                    )
-                }
+                                    | Error _ as err ->
+                                        errorT (
+                                            ctx,
+                                            targetIAgentAcquireParticipant,
+                                            versionLabel,
+                                            err
+                                        )
+                    }
+                    |> Ok
+                with ex ->
+                    Error ex
 
             match
                 resolveVersionedRuntime<Agent>
                     node
                     targetWrapperAgent
-                    CommonCommand.WrapperAgent
+                    (fun parsed ->
+                        parsed.TryGetResult CommonCommand.WrapperAgent)
                     argString
                     ctx
             with
             | Error err -> Error err
-            | Ok wrapperAgent ->
-                createIAgent wrapperAgent argString
-                |> Ok
+            | Ok wrapperAgent -> createIAgent wrapperAgent argString
 
         static member createReActLoop
             (node: FodexNode, argString: string, ctx: UniContext)
@@ -1005,15 +1025,16 @@ module CoreMod =
                 resolveVersionedRuntime<IActorRef>
                     node
                     targetReActLoopHandler
-                    CommonCommand.ReActLoopHandler
+                    (fun parsed ->
+                        parsed.TryGetResult CommonCommand.ReActLoopHandler)
                     argString
                     ctx
             with
             | Error err -> Error err
             | Ok reActLoopHandler ->
-                ReActLoop<'TypedCmdToWrapper, 'TAgentCommMsg>
-                    (node, reActLoopHandler, argString, ctx)
-                |> Ok
-
-
-
+                try
+                    ReActLoop<'TypedCmdToWrapper, 'TAgentCommMsg>
+                        (node, reActLoopHandler, argString, ctx)
+                    |> Ok
+                with ex ->
+                    Error ex

@@ -3,10 +3,46 @@ namespace Fodex.Supervisor.Tests
 open System
 open Expecto
 open FSharp.Quotations
+open LoggerUtil
 open Fodex.Supervisor.Contracts.AliasMod
+open Fodex.Supervisor.Contracts.CommandMod
 open Fodex.Supervisor.Contracts.Concepts
 
 module RegistryFunctionQuotationTests =
+    let testContext =
+        let logger =
+            {
+                new UniLogger() with
+                    member _.Info _ = ()
+                    member _.Debug _ = ()
+                    member _.Warn _ = ()
+                    member _.Error _ = ()
+                    member _.infof format = Printf.kprintf ignore format
+                    member _.debugf format = Printf.kprintf ignore format
+                    member _.warnf format = Printf.kprintf ignore format
+                    member _.errorf format = Printf.kprintf ignore format
+                    member _.pInfof format = Printf.kprintf ignore format
+                    member _.pDebugf format = Printf.kprintf ignore format
+                    member _.pWarnf format = Printf.kprintf ignore format
+                    member _.pErrorf format = Printf.kprintf ignore format
+                    member _.fInfof format =
+                        Printf.kprintf (fun message -> raise (Exception message)) format
+                    member _.fDebugf format =
+                        Printf.kprintf (fun message -> raise (Exception message)) format
+                    member _.fWarnf format =
+                        Printf.kprintf (fun message -> raise (Exception message)) format
+                    member _.fErrorf format =
+                        Printf.kprintf (fun message -> raise (Exception message)) format
+                    member _.pfErrorf format =
+                        Printf.kprintf (fun message -> raise (Exception message)) format
+            }
+
+        {
+            logger = logger
+            usage = ["RegistryFunctionQuotationTests"]
+            caller = []
+        }
+
     let expectOk label result =
         match result with
         | Ok value -> value
@@ -154,4 +190,75 @@ module RegistryFunctionQuotationTests =
 
                 Expect.isNone missing
                     "an explicit version must never silently select another version"
+
+            testCase "invalid version text does not escape the Result-based boundary" <| fun _ ->
+                let registry = newRegistry "InvalidVersion"
+
+                registry.Register(
+                    System.Version(1, 0, 0),
+                    FeasibleFun<int, int, string>(addQuotation 10)
+                )
+
+                let invalid = FodexFun.pin (Some "not-a-version") registry
+
+                Expect.isNone invalid
+                    "invalid version text must not throw during operation pinning"
+
+            testCase "different targets remain isolated in a shared registry" <| fun _ ->
+                let shared =
+                    CD<
+                        TargetName,
+                        CD<
+                            System.Version,
+                            VersionedTarget<FeasibleFun<int, int, string>>
+                        >
+                    >()
+                let version = System.Version(1, 0, 0)
+                let targetA = FodexFun<int, int, string>(shared, "TargetA")
+                let targetB = FodexFun<int, int, string>(shared, "TargetB")
+
+                targetA.Register(
+                    version,
+                    FeasibleFun<int, int, string>(addQuotation 10)
+                )
+
+                Expect.isSome targetA.Instance
+                    "the registered target must resolve its function"
+                Expect.isNone targetB.Instance
+                    "another target in the same registry must remain empty"
+
+            testCase "Argu keeps NodeRole primitive and selectors explicit" <| fun _ ->
+                let parsed =
+                    FodexCommanddHelper.Parser.Parse(
+                        [|
+                            "--noderole"
+                            "main-wrapper"
+                            "--wrapperagent"
+                            "1.0.0"
+                        |],
+                        ignoreMissing = true,
+                        ignoreUnrecognized = true
+                    )
+
+                let nodeRole = parsed.TryGetResult CommonCommand.NodeRole
+                let wrapperVersion =
+                    (fun (results: Argu.ParseResults<CommonCommand>) ->
+                        results.TryGetResult CommonCommand.WrapperAgent)
+                        parsed
+
+                Expect.equal nodeRole (Some "main-wrapper")
+                    "NodeRole must be parsed as a primitive string"
+                Expect.equal wrapperVersion (Some "1.0.0")
+                    "runtime version selectors must use an explicit ParseResults lambda"
+
+            testCase "ParseStr preserves a quoted Send payload" <| fun _ ->
+                let parsed =
+                    FodexCommanddHelper.ParseStr
+                        testContext
+                        "--send 1.0.0 \"fix parser\""
+
+                let send = parsed.TryGetResult CommonCommand.Send
+
+                Expect.equal send (Some ("1.0.0", "fix parser"))
+                    "ParseLine and Argu must preserve spaces inside a quoted payload"
         ]
