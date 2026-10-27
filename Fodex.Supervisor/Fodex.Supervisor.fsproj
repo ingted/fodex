@@ -18,7 +18,7 @@
     <TestingPlatformDotnetTestSupport>false</TestingPlatformDotnetTestSupport>
     <IsTestProject>false</IsTestProject>
     <IsTestingPlatformApplication>false</IsTestingPlatformApplication>
-    <Version>1.571.101.400-win41</Version>
+    <Version>0.0.1</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
 	<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PublishProcSupervisorPackage Condition="'$(PublishProcSupervisorPackage)' == ''">false</PublishProcSupervisorPackage>
@@ -60,19 +60,7 @@
   <ItemGroup>
 	  <Compile Include="SupervisorArgs.fsx" />
 	  <Compile Include="LoggingRuntime.fsx" />
-	  <Compile Include="FodexNodeRuntime.fsx" />
-	  <Compile Include="ProcessSupervisorRuntime.fsx" />
-	  <Compile Include="CodexWireRuntime.fsx" />
-	  <Compile Include="CodexExecRuntime.fsx" />
-	  <Compile Include="CodexAppServerRuntime.fsx" />
-	  <Compile Include="NativeRuntime.fsx" />
-	  <Compile Include="ReActStoreRuntime.fsx" />
-	  <Compile Include="WrapperAgentRuntime.fsx" />
 	  <Compile Include="RegistryFunctionState.fsx" />
-	  <Compile Include="RegistryFunctionQuotationsV100.fsx" />
-	  <Compile Include="ReActLoopRuntime.fsx" />
-	  <Compile Include="CliRuntime.fsx" />
-	  <Compile Include="RuntimeRegistration.fsx" />
 	  <Compile Include="Application.fsx" />
 	  <Compile Include="main.fsx" />
   </ItemGroup>
