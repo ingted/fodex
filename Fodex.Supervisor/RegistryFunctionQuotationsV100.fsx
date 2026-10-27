@@ -51,14 +51,24 @@ module RegistryFunctionQuotationsV100 =
                         Error ex
         @>
 
-    let iAgentStart: Expr<TIAgentStart> =
-        <@ fun () -> Ok 1 @>
+    let iAgentStart: Expr<TIAgentRuntime<Agent, TIAgentStart>> =
+        <@
+            fun (_node: FodexNode) agent ->
+                WrapperAgentRuntime.start agent
+        @>
 
-    let iAgentStop: Expr<TIAgentStop> =
-        <@ fun () -> Ok 1 @>
+    let iAgentStop: Expr<TIAgentRuntime<Agent, TIAgentStop>> =
+        <@
+            fun (_node: FodexNode) agent ->
+                WrapperAgentRuntime.stop agent
+        @>
 
-    let iAgentSend<'TAgentCommMsg>: Expr<TIAgentSend<'TAgentCommMsg>> =
-        <@ fun _message -> Ok 1 @>
+    let iAgentSend<'TAgentCommMsg>:
+        Expr<TIAgentRuntime<Agent, TIAgentSend<'TAgentCommMsg>>> =
+        <@
+            fun (_node: FodexNode) agent ->
+                WrapperAgentRuntime.send<'TAgentCommMsg> agent
+        @>
 
     let reActLoopUpsertParticipant<'TypedCmdToWrapper, 'TAgentCommMsg>:
         Expr<

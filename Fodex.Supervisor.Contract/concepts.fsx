@@ -314,6 +314,11 @@ module TypesMod =
     //type of IAgent sends
     type TIAgentSend<'T>  = FeasibleT<'T, int, exn>
 
+    // Versioned IAgent implementation 可在同一 node 內共用；建立 IAgent 時
+    // 才綁定該 instance 的 logical Agent handle。
+    type TIAgentRuntime<'TAgent, 'TOperation> =
+        FodexNode -> 'TAgent -> 'TOperation
+
     // Versioned ReActLoop implementation 可在同一 node 內共用；建立 ReActLoop 時
     // 才綁定該 instance 的 physical handler。
     type TReActLoopRuntime<'TOperation> =
@@ -523,37 +528,90 @@ module CoreMod =
         let cmd =  FodexCommanddHelper.ParseStr ctx argString
         let startVersion = cmd.TryGetResult CommonCommand.Start
         let stopVersion = cmd.TryGetResult CommonCommand.Stop
-        let sendVersion = cmd.TryGetResult CommonCommand.Send
+        let sendVersion =
+            cmd.TryGetResult CommonCommand.Send
+            |> Option.map fst
 
-        let versionedIAgentStart = new Versioned<TIAgentStart> (node, targetIAgentStart)
-        let versionedIAgentStop = new Versioned<TIAgentStop> (node, targetIAgentStop)
-        let versionedIAgentSend = new Versioned<TIAgentSend<'TAgentCommMsg>> (node, targetIAgentSend)
+        let versionedIAgentStart =
+            Versioned<TIAgentRuntime<Agent, TIAgentStart>>
+                (node, targetIAgentStart)
+        let versionedIAgentStop =
+            Versioned<TIAgentRuntime<Agent, TIAgentStop>>
+                (node, targetIAgentStop)
+        let versionedIAgentSend =
+            Versioned<TIAgentRuntime<Agent, TIAgentSend<'TAgentCommMsg>>>
+                (node, targetIAgentSend)
+
+        // argString 指定版，或當下已註冊的最大版，只在 IAgent 建立時 resolve 一次。
+        // 後續 hot-load 只更新 registry，不替換既有 IAgent 已 pin 的 operation。
+        let pinAtStartup
+            (versionText: string option)
+            (versioned: Versioned<TIAgentRuntime<Agent, 'TOperation>>)
+            : 'TOperation option =
+            let runtime =
+                match versionText with
+                | Some version -> versioned[getVersion version]
+                | None -> versioned.Instance
+            runtime
+            |> Option.map (fun createOperation -> createOperation node instance)
+
+        let start = pinAtStartup startVersion versionedIAgentStart
+        let stop = pinAtStartup stopVersion versionedIAgentStop
+        let send = pinAtStartup sendVersion versionedIAgentSend
+
+        let runPinned target versionText operation input =
+            let versionLabel = defaultArg versionText "max-at-startup"
+            match operation with
+            | Some f ->
+                match f input with
+                | Ok _ as ok -> infoT (ctx, target, versionLabel, ok)
+                | Error _ as err -> errorT (ctx, target, versionLabel, err)
+            | None ->
+                let err =
+                    Error (
+                        exn (
+                            sprintf
+                                "%s function for version %s was not pinned at IAgent startup"
+                                target
+                                versionLabel
+                        )
+                    )
+                errorT (ctx, target, versionLabel, err)
         (*
             1. 所有對 agent 的操作，皆由該 agent tell 自己的 instance (IActorRef) 來進行，所以 agent 的能力封裝都在 actor 中
             2. 無論是以第一人稱視角進行(也就是 agent 自身)或者是以第三人稱視角進行(也就是 agent 自身之外的使用者)，都必須透過 IAgent<'T> 來操作 agent instance (基本上就是 tell message)
         *)
         member this.Instance = instance
         abstract member Start: TIAgentStart
+        default this.Start =
+            fun () ->
+                runPinned
+                    targetIAgentStart
+                    startVersion
+                    start
+                    ()
+
         abstract member Stop: TIAgentStop
+        default this.Stop =
+            fun () ->
+                runPinned
+                    targetIAgentStop
+                    stopVersion
+                    stop
+                    ()
+
         abstract member Send: TIAgentSend<'TAgentCommMsg>
+        default this.Send =
+            fun msg ->
+                runPinned
+                    targetIAgentSend
+                    sendVersion
+                    send
+                    msg
+
         // Contract 不規定新建或重用；argString 選擇 participant 的版本化 runtime abilities。
         abstract member AcquireParticipant:
             FeasibleT<ReActParticipant * string, IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>, exn>
-        //請完成其他幾個
-        default this.Start = 
-            fun () ->
-                printfn "Starting agent of type %s" typeof<'TAgentCommMsg>.FullName
-                match startVersion with
-                | Some v -> 
-                    match versionedIAgentStart[getVersion v] with
-                    | Some f -> 
-                        infoT (ctx, targetIAgentStart, v, f ())                        
-                    | None -> 
-                        let err = Error (exn (sprintf "Start function for version %A not found" v))
-                        errorT (ctx, targetIAgentStart, v, err)
-                | None -> 
-                    let err = Error (exn "No start version specified")
-                    errorT (ctx, targetIAgentStart, "-1", err)
 
 
 
@@ -773,12 +831,6 @@ module CoreMod =
                 let wrapper =
                     {
                         new IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>(node, iarefAgent, argString, ctx) with
-                            member this.Stop = fun () ->
-                                printfn "Stopping agent of type %s" typeof<'TAgentCommMsg>.FullName
-                                Error (exn "Haven't implemented")
-                            member this.Send = fun (msg: 'TAgentCommMsg) ->
-                                printfn "Sending message to wrapper agent of type %s: %A" typeof<'TAgentCommMsg>.FullName msg
-                                Error (exn "Haven't implemented")
                             member this.AcquireParticipant = fun _participantRequest ->
                                 Error (exn "Haven't implemented")
                     }

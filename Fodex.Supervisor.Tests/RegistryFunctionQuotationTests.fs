@@ -14,6 +14,18 @@ open Fodex.Supervisor.Contracts.CoreMod
 open Fodex.Supervisor.Contracts.LiteralsMod
 open Fodex.Supervisor.Contracts.TypesMod
 
+type RecordingActorRef() =
+    inherit ActorRefBase()
+
+    let messages = ResizeArray<obj>()
+
+    override _.Path = ActorRefs.Nobody.Path
+
+    override _.TellInternal(message: obj, _sender: IActorRef) =
+        messages.Add message
+
+    member _.Messages = messages.ToArray()
+
 module RegistryFunctionQuotationTests =
     let evaluate (quotation: Expr<'T>) : 'T =
         QuotationEvaluator.Evaluate quotation
@@ -61,6 +73,13 @@ module RegistryFunctionQuotationTests =
         : 'TOperation =
         let createOperation = evaluate quotation
         createOperation node handler
+
+    let bindAgent
+        (agentHandle: Agent)
+        (quotation: Expr<TIAgentRuntime<Agent, 'TOperation>>)
+        : 'TOperation =
+        let createOperation = evaluate quotation
+        createOperation node agentHandle
 
     let seedParticipant
         (state: RegistryFunctionState<string, string>)
@@ -161,34 +180,49 @@ module RegistryFunctionQuotationTests =
                     Expect.equal json "\"hello\"" "prompt was serialized as JSON"
 
                 testCase targetIAgentStart <| fun _ ->
+                    let recorder = RecordingActorRef()
                     let start =
                         RegistryFunctionQuotationsV100.iAgentStart
-                        |> evaluate
+                        |> bindAgent (Wrapper recorder)
 
                     Expect.equal
                         (start () |> expectOk targetIAgentStart)
                         1
-                        "start returns the invocation count"
+                        "start reports one accepted message"
+                    Expect.sequenceEqual
+                        recorder.Messages
+                        [| box AgentLifecycleMessage.Start |]
+                        "start was sent to the bound wrapper actor"
 
                 testCase targetIAgentStop <| fun _ ->
+                    let recorder = RecordingActorRef()
                     let stop =
                         RegistryFunctionQuotationsV100.iAgentStop
-                        |> evaluate
+                        |> bindAgent (Native recorder)
 
                     Expect.equal
                         (stop () |> expectOk targetIAgentStop)
                         1
-                        "stop returns the invocation count"
+                        "stop reports one accepted message"
+                    Expect.sequenceEqual
+                        recorder.Messages
+                        [| box AgentLifecycleMessage.Stop |]
+                        "stop was sent to the bound native actor"
 
                 testCase targetIAgentSend <| fun _ ->
+                    let recorder = RecordingActorRef()
                     let send =
                         RegistryFunctionQuotationsV100.iAgentSend<string>
-                        |> evaluate
+                        |> bindAgent (Wrapper recorder)
 
                     Expect.equal
                         (send "message" |> expectOk targetIAgentSend)
                         1
-                        "send returns the invocation count"
+                        "send reports one accepted message"
+                    Expect.sequenceEqual
+                        recorder.Messages
+                        [| box "message" |]
+                        "the original typed message was sent to the bound actor"
 
                 testCase targetReActLoopUpsertParticipant <| fun _ ->
                     let state = freshState ()
