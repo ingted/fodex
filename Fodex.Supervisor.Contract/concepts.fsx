@@ -20,6 +20,10 @@ module LiteralsMod =
     [<Literal>]
     let targetIAgentSend = "IAgentSend"
     [<Literal>]
+    let targetIAgentGetSessionId = "IAgentGetSessionId"
+    [<Literal>]
+    let targetIAgentExportReActDataStreamJsonl = "IAgentExportReActDataStreamJsonl"
+    [<Literal>]
     let targetIAgentAcquireParticipant = "IAgentAcquireParticipant"
     [<Literal>]
     let targetWrapperAgent = "WrapperAgent"
@@ -43,6 +47,8 @@ module LiteralsMod =
     let targetReActLoopCollect = "ReActLoopCollect"
     [<Literal>]
     let targetReActLoopGetStatus = "ReActLoopGetStatus"
+    [<Literal>]
+    let targetReActLoopGetParticipantCapabilities = "ReActLoopGetParticipantCapabilities"
 
 
 
@@ -62,12 +68,6 @@ module VersionMod =
     let inline getVersion (x: ^T) : Version =
         ((^T or VersionConverter) : (static member ToVersion : ^T -> Version) x)
 
-    if false then
-        // 測試呼叫：
-        let v1 = getVersion "1.0.1"        // 自動轉成 Version
-        ()
-
-
 module CommandMod =
     open Argu
     open Akka.Actor
@@ -80,16 +80,14 @@ module CommandMod =
         //假設要使用 proc supervisor windows service 調用遠端節點的 fodex 則需要相關設定
         //目前已經有請 asteer (一個 agent) 調整我們環境中的 cluster 部署服務，後續皆假定 wrapper 能夠被正常遠端起動
     type CommonCommand =
-    // Argu 只接受 primitive/enum 作為 union case 欄位；FodexNodeRole
-    // 必須在 ParseResults 之後由 implementation post-process。
-    | NodeRole of string
+    | NodeRole of FodexNodeRole
+    | CliStart of CommandVersion
+    | PromptConvert of CommandVersion
     | Start of CommandVersion
     | Stop of CommandVersion
-    | Status of CommandVersion
-    | Restart of CommandVersion
-    | Reset of CommandVersion
-    | Heartbeat of CommandVersion
     | Send of CommandVersion * string
+    | GetSessionId of CommandVersion
+    | ExportReActDataStreamJsonl of CommandVersion
     | AcquireParticipant of CommandVersion
     | WrapperAgent of CommandVersion
     | ReActLoopHandler of CommandVersion
@@ -102,6 +100,7 @@ module CommandMod =
     | ReActLoopRouteReActDataStream of CommandVersion
     | ReActLoopCollect of CommandVersion
     | ReActLoopGetStatus of CommandVersion
+    | ReActLoopGetParticipantCapabilities of CommandVersion
     | Clear
         // Clear 是 runtime-independent 語意；exec adapter 可停止目前 process，app-server adapter 可 interrupt／切換 thread。
         interface IArgParserTemplate with
@@ -144,51 +143,18 @@ module LoggingMod =
     let debug<'T> = debugT<'T> >> ignore
     let error<'T> = errorT<'T> >> ignore
 
-module AkkaMod =
-    open Akka
-    open Akka.Actor
-    open CommandMod
-    let createFodexNode ctx (argString:string) : FodexNode = //本 process的 akka 節點
-        let args = FodexCommanddHelper.ParseStr ctx argString
-        failwithf "haven't implemented"
-
-    let getFodexNodeRole (node:FodexNode) : FodexNodeRole =
-        failwithf "haven't implemented"
-
-
 module Concepts =
     open System
     
     open System.Collections.Concurrent
-    open System.Reflection
     open FSharp.Quotations
     open FAkka.FSharp.Quotations.Evaluator
     open Akka.Actor
     open LoggingMod
-    open AkkaMod
     open LiteralsMod
     open VersionMod
     open AliasMod
     open CommandMod
-
-    let f2 (o:obj) (args:obj[]) = args |> Seq.map string |> String.concat ", " |> box
-    let f1 (args:obj[])         = args |> Seq.map string |> String.concat ", " |> box
-    
-    type MyInvoke2<^T, ^S, ^I, ^O when ^T: (member Invoke: ^S -> ^I[] -> ^O)> (t:^T) =
-        member inline this.T = t
-        member inline this.Invoke = t.Invoke
-        member inline this.InvokeFun = fun sender args -> t.Invoke(sender, args)
-
-    type MyInvoke<^T, ^I, ^O when ^T: (member Invoke: ^I[] -> ^O)> (t:^T) =
-        member inline this.T = t
-        member inline this.Invoke = t.Invoke
-        member inline this.InvokeFun = fun sender args -> t.Invoke(args)
-
-    let inline getInvoke<^T, ^I, ^O when ^T: (member Invoke: ^I[] -> ^O)> (t:^T) =
-        MyInvoke(t).InvokeFun
-
-    let inline getInvoke2<^T, ^S, ^I, ^O when ^T: (member Invoke: ^S -> ^I[] -> ^O)> (t:^T) =
-        MyInvoke2(t).InvokeFun
 
     type FeasibleT<'T, 'TSuccess, 'TError> = 'T -> Result<'TSuccess, 'TError>
     type Feasible<'TSuccess, 'TError> = FeasibleT<unit, 'TSuccess, 'TError>
@@ -295,13 +261,32 @@ module Concepts =
     type SimpleFun<'Input, 'Output> (q:Expr<'Input -> 'Output>) = 
         member this.q = q
         member val f:Lazy<'Input -> 'Output> = lazy (QuotationEvaluator.Evaluate q)
+        member this.Invoke(input: 'Input) : 'Output =
+            this.f.Value input
 
     type FeasibleFun<'Input, 'OutputSuccess, 'TError> = 
         SimpleFun<'Input, FeasibleT<'Input, 'OutputSuccess, 'TError>>
 
     type FodexFun<'Input, 'OutputSuccess, 'TError> = Versioned<FeasibleFun<'Input, 'OutputSuccess, 'TError>>
 
-    type WrapperAgentMessageConvert<'T> = FodexFun<'T, string, exn>
+    module FeasibleFun =
+        let invoke
+            (input: 'Input)
+            (feasibleFun: FeasibleFun<'Input, 'OutputSuccess, 'TError>)
+            : Result<'OutputSuccess, 'TError> =
+            let inputToResult = feasibleFun.Invoke input
+            inputToResult input
+
+    module FodexFun =
+        let pin
+            (versionText: string option)
+            (fodexFun: FodexFun<'Input, 'OutputSuccess, 'TError>)
+            : FeasibleFun<'Input, 'OutputSuccess, 'TError> option =
+            match versionText with
+            | Some version -> fodexFun[getVersion version]
+            | None -> fodexFun.Instance
+
+    type WrapperAgentMessageConvert<'T> = FodexFun<'T, JsonStr, exn>
         
     type MsgConvert<'T> = WrapperAgentMessageConvert<'T>
 
@@ -311,26 +296,21 @@ module TypesMod =
     open CommandMod
     
     //type of Cli starts
-    type TCliStart        = string [] -> unit
+    type TCliStart        = FeasibleT<string [], unit, exn>
     //type of IAgent starts
     type TIAgentStart     = Feasible<int, exn>
     //type of IAgent stop
     type TIAgentStop      = Feasible<int, exn>
     //type of IAgent sends
     type TIAgentSend<'T>  = FeasibleT<'T, int, exn>
+    //type of IAgent session id reads
+    type TIAgentGetSessionId<'TSessionId> = Feasible<'TSessionId, exn>
+    //type of IAgent persisted stream exports; implementation 必須逐行輸出，不建立巨型 in-memory string。
+    type TIAgentExportReActDataStreamJsonl<'TSessionId, 'TFilePath> =
+        FeasibleT<'TSessionId * 'TFilePath, int64, exn>
     //type of IAgent participant acquisition
     type TIAgentAcquireParticipant<'TParticipant, 'TAgent> =
         FeasibleT<'TParticipant * string, 'TAgent, exn>
-
-    // Versioned IAgent implementation 可在同一 node 內共用；建立 IAgent 時
-    // 才綁定該 instance 的 logical Agent handle。
-    type TIAgentRuntime<'TAgent, 'TOperation> =
-        FodexNode -> 'TAgent -> 'TOperation
-
-    // Versioned ReActLoop implementation 可在同一 node 內共用；建立 ReActLoop 時
-    // 才綁定該 instance 的 physical handler。
-    type TReActLoopRuntime<'TOperation> =
-        FodexNode -> IActorRef -> 'TOperation
 
     type TReActLoopUpsertParticipant<'TParticipant, 'TAgent> =
         FeasibleT<'TParticipant * 'TAgent, unit, exn>
@@ -347,17 +327,23 @@ module TypesMod =
     type TReActLoopPostHumanPrompt<'TParticipant, 'TPrompt> =
         FeasibleT<'TParticipant * 'TPrompt, int, exn>
 
-    type TReActLoopDispatchToParticipant<'TParticipant, 'TMessage> =
-        FeasibleT<'TParticipant * 'TMessage, int, exn>
+    type TReActLoopDispatchToParticipant<'TParticipant, 'TInputMode, 'TMessage> =
+        FeasibleT<'TParticipant * 'TInputMode * 'TMessage, int, exn>
+
+    // Ok 僅能在 durable persistence 完成後回傳；它不是 mailbox enqueue acknowledgement。
+    type PersistedReActDataCount = int
 
     type TReActLoopRouteReActDataStream<'TStream> =
-        FeasibleT<'TStream, int, exn>
+        FeasibleT<'TStream, PersistedReActDataCount, exn>
 
     type TReActLoopCollect<'TSessionId, 'TStream> =
         FeasibleT<'TSessionId, 'TStream [], exn>
 
     type TReActLoopGetStatus<'TSessionId, 'TStatus> =
         FeasibleT<'TSessionId, 'TStatus, exn>
+
+    type TReActLoopGetParticipantCapabilities<'TParticipant, 'TCapability> =
+        FeasibleT<'TParticipant, 'TCapability [], exn>
 
     
 module CoreMod =
@@ -378,15 +364,14 @@ module CoreMod =
     let resolveVersionedRuntime<'TRuntime>
         (node: FodexNode)
         (target: TargetName)
-        (versionSelector:
-            Argu.ParseResults<CommonCommand> -> CommandVersion option)
+        (versionCase: CommandVersion -> CommonCommand)
         (argString: string)
         (ctx: UniContext)
         : Result<'TRuntime, exn> =
         let mutable versionLabel = "max-at-creation"
         try
             let cmd = FodexCommanddHelper.ParseStr ctx argString
-            let versionText = versionSelector cmd
+            let versionText = cmd.TryGetResult versionCase
             versionLabel <- defaultArg versionText versionLabel
 
             let versioned = Versioned<'TRuntime>(node, target)
@@ -413,35 +398,38 @@ module CoreMod =
             Error ex
             |> fun err -> errorT (ctx, target, versionLabel, err)
 
-    (*
-    描述一下 cli 的底層行為，基本上處理 
-    1. user input
-    2. wrapper output
-    3. cli 與 wrapper 基本 1-1
-    *)
-    
-    [<AbstractClass>]
-    type Cli (node: FodexNode) =
-        //entrypoint 會吃 cli arguments 起動 cli process
-        abstract member CliStart: TCliStart
-        default this.CliStart = 
-            fun (args: string []) ->
-                printfn "Starting CLI with arguments: %A" args
-                // 這裡可以加入更多的邏輯來處理 CLI 啟動
-                let v100 = getVersion "1.0.0"
-                let versionedCliStart = new Versioned<TCliStart> (node, targetCliStart)
-                let f = 
-                    match versionedCliStart[v100] with
-                    | Some v -> v
-                    | None -> 
-                        printfn "Version 1.0.0 not found, default is applied"
-                        let r = versionedCliStart.Registry
-                        let cliStartFun =
-                            fun args -> printfn "Default CLI Start for version 1.0.0 with args: %A" args 
-                        r[v100] <- { Version = v100; Value = cliStartFun}
-                        cliStartFun
+    // Cli 只描述 terminal 與 wrapper 的 1:1 contract；hosting 與 rendering 由 implementation 負責。
+    type CliFunInput = FodexNode * string []
+    type CliFodexFun = FodexFun<CliFunInput, unit, exn>
 
-                f args
+    [<AbstractClass>]
+    type Cli (node: FodexNode, argString: string, ctx: UniContext) =
+        let cmd = FodexCommanddHelper.ParseStr ctx argString
+        let cliStartVersion = cmd.TryGetResult CommonCommand.CliStart
+        let versionedCliStart = CliFodexFun(node, targetCliStart)
+        let pinnedCliStart = FodexFun.pin cliStartVersion versionedCliStart
+
+        let runPinned (args: string []) =
+            let versionLabel = defaultArg cliStartVersion "max-at-creation"
+            match pinnedCliStart with
+            | Some feasibleFun ->
+                match FeasibleFun.invoke (node, args) feasibleFun with
+                | Ok _ as ok -> infoT (ctx, targetCliStart, versionLabel, ok)
+                | Error _ as err -> errorT (ctx, targetCliStart, versionLabel, err)
+            | None ->
+                Error (
+                    exn (
+                        sprintf
+                            "%s function for version %s was not pinned at Cli creation"
+                            targetCliStart
+                            versionLabel
+                    )
+                )
+                |> fun err -> errorT (ctx, targetCliStart, versionLabel, err)
+
+        // entrypoint 會吃 cli arguments 起動 cli process。
+        abstract member CliStart: TCliStart
+        default this.CliStart = runPinned
 
     //描述一下 wrapper 與 natives 互動
     (* 一次 ReActLoop 代表至少一個起始 user prompt 與至少一個 natives 的回應 (codex 開啟 --json 則為 jsonl，不開啟則是 string)
@@ -467,11 +455,36 @@ module CoreMod =
     type ReActParticipantSessionId = Guid * IPAddress option 
     type ReActParticipant = ReActParticipantId * ReActParticipantSessionId //actor 位置可能會變，但是 main wrapper
 
+    type CodexSessionId = string
+
+    // Wrapper 暴露 Fodex 自己的 session id；Native 暴露可由 Codex 恢復的 id。
+    // exec adapter 取 CODEX_SESSION_ID；app-server adapter 取 thread.id，不能以
+    // 同一 session tree 共用的 thread.sessionId 取代 thread.id。
+    type AgentSessionId =
+    | WrapperSessionId of ReActParticipantSessionId
+    | NativeCodexSessionId of CodexSessionId
+
+    type JsonlFilePath = string
+    type ExportedReActDataCount = int64
+    // Offline handoff 匯出直接逐行複製 store 中已持久化的 JSON event；不得為了匯出先把
+    // 整個 session deserialize／materialize，也不得要求 FSI 知道 'TypedCmdToWrapper。
+    type ReActDataStreamJsonlExport =
+        TIAgentExportReActDataStreamJsonl<ReActParticipantSessionId, JsonlFilePath>
+
     // StartTurn 可由 exec --json 或 app-server turn/start 實作。
     // SteerTurn 表示對 active turn 插入輸入；app-server 可映射 turn/steer，不能支援的 adapter 必須明確回傳 Error 或採已宣告的延後政策。
     type ReActTurnInputMode =
     | StartTurn
     | SteerTurn
+
+    // ReActLoop 只依 capability 決定可呼叫的操作，不把 exec／app-server 寫死在 topology。
+    // CanInterruptTurn 表示中斷 active turn 後 logical session 仍可使用；單純 kill OS process 不足以宣告此能力。
+    // CanResumeSession 表示新 runtime instance 可重新綁定既有 NativeCodexSessionId。
+    type ReActParticipantCapability =
+    | CanStartTurn
+    | CanSteerTurn
+    | CanInterruptTurn
+    | CanResumeSession
 
     type ReActData<'TypedCmdToWrapper> =
     | HumanPromptToWrapper of 'TypedCmdToWrapper
@@ -504,6 +517,13 @@ module CoreMod =
             -> ReActLoop UpsertParticipant
             -> WrapperToNatives(StartTurn, ...)
             -> NativeToNative(SteerTurn, ..., mainParticipant)
+
+        COT participant 必須使用不同於 main participant 的 logical participant 與 Codex session。
+        它可以讀取 main session 已保存的 ReActDataStream 作為 input，但不能 attach、resume 或直接在
+        main participant 的 Codex session 上生成；產出只能經 durable RouteReActDataStream 後再 steer 給 main。
+
+        COT／其他輔助 participant 無法 resume 時可移除，不要求自動重建；main participant 無法 resume
+        時必須保留可讀取的 NativeCodexSessionId，並允許把 wrapper session 的 persisted stream 匯出為 handoff JSONL。
     *)
 
 
@@ -530,137 +550,139 @@ module CoreMod =
                 && this.ActiveParticipantTurnCount = 0
                 && not this.IsWrapperGenerating
 
+    // Versioned IAgent quotation 會同時取得所在 node、logical Agent 與 operation input。
+    type IAgentFunInput<'Input> = FodexNode * Agent * 'Input
+    type IAgentFodexFun<'Input, 'Success> =
+        FodexFun<IAgentFunInput<'Input>, 'Success, exn>
 
     [<AbstractClass>]
     type IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
         (node: FodexNode, instance: Agent, argString: string, ctx: UniContext) =
-        let cmd =  FodexCommanddHelper.ParseStr ctx argString
+        let cmd = FodexCommanddHelper.ParseStr ctx argString
         let startVersion = cmd.TryGetResult CommonCommand.Start
         let stopVersion = cmd.TryGetResult CommonCommand.Stop
         let sendVersion =
             cmd.TryGetResult CommonCommand.Send
             |> Option.map fst
-        let acquireParticipantVersion =
-            cmd.TryGetResult CommonCommand.AcquireParticipant
+        let getSessionIdVersion =
+            cmd.TryGetResult CommonCommand.GetSessionId
+        let exportReActDataStreamJsonlVersion =
+            cmd.TryGetResult CommonCommand.ExportReActDataStreamJsonl
 
-        let versionedIAgentStart =
-            Versioned<TIAgentRuntime<Agent, TIAgentStart>>
-                (node, targetIAgentStart)
-        let versionedIAgentStop =
-            Versioned<TIAgentRuntime<Agent, TIAgentStop>>
-                (node, targetIAgentStop)
-        let versionedIAgentSend =
-            Versioned<TIAgentRuntime<Agent, TIAgentSend<'TAgentCommMsg>>>
-                (node, targetIAgentSend)
-        let versionedIAgentAcquireParticipant =
-            Versioned<
-                TIAgentRuntime<
-                    Agent,
-                    TIAgentAcquireParticipant<ReActParticipant, Agent>
-                >
-            >(node, targetIAgentAcquireParticipant)
+        let versionedIAgentStart: IAgentFodexFun<unit, int> =
+            IAgentFodexFun<unit, int>(node, targetIAgentStart)
+        let versionedIAgentStop: IAgentFodexFun<unit, int> =
+            IAgentFodexFun<unit, int>(node, targetIAgentStop)
+        let versionedIAgentSend: IAgentFodexFun<'TAgentCommMsg, int> =
+            IAgentFodexFun<'TAgentCommMsg, int>(node, targetIAgentSend)
+        let versionedIAgentGetSessionId: IAgentFodexFun<unit, AgentSessionId> =
+            IAgentFodexFun<unit, AgentSessionId>(node, targetIAgentGetSessionId)
+        let versionedIAgentExportReActDataStreamJsonl:
+            IAgentFodexFun<ReActParticipantSessionId * JsonlFilePath, ExportedReActDataCount> =
+            IAgentFodexFun<
+                ReActParticipantSessionId * JsonlFilePath,
+                ExportedReActDataCount
+            >(node, targetIAgentExportReActDataStreamJsonl)
 
-        // argString 指定版，或當下已註冊的最大版，只在 IAgent 建立時 resolve 一次。
-        // 後續 hot-load 只更新 registry，不替換既有 IAgent 已 pin 的 operation。
-        let pinAtStartup
-            (versionText: string option)
-            (versioned: Versioned<TIAgentRuntime<Agent, 'TOperation>>)
-            : 'TOperation option =
-            let runtime =
-                match versionText with
-                | Some version -> versioned[getVersion version]
-                | None -> versioned.Instance
-            runtime
-            |> Option.map (fun createOperation -> createOperation node instance)
+        let pinnedIAgentStart = FodexFun.pin startVersion versionedIAgentStart
+        let pinnedIAgentStop = FodexFun.pin stopVersion versionedIAgentStop
+        let pinnedIAgentSend = FodexFun.pin sendVersion versionedIAgentSend
+        let pinnedIAgentGetSessionId =
+            FodexFun.pin getSessionIdVersion versionedIAgentGetSessionId
+        let pinnedIAgentExportReActDataStreamJsonl =
+            FodexFun.pin
+                exportReActDataStreamJsonlVersion
+                versionedIAgentExportReActDataStreamJsonl
 
-        let start = pinAtStartup startVersion versionedIAgentStart
-        let stop = pinAtStartup stopVersion versionedIAgentStop
-        let send = pinAtStartup sendVersion versionedIAgentSend
-        let acquireParticipant =
-            pinAtStartup
-                acquireParticipantVersion
-                versionedIAgentAcquireParticipant
-
-        let runPinned target versionText operation input =
-            let versionLabel = defaultArg versionText "max-at-startup"
-            match operation with
-            | Some f ->
-                match f input with
+        let runPinned target versionText pinned input =
+            let versionLabel = defaultArg versionText "max-at-creation"
+            match pinned with
+            | Some feasibleFun ->
+                match FeasibleFun.invoke input feasibleFun with
                 | Ok _ as ok -> infoT (ctx, target, versionLabel, ok)
                 | Error _ as err -> errorT (ctx, target, versionLabel, err)
             | None ->
-                let err =
-                    Error (
-                        exn (
-                            sprintf
-                                "%s function for version %s was not pinned at IAgent startup"
-                                target
-                                versionLabel
-                        )
+                Error (
+                    exn (
+                        sprintf
+                            "%s function for version %s was not pinned at IAgent creation"
+                            target
+                            versionLabel
                     )
-                errorT (ctx, target, versionLabel, err)
+                )
+                |> fun err -> errorT (ctx, target, versionLabel, err)
+
         (*
             1. 所有對 agent 的操作，皆由該 agent tell 自己的 instance (IActorRef) 來進行，所以 agent 的能力封裝都在 actor 中
             2. 無論是以第一人稱視角進行(也就是 agent 自身)或者是以第三人稱視角進行(也就是 agent 自身之外的使用者)，都必須透過 IAgent<'T> 來操作 agent instance (基本上就是 tell message)
         *)
         member this.Instance = instance
         abstract member Start: TIAgentStart
-        default this.Start =
-            fun () ->
-                runPinned
-                    targetIAgentStart
-                    startVersion
-                    start
-                    ()
-
         abstract member Stop: TIAgentStop
-        default this.Stop =
-            fun () ->
-                runPinned
-                    targetIAgentStop
-                    stopVersion
-                    stop
-                    ()
-
         abstract member Send: TIAgentSend<'TAgentCommMsg>
-        default this.Send =
-            fun msg ->
-                runPinned
-                    targetIAgentSend
-                    sendVersion
-                    send
-                    msg
-
+        abstract member GetSessionId: TIAgentGetSessionId<AgentSessionId>
+        // 這是 unhealthy wrapper 的 recovery surface，不表示 IAgent 擁有 DB。
+        // Implementation DLL 另須公開同型別 ReActDataStreamJsonlExport entry point，讓 FSI 只以
+        // wrapper session id 與 output path 即可匯出，不依賴仍存活的 actor 或 Codex process。
+        abstract member ExportReActDataStreamJsonl: ReActDataStreamJsonlExport
         // Contract 不規定新建或重用；argString 選擇 participant 的版本化 runtime abilities。
         abstract member AcquireParticipant:
             TIAgentAcquireParticipant<
                 ReActParticipant,
                 IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
             >
-        default this.AcquireParticipant =
-            fun ((_, participantArgString) as participantRequest) ->
-                match
-                    runPinned
-                        targetIAgentAcquireParticipant
-                        acquireParticipantVersion
-                        acquireParticipant
-                        participantRequest
-                with
-                | Error err -> Error err
-                | Ok participantAgent ->
-                    RegistryIAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
-                        (node, participantAgent, participantArgString, ctx)
-                    :> IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
-                    |> Ok
 
-    // 只具現化 IAgent 的 registry-backed defaults；actor/resource 行為仍由
-    // implementation project 註冊的 operation 決定。
-    and RegistryIAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
-        (node: FodexNode, instance: Agent, argString: string, ctx: UniContext) =
-        inherit IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
-            (node, instance, argString, ctx)
+        default this.Start =
+            fun () ->
+                runPinned
+                    targetIAgentStart
+                    startVersion
+                    pinnedIAgentStart
+                    (node, instance, ())
+
+        default this.Stop =
+            fun () ->
+                runPinned
+                    targetIAgentStop
+                    stopVersion
+                    pinnedIAgentStop
+                    (node, instance, ())
+
+        default this.Send =
+            fun message ->
+                runPinned
+                    targetIAgentSend
+                    sendVersion
+                    pinnedIAgentSend
+                    (node, instance, message)
+
+        default this.GetSessionId =
+            fun () ->
+                runPinned
+                    targetIAgentGetSessionId
+                    getSessionIdVersion
+                    pinnedIAgentGetSessionId
+                    (node, instance, ())
+
+        default this.ExportReActDataStreamJsonl =
+            fun request ->
+                runPinned
+                    targetIAgentExportReActDataStreamJsonl
+                    exportReActDataStreamJsonlVersion
+                    pinnedIAgentExportReActDataStreamJsonl
+                    (node, instance, request)
 
 
+
+    type ReActLoopFunInput<'Input> = FodexNode * IActorRef * 'Input
+    type ReActLoopFodexFun<'Input, 'Success> =
+        FodexFun<ReActLoopFunInput<'Input>, 'Success, exn>
+
+    let reActLoopFodexFun<'Input, 'Success>
+        (node: FodexNode)
+        (target: TargetName)
+        : ReActLoopFodexFun<'Input, 'Success> =
+        ReActLoopFodexFun<'Input, 'Success>(node, target)
 
     type ReActLoop<'TypedCmdToWrapper, 'TAgentCommMsg>
         (node: FodexNode, reActLoopHandler: IActorRef, argString: string, ctx: UniContext) =
@@ -685,47 +707,65 @@ module CoreMod =
             cmd.TryGetResult CommonCommand.ReActLoopCollect
         let getStatusVersion =
             cmd.TryGetResult CommonCommand.ReActLoopGetStatus
+        let getParticipantCapabilitiesVersion =
+            cmd.TryGetResult CommonCommand.ReActLoopGetParticipantCapabilities
 
         let versionedUpsertParticipant =
-            Versioned<TReActLoopRuntime<TReActLoopUpsertParticipant<ReActParticipant, IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>>>>
-                (node, targetReActLoopUpsertParticipant)
+            reActLoopFodexFun<
+                ReActParticipant * IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>,
+                unit
+            > node targetReActLoopUpsertParticipant
         let versionedRemoveParticipant =
-            Versioned<TReActLoopRuntime<TReActLoopRemoveParticipant<ReActParticipant>>>
-                (node, targetReActLoopRemoveParticipant)
+            reActLoopFodexFun<ReActParticipant, unit>
+                node
+                targetReActLoopRemoveParticipant
         let versionedResolveParticipant =
-            Versioned<TReActLoopRuntime<TReActLoopResolveParticipant<ReActParticipant, IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>>>>
-                (node, targetReActLoopResolveParticipant)
+            reActLoopFodexFun<
+                ReActParticipant,
+                IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
+            > node targetReActLoopResolveParticipant
         let versionedListParticipants =
-            Versioned<TReActLoopRuntime<TReActLoopListParticipants<ReActParticipantSessionId, ReActParticipant>>>
-                (node, targetReActLoopListParticipants)
+            reActLoopFodexFun<ReActParticipantSessionId, ReActParticipant []>
+                node
+                targetReActLoopListParticipants
         let versionedPostHumanPrompt =
-            Versioned<TReActLoopRuntime<TReActLoopPostHumanPrompt<ReActParticipant, 'TypedCmdToWrapper>>>
-                (node, targetReActLoopPostHumanPrompt)
+            reActLoopFodexFun<ReActParticipant * 'TypedCmdToWrapper, int>
+                node
+                targetReActLoopPostHumanPrompt
         let versionedDispatchToParticipant =
-            Versioned<TReActLoopRuntime<TReActLoopDispatchToParticipant<ReActParticipant, 'TAgentCommMsg>>>
-                (node, targetReActLoopDispatchToParticipant)
+            reActLoopFodexFun<
+                ReActParticipant * ReActTurnInputMode * 'TAgentCommMsg,
+                int
+            >
+                node
+                targetReActLoopDispatchToParticipant
         let versionedRouteReActDataStream =
-            Versioned<TReActLoopRuntime<TReActLoopRouteReActDataStream<ReActDataStream<'TypedCmdToWrapper>>>>
-                (node, targetReActLoopRouteReActDataStream)
+            reActLoopFodexFun<
+                ReActDataStream<'TypedCmdToWrapper>,
+                PersistedReActDataCount
+            > node targetReActLoopRouteReActDataStream
         let versionedCollect =
-            Versioned<TReActLoopRuntime<TReActLoopCollect<ReActParticipantSessionId, ReActDataStream<'TypedCmdToWrapper>>>>
-                (node, targetReActLoopCollect)
+            reActLoopFodexFun<
+                ReActParticipantSessionId,
+                ReActDataStream<'TypedCmdToWrapper> []
+            > node targetReActLoopCollect
         let versionedGetStatus =
-            Versioned<TReActLoopRuntime<TReActLoopGetStatus<ReActParticipantSessionId, ReActLoopStatus>>>
-                (node, targetReActLoopGetStatus)
+            reActLoopFodexFun<ReActParticipantSessionId, ReActLoopStatus>
+                node
+                targetReActLoopGetStatus
+        let versionedGetParticipantCapabilities =
+            reActLoopFodexFun<
+                ReActParticipant,
+                ReActParticipantCapability []
+            > node targetReActLoopGetParticipantCapabilities
 
         // argString 指定版，或當下已註冊的最大版，只在這裡 resolve 一次。
         // 後續 hot-load 只更新 registry，不會替換既有 loop 已 pin 的 operation。
         let pinAtStartup
             (versionText: string option)
-            (versioned: Versioned<TReActLoopRuntime<'TOperation>>)
-            : 'TOperation option =
-            let runtime =
-                match versionText with
-                | Some version -> versioned[getVersion version]
-                | None -> versioned.Instance
-            runtime
-            |> Option.map (fun createOperation -> createOperation node reActLoopHandler)
+            (versioned: ReActLoopFodexFun<'Input, 'Success>)
+            : FeasibleFun<ReActLoopFunInput<'Input>, 'Success, exn> option =
+            FodexFun.pin versionText versioned
 
         let upsertParticipant = pinAtStartup upsertParticipantVersion versionedUpsertParticipant
         let removeParticipant = pinAtStartup removeParticipantVersion versionedRemoveParticipant
@@ -736,12 +776,17 @@ module CoreMod =
         let routeReActDataStream = pinAtStartup routeReActDataStreamVersion versionedRouteReActDataStream
         let collect = pinAtStartup collectVersion versionedCollect
         let getStatus = pinAtStartup getStatusVersion versionedGetStatus
+        let getParticipantCapabilities =
+            pinAtStartup
+                getParticipantCapabilitiesVersion
+                versionedGetParticipantCapabilities
 
-        let runPinned target versionText operation input =
+        let runPinned target versionText operation operationInput =
             let versionLabel = defaultArg versionText "max-at-startup"
             match operation with
-            | Some f ->
-                match f input with
+            | Some feasibleFun ->
+                let input = node, reActLoopHandler, operationInput
+                match FeasibleFun.invoke input feasibleFun with
                 | Ok _ as ok -> infoT (ctx, target, versionLabel, ok)
                 | Error _ as err -> errorT (ctx, target, versionLabel, err)
             | None ->
@@ -814,7 +859,11 @@ module CoreMod =
                     input
 
         abstract member DispatchToParticipant:
-            TReActLoopDispatchToParticipant<ReActParticipant, 'TAgentCommMsg>
+            TReActLoopDispatchToParticipant<
+                ReActParticipant,
+                ReActTurnInputMode,
+                'TAgentCommMsg
+            >
         default this.DispatchToParticipant =
             fun input ->
                 runPinned
@@ -823,8 +872,8 @@ module CoreMod =
                     dispatchToParticipant
                     input
 
-        // 單一 routing 入口。MainWrapperToHuman 必須先成功保存至 DB，才可成為 user-visible output。
-        // Output sink 可由 actor mailbox、channel 或其他 implementation 提供；Contract 不指定 queue 型別。
+        // 單一 routing 入口。Ok persistedCount 表示 durable persistence 已完成，不能只表示 mailbox enqueue。
+        // MainWrapperToHuman 只有在這個 Ok 之後才可 stream 給 user；Contract 不指定 output sink 型別。
         abstract member RouteReActDataStream:
             TReActLoopRouteReActDataStream<ReActDataStream<'TypedCmdToWrapper>>
         default this.RouteReActDataStream =
@@ -856,29 +905,97 @@ module CoreMod =
                     getStatus
                     sessionId
 
-
-                     
-
+        // Adapter 未宣告的 capability 不可呼叫；implementation 必須回傳 Error，不能靜默降級。
+        abstract member GetParticipantCapabilities:
+            TReActLoopGetParticipantCapabilities<
+                ReActParticipant,
+                ReActParticipantCapability
+            >
+        default this.GetParticipantCapabilities =
+            fun participant ->
+                runPinned
+                    targetReActLoopGetParticipantCapabilities
+                    getParticipantCapabilitiesVersion
+                    getParticipantCapabilities
+                    participant
     //Wrapped agent (簡稱 Native Agent，natives) 與 agents wrapper (簡稱 wrapper) 都是一種 Agent
     [<AbstractClass>]
     type FodexAgent<'TypedCmdToWrapper, 'TAgentCommMsg> () =
         static member createWrapper
             (node: FodexNode, argString: string, ctx: UniContext)
             : Result<IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>, exn> =
+            let rec createIAgent
+                (agentInstance: Agent)
+                (agentArgString: string)
+                : IAgent<'TypedCmdToWrapper, 'TAgentCommMsg> =
+                let cmd = FodexCommanddHelper.ParseStr ctx agentArgString
+                let acquireVersion =
+                    cmd.TryGetResult CommonCommand.AcquireParticipant
+                let versionedAcquire =
+                    IAgentFodexFun<ReActParticipant * string, Agent>
+                        (node, targetIAgentAcquireParticipant)
+                let pinnedAcquire =
+                    FodexFun.pin acquireVersion versionedAcquire
+
+                {
+                    new IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
+                        (node, agentInstance, agentArgString, ctx) with
+                        member this.AcquireParticipant =
+                            fun ((_, participantArgString) as request) ->
+                                let versionLabel =
+                                    defaultArg acquireVersion "max-at-creation"
+                                let result =
+                                    match pinnedAcquire with
+                                    | Some feasibleFun ->
+                                        match
+                                            FeasibleFun.invoke
+                                                (node, agentInstance, request)
+                                                feasibleFun
+                                        with
+                                        | Ok participantAgent ->
+                                            createIAgent
+                                                participantAgent
+                                                participantArgString
+                                            |> Ok
+                                        | Error err -> Error err
+                                    | None ->
+                                        Error (
+                                            exn (
+                                                sprintf
+                                                    "%s function for version %s was not pinned at IAgent creation"
+                                                    targetIAgentAcquireParticipant
+                                                    versionLabel
+                                            )
+                                        )
+
+                                match result with
+                                | Ok _ as ok ->
+                                    infoT (
+                                        ctx,
+                                        targetIAgentAcquireParticipant,
+                                        versionLabel,
+                                        ok
+                                    )
+                                | Error _ as err ->
+                                    errorT (
+                                        ctx,
+                                        targetIAgentAcquireParticipant,
+                                        versionLabel,
+                                        err
+                                    )
+                }
+
             match
                 resolveVersionedRuntime<Agent>
                     node
                     targetWrapperAgent
-                    (fun parsed ->
-                        parsed.TryGetResult CommonCommand.WrapperAgent)
+                    CommonCommand.WrapperAgent
                     argString
                     ctx
             with
             | Error err -> Error err
-            | Ok iarefAgent ->
-                RegistryIAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
-                    (node, iarefAgent, argString, ctx)
-                :> IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
+            | Ok wrapperAgent ->
+                createIAgent wrapperAgent argString
                 |> Ok
 
         static member createReActLoop
@@ -888,8 +1005,7 @@ module CoreMod =
                 resolveVersionedRuntime<IActorRef>
                     node
                     targetReActLoopHandler
-                    (fun parsed ->
-                        parsed.TryGetResult CommonCommand.ReActLoopHandler)
+                    CommonCommand.ReActLoopHandler
                     argString
                     ctx
             with
@@ -898,19 +1014,6 @@ module CoreMod =
                 ReActLoop<'TypedCmdToWrapper, 'TAgentCommMsg>
                     (node, reActLoopHandler, argString, ctx)
                 |> Ok
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
