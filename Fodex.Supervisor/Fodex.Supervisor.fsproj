@@ -40,6 +40,7 @@
     <PackageReference Include="Akka.Remote" Version="1.5.73" />
     <PackageReference Include="Akka.Serialization.Hyperion" Version="1.5.73" />
     <PackageReference Include="FAkka.Argu" Version="10.2.1" />
+    <PackageReference Include="FAkka.FSharp.Quotations.Evaluator" Version="2.2.1" />
     <PackageReference Include="FAkka.FSI.Supervisor" Version="1.572.2" />
     <PackageReference Include="FSharp.Compiler.Service" Version="43.12.402" />
     <PackageReference Include="FAkka.Quartz.Actor" Version="1.572.2" />
@@ -57,6 +58,22 @@
     <PackageReference Include="PulseTrade.Infra.Logging" Version="1.572.0" />
   </ItemGroup>
   <ItemGroup>
+	  <Compile Include="SupervisorArgs.fsx" />
+	  <Compile Include="LoggingRuntime.fsx" />
+	  <Compile Include="FodexNodeRuntime.fsx" />
+	  <Compile Include="ProcessSupervisorRuntime.fsx" />
+	  <Compile Include="CodexWireRuntime.fsx" />
+	  <Compile Include="CodexExecRuntime.fsx" />
+	  <Compile Include="CodexAppServerRuntime.fsx" />
+	  <Compile Include="NativeRuntime.fsx" />
+	  <Compile Include="ReActStoreRuntime.fsx" />
+	  <Compile Include="RegistryFunctionState.fsx" />
+	  <Compile Include="RegistryFunctionQuotationsV100.fsx" />
+	  <Compile Include="ReActLoopRuntime.fsx" />
+	  <Compile Include="WrapperAgentRuntime.fsx" />
+	  <Compile Include="CliRuntime.fsx" />
+	  <Compile Include="RuntimeRegistration.fsx" />
+	  <Compile Include="Application.fsx" />
 	  <Compile Include="main.fsx" />
   </ItemGroup>
   <ItemGroup>
