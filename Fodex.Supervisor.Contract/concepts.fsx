@@ -20,6 +20,8 @@ module LiteralsMod =
     [<Literal>]
     let targetIAgentSend = "IAgentSend"
     [<Literal>]
+    let targetIAgentAcquireParticipant = "IAgentAcquireParticipant"
+    [<Literal>]
     let targetWrapperAgent = "WrapperAgent"
     [<Literal>]
     let targetReActLoopHandler = "ReActLoopHandler"
@@ -78,7 +80,9 @@ module CommandMod =
         //假設要使用 proc supervisor windows service 調用遠端節點的 fodex 則需要相關設定
         //目前已經有請 asteer (一個 agent) 調整我們環境中的 cluster 部署服務，後續皆假定 wrapper 能夠被正常遠端起動
     type CommonCommand =
-    | NodeRole of FodexNodeRole
+    // Argu 只接受 primitive/enum 作為 union case 欄位；FodexNodeRole
+    // 必須在 ParseResults 之後由 implementation post-process。
+    | NodeRole of string
     | Start of CommandVersion
     | Stop of CommandVersion
     | Status of CommandVersion
@@ -86,6 +90,7 @@ module CommandMod =
     | Reset of CommandVersion
     | Heartbeat of CommandVersion
     | Send of CommandVersion * string
+    | AcquireParticipant of CommandVersion
     | WrapperAgent of CommandVersion
     | ReActLoopHandler of CommandVersion
     | ReActLoopUpsertParticipant of CommandVersion
@@ -313,6 +318,9 @@ module TypesMod =
     type TIAgentStop      = Feasible<int, exn>
     //type of IAgent sends
     type TIAgentSend<'T>  = FeasibleT<'T, int, exn>
+    //type of IAgent participant acquisition
+    type TIAgentAcquireParticipant<'TParticipant, 'TAgent> =
+        FeasibleT<'TParticipant * string, 'TAgent, exn>
 
     // Versioned IAgent implementation 可在同一 node 內共用；建立 IAgent 時
     // 才綁定該 instance 的 logical Agent handle。
@@ -370,14 +378,15 @@ module CoreMod =
     let resolveVersionedRuntime<'TRuntime>
         (node: FodexNode)
         (target: TargetName)
-        (versionCase: CommandVersion -> CommonCommand)
+        (versionSelector:
+            Argu.ParseResults<CommonCommand> -> CommandVersion option)
         (argString: string)
         (ctx: UniContext)
         : Result<'TRuntime, exn> =
         let mutable versionLabel = "max-at-creation"
         try
             let cmd = FodexCommanddHelper.ParseStr ctx argString
-            let versionText = cmd.TryGetResult versionCase
+            let versionText = versionSelector cmd
             versionLabel <- defaultArg versionText versionLabel
 
             let versioned = Versioned<'TRuntime>(node, target)
@@ -531,6 +540,8 @@ module CoreMod =
         let sendVersion =
             cmd.TryGetResult CommonCommand.Send
             |> Option.map fst
+        let acquireParticipantVersion =
+            cmd.TryGetResult CommonCommand.AcquireParticipant
 
         let versionedIAgentStart =
             Versioned<TIAgentRuntime<Agent, TIAgentStart>>
@@ -541,6 +552,13 @@ module CoreMod =
         let versionedIAgentSend =
             Versioned<TIAgentRuntime<Agent, TIAgentSend<'TAgentCommMsg>>>
                 (node, targetIAgentSend)
+        let versionedIAgentAcquireParticipant =
+            Versioned<
+                TIAgentRuntime<
+                    Agent,
+                    TIAgentAcquireParticipant<ReActParticipant, Agent>
+                >
+            >(node, targetIAgentAcquireParticipant)
 
         // argString 指定版，或當下已註冊的最大版，只在 IAgent 建立時 resolve 一次。
         // 後續 hot-load 只更新 registry，不替換既有 IAgent 已 pin 的 operation。
@@ -558,6 +576,10 @@ module CoreMod =
         let start = pinAtStartup startVersion versionedIAgentStart
         let stop = pinAtStartup stopVersion versionedIAgentStop
         let send = pinAtStartup sendVersion versionedIAgentSend
+        let acquireParticipant =
+            pinAtStartup
+                acquireParticipantVersion
+                versionedIAgentAcquireParticipant
 
         let runPinned target versionText operation input =
             let versionLabel = defaultArg versionText "max-at-startup"
@@ -611,7 +633,32 @@ module CoreMod =
 
         // Contract 不規定新建或重用；argString 選擇 participant 的版本化 runtime abilities。
         abstract member AcquireParticipant:
-            FeasibleT<ReActParticipant * string, IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>, exn>
+            TIAgentAcquireParticipant<
+                ReActParticipant,
+                IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
+            >
+        default this.AcquireParticipant =
+            fun ((_, participantArgString) as participantRequest) ->
+                match
+                    runPinned
+                        targetIAgentAcquireParticipant
+                        acquireParticipantVersion
+                        acquireParticipant
+                        participantRequest
+                with
+                | Error err -> Error err
+                | Ok participantAgent ->
+                    RegistryIAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
+                        (node, participantAgent, participantArgString, ctx)
+                    :> IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
+                    |> Ok
+
+    // 只具現化 IAgent 的 registry-backed defaults；actor/resource 行為仍由
+    // implementation project 註冊的 operation 決定。
+    and RegistryIAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
+        (node: FodexNode, instance: Agent, argString: string, ctx: UniContext) =
+        inherit IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
+            (node, instance, argString, ctx)
 
 
 
@@ -822,19 +869,17 @@ module CoreMod =
                 resolveVersionedRuntime<Agent>
                     node
                     targetWrapperAgent
-                    CommonCommand.WrapperAgent
+                    (fun parsed ->
+                        parsed.TryGetResult CommonCommand.WrapperAgent)
                     argString
                     ctx
             with
             | Error err -> Error err
             | Ok iarefAgent ->
-                let wrapper =
-                    {
-                        new IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>(node, iarefAgent, argString, ctx) with
-                            member this.AcquireParticipant = fun _participantRequest ->
-                                Error (exn "Haven't implemented")
-                    }
-                Ok wrapper
+                RegistryIAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
+                    (node, iarefAgent, argString, ctx)
+                :> IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
+                |> Ok
 
         static member createReActLoop
             (node: FodexNode, argString: string, ctx: UniContext)
@@ -843,7 +888,8 @@ module CoreMod =
                 resolveVersionedRuntime<IActorRef>
                     node
                     targetReActLoopHandler
-                    CommonCommand.ReActLoopHandler
+                    (fun parsed ->
+                        parsed.TryGetResult CommonCommand.ReActLoopHandler)
                     argString
                     ctx
             with

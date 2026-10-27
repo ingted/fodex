@@ -53,6 +53,10 @@ module RuntimeRegistration =
             |> QuotationEvaluator.Evaluate
             |> registerValue node targetIAgentSend version
 
+            RegistryFunctionQuotationsV100.iAgentAcquireParticipant
+            |> QuotationEvaluator.Evaluate
+            |> registerValue node targetIAgentAcquireParticipant version
+
             RegistryFunctionQuotationsV100.reActLoopUpsertParticipant<
                 'TypedCmdToWrapper,
                 'TAgentCommMsg
@@ -120,9 +124,25 @@ module RuntimeRegistration =
         with ex ->
             Error ex
 
-    // 這一階段只註冊 function quotation；Agent 與 IActorRef runtime object
-    // 仍由後續 createAgent/createHandler composition 負責。
+    let registerRuntimeObjectsV100
+        (node: FodexNode)
+        (ctx: UniContext)
+        : Result<unit, exn> =
+        match WrapperAgentRuntime.createAgent (node, ctx) with
+        | Error err -> Error err
+        | Ok wrapperAgent ->
+            registerValue
+                node
+                targetWrapperAgent
+                RegistryFunctionQuotationsV100.version
+                wrapperAgent
+            Ok ()
+
     let register<'TypedCmdToWrapper, 'TAgentCommMsg>:
         FeasibleT<FodexNode * SupervisorOptions * UniContext, unit, exn> =
-        fun (node, _options, _ctx) ->
-            registerFunctionsV100<'TypedCmdToWrapper, 'TAgentCommMsg> node
+        fun (node, _options, ctx) ->
+            match
+                registerFunctionsV100<'TypedCmdToWrapper, 'TAgentCommMsg> node
+            with
+            | Error err -> Error err
+            | Ok () -> registerRuntimeObjectsV100 node ctx

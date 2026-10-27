@@ -5,4 +5,8 @@ open Expecto
 module Program =
     [<EntryPoint>]
     let main _ =
-        runTestsWithCLIArgs [] [||] RegistryFunctionQuotationTests.tests
+        testList "Fodex.Supervisor" [
+            RegistryFunctionQuotationTests.tests
+            AgentRuntimeTests.tests
+        ]
+        |> runTestsWithCLIArgs [] [||]

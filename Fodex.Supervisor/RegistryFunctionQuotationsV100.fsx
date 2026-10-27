@@ -22,6 +22,7 @@ module RegistryFunctionQuotationsV100 =
             targetIAgentStart
             targetIAgentStop
             targetIAgentSend
+            targetIAgentAcquireParticipant
             targetReActLoopUpsertParticipant
             targetReActLoopRemoveParticipant
             targetReActLoopResolveParticipant
@@ -68,6 +69,18 @@ module RegistryFunctionQuotationsV100 =
         <@
             fun (_node: FodexNode) agent ->
                 WrapperAgentRuntime.send<'TAgentCommMsg> agent
+        @>
+
+    let iAgentAcquireParticipant:
+        Expr<
+            TIAgentRuntime<
+                Agent,
+                TIAgentAcquireParticipant<ReActParticipant, Agent>
+            >
+        > =
+        <@
+            fun node agent ->
+                WrapperAgentRuntime.acquireParticipant node agent
         @>
 
     let reActLoopUpsertParticipant<'TypedCmdToWrapper, 'TAgentCommMsg>:

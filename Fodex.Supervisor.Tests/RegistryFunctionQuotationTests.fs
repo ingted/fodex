@@ -112,6 +112,7 @@ module RegistryFunctionQuotationTests =
                             targetIAgentStart
                             targetIAgentStop
                             targetIAgentSend
+                            targetIAgentAcquireParticipant
                             targetReActLoopUpsertParticipant
                             targetReActLoopRemoveParticipant
                             targetReActLoopResolveParticipant
@@ -141,6 +142,7 @@ module RegistryFunctionQuotationTests =
                             RegistryFunctionQuotationsV100.iAgentStart :> Expr
                             RegistryFunctionQuotationsV100.iAgentStop :> Expr
                             RegistryFunctionQuotationsV100.iAgentSend<string> :> Expr
+                            RegistryFunctionQuotationsV100.iAgentAcquireParticipant :> Expr
                             RegistryFunctionQuotationsV100.reActLoopUpsertParticipant<string, string> :> Expr
                             RegistryFunctionQuotationsV100.reActLoopRemoveParticipant<string, string> :> Expr
                             RegistryFunctionQuotationsV100.reActLoopResolveParticipant<string, string> :> Expr
