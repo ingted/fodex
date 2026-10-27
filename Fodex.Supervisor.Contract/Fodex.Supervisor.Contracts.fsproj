@@ -18,7 +18,7 @@
     <TestingPlatformDotnetTestSupport>false</TestingPlatformDotnetTestSupport>
     <IsTestProject>false</IsTestProject>
     <IsTestingPlatformApplication>false</IsTestingPlatformApplication>
-    <Version>1.571.101.400-win41</Version>
+    <Version>0.0.1</Version>
     <PackageReadmeFile>README.md</PackageReadmeFile>
 	<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PublishProcSupervisorPackage Condition="'$(PublishProcSupervisorPackage)' == ''">false</PublishProcSupervisorPackage>
@@ -36,6 +36,7 @@
 	 
 	  <Compile Include="concepts.fsx" />
   </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <PackageReference Include="Akka" Version="1.5.73" />
     <PackageReference Include="Akka.Cluster" Version="1.5.73" />

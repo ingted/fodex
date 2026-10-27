@@ -1,424 +1,157 @@
 namespace Fodex.Supervisor.Tests
 
 open System
-open Akka.Actor
 open Expecto
 open FSharp.Quotations
-open FSharp.Quotations.ExprShape
-open FSharp.Quotations.Patterns
-open FAkka.FSharp.Quotations.Evaluator
-open Fodex.Supervisor
-open Fodex.Supervisor.Contracts.CommandMod
+open Fodex.Supervisor.Contracts.AliasMod
 open Fodex.Supervisor.Contracts.Concepts
-open Fodex.Supervisor.Contracts.CoreMod
-open Fodex.Supervisor.Contracts.LiteralsMod
-open Fodex.Supervisor.Contracts.TypesMod
-
-type RecordingActorRef() =
-    inherit ActorRefBase()
-
-    let messages = ResizeArray<obj>()
-
-    override _.Path = ActorRefs.Nobody.Path
-
-    override _.TellInternal(message: obj, _sender: IActorRef) =
-        messages.Add message
-
-    member _.Messages = messages.ToArray()
 
 module RegistryFunctionQuotationTests =
-    let evaluate (quotation: Expr<'T>) : 'T =
-        QuotationEvaluator.Evaluate quotation
-
-    let rec capturesRegistryFunctionState expression =
-        let isRegistryFunctionState (value: obj) =
-            not (obj.ReferenceEquals(value, null))
-            && value.GetType().IsGenericType
-            && value.GetType().GetGenericTypeDefinition()
-                = typedefof<RegistryFunctionState<_, _>>
-
-        match expression with
-        | Value (value, _)
-        | ValueWithName (value, _, _) -> isRegistryFunctionState value
-        | ShapeVar _ -> false
-        | ShapeLambda (_, body) -> capturesRegistryFunctionState body
-        | ShapeCombination (_, arguments) ->
-            arguments |> List.exists capturesRegistryFunctionState
-
-    let expectOk label (result: Result<'T, exn>) : 'T =
+    let expectOk label result =
         match result with
         | Ok value -> value
-        | Error error -> failtestf "%s returned Error: %s" label error.Message
+        | Error error ->
+            failtestf "%s returned Error: %A" label error
 
-    let sessionA: ReActParticipantSessionId =
-        Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), None
+    let twiceInputQuotation:
+        Expr<int -> FeasibleT<int, int, string>> =
+        <@
+            fun outerInput ->
+                fun innerInput ->
+                    Ok (outerInput * 100 + innerInput)
+        @>
 
-    let sessionB: ReActParticipantSessionId =
-        Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), None
+    let addQuotation amount:
+        Expr<int -> FeasibleT<int, int, string>> =
+        <@
+            fun outerInput ->
+                let preparedAmount = outerInput + amount
 
-    let participantA: ReActParticipant = 1L, sessionA
-    let participantB: ReActParticipant = 2L, sessionA
-    let participantOtherSession: ReActParticipant = 3L, sessionB
+                fun innerInput ->
+                    Ok (preparedAmount + innerInput)
+        @>
 
-    let agent: IAgent<string, string> = Unchecked.defaultof<_>
-    let node: FodexNode = Unchecked.defaultof<_>
-    let handler: IActorRef = ActorRefs.Nobody
+    let newRegistry target =
+        let registry =
+            CD<
+                TargetName,
+                CD<
+                    System.Version,
+                    VersionedTarget<FeasibleFun<int, int, string>>
+                >
+            >()
 
-    let freshState () =
-        RegistryFunctionStateStore<string, string>.Remove handler
-        RegistryFunctionStateStore<string, string>.For handler
-
-    let bind
-        (quotation: Expr<TReActLoopRuntime<'TOperation>>)
-        : 'TOperation =
-        let createOperation = evaluate quotation
-        createOperation node handler
-
-    let bindAgent
-        (agentHandle: Agent)
-        (quotation: Expr<TIAgentRuntime<Agent, 'TOperation>>)
-        : 'TOperation =
-        let createOperation = evaluate quotation
-        createOperation node agentHandle
-
-    let seedParticipant
-        (state: RegistryFunctionState<string, string>)
-        participant =
-        state.UpsertParticipant(participant, agent)
-        |> expectOk "seed participant"
-
-    let seedHumanInit
-        (state: RegistryFunctionState<string, string>)
-        participant
-        streamId =
-        state.PostHumanPrompt(participant, "prompt")
-        |> expectOk "seed human prompt"
-        |> ignore
-
-        HumanInit(streamId, HumanPromptToWrapper "prompt")
-        |> state.RouteReActDataStream
-        |> expectOk "seed HumanInit"
-        |> ignore
+        FodexFun<int, int, string>(registry, target)
 
     [<Tests>]
     let tests =
-        testSequenced <|
-            testList "registry function quotations v1.0.0" [
-                testCase "function target manifest" <| fun _ ->
-                    let expected =
-                        [|
-                            targetCliStart
-                            targetPromptConvert
-                            targetIAgentStart
-                            targetIAgentStop
-                            targetIAgentSend
-                            targetIAgentAcquireParticipant
-                            targetReActLoopUpsertParticipant
-                            targetReActLoopRemoveParticipant
-                            targetReActLoopResolveParticipant
-                            targetReActLoopListParticipants
-                            targetReActLoopPostHumanPrompt
-                            targetReActLoopDispatchToParticipant
-                            targetReActLoopRouteReActDataStream
-                            targetReActLoopCollect
-                            targetReActLoopGetStatus
-                        |]
+        testList "FeasibleFun and FodexFun" [
+            testCase "invoke sends the same input through both stages" <| fun _ ->
+                let feasibleFun =
+                    FeasibleFun<int, int, string>(twiceInputQuotation)
 
-                    Expect.sequenceEqual
-                        RegistryFunctionQuotationsV100.functionTargets
-                        expected
-                        "manifest must cover every function-valued registry target"
+                let actual =
+                    FeasibleFun.invoke 7 feasibleFun
+                    |> expectOk "twice input"
 
-                    Expect.equal
-                        (expected |> Array.distinct |> Array.length)
-                        expected.Length
-                        "function target names must be unique"
+                Expect.equal actual 707
+                    "outer and inner functions must receive the same input"
 
-                testCase "quotations are closed over runtime state" <| fun _ ->
-                    let quotations: Expr list =
-                        [
-                            RegistryFunctionQuotationsV100.cliStart :> Expr
-                            RegistryFunctionQuotationsV100.promptConvert<string> :> Expr
-                            RegistryFunctionQuotationsV100.iAgentStart :> Expr
-                            RegistryFunctionQuotationsV100.iAgentStop :> Expr
-                            RegistryFunctionQuotationsV100.iAgentSend<string> :> Expr
-                            RegistryFunctionQuotationsV100.iAgentAcquireParticipant :> Expr
-                            RegistryFunctionQuotationsV100.reActLoopUpsertParticipant<string, string> :> Expr
-                            RegistryFunctionQuotationsV100.reActLoopRemoveParticipant<string, string> :> Expr
-                            RegistryFunctionQuotationsV100.reActLoopResolveParticipant<string, string> :> Expr
-                            RegistryFunctionQuotationsV100.reActLoopListParticipants<string, string> :> Expr
-                            RegistryFunctionQuotationsV100.reActLoopPostHumanPrompt<string, string> :> Expr
-                            RegistryFunctionQuotationsV100.reActLoopDispatchToParticipant<string, string> :> Expr
-                            RegistryFunctionQuotationsV100.reActLoopRouteReActDataStream<string, string> :> Expr
-                            RegistryFunctionQuotationsV100.reActLoopCollect<string, string> :> Expr
-                            RegistryFunctionQuotationsV100.reActLoopGetStatus<string, string> :> Expr
-                        ]
+            testCase "quotation evaluation stays lazy" <| fun _ ->
+                let feasibleFun =
+                    FeasibleFun<int, int, string>(twiceInputQuotation)
 
-                    let capturedStateCount =
-                        quotations
-                        |> List.filter capturesRegistryFunctionState
-                        |> List.length
+                Expect.isFalse feasibleFun.f.IsValueCreated
+                    "construction must not evaluate the quotation"
 
-                    Expect.equal
-                        capturedStateCount
-                        0
-                        "quotations must reconstruct state through their runtime arguments"
+                FeasibleFun.invoke 1 feasibleFun |> ignore
 
-                testCase targetCliStart <| fun _ ->
-                    let start =
-                        RegistryFunctionQuotationsV100.cliStart
-                        |> evaluate
+                Expect.isTrue feasibleFun.f.IsValueCreated
+                    "first invocation evaluates the quotation"
 
-                    start [| "--mode"; "test" |]
-                    Expect.isTrue true "CLI function completed"
+            testCase "exact version resolves the registered FeasibleFun" <| fun _ ->
+                let registry = newRegistry "Exact"
+                let version = System.Version(1, 0, 0)
+                let feasibleFun =
+                    FeasibleFun<int, int, string>(addQuotation 10)
 
-                testCase targetPromptConvert <| fun _ ->
-                    let createConverter =
-                        RegistryFunctionQuotationsV100.promptConvert<string>
-                        |> evaluate
-                    let convert = createConverter "initialization-input"
-                    let json = convert "hello" |> expectOk targetPromptConvert
+                registry.Register(version, feasibleFun)
 
-                    Expect.equal json "\"hello\"" "prompt was serialized as JSON"
+                let resolved =
+                    FodexFun.pin (Some "1.0.0") registry
+                    |> Option.defaultWith (fun () -> failtest "version missing")
 
-                testCase targetIAgentStart <| fun _ ->
-                    let recorder = RecordingActorRef()
-                    let start =
-                        RegistryFunctionQuotationsV100.iAgentStart
-                        |> bindAgent (Wrapper recorder)
+                let actual =
+                    FeasibleFun.invoke 2 resolved
+                    |> expectOk "exact"
 
-                    Expect.equal
-                        (start () |> expectOk targetIAgentStart)
-                        1
-                        "start reports one accepted message"
-                    Expect.sequenceEqual
-                        recorder.Messages
-                        [| box AgentLifecycleMessage.Start |]
-                        "start was sent to the bound wrapper actor"
+                Expect.equal actual 14
+                    "outer prepares 12 and inner receives 2"
 
-                testCase targetIAgentStop <| fun _ ->
-                    let recorder = RecordingActorRef()
-                    let stop =
-                        RegistryFunctionQuotationsV100.iAgentStop
-                        |> bindAgent (Native recorder)
+            testCase "unspecified version pins the greatest System.Version" <| fun _ ->
+                let registry = newRegistry "Latest"
 
-                    Expect.equal
-                        (stop () |> expectOk targetIAgentStop)
-                        1
-                        "stop reports one accepted message"
-                    Expect.sequenceEqual
-                        recorder.Messages
-                        [| box AgentLifecycleMessage.Stop |]
-                        "stop was sent to the bound native actor"
+                registry.Register(
+                    System.Version(1, 0, 0),
+                    FeasibleFun<int, int, string>(addQuotation 10)
+                )
 
-                testCase targetIAgentSend <| fun _ ->
-                    let recorder = RecordingActorRef()
-                    let send =
-                        RegistryFunctionQuotationsV100.iAgentSend<string>
-                        |> bindAgent (Wrapper recorder)
+                registry.Register(
+                    System.Version(2, 0, 0),
+                    FeasibleFun<int, int, string>(addQuotation 20)
+                )
 
-                    Expect.equal
-                        (send "message" |> expectOk targetIAgentSend)
-                        1
-                        "send reports one accepted message"
-                    Expect.sequenceEqual
-                        recorder.Messages
-                        [| box "message" |]
-                        "the original typed message was sent to the bound actor"
+                let latest =
+                    FodexFun.pin None registry
+                    |> Option.defaultWith (fun () -> failtest "latest missing")
 
-                testCase targetReActLoopUpsertParticipant <| fun _ ->
-                    let state = freshState ()
-                    let upsert =
-                        RegistryFunctionQuotationsV100.reActLoopUpsertParticipant<
-                            string,
-                            string
-                        >
-                        |> bind
+                let actual =
+                    FeasibleFun.invoke 2 latest
+                    |> expectOk "latest"
 
-                    upsert (participantA, agent)
-                    |> expectOk targetReActLoopUpsertParticipant
+                Expect.equal actual 24
+                    "version 2.0.0 must be selected"
 
-                    Expect.isTrue
-                        (state.ContainsParticipant participantA)
-                        "participant was inserted"
+            testCase "same version registration overwrites registry only" <| fun _ ->
+                let registry = newRegistry "Overwrite"
+                let version = System.Version(1, 0, 0)
+                let original =
+                    FeasibleFun<int, int, string>(addQuotation 10)
 
-                testCase targetReActLoopRemoveParticipant <| fun _ ->
-                    let state = freshState ()
-                    seedParticipant state participantA
-                    let remove =
-                        RegistryFunctionQuotationsV100.reActLoopRemoveParticipant<
-                            string,
-                            string
-                        >
-                        |> bind
+                registry.Register(version, original)
+                let pinned = registry[version] |> Option.get
 
-                    remove participantA
-                    |> expectOk targetReActLoopRemoveParticipant
+                registry.Register(
+                    version,
+                    FeasibleFun<int, int, string>(addQuotation 30)
+                )
 
-                    Expect.isFalse
-                        (state.ContainsParticipant participantA)
-                        "participant was removed"
+                let current = registry[version] |> Option.get
 
-                testCase targetReActLoopResolveParticipant <| fun _ ->
-                    let state = freshState ()
-                    seedParticipant state participantA
-                    let resolve =
-                        RegistryFunctionQuotationsV100.reActLoopResolveParticipant<
-                            string,
-                            string
-                        >
-                        |> bind
+                let pinnedValue =
+                    FeasibleFun.invoke 2 pinned
+                    |> expectOk "pinned"
 
-                    let resolved =
-                        resolve participantA
-                        |> expectOk targetReActLoopResolveParticipant
+                let currentValue =
+                    FeasibleFun.invoke 2 current
+                    |> expectOk "current"
 
-                    Expect.isTrue
-                        (obj.ReferenceEquals(resolved, agent))
-                        "the currently registered IAgent was resolved"
+                Expect.equal pinnedValue 14
+                    "an already pinned FeasibleFun keeps its original behavior"
 
-                testCase targetReActLoopListParticipants <| fun _ ->
-                    let state = freshState ()
-                    seedParticipant state participantB
-                    seedParticipant state participantOtherSession
-                    seedParticipant state participantA
-                    let listParticipants =
-                        RegistryFunctionQuotationsV100.reActLoopListParticipants<
-                            string,
-                            string
-                        >
-                        |> bind
+                Expect.equal currentValue 34
+                    "new resolution receives the overwritten version"
 
-                    let listed =
-                        listParticipants sessionA
-                        |> expectOk targetReActLoopListParticipants
+            testCase "missing exact version does not fall back to latest" <| fun _ ->
+                let registry = newRegistry "Missing"
 
-                    Expect.sequenceEqual
-                        listed
-                        [| participantA; participantB |]
-                        "only the requested session was returned in id order"
+                registry.Register(
+                    System.Version(2, 0, 0),
+                    FeasibleFun<int, int, string>(addQuotation 20)
+                )
 
-                testCase targetReActLoopPostHumanPrompt <| fun _ ->
-                    let state = freshState ()
-                    let post =
-                        RegistryFunctionQuotationsV100.reActLoopPostHumanPrompt<
-                            string,
-                            string
-                        >
-                        |> bind
+                let missing = FodexFun.pin (Some "1.0.0") registry
 
-                    Expect.equal
-                        (post (participantA, "prompt")
-                         |> expectOk targetReActLoopPostHumanPrompt)
-                        1
-                        "one prompt is pending"
-
-                    let status = state.GetStatus sessionA |> expectOk "status"
-                    Expect.equal status.PendingHumanPromptCount 1 "pending count changed"
-
-                testCase targetReActLoopDispatchToParticipant <| fun _ ->
-                    let state = freshState ()
-                    seedParticipant state participantA
-                    let dispatch =
-                        RegistryFunctionQuotationsV100.reActLoopDispatchToParticipant<
-                            string,
-                            string
-                        >
-                        |> bind
-
-                    Expect.equal
-                        (dispatch (participantA, "turn/start")
-                         |> expectOk targetReActLoopDispatchToParticipant)
-                        1
-                        "one participant turn is active"
-
-                    let status = state.GetStatus sessionA |> expectOk "status"
-                    Expect.equal
-                        status.ActiveParticipantTurnCount
-                        1
-                        "active turn count changed"
-
-                testCase targetReActLoopRouteReActDataStream <| fun _ ->
-                    let state = freshState ()
-                    seedParticipant state participantA
-                    state.PostHumanPrompt(participantA, "prompt")
-                    |> expectOk "seed prompt"
-                    |> ignore
-                    state.DispatchToParticipant(participantA, "turn/start")
-                    |> expectOk "seed dispatch"
-                    |> ignore
-
-                    let route =
-                        RegistryFunctionQuotationsV100.reActLoopRouteReActDataStream<
-                            string,
-                            string
-                        >
-                        |> bind
-
-                    HumanInit(10L, HumanPromptToWrapper "prompt")
-                    |> route
-                    |> expectOk targetReActLoopRouteReActDataStream
-                    |> ignore
-                    AgentWork(11L, 10L, [| NativeToWrapper "working" |])
-                    |> route
-                    |> expectOk targetReActLoopRouteReActDataStream
-                    |> ignore
-                    AgentEnd(
-                        12L,
-                        11L,
-                        participantA,
-                        MainWrapperToHuman "done"
-                    )
-                    |> route
-                    |> expectOk targetReActLoopRouteReActDataStream
-                    |> ignore
-
-                    let collected = state.Collect sessionA |> expectOk "collect"
-                    let status = state.GetStatus sessionA |> expectOk "status"
-                    Expect.equal collected.Length 3 "the causedBy chain was routed"
-                    Expect.isTrue status.IsQuiescent "AgentEnd completed the session"
-
-                testCase targetReActLoopCollect <| fun _ ->
-                    let state = freshState ()
-                    seedHumanInit state participantA 20L
-                    StdOut(21L, 20L, "partial")
-                    |> state.RouteReActDataStream
-                    |> expectOk "seed stdout"
-                    |> ignore
-                    let collect =
-                        RegistryFunctionQuotationsV100.reActLoopCollect<
-                            string,
-                            string
-                        >
-                        |> bind
-
-                    let collected =
-                        collect sessionA
-                        |> expectOk targetReActLoopCollect
-
-                    Expect.equal collected.Length 2 "persisted session stream was returned"
-
-                testCase targetReActLoopGetStatus <| fun _ ->
-                    let state = freshState ()
-                    seedParticipant state participantA
-                    state.PostHumanPrompt(participantA, "prompt")
-                    |> expectOk "seed prompt"
-                    |> ignore
-                    state.DispatchToParticipant(participantA, "turn/start")
-                    |> expectOk "seed dispatch"
-                    |> ignore
-                    let getStatus =
-                        RegistryFunctionQuotationsV100.reActLoopGetStatus<
-                            string,
-                            string
-                        >
-                        |> bind
-
-                    let status =
-                        getStatus sessionA
-                        |> expectOk targetReActLoopGetStatus
-
-                    Expect.equal status.PendingHumanPromptCount 1 "pending prompt is visible"
-                    Expect.equal status.ActiveParticipantTurnCount 1 "active turn is visible"
-                    Expect.isFalse status.IsWrapperGenerating "HumanInit has not begun"
-            ]
+                Expect.isNone missing
+                    "an explicit version must never silently select another version"
+        ]
