@@ -41,6 +41,21 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 › 根據你目前的認知補全 F:\fodex\Fodex.Supervisor.Contract\concepts.fsx
   1. 記得，這是 contract 專案，不是實作專案，更像實際 spec 的規範 (規範的規範???)
   2. 請仔細看我的註解，我是人類，後續維護無法用矽基生物的速度進行開發，所以我需要犧牲部分效能以及增加高度抽象性減輕未來維護成本
@@ -972,3 +987,1066 @@
   整個 solution 仍有一個無關的既有錯誤：main.fsx (Fodex.Supervisor/main.fsx:23) 沒有開啟 CoreMod，因此找不到 Cli。這次沒有順手修改它。
 
   Worked for 5m 9s • 11:20 AM
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 請根據討論補齊ReActLoop的 abstract member
+
+• 已補齊 ReActLoop (Fodex.Supervisor.Contract/concepts.fsx:468) 的 abstract members：
+
+  • CreateParticipant
+  • RebindParticipant
+  • RemoveParticipant
+  • LookupParticipant
+  • ListParticipants
+  • PostHumanPrompt
+  • DispatchToParticipant
+  • EnqueueDataFlow
+  • CollectDataFlow
+  • GetStatus
+
+  同時補上 cursor-based DB/read-model 契約：
+
+  • ReActDataFlowWrite
+  • ReActDataFlowItem
+  • ReActCollectRequest
+  • ReActCollectResult
+  • ReActLoopStatus
+
+  IAgent.Collect 也同步改為接收 cursor request、回傳 immutable batch，不再暴露 ConcurrentQueue。
+
+  其他規範：
+
+  • CreateParticipant 同時建立初始 logical→physical binding。
+  • Actor 重新定位使用 RebindParticipant。
+  • DB 可持續寫入，CollectDataFlow 同時分批讀取。
+  • IsQuiescent 代表沒有 pending prompt、沒有 active participant turn、wrapper 也未生成；不表示 session 已關閉。
+  • AgentCot 已註明是實際輸出的非 tool、非 final 中間內容。
+  • 無 private、internal、[待刪除] 或殘留 ConcurrentQueue。
+
+  Contract build 成功，0 errors；僅保留既有 ParseLine.fsx:155 warning。尚未 commit。
+
+  Worked for 3m 42s • 2:08 AM
+
+
+
+
+
+
+
+
+
+> 1. 為什麼 ReActLoop 裡面的 PARTICIPANT 你選擇 Agent 表示 而不是 IAgent? 我原先確實是 Agent 但是想想 Agent 有可能失去 runtime 的功能升級 (IAgent 是從 registry 出功能)
+  2. "中央保存，要有一個 actor 不斷 dequeue 存到 db" 概念消失了 -> WrappedReActDataFlow 的意思是它是 real-time graph 的狀態，一直存在那邊不是被收回來的 snapshot，result 應該是從 graph 收回來的 state，被 sink 
+  3. 承 2. 你覺得我原先的設計比較合理還是新設計? 優劣? 為什麼?
+
+
+• 1. Participant 應該用 IAgent
+
+  我先前把 participant map 當成純 routing table：
+
+  logical participant → physical IActorRef
+
+  所以選了 Agent。但依你的架構，IAgent 不只是方便操作的 wrapper，而是：
+
+  IAgent
+    = physical Agent
+    + 從 VersionRegistry resolve/pin 的 runtime 能力
+    + Start/Stop/Send/Collect 契約
+
+  因此只保存 Agent 確實會產生旁路：ReActLoop 可能直接對 IActorRef 操作，繞過 runtime 版本能力。
+
+  應改成：
+
+  abstract member CreateParticipant:
+      FeasibleT<
+          ReActParticipant,
+          IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>,
+          exn>
+
+  abstract member RebindParticipant:
+      FeasibleT<
+          ReActParticipant *
+          IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>,
+          unit,
+          exn>
+
+  abstract member LookupParticipant:
+      FeasibleT<
+          ReActParticipant,
+          IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>,
+          exn>
+
+  Agent 不消失，而是留在：
+
+  iAgent.Instance
+
+  Actor 重新定位時，建立新的 IAgent incarnation 並原子替換 binding。這樣也自然符合版本 pinning：新 incarnation 重新 resolve，舊 incarnation 繼續使用舊能力。
+
+  2. 我確實誤刪了 live graph 概念
+
+  你的原意應該是：
+
+                           ┌─ fold/apply ─→ live WrappedReActDataFlow
+  input → ReActLoop actor ─┤
+                           └─ persistence event → sink queue → DB
+
+  Collect ────────────────→ 從 live graph materialize result
+
+  重點是：
+
+  • WrappedReActDataFlow 是持續存在的即時 graph state。
+  • Collect 是非破壞性地從 graph materialize／投影結果。
+  • DB 是 persistence sink，負責歷史、恢復與稽核。
+  • 正常即時 Collect 不必繞 DB。
+  • 被 sink actor dequeue 的應該是「待持久化事件」，不是 live graph 本身。
+
+  我上一版把 DB/read model 變成 Collect 的主要來源，等於把即時 graph 降級成普通 event table，確實偏離你的設計。
+
+  3. 原設計與新設計比較
+
+   面向                    原設計                       我上一版
+  ━━━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   即時推理迴圈            很合適，直接讀 live graph    必須等 DB/read model
+  ──────────────────────  ───────────────────────────  ───────────────────────────────
+   DB sink 延遲            不阻塞 ReActLoop             可能造成 eventual consistency
+  ──────────────────────  ───────────────────────────  ───────────────────────────────
+   持續接收 user prompt    自然                         需要不斷重新查 DB
+  ──────────────────────  ───────────────────────────  ───────────────────────────────
+   恢復與歷史查詢          尚未分清楚                   cursor/page 很清楚
+  ──────────────────────  ───────────────────────────  ───────────────────────────────
+   狀態所有權              概念正確                     DB 所有權清楚
+  ──────────────────────  ───────────────────────────  ───────────────────────────────
+   具體資料型別            有一個矛盾                   較安全但失去 graph
+
+  結論是：
+
+  • 你的原始架構方向比較合理。
+  • 但原本這個具體型別有矛盾：
+
+  ConcurrentQueue<...>
+
+  不能同時是「永久存在的 graph state」又被 sink actor 持續 dequeue；dequeue 後狀態就消失了。
+
+  最佳方案不是二選一，而是拆成兩個責任：
+
+  WrappedReActDataFlow
+      actor-owned、持續存在的 live graph state
+
+  ReActDataFlowSinkQueue
+      可被 dequeue 的 persistence events/deltas
+
+  下一版我建議改成：
+
+  - logical participant → Agent
+  + logical participant → IAgent
+
+  - CollectDataFlow 從 DB cursor page 讀取
+  + CollectState 從 live graph 非破壞性 materialize
+
+  - WrappedReActDataFlow 本身被 dequeue 到 DB
+  + live graph 永久存在
+  + persistence sink queue 另外被 dequeue 到 DB
+
+  DB cursor/page 型別仍有價值，但應屬於「歷史查詢／恢復 API」，不是 ReActLoop 即時 Collect 的核心路徑。
+
+  目前這批變更尚未 commit。我建議下一小段就按上述 hybrid 模型修回去；live graph 採 actor-owned state，只有 persistence queue 使用 ConcurrentQueue。
+
+  Worked for 1m 15s • 3:57 AM
+
+
+
+
+
+
+
+› 但是我們不是要做 TencentDB (https://github.com/TencentCloud/TencentDB-Agent-Memory) 那種 memory 功能， WrappedReActDataFlow 只是 main wrapper IO 的 OUTPUT
+  持續將整個 FODEX 一次 ReAct 回合的過程先放進 db 再持續 stream out 給 user，你覺得呢? 它沒有必要切你說的兩塊，畢竟沒有其他 consumer
+
+  不過我有想過未來如果要擴充 wrapper level 的 COT 那可能就真得有必要，那是不是寧可做成 eventsourcing? 讓 有需要的 actor / participant / IAgent 自己去 replay?
+
+
+• 我同意你把範圍再縮小後，問題已經不同：WrappedReActDataFlow 比較像單一 main wrapper 的「本回合輸出 journal／stream buffer」，不是可被多方查詢與推理的 memory
+  graph。我先核對你引用的 TencentDB-Agent-Memory 定位，再回答是否值得直接採 event sourcing；只看該專案的一手資料。
+
+• Browsing the web
+
+• Opened https://github.com/TencentCloud/TencentDB-Agent-Memory
+
+• Context compacted · 22s
+
+• Browsing the web
+
+• Searched the web for site:github.com/TencentCloud/TencentDB-Agent-Memory README memory architecture
+
+• 對，照你這次把 boundary 說清楚後，我前面提出的「live graph + persistence queue」確實拆過頭了，我撤回那個建議。
+
+  TencentDB-Agent-Memory 的目標是把對話、知識與技能加工成可檢索、可跨 Agent 重用的 L0–L3 memory assets；你的 WrappedReActDataFlow 只是單次 ReAct 回合的
+  durable output stream，兩者不是同一層問題。官方 README
+
+  我理解你要的是：
+
+  Main Wrapper 產生 output event
+              ↓
+          DB append + commit
+              ↓
+  以相同 EventId / Seq stream 給 user
+
+  斷線重連 ──────→ 從 DB 的 cursor 繼續讀
+
+  這裡只有一條邏輯 data flow。DB writer 與 user streamer 即使實作上是兩個階段，也不應在 Contract 裡被描述成兩套狀態。
+
+  ## 是否直接做 Event Sourcing
+
+  我的建議是：
+
+  > 現在做成「Event-Sourcing-ready 的 durable journal」，暫時不要宣稱整個 FODEX 都是 Event Sourcing。
+
+  差異在於：
+
+  • 現在：DB 保存已發生的 wrapper output，支援排序、重連與重播。
+  • 完整 Event Sourcing：目前狀態必須能由 events 重建，events 是唯一真相來源。
+
+  目前先具備這些欄位就夠了：
+
+  • ReActId / TurnId
+  • 單調遞增的 Sequence
+  • 唯一 EventId
+  • Producer（participant／IAgent identity）
+  • EventKind
+  • Payload
+  • SchemaVersion
+  • OccurredAt
+  • CorrelationId / CausationId
+  • Completed、Failed、Cancelled 等 terminal event
+
+  如此未來增加 wrapper-level COT——也就是你定義的「wrapper 實際輸出的可觀測中間內容」，不是模型隱藏思維——便只是增加 event type 與 projection，不必推翻現有資
+  料。
+
+  ## 讓 actor／participant／IAgent replay
+
+  可以，但我會加三條硬限制：
+
+  1. Replay 只重建狀態，不重做副作用
+
+     不可因 replay 再次呼叫 tool、啟動 process、寫外部 DB 或重新發訊息。Recovery handler 應該是近似純函數：
+
+     old state × event → new state
+
+  2. 各 consumer 有自己的 cursor/checkpoint
+
+     有需要的 participant／IAgent 只 replay 自己關心的 event，不是所有 actor 每次讀完整回合。
+
+  3. Projection 也要有版本
+
+     IAgent 重啟後可能取得新版 runtime function；新版 projector 若用同一批 events 得到不同結果，checkpoint 必須記錄 projector/runtime version，版本改變時選擇
+     重建或遷移。
+
+  因此 event stream 的擁有者應是 ReAct round/session；IAgent 是可選的 subscriber/projection owner，而不是 event store 的主人。實體 Agent/IActorRef 更不應成為
+  持久 identity。
+
+  ## 對目前 Contract 的具體影響
+
+  我傾向下一小段這樣精修：
+
+  • Participant 改回 IAgent<...>；實體 actor 仍藏在 IAgent.Instance。
+  • WrappedReActDataFlow 保留為一條 ordered durable output stream。
+  • 不再引入另一個「live graph state」。
+  • EnqueueDataFlow 改成較準確的 AppendOutput。
+  • CollectDataFlow 明確定義成由 DB 按 cursor 讀取；名稱可再討論是 CollectOutput、ReadOutput 或 ReplayOutput。
+  • 保證 DB commit 後才對 user 可見。
+  • delivery 採 at-least-once，frontend 依 EventId 或 (ReActId, Sequence) 去重。
+
+  唯一需要你確認的語意是：我把「先放進 DB 再 stream」理解為每個 event commit 後立刻 stream，不是等整個 ReAct 回合結束後才一次送出。若這個理解正確，我們下一段
+  便可以先精修 event envelope 與三個 abstract members。
+
+  Worked for 1m 49s • 4:07 AM
+
+
+
+
+
+
+
+
+> 0. 後續任何一回合要改動，先把 concepts.fsx 複製改名為 concepts.yyyymmddhhmm.fsx 然後 commit push 後該回合整個改進 concepts.fsx
+  1. 先改 logical participant → IAgent
+  2. 另外我確認一下，我想的 main wrapper cot 是 user prompt 符合特定 syntax，main wrapper 會 create participant 處理一串 ReActData (可能是歷史也可能是最新的 prompt) 後輸入給 main participant，我們想法有相同嗎? 如果相同，請在 ReActLoop 補齊所需的 abstract member，如果不同，請敘述你的建議作法
+
+
+• 已完成，而且我們的想法一致：main wrapper COT 是一段可觀測的 orchestration——syntax 命中後建立輔助 participant，處理有序的歷史／最新 ReActData，再把結果交給
+  main participant；不是模型隱藏思維，也不等同 output journal。
+
+  已完成：
+
+  • 快照 concepts.202610270423.fsx (Fodex.Supervisor.Contract/concepts.202610270423.fsx) 已 commit、push：
+    87450c0 chore(contract): snapshot concepts before participant refinement
+
+  • logical participant binding 已由 Agent 改成 IAgent：
+    concepts.fsx:495 (Fodex.Supervisor.Contract/concepts.fsx:495)
+
+  • 新增 COT request／plan／result：
+    concepts.fsx:359 (Fodex.Supervisor.Contract/concepts.fsx:359)
+
+  • ReActLoop 新增三段 ROP contract：
+      • TryPlanMainWrapperCot：syntax 未命中回傳 Ok None
+      • ExecuteMainWrapperCot：建立或取得 COT participant，依序處理 Inputs
+      • DispatchMainWrapperCot：維持順序送入 main participant
+
+  Inputs 直接使用有序 ReActData[]，沒有再拆「歷史／最新」union，避免 COT execution contract 綁死資料來源。
+
+  驗證結果：
+
+  • Contract build：0 errors
+  • 既有 ParseLine.fsx：1 個 pattern-match warning
+  • UTF-8 no BOM、CRLF 維持不變
+  • 無 NUL、無 private／internal／[待刪除]
+  • 本輪對原始 concepts.fsx 的修改目前保留為未提交狀態，方便繼續精修
+
+  下一個需要討論的小決策是：CotParticipant 每次 syntax 命中都新建，還是允許同一 session 重用；這會直接決定 participant lifecycle 與 RemoveParticipant 的觸發時
+  機。
+
+
+
+
+
+
+
+
+
+
+1. CotParticipant 每次 syntax 命中都新建，還是允許同一 session 重用 -> contract 不管這個吧? registry 可以有不同的版本  
+2. 我說個 Cot 情境，你思考下目前的 spec 與 contract 是不是能 fulfill:
+
+  原始 prompt -> 請針對 xxx 程式碼進行 review 並修正 yyyy exception
+  main participant (IAgent) -> 將 seq of json 轉為 ReActDataStream -> stream json object by json object to reActLoopHandler
+  reActLoopHandler -> 負責將 ReActData 傳給正確的 PARTICIPANT / WRAPPER，其中用於輸出給 USER 的會 ENQUEUE 進 WrappedReActDataFlow (舊版，看你新版要怎樣)
+  main wrapper -> DEQUEUE 後 放進 DB，就收到的部分整理成單一 STRING 輸出給 USER
+
+  假設 reActLoopHandler 跟 main wrapper 還在運作， USER 看到還沒輸出的 WWW 概念過於模糊，懷疑生成 WWW 的基礎不夠結構性，就下 prompt
+
+  "/wrapper_cot www 概念不夠具體請將目前的生成基礎: 原始檔案分析 -> 整理並匯總 -> 去重去誤 -> 流程 SOP 化，請重新生成 www"
+
+  main wrapper 收到後根據 IAgent 的建立 cot participant 方法建立後，輸入該 prmopt，並將 cot participant 生成的內容傳給 main participant
+
+3. 承 2., 你設計的 ReActDataFlowWrite / ReActDataFlowItem / ReActCollectRequest / ReActCollectResult 或者 COT 系列 TYPE 過度去抽象化，會讓實作過程瑣碎化，這對機器來說很 EASY 但對人類來說是個 ANTI-pattern
+或者說對 F# developer 來說不優，雖然你建立的是一堆 record，但是給我感覺更像是 OO 風格。我覺得你想表達的玩意， ReActData 目前都能提供，請說明哪裡不行，擴充 DU 可能好於建立一堆 RECORD
+
+
+
+
+
+
+
+
+
+
+
+• 你判斷得對。目前這批 record 過度建模，而且 MainWrapperCotResult.Outputs 會迫使實作先收齊結果，反而破壞「JSON object 逐筆 stream 給 main participant」的流
+  程。
+
+  本回合先討論，沒有修改檔案。
+
+  ## 1. CotParticipant lifecycle
+
+  Contract 不該決定每次新建或 session 重用。
+
+  但要區分兩件事：
+
+  • Version registry：決定使用哪個版本的建立／操作函數。
+  • Instance lifecycle：決定回傳既有 participant 還是新建 participant。
+
+  兩者都由實作決定。Contract 只需要保證「取得一個可用且已綁定 logical participant 的 IAgent」。因此名稱用 AcquireParticipant 會比 CreateParticipant 精準；
+  Create 容易讓人誤會一定產生新 instance。
+
+  ## 2. 你的情境目前能不能表達
+
+  現有 ReActData 幾乎已經足夠：
+
+   流程                                           既有表示
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   原始 user prompt                               HumanPromptToWrapper
+  ─────────────────────────────────────────────  ─────────────────────────────────────────────────────────
+   main participant 逐筆輸出 JSON                 `AgentWork(StreamId, [
+  ─────────────────────────────────────────────  ─────────────────────────────────────────────────────────
+   wrapper 對 user 輸出                           MainWrapperToHuman
+  ─────────────────────────────────────────────  ─────────────────────────────────────────────────────────
+   /wrapper_cot prompt                            仍是 HumanPromptToWrapper，syntax 存在 typed command 中
+  ─────────────────────────────────────────────  ─────────────────────────────────────────────────────────
+   main wrapper 將 prompt 送給 COT participant    WrapperToNatives
+  ─────────────────────────────────────────────  ─────────────────────────────────────────────────────────
+   COT participant 將結果送進 main participant    NativeToNative(..., mainParticipant)
+  ─────────────────────────────────────────────  ─────────────────────────────────────────────────────────
+   participant 回合完成                           AgentEnd
+
+  所以不需要把 COT 再包成 Request → Plan → Result。
+
+  而且你的流程是 streaming：
+
+  COT participant
+      └─ ReActData object
+            └─ reActLoopHandler
+                  └─ NativeToNative
+                        └─ main participant
+
+  我目前的 ExecuteMainWrapperCot -> MainWrapperCotResult.Outputs[] 會變成：
+
+  先收齊全部 Outputs
+      └─ 再一次 Dispatch
+
+  這不符合你的情境，應該刪除。
+
+  ## 3. 現在真正缺少的部分
+
+  不是更多 DTO，而是以下幾個簡單責任。
+
+  ### A. participant 建立責任放錯位置
+
+  你的描述是 main wrapper 的 IAgent 取得 COT participant；ReActLoop 只負責保存 binding 與 routing。
+
+  因此較合理的是：
+
+  main wrapper IAgent
+      AcquireParticipant
+            ↓
+  ReActLoop
+      BindParticipant
+      RouteReActDataStream
+
+  而不是由 ReActLoop.ExecuteMainWrapperCot 統籌整段工作。
+
+  ### B. ReActLoop 缺少真正的 hub member
+
+  現在有很多操作型 member，卻沒有最重要的：
+
+  abstract member RouteReActDataStream:
+      FeasibleT<ReActDataStream<'TypedCmdToWrapper>, int, exn>
+
+  它應依 ReActData DU case：
+
+  • 找到目標 participant／wrapper。
+  • 交給對應 IAgent。
+  • 遇到 MainWrapperToHuman 時 enqueue 到 WrappedReActDataFlow。
+  • 維持 StreamId 順序。
+
+  ### C. 並行 COT 的 causation
+
+  如果同時收到兩個 /wrapper_cot，目前 target participant 足以 routing，但未必能知道某段 COT output 是由哪個 user prompt 引起。
+
+  這是現有 DU 唯一可能缺少的資訊。可以直接擴充 DU tuple，例如帶上 causedBy: StreamId，不需要建立 record hierarchy。
+
+  如果 contract 規定同一 main participant mailbox 嚴格循序，而且一次只處理一個 COT，甚至可以暫時不加。
+
+  ### D. DEQUEUE 的失敗語意
+
+  WrappedReActDataFlow 可以維持單一 queue，不需要 Write／Item 兩種模型；但規範應寫清楚：
+
+  取出資料
+  → DB commit 成功
+  → 才輸出給 user
+
+  DB 失敗
+  → 該資料不得視為已消費
+
+  這是 delivery invariant，不需要四個 record 才能表達。
+
+  ## 我建議刪除的設計
+
+  下一次修改時，我建議直接刪除：
+
+  • ReActDataFlowWrite
+  • ReActDataFlowItem
+  • ReActCollectRequest
+  • ReActCollectResult
+  • MainWrapperCotRequest
+  • MainWrapperCotPlan
+  • MainWrapperCotResult
+  • TryPlanMainWrapperCot
+  • ExecuteMainWrapperCot
+  • DispatchMainWrapperCot
+  • 很可能也可刪掉 ReActDataDirection，因為 DU case 本身已經表達方向
+
+  保留並精簡成：
+
+  • ReActData
+  • ReActDataStream
+  • 單一 WrappedReActDataFlow
+  • IAgent.AcquireParticipant
+  • ReActLoop.BindParticipant
+  • ReActLoop.RouteReActDataStream
+  • PostHumanPrompt
+  • participant lookup／remove／status
+
+  Collect 若只是讀 DB，也可以直接以 session 查回 ReActDataStream[]；cursor、page、caught-up 等機制等真的需要斷線續傳時再放到 DB adapter，不必污染現在的核心規
+  範。
+
+  Worked for 2m 24s • 5:40 AM
+
+
+
+
+
+
+
+
+
+
+
+1. 請依討論調整程式碼
+2. 加入  abstract member RouteReActDataStream:
+      FeasibleT<ReActDataStream<'TypedCmdToWrapper>, int, exn>
+3. 擴充 DU tuple，例如帶上 causedBy: StreamId 
+4. 其實關於 WrappedReActDataFlow 那個 queue 我也說那是舊版描述，我也不確定那樣到底好不好，
+5. 讀取 C:\Users\Administrator\Downloads 底下的 CodexAppServerDemo.fsx 與 FSharp_Codex_App_Server_Protocol_Guide_2026-10-27.md
+6. 決定本次到底要支援 codex exec 還是 app-server 又或者能在架構上抽象化兩者都支援      
+
+
+• 我會先依你新增的留存規則，將目前尚未提交的 concepts.fsx 原樣做分鐘戳快照，單獨 commit 並 push；遠端確認後才修改原檔。接著會完整分段讀取 Downloads 內兩份指定
+  文件，再決定 codex exec／app-server 的共同抽象，而不是先猜協定。所有 Shell 讀取與 build 都會套用 powershell-output-guard 控制輸出。
+
+• 已依討論完成調整。架構決定為：Contract 同時支援 exec 與 app-server，但只描述 StartTurn／SteerTurn 語意，不把 transport 寫進 logical IAgent 身分。
+
+  • exec --json：適合單次／續接 Turn，也可用於 COT participant。
+  • app-server：支援 turn/steer，因此你的 live /wrapper_cot main participant 必須使用這類 adapter。
+  • exec 收到 SteerTurn 時，必須明確回傳 Error 或採已宣告的延後策略，不能靜默轉成新回合。
+  • adapter 版本仍由既有 registry／argstring 選擇。
+
+  已完整閱讀：
+
+  • CodexAppServerDemo.fsx (C:/Users/Administrator/Downloads/CodexAppServerDemo.fsx)：167 行
+  • FSharp_Codex_App_Server_Protocol_Guide_2026-10-27.md (C:/Users/Administrator/Downloads/FSharp_Codex_App_Server_Protocol_Guide_2026-10-27.md)：1126 行
+
+  程式碼調整位於 concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx)：
+
+  • 新增 ReActTurnInputMode = StartTurn | SteerTurn：line 352 (Fodex.Supervisor.Contract/concepts.fsx:352)
+  • WrapperToNatives／NativeToNative 攜帶 input mode。
+  • HumanInit 現在也有自己的 StreamId。
+  • AgentCot、AgentWork、StdOut、StdErr、AgentEnd 都加入 causedBy: StreamId：line 396 (Fodex.Supervisor.Contract/concepts.fsx:396)
+  • IAgent.AcquireParticipant 不規定新建或重用：line 434 (Fodex.Supervisor.Contract/concepts.fsx:434)
+  • ReActLoop.CreateParticipant 改為只負責 registry binding 的 BindParticipant：line 461 (Fodex.Supervisor.Contract/concepts.fsx:461)
+  • 加入指定的 RouteReActDataStream：line 487 (Fodex.Supervisor.Contract/concepts.fsx:487)
+  • MainWrapperToHuman 的規範是 DB 保存成功後才可對 user 顯示；Contract 不指定 queue、channel 或 actor mailbox。
+  • Collect 簡化為依 session 從 DB 取得 ReActDataStream[]。
+
+  已直接刪除：
+
+  • 四個 DataFlow／Collect records
+  • 三個 MainWrapper COT records
+  • 三個 COT orchestration abstract members
+  • ReActDataDirection、cursor/page read-model
+  • EnqueueDataFlow／CollectDataFlow
+
+  快照 concepts.202610270548.fsx (Fodex.Supervisor.Contract/concepts.202610270548.fsx) 已 commit 並 push：
+
+  c83eaa2 chore(contract): snapshot concepts before protocol abstraction
+
+  驗證：
+
+  • Contract build：0 errors
+  • 既有 ParseLine.fsx:155：1 warning
+  • UTF-8 no BOM、CRLF 完整保持
+  • 無 NUL、無禁止關鍵字、git diff --check 通過
+  • 修改後的 concepts.fsx 目前保留為未提交，供下一輪精修
+
+  Worked for 6m 54s • 5:54 AM
+
+
+
+
+
+
+
+
+
+
+
+
+
+› LiteralsMod 以及 TypesMod 針對 ReActLoop 該補的也補一下。另外 ReActLoop 的 default member 應該可以加了，理論上我傾向放在 FodexAgent 的 static member
+  createReActLoop。 createWrapper 的 iarefAgent 與 createReActLoop 的 reActLoopHandler
+
+  ReActLoop 的第一個建構參數 iAgent:IAgent<'TypedCmdToWrapper, 'TAgentCommMsg> 是不是感覺怪怪的，應該要改成 node: FodexNode 你覺得呢?
+
+
+• 我同意：ReActLoop 現在是 routing hub，把特定 iAgent 放在建構子會把 hub 綁死到某個 wrapper，而且無法自然取得 node-scoped Versioned<_> registry；第一參數改成
+  node: FodexNode 比較正確。main wrapper／participants 都應透過 binding 進入 loop。
+
+  本輪會先照規則封存並 push 當前 concepts.fsx，再補齊 ReActLoop 的 literals、function types、啟動時版本 pinning、default members，以及
+  FodexAgent.createReActLoop。Shell 與 build 仍使用 powershell-output-guard。
+
+• 已補完，且我同意把 iAgent 改為 node: FodexNode：
+
+  • ReActLoop 是 routing hub，不應綁死單一 IAgent；participant 的 IAgent 由 BindParticipant 傳入。
+  • node 用於隔離、解析 node-scoped Versioned<_> registry。
+  • reActLoopHandler 則保留為該 loop 的 physical actor endpoint。
+
+  本次完成：
+
+  • 補上 9 組 ReActLoop literals 與 Argu version selectors：concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx:11)
+  • 補上對應 TypesMod function aliases，以及綁定 node + IActorRef 的 TReActLoopRuntime：concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx:297)
+  • ReActLoop 改用 node 建構，並在啟動時 pin 指定版本或當下最大版本：concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx:519)
+  • 9 個 abstract members 均已有 default implementation；ROP 的 Error 會走 error logging：concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx:594)
+  • 新增對稱於 createWrapper 的 FodexAgent.createReActLoop，由 implementation project 提供 reActLoopHandler：concepts.fsx
+    (Fodex.Supervisor.Contract/concepts.fsx:735)
+
+  F# 語法上，default member 必須宣告在 ReActLoop 型別內；createReActLoop 負責建立並回傳使用這些 defaults 的實例。因為所有 virtual members 都有 defaults，
+  ReActLoop 現在可以直接建構，但仍能被 implementation override。
+
+  驗證結果：
+
+  • Contract build：成功，0 errors
+  • 僅剩既有 ParseLine.fsx:155 FS0025 warning
+  • UTF-8 no BOM、CRLF、無 NUL/U+FFFD
+  • 無 private、internal、[待刪除]
+  • git diff --check 通過
+
+  修改前快照已獨立 commit、push：
+
+  • c5fa40e — concepts.202610270614.fsx
+  • 本輪 concepts.fsx 改進目前保留為未 commit，方便繼續精修。
+
+  Worked for 7m 44s • 6:20 AM
+
+
+
+
+
+
+
+
+
+
+
+
+› ReActLoop bind participant 意義是什麼? ReActLoop 象徵 across 整個 fodex 的骨架耶
+
+
+• 你提醒得對。我原本的 BindParticipant 意思是：
+
+  > 在 Fodex-wide routing topology 中登記
+  > ReActParticipant -> 目前可用的 IAgent
+
+  不是把 participant 綁到某一次 ReAct 回合。但 Bind 這個名稱確實容易誤解成「某個 loop instance 擁有 participant」，而且拆成 Bind／Rebind 過度細碎。
+
+  若 ReActLoop 是橫跨整個 Fodex、長期存在的骨架，我建議改成：
+
+  abstract member UpsertParticipant:
+      TReActLoopUpsertParticipant<
+          ReActParticipant,
+          IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>>
+
+  abstract member ResolveParticipant:
+      TReActLoopResolveParticipant<
+          ReActParticipant,
+          IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>>
+
+  語意是：
+
+  • UpsertParticipant：participant 第一次出現、actor restart、換 physical actor、重新 pin runtime version，都覆寫同一 logical participant。
+  • ResolveParticipant：RouteReActDataStream 依 toParticipant 找到目前的 IAgent。
+  • RemoveParticipant：只有 logical participant 真正退場才使用。
+  • ListParticipants：只是骨架的觀測／診斷 API。
+
+  因此我目前的 BindParticipant + RebindParticipant 拆分不夠好；應合併成 UpsertParticipant。ReActLoop 管的是整體 topology，不是某個 participant 的局部容器。
+
+  node 仍有意義，但只是這個骨架在本地執行時使用的 ActorSystem／version-registry anchor，不代表 ReActLoop 的邏輯範圍只限該 node。
+
+  我先不改，等你確認是否採用：
+
+  BindParticipant + RebindParticipant
+      → UpsertParticipant
+
+  LookupParticipant
+      → ResolveParticipant
+
+  這一版語意會更符合你說的「across 整個 Fodex 的骨架」。
+
+  Worked for 42s • 6:35 AM
+
+
+
+
+
+
+
+
+
+
+
+› 那就先這樣改
+  另外為什麼 IAgent 會有 Collect? 那個玩意不是應該要在ReActLoop上?
+
+
+• 對，Collect 放在 IAgent 是我前一輪沿用錯誤的 ownership：它讀的是整個 ReActLoop session 已保存的跨 participant stream，不是某一個 agent 的 mailbox／輸出，因
+  此應移到 ReActLoop。IAgent 只負責取得 participant 與操作自己的 actor。
+
+  本輪我會一起做兩個小段：Bind + Rebind → Upsert、Lookup → Resolve，以及把 Collect 完整搬到 ReActLoop（literal、Argu version、TypesMod、default member、
+  factory override 一併更新）。修改前仍先依規則封存、commit、push；shell 繼續套用 powershell-output-guard。
+
+• 已調整。IAgent.Collect 是我先前放錯 ownership：當時把 main wrapper 的外部 API 和整體 session read 混在一起了。既然資料涵蓋整個 ReActLoop、跨越多個
+  participants，Collect 應由 ReActLoop 負責。
+
+  本次修改：
+
+  • BindParticipant + RebindParticipant → UpsertParticipant
+  • LookupParticipant → ResolveParticipant
+  • Collect 從 IAgent 移至 ReActLoop
+  • literals、Argu version selectors、TypesMod、version pinning 與 defaults 全部同步
+  • 移除所有舊名稱
+  • 移除 ReActLoop 的 [<AbstractClass>]，讓 createReActLoop 能直接建立已有完整 defaults 的型別
+
+  關鍵位置：
+
+  • TypesMod：concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx:316)
+  • IAgent 現在只保留 participant acquisition：concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx:495)
+  • ReActLoop topology API：concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx:614)
+  • ReActLoop Collect：concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx:689)
+
+  修改前快照已 commit、push：
+
+  • 0f4d0c2 — concepts.202610270642.fsx
+
+  驗證：Contract build 0 errors；僅有既有 ParseLine.fsx:155 FS0025 warning。當前 concepts.fsx 保留未 commit 供精修。
+
+  Worked for 3m 53s • 6:46 AM
+
+
+
+
+› let iarefAgent : Agent = failwithf "havent yet implemented" //請在 Fodex.Supervisor 專案中規劃，不要寫在這 你總該改成從 registry 拿吧，不能 failwith 阿?
+  loop 那邊也是
+
+
+• 對，這兩個 failwithf 不該存在；它們其實是 contract factory 的正常失敗路徑，不是「尚未實作」的不可恢復例外。
+
+  我會讓 registry 直接保存版本化 runtime object：
+
+  • Versioned<Agent> + targetWrapperAgent
+  • Versioned<IActorRef> + targetReActLoopHandler
+
+  createWrapper／createReActLoop 依 argstring 指定版本；未指定時取建立當下最大版本。找不到或版本字串無效時回傳 Result.Error，因此兩個 factory 的回傳型別會改成
+  Result<_, exn>。本輪仍先封存、commit、push 再動原檔，shell 使用 output guard。
+
+
+
+
+
+
+
+
+
+
+
+• 對，已改成從版本 registry 取得，不再 failwithf。
+
+  現在 implementation project 應註冊：
+
+  Versioned<Agent>(node, targetWrapperAgent)
+  Versioned<IActorRef>(node, targetReActLoopHandler)
+
+  factory 行為：
+
+  • argstring 指定版本：取得該版本。
+  • 未指定：取得建立當下最大版本並 pin。
+  • 找不到或版本格式錯誤：回傳 Result.Error。
+  • createWrapper 現在回傳 Result<IAgent<...>, exn>。
+  • createReActLoop 現在回傳 Result<ReActLoop<...>, exn>。
+
+  關鍵位置：
+
+  • Runtime literals／Argu selectors：concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx:23)
+  • 共用 registry resolver：concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx:365)
+  • createWrapper：concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx:760)
+  • createReActLoop：concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx:787)
+
+  修改前快照已 commit、push：
+
+  • 3bc9fec — concepts.202610270651.fsx
+
+  Contract build：0 errors；僅剩既有 ParseLine.fsx:155 warning。當前修改尚未 commit。
+
+  Worked for 2m 57s • 6:53 AM
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› commit push 之後規劃一下 Fodex.Supervisor 的各個 .fsx (要 Compile) (模組檔) 以及 main.fsx 撰寫 (模組檔可以先都 failwith 留空)
+
+› 你先完成所有 registry 所有的 function quotation，然後針對這些 quotation 先 eval 後執行 function 後使用 expecto 測試
+  => 純測這些 function
+
+• 完成。目前 14 個 function-valued registry target 都有 v1.0.0 quotation，並在註冊前 Evaluate：
+
+  • CLI 1、Prompt converter 1、IAgent 3、ReActLoop 9。
+  • Quotation 不捕捉 live state；ReActLoop 透過 reActLoopHandler 取得 weak-keyed state，適合後續重建 quotation。
+  • ReActLoop 已實作 participant topology、causedBy routing、collect 與 status 狀態轉移。
+  • RuntimeRegistration 固定以實作檔版本 1.0.0 註冊，避免將 V100 錯標成其他版本。
+  • concepts.fsx 未修改。
+
+  主要檔案：
+
+  • RegistryFunctionQuotationsV100.fsx (/F:/fodex/Fodex.Supervisor/RegistryFunctionQuotationsV100.fsx:15)
+  • RegistryFunctionState.fsx (/F:/fodex/Fodex.Supervisor/RegistryFunctionState.fsx:12)
+  • RuntimeRegistration.fsx (/F:/fodex/Fodex.Supervisor/RuntimeRegistration.fsx:22)
+  • RegistryFunctionQuotationTests.fs (/F:/fodex/Fodex.Supervisor.Tests/RegistryFunctionQuotationTests.fs:85)
+
+  驗證結果：
+
+  • Expecto：16 passed，0 failed。
+      • 14 個 quotation 各自執行 Evaluate → 呼叫 function → assert
+      • 1 個 target manifest 測試
+      • 1 個禁止捕捉 live runtime state 的 quotation 結構測試
+
+  • Solution build：0 warnings，0 errors。
+  • 測試沒有啟動 ActorSystem、Process、DB 或 Codex transport。
+  • 新增程式碼沒有 private、internal、failwith、[待刪除]，UTF-8/NUL 檢查通過。
+  • Shell 全程使用 Read-CodexStdout { ... }，沒有 dot-source。
+
+  目前的 contract 限制是：TIAgentStart/Stop/Send 沒有接收 Agent 或 IActorRef，所以 quotation 無法知道要操作哪個 instance；這版只能提供純函數的 Ok 1 acceptance
+  baseline。若下一段要接上真正 actor 行為，建議先討論是否仿照 TReActLoopRuntime，增加 Agent -> operation 的 binding 層。
+
+  本輪尚未 commit／push。
+
+  Worked for 16m 3s • 8:03 AM  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› › 接上真正 actor 行為，建議先討論是否仿照 TReActLoopRuntime，增加 Agent -> operation 的 binding 層 -> 如果你說的是 IAgent 裡面的 abstract member ，那沒錯，
+  需
+    要補
+
+
+  • Ran Read-CodexStdout { git fetch origin master; git rev-list --left-right --count HEAD...origin/master }
+    └ WARNING: Command wrote 77 bytes to C:\Users\Administrator\.codex\temp\output-guard\01a16f6c-722c-7da3-816c-caae933504f8\stderr.raw
+      0    0
+
+
+  • 收到；你確認的是 IAgent 的 Start / Stop / Send abstract member 需要像 ReActLoop 一樣，先把 registry runtime 綁到該 Agent instance。我先完成眼前這批
+    quotation/tests 的乾淨 commit＋push；接著依你訂的 contract 規則，先建立並推送 concepts.yyyymmddhhmm.fsx 快照，再修改 concepts.fsx 與對應 Supervisor/
+  tests。
+
+
+  我們剛剛說的是同一件事情嗎?
+
+
+• Ran Read-CodexStdout { Get-Content -LiteralPath 'Fodex.Supervisor.Contract\concepts.fsx' -Encoding utf8 | Select-Object -Skip 75 -First 38 }
+  └     | MainWrapper
+        | Participant of IPAddress option
+            //假設要使用 proc supervisor windows service 調用遠端節點的 fodex 則需要相關設定
+    +36 lines (ctrl+t to view transcript)
+
+• 大方向是同一件事，但我先前的「接上真正 actor 行為」說得過頭了。
+
+  你的意思應該是：
+
+  • IAgent.Start / Stop / Send / AcquireParticipant 是對外的 abstract member。
+  • 這些 member 的 default implementation 從 registry 取得對應 quotation。
+  • quotation 再綁定這個 IAgent.Instance : Agent，形成實際 operation。
+  • Supervisor 負責 operation 最終如何操作 actor。
+
+  我這次做的是上述前三點：
+
+  TIAgentRuntime<'TAgent, 'TOperation> =
+      FodexNode -> 'TAgent -> 'TOperation
+
+  IAgent 建立時把 registry quotation 綁到自己的 Agent，供既有的 Start / Stop / Send default member 使用；它不是另一個 OO binding 物件。
+
+  但目前只完成 actor 呼叫端：
+
+  IAgent.Start
+  → versioned quotation
+  → bind FodexNode + Agent
+  → IActorRef.Tell AgentLifecycleMessage.Start
+
+  目標 actor 的 receive、createAgent，以及 AcquireParticipant 還沒有實作。因此準確說法是：
+
+  > 已補上 IAgent abstract member -> versioned operation -> Agent 的 binding；尚未完成接收端的真正 actor 行為。
+
+  若你原意也是這條路徑，我們談的是同一件事。下一段應該補 AcquireParticipant 的 versioned binding，然後才實作 wrapper/native actor 的 message handling。已推送
+  的 commit 是 80bd4e8。
+
+  Worked for 13m 2s • 7:21 PM
+
+
+
+
+
+
+
+
+
+
+
+
+
+• 目前端到端路徑已通過：
+
+  RuntimeRegistration → createWrapper → IAgent.Start/Send → live wrapper mailbox → AcquireParticipant quotation → live Native actor → Start/Send/Stop
+
+
+• 已完成並推送。
+
+  • Snapshot commit：72859b3
+  • Actor binding commit：4e47632
+  • origin/master 已確認與本機 SHA 一致。
+
+  完成內容：
+
+  • AcquireParticipant 成為完整的 versioned abstract/default member。
+  • 新增 IAgentAcquireParticipant quotation 與 registry registration。
+  • RegistryIAgent 只具現化 registry-backed contract，不包含資源實作。
+  • v1.0.0 每次 acquisition 建立新的 local Native actor。
+  • 真實 actor mailbox 已處理 Start / Stop / Send；Native OS process 仍保留給 Proc Supervisor 的 FeasibleT SOP。
+  • 修正 Argu 的既有 runtime 問題：NodeRole 先解析為 primitive string，再 post-process，因為 Argu 不支援帶參數的任意 DU 作為欄位。Argu 官方說明
+  • 修正 resolveVersionedRuntime 將 union constructor 當普通函數傳遞造成的 expression-query 錯誤。
+
+  驗證結果：
+
+  • Full solution：0 errors。
+  • 既有 ParseLine.fsx:155 FS0025：1 warning。
+  • Expecto：17 passed。
+      • 原有 16 個純 quotation tests。
+      • 新增 1 個真實 ActorSystem smoke test，涵蓋 wrapper → acquisition quotation → Native actor → Start/Send/Stop。
+
+  • Encoding、NUL、U+FFFD、secret、private/internal、[待刪除]、diff whitespace 檢查皆通過。
+  • 既有 project version、notes、舊 snapshot 與 bin/obj WIP 均未提交。
+
+  下一段最值得先精修的是 Status / Restart / Reset / Heartbeat。舊稿確實留下「其他幾個」但沒有定義語意；尤其目前 Ok 1 只代表 Tell 已送入 actor API，不代表
+  process 已啟動或操作已完成。建議先決定 lifecycle acknowledgement，再補這四個 abstract member，避免把 Status 草率做成魔術 int。
+
+  Worked for 17m 26s • 7:41 PM    
+
+
+
+
+
+
+
+• 已完成並推送。
+
+  • Snapshot commit：72859b3
+  • Actor binding commit：4e47632
+  • origin/master 已確認與本機 SHA 一致。
+
+  完成內容：
+
+  • AcquireParticipant 成為完整的 versioned abstract/default member。
+  • 新增 IAgentAcquireParticipant quotation 與 registry registration。
+  • RegistryIAgent 只具現化 registry-backed contract，不包含資源實作。
+  • v1.0.0 每次 acquisition 建立新的 local Native actor。
+  • 真實 actor mailbox 已處理 Start / Stop / Send；Native OS process 仍保留給 Proc Supervisor 的 FeasibleT SOP。
+  • 修正 Argu 的既有 runtime 問題：NodeRole 先解析為 primitive string，再 post-process，因為 Argu 不支援帶參數的任意 DU 作為欄位。Argu 官方說明
+  • 修正 resolveVersionedRuntime 將 union constructor 當普通函數傳遞造成的 expression-query 錯誤。
+
+  驗證結果：
+
+  • Full solution：0 errors。
+  • 既有 ParseLine.fsx:155 FS0025：1 warning。
+  • Expecto：17 passed。
+      • 原有 16 個純 quotation tests。
+      • 新增 1 個真實 ActorSystem smoke test，涵蓋 wrapper → acquisition quotation → Native actor → Start/Send/Stop。
+
+  • Encoding、NUL、U+FFFD、secret、private/internal、[待刪除]、diff whitespace 檢查皆通過。
+  • 既有 project version、notes、舊 snapshot 與 bin/obj WIP 均未提交。
+
+  下一段最值得先精修的是 Status / Restart / Reset / Heartbeat。舊稿確實留下「其他幾個」但沒有定義語意；尤其目前 Ok 1 只代表 Tell 已送入 actor API，不代表
+  process 已啟動或操作已完成。建議先決定 lifecycle acknowledgement，再補這四個 abstract member，避免把 Status 草率做成魔術 int。
+
+  Worked for 17m 26s • 7:41 PM
+
+  ↳ Recap: 目標是完成 Fodex.Supervisor 的版本化 registry quotation、IAgent 綁定與可編譯 runtime。相關 scaffold、AcquireParticipant binding 與真實 local
+           actor mailbox 已實作並推送；solution 0 errors，Expecto 17/17 通過。限制是 Native OS process 尚未接入 Proc Supervisor，Tell 的 Ok 1 僅代表已送出，
+           Status／Restart／Reset／Heartbeat 與完成確認語意仍未定。
+           Next: 先定義 lifecycle acknowledgement 與 status model，再補四個 abstract member、quotation、actor handling 及測試。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 但是 RegistryIAgent 又是怎麼回事?
+
+• RegistryIAgent 目前其實只是我為了「把 abstract IAgent 具現化」加的空殼：
+
+  type RegistryIAgent(...) =
+      inherit IAgent(...)
+  // 沒有自己的 member
+
+  它不代表 registry 中的一筆資料，也沒有新的 domain 語意；只是因為 IAgent 是 abstract class，而所有行為又放在 default member 裡，需要一個 concrete subtype 才
+  能 new。這是我為解決編譯問題留下的 implementation artifact，名稱也會誤導。
+
+  依你對 Contract 的定位，我現在傾向：
+
+  • Contract 保留 IAgent、其 operation 型別與由 FodexFun resolve/pin 的規範。
+  • RegistryIAgent 從 Contract 移到 Fodex.Supervisor，改成實作專案的 concrete adapter（名稱也應重取）。
+  • createWrapper 與 AcquireParticipant 對外仍只回 IAgent，不暴露這個 concrete type。
+  • 若你認為 IAgent 的 defaults 已是完整 contract-level reference behavior，也可以直接取消 [<AbstractClass>]；但這會把「規範」變成可直接建立的實作，我較不建
+    議。
+
+  我會把它列為這次 review 中因 FodexFun 修正而必須一起重整的邊界問題。
+
+
+
+• 收到，RegistryIAgent 不搬家，直接刪除；也不建立任何 named subtype。
+
+  createWrapper 與 AcquireParticipant 都應直接用 object expression 產生 IAgent：
+
+  {
+      new IAgent<...>(...) with
+          // 只在確實需要時 override
+  }
+  :> IAgent<...>
+
+  先前遇到 FS0740 是我當時 object expression 寫法／abstract member 完整性沒有處理好，不構成改用 inherit concrete class 的理由。我會把 review 結論改成：移除
+  RegistryIAgent，並讓 FodexFun resolve/pin 的 operation 由 object expression 捕捉後實作 IAgent。
+
+• Ran Read-CodexStdout { git.exe show --format= --unified=22 4e47632 -- 'Fodex.Supervisor.Contract/concepts.fsx' | Select-Object -First 300 }
+  └ diff --git a/Fodex.Supervisor.Contract/concepts.fsx b/Fodex.Supervisor.Contract/concepts.fsx
+    index d46a7f9..5555239 100644
+    --- a/Fodex.Supervisor.Contract/concepts.fsx
+    +298 lines (ctrl+t to view transcript)
+
+
+› 我不要妳 inherit，就是要 object expression

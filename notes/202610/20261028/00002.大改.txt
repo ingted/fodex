@@ -1,0 +1,663 @@
+› 1. concepts.fsx 我已經還原到我認為比較正常的版本。請記住我要的是人能維護的版本，不要機器才能維護的垃圾
+  2. 殘骸我都放進 F:\fodex\Fodex.Supervisor.Contract\archive\20261028，連同現在的實作專案與測試專案，讓你可以考古
+  3. 實作專案我把不符合我期待的檔案都砍了，留下沒有完全不符合的，不過我覺得如果你沒有需要那些舊檔，那你自己全砍吧
+  我們還是先從 contract 專案開始，我們要以 FodexFun 作為基底的版本，不要你那種 freestyle只有機器才能維護的散漫版本
+
+
+• 收到。從現在起：
+
+  • 現行 concepts.fsx (/F:/fodex/Fodex.Supervisor.Contract/concepts.fsx) 是唯一設計基準。
+  • archive/20261028 只作考古，不把舊架構搬回來。
+  • Contract 的版本化函數一律以 FeasibleFun／FodexFun 為主幹；不再發明 raw function registry、runtime binder record 群或 named RegistryIAgent。
+  • 先做「人能一次讀懂」的最小型別骨架，再逐小段和你確認。
+  • 這一輪先不刪實作檔，也不改碼；我先盤點你還原後的實際狀態與 archive 差異。Shell 仍依 powershell-output-guard 控制輸出。
+
+• 你目前的 concepts.fsx (/F:/fodex/Fodex.Supervisor.Contract/concepts.fsx) 是 36,451 bytes，和較早快照同尺寸；archive 裡則保留了 37,881／40,010 bytes 的兩個後
+  期殘骸。現行實作只留下少數檔案，但其中 quotation／registration／tests 仍是舊路線，我暫時把它們視為「待重寫參考」，不讓它們反過來污染 Contract。接著我只讀現
+  行 concepts.fsx。
+
+• 我已確認：你還原的版本確實比較正常，也恢復了 object expression；RegistryIAgent 已不存在，createWrapper 最終仍回傳 Result<IAgent<...>, exn>。
+
+  目前 Contract 尚有三個核心殘留問題：
+
+  1. FeasibleFun 仍然重複吃 input
+
+  type FeasibleFun<'Input, 'Success, 'Error> =
+  -   SimpleFun<'Input, FeasibleT<'Input, 'Success, 'Error>>
+  +   SimpleFun<'Input, Result<'Success, 'Error>>
+
+  否則實際型別是：
+
+  'Input -> 'Input -> Result<'Success, 'Error>
+
+  2. 版本化函數仍直接使用 Versioned<raw function>
+
+  必須改成 FodexFun 的位置：
+
+  • CliStart
+  • IAgent.Start / Stop / Send
+  • 後續補回的 AcquireParticipant
+  • ReActLoop 的 9 個 operations
+
+  3. TReActLoopRuntime = FodexNode -> IActorRef -> operation 仍是 freestyle binder
+
+  它應移除，改由少量、可讀的 FodexFun specialization 表達，例如：
+
+  type IAgentFodexFun<'Input, 'Success> =
+      FodexFun<FodexNode * Agent * 'Input, 'Success, exn>
+
+  type ReActLoopFodexFun<'Input, 'Success> =
+      FodexFun<FodexNode * IActorRef * 'Input, 'Success, exn>
+
+  這樣維護者只需要理解：
+
+  FeasibleT   = 對外 operation
+  FeasibleFun = quotation 包裝的一次輸入函數
+  FodexFun    = 有版本的 FeasibleFun
+
+  targetWrapperAgent : Versioned<Agent> 與 targetReActLoopHandler : Versioned<IActorRef> 可以保留，因為它們是 runtime object，不是 function；createWrapper 也
+  繼續用 object expression 回傳 IAgent。
+
+  建議分段順序：
+
+  1. 只修 SimpleFun / FeasibleFun / FodexFun 基底並編譯 Contract。
+  2. 將 IAgent.Start / Stop / Send 改走 FodexFun。
+  3. 補回 AcquireParticipant 的 FodexFun。
+  4. 將 ReActLoop 九個 operation 全部改走 FodexFun。
+  5. 最後才重寫 implementation quotations 與 tests。
+
+  目前未修改、未刪除、未 commit。下一段若開始修改，我會先依規則建立 concepts.20261028hhmm.fsx 快照並單獨 commit/push。舊 implementation 中的 quotation、
+  registration、tests 明顯綁著錯誤架構，但先不刪，等 Contract 定型後再處理。
+
+  Worked for 2m 31s • 2:12 AM
+
+
+
+
+
+
+
+
+
+› 1. 已經跟你說過了 'Input -> 'Input -> Result<'Success, 'Error> 的意思是，把 input 送進一個吃 input 的函數，你要用這樣的語意去使用好嗎?
+  2. 你把 1~6 分別寫 6 個 md 文件給我 code snippet 檢視，放在 F:\fodex\Fodex.Supervisor.Contract\codex_demo\20261028
+
+
+• 你說得對；我前一回合又把既定語意當成 bug 了。這次會保留：
+
+  'Input -> ('Input -> Result<'Success, 'Error>)
+
+  並明確用「外層以 input 準備函數，內層再吃同一個 input 執行」：
+
+  let inputToResult = feasibleFun.f.Value input
+  inputToResult input
+
+  我把六份文件對應為：
+
+  1. SimpleFun / FeasibleFun / FodexFun 基底與雙層 input 語意
+  2. IAgent.Start / Stop / Send
+  3. IAgent.AcquireParticipant 與 object expression
+  4. ReActLoop 九個 operation
+  5. quotation 與 registration
+  6. Expecto tests
+
+  只建立 demo Markdown，不改 concepts.fsx，也不碰 archive／刪除中的實作檔。
+
+
+
+
+
+
+
+
+• 已完成六份 code snippet 文件，並完整保留「同一 input 依序送入外層與內層函數」的語意：
+
+  1. FeasibleFun／FodexFun 基底 (/F:/fodex/Fodex.Supervisor.Contract/codex_demo/20261028/01-feasiblefun-fodexfun.md)
+  2. IAgent Start／Stop／Send (/F:/fodex/Fodex.Supervisor.Contract/codex_demo/20261028/02-iagent-start-stop-send.md)
+  3. AcquireParticipant 與 object expression (/F:/fodex/Fodex.Supervisor.Contract/codex_demo/20261028/03-iagent-acquire-participant.md)
+  4. ReActLoop FodexFun (/F:/fodex/Fodex.Supervisor.Contract/codex_demo/20261028/04-reactloop-fodexfun.md)
+  5. Quotation 與 registration (/F:/fodex/Fodex.Supervisor.Contract/codex_demo/20261028/05-quotation-registration.md)
+  6. Expecto 純函數測試 (/F:/fodex/Fodex.Supervisor.Contract/codex_demo/20261028/06-expecto-tests.md)
+
+  核心執行方式統一為：
+
+  let inputToResult = feasibleFun.Invoke input
+  inputToResult input
+
+  六檔皆為 UTF-8 no BOM，無 NUL／U+FFFD，Markdown fences 成對，git diff --check 通過。未修改 concepts.fsx、未 commit。
+
+  Worked for 3m 5s • 2:22 AM
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 所以這六項改完就是符合我們之前幾乎所有討論議題的一個最終版的 contract 專案對嗎?
+
+
+• 不是。準確地說，這六份是「以 FodexFun 為主幹的設計草稿」，完成後會解決版本化函數這條主線，但還不能稱為整個 Contract 最終版。
+
+  已涵蓋：
+
+  • FeasibleFun 的雙層 input 語意。
+  • FodexFun = Versioned<FeasibleFun<...>>。
+  • exact/latest startup pinning 與 hot-load 不影響既有 instance。
+  • IAgent Start／Stop／Send／AcquireParticipant。
+  • object expression，不使用 RegistryIAgent。
+  • ReActLoop 九個 operation。
+  • quotation 保留到 registry，不預先 Evaluate。
+  • 純函數 Expecto 測試方向。
+
+  尚未完成或仍需討論：
+
+  1. CliStart、PromptConvert
+
+  目前六份沒有完整改寫這兩條路徑；CliStart 仍有 raw Versioned<TCliStart>、printfn 與 Contract 內註冊 fallback。
+
+  2. Lifecycle 語意
+
+  Status / Restart / Reset / Heartbeat 只有 command，尚未確定 acknowledgement、回傳型別與 actor/process 邊界，不能自行補成 int。
+
+  3. ReActLoop 的 DB／輸出不變量
+
+  目前只有註解要求：
+
+  MainWrapperToHuman
+  -> 先持久化 DB
+  -> 再 stream 給 user
+
+  但 Contract 尚未明確表達「持久化成功」和「只接受進 mailbox」的差異。
+
+  4. Wrapper COT orchestration
+
+  現有 AcquireParticipant + PostHumanPrompt + DispatchToParticipant 理論上可組合出：
+
+  syntax 命中
+  -> 建立 COT participant
+  -> 餵入歷史或最新 ReActData
+  -> 將結果 steer 給 main participant
+
+  但還要確認這只需要組合規範，還是需要一個明確的高階 operation。
+
+  5. Process supervision／exec／app-server
+
+  目前只有 ProcessSopStep 與 StartTurn / SteerTurn 的形狀，尚未完成：
+
+  • Native actor 與 OS process 的 attach／rebind 規範。
+  • Proc Supervisor 的責任邊界。
+  • exec 與 app-server capability 差異。
+  • restart 後如何保留 logical participant identity。
+
+  6. Contract 清理
+
+  現行檔案仍有一些 implementation/demo 殘留：
+
+  • AkkaMod.createFodexNode 的 failwithf。
+  • Cli 裡的 printfn 與內建 fallback。
+  • f1 / f2 / MyInvoke / MyInvoke2 是否仍屬於正式 Contract。
+  • generic resolveVersionedRuntime 要限制為 runtime object，避免再次拿來註冊 function。
+
+  7. 六份 snippets 尚未整合編譯
+
+  目前只驗證 Markdown、encoding 與結構；尚未實際套入 concepts.fsx，因此型別排列、forward reference 與 object expression 完整性仍要逐段編譯確認。
+
+  所以我的定義是：
+
+  六份完成
+  = FodexFun／IAgent／ReActLoop 的版本化函數骨架定型
+
+  六份完成
+  ≠ 整個 Contract 專案最終定型
+
+  我建議先把這六份視為 Milestone A。逐份確認並整合編譯後，再只討論上述第 2～5 項的大型語意；那些確認完，才比較接近「符合先前幾乎所有討論的最終 Contract」。
+
+  Worked for 37s • 2:44 AM
+
+
+
+
+
+
+
+
+
+› 1 2 3 6 你應該能獨立處理但不會多出奇怪的東西對吧?
+
+
+• Context compacted · 25s
+
+• 對。1、2、3、6 我可以獨立收斂，而且會把邊界鎖死：
+
+  1. CliStart / PromptConvert：只統一成 FodexFun，移除 contract 內的 demo side effect，不發明新 CLI 架構。
+  2. Lifecycle：不擅自新增 Status / Restart / Reset / Heartbeat 語意；只整理已經確認的 Start / Stop / Send / AcquireParticipant。遇到必須決定回傳值時先停下討
+     論。
+
+  3. ReActLoop 輸出：用現有 ReActData／DU 表達「先持久化成功，再 stream 給 user」，不拆出一堆 record、queue abstraction 或 event-sourcing framework。
+  4. Contract hygiene：清除 failwith placeholder、printfn、demo fallback、f1/f2/MyInvoke 等殘留；不趁機擴充功能。
+
+  原則就是：只把已討論且已確定的語意補完整，不新增 RegistryIAgent、不建立 named inheritance、不引入額外 domain hierarchy，也不碰尚待討論的 COT、process
+  supervision 與 exec/app-server 大型設計。
+
+  Worked for 36s • 2:51 AM
+
+
+• 已完成，範圍沒有外溢。
+
+  • concepts.fsx (/F:/fodex/Fodex.Supervisor.Contract/concepts.fsx:252)：保留雙層 input 語意，加入 FeasibleFun.invoke、FodexFun.pin。
+  • CLI、IAgent、AcquireParticipant、ReActLoop 全部改用 FodexFun；IAgent 維持 object expression。
+  • 移除未定義語意的 Status/Restart/Reset/Heartbeat。
+  • RouteReActDataStream 明定只有 durable persistence 完成才能回傳 Ok，不能只是 mailbox enqueue。
+  • 清除 failwith、printfn、fallback registry、MyInvoke/f1/f2 等殘留。
+  • 純函數測試 (/F:/fodex/Fodex.Supervisor.Tests/RegistryFunctionQuotationTests.fs:47)：Expecto 6/6 通過。
+  • Contract build 成功；僅有既存的 ParseLine.fsx:155 FS0025 warning。
+
+  修改前快照已 commit＋push：2bea963。目前正式修改尚未 commit，留給你檢視。Fodex.Supervisor implementation 尚未遷移到新 contract，這輪刻意沒有碰。
+
+  Worked for 11m 9s • 3:05 AM
+
+  ↳ Recap: 目標是把 Contract 收斂為人能維護、以 FodexFun 為主幹的版本。concepts.fsx 已完成 CLI、IAgent、AcquireParticipant、ReActLoop 與 hygiene 重整，保留
+           雙層 input、object expression 及持久化後輸出語意；Contract build 與 Expecto 6/6 通過。正式修改尚未 commit，implementation 尚未遷移，COT／process
+           supervision 等仍未定案。
+           Next: 請先檢視尚未提交的 Contract diff；確認後再提交並遷移 implementation。
+
+
+
+
+
+
+
+
+
+關於 4. 既然必須由 user 主動觸發，那就不是 wrapper 本身的輔助性 implicit COT，像是 user prompt "那段 code..." blabla
+輔助性 implicit COT 應該要觸發 participant 去根據 regex 撈歷史最近 20K token 的 RouteReActDataStream + sinked data
+但是既然 /wrapper_cot 那 `根據 regex 撈歷史最近 20K token 的 RouteReActDataStream + sinked data` 只能變成某種讓 agent 自行操作 shell 或者 fsi 的初始化與基本操作；DB
+要變成高階 operation 以我們的資源來說是不是有點困難?
+
+  syntax 命中
+  -> 建立 COT participant     ===> 要變成 invoke deterministic 的某種操作
+  -> 餵入歷史或最新 ReActData  ===> e.g. 先操作 ReActData 再餵入，重點是 `e.g.` 只是舉例
+  -> 將結果 steer 給 main participant
+
+
+我對你的 高階 operation 的理解有錯誤嗎?
+
+
+關於 5. Process supervision／exec／app-server
+
+  目前只有 ProcessSopStep 與 StartTurn / SteerTurn 的形狀，尚未完成：
+
+  • Native actor 與 OS process 的 attach／rebind 規範 <= 我記得有說這些都實作在 v1.0.0 的 FodexFun，也就是說 process 操作如果是要敲 proc supervisor (直接 reference nuget package 而不是 使用 windows service) 建立，那不要變成規範，畢靜 proc supervisor 太髒了，你覺得呢?
+  • Proc Supervisor 的責任邊界。 (同上)
+  • exec 與 app-server capability 差異 <= 這部分應該要做，我可能把你之前做的砍了，你補上。不過我覺得差異應該會是在 ReActLoop 底下的 member ，我們認知一樣嗎?
+  • restart 後如何保留 logical participant identity。
+
+  restart wrapper 那就是要確保 codex cli session id 要正確被記錄，wrapper 重啟時使用同樣的 topology 帶起，頂多 IAgent綁的 actor 與 .net process 物件不同不是嗎?
+
+
+關於 7. 六份 snippets 尚未整合編譯  -> 你這波改完再編譯?
+
+
+
+
+
+
+
+• 你的理解大致正確，但「高階 operation」有一個關鍵差異：它不應等同於讓 agent 自己用 shell／FSI 查 DB，而應是 wrapper／ReActLoop 可重現、可版本化的
+  deterministic orchestration。
+
+  ### 4. Explicit 與 implicit COT
+
+  兩種觸發來源不同，但可以共用同一個 operation：
+
+  Explicit：/wrapper_cot ...
+  Implicit：wrapper regex 命中「那段 code」之類的指涉
+      ↓
+  InvokeWrapperCot（versioned FodexFun）
+      ↓
+  從 persisted ReActDataStream 做 bounded selection
+      ↓
+  AcquireParticipant
+      ↓
+  把整理後資料送給 COT participant
+      ↓
+  逐步 SteerTurn 給 main participant
+
+  其中「最近 20K token＋regex」只是 v1.0.0 的 context-selection policy，未來可以換其他版本。
+
+  我不建議查詢 RouteReActDataStream + sinked data 兩套來源。正確模型應該是：
+
+  • RouteReActDataStream 成功後，事件已經 durable persisted。
+  • MainWrapperToHuman 也屬於 persisted stream。
+  • sink 只是 DB 資料投影到 user 的 side effect，不是第二份權威歷史。
+
+  如此 COT 只查 persisted ReActDataStream。不用做 TencentDB memory，也不用讓 participant 理解 DB schema。
+
+  所以你對高階 operation 的理解沒有根本錯誤；只是 operation 應包含整段 deterministic orchestration，而 DB 查詢只是它的 implementation detail。
+
+  ### 5. Process supervision
+
+  這部分我同意你的判斷：
+
+  • FAkka.Proc.Supervisor、Windows Service、直接 reference NuGet、attach/rebind 細節都不要進 contract。
+  • v1.0.0 的 FodexFun implementation 可以直接使用那個髒但有效的 library。
+  • Contract 只保留：
+      • ProcessSopStep
+      • logical participant identity 不因資源替換而改變
+      • 同一 logical participant 可以 UpsertParticipant 成新的 IAgent
+
+  換句話說，Proc Supervisor 是實作材料，不是 Fodex 規範。
+
+  ### exec／app-server capability
+
+  我們的認知「部分相同」。
+
+  差異確實應該在 ReActLoop 的操作邊界被看見，因為 ReActLoop 決定要 StartTurn 還是 SteerTurn；但真正支援哪些能力，是 Native IAgent／adapter 所擁有。
+
+  我不建議出現 ExecXXX、AppServerXXX 這種 member。較乾淨的最小形狀是：
+
+  type ReActParticipantCapability =
+      | CanStartTurn
+      | CanSteerTurn
+      | CanInterruptTurn
+      | CanResumeSession
+
+  然後：
+
+  abstract member GetParticipantCapabilities:
+      FeasibleT<
+          ReActParticipant,
+          ReActParticipantCapability list,
+          exn
+      >
+
+  abstract member DispatchToParticipant:
+      FeasibleT<
+          ReActParticipant
+              * ReActTurnInputMode
+              * 'TAgentCommMsg,
+          int,
+          exn
+      >
+
+  也就是 ReActLoop 使用統一 member；exec v1.0.0 可能只有 CanStartTurn，app-server v1.0.0 則可提供 steer／interrupt／resume。實際行為仍由各自的 FodexFun 實作。
+
+  ### Wrapper restart
+
+  你的理解正確，但需要區分兩種 session ID：
+
+  • ReActParticipantSessionId：Fodex topology／ReActLoop session。
+  • Codex CLI session/thread ID：用來 resume native runtime。
+
+  Wrapper 重啟時應保存並恢復：
+
+  logical ReActParticipant
+  + topology
+  + Codex runtime session ID
+
+  之後可以換成：
+
+  新的 IActorRef
+  新的 IAgent object expression
+  新的 .NET Process / PID
+
+  但仍 UpsertParticipant 到同一個 logical participant。.NET Process 不應進 contract。
+
+  ### 六份 snippet 的實際狀態
+
+  目前是：
+
+  • 1～4：已整合進 concepts.fsx 並編譯成功。
+  • 6：Expecto 6/6 通過。
+  • 5：尚未遷移到 implementation project；RegistryFunctionQuotationsV100.fsx 與 RuntimeRegistration.fsx 還不是新版雙層 FodexFun。
+
+  所以嚴格來說，還不能宣稱「六份都完成並通過整個 solution」。目前完成的是 contract＋純函數測試；implementation quotation registration 要等這輪 contract 語意確
+  認後再接。
+
+  Worked for 1m 24s • 4:11 AM
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 把整理後資料送給 COT participant <- 這樣 COT participant 放飛自我，我們又不是 AI 公司，不是專門搞 COT 的，沒有無限算力以及人力，我們只是包 CODEX CLI 不是去
+  設計更好的 CODEX CLI
+
+
+• 對，我剛才過度設計了。這不是要打造一套新的 COT framework。
+
+  正確的最小模型應該是：
+
+  syntax／implicit regex 命中
+  → 用既有 AcquireParticipant 建立普通 Codex CLI participant
+  → 傳入原始指令與 regex
+  → participant 呼叫固定的 shell／FSI helper
+  → helper 從 persisted ReActDataStream 取最近最多 20K token
+  → Codex CLI 處理一次
+  → 將輸出 SteerTurn 給 main participant
+
+  重點是：
+
+  • 不先用模型「整理資料」。
+  • 不讓 COT participant 遞迴規劃或管理其他 participant。
+  • 不建立 memory framework。
+  • 不把 DB 包成龐大的高階 ReActLoop API。
+  • helper 只做 deterministic 的 regex、排序、token 截斷與輸出。
+  • 推理仍完全交給既有 Codex CLI。
+
+  因此也不需要新增我剛才提議的 InvokeWrapperCot 高階 member。既有的 AcquireParticipant、StartTurn、RouteReActDataStream、SteerTurn 已足以組合這個流程；歷史查
+  詢 helper 屬於 v1.0.0 implementation／初始化環境。
+
+  /wrapper_cot 與 implicit COT 的差別只在觸發來源：
+
+  • /wrapper_cot：使用者明確要求建立輔助 participant。
+  • implicit COT：wrapper 的簡單規則命中後，自動建立同樣受限的 participant。
+
+  兩者都只是「多叫一次 Codex CLI，提供一個有限的歷史查詢工具」，不是我們自行研發更好的 Codex。上一則提出的高階 COT orchestration，我撤回。
+
+  Worked for 24s • 4:18 AM
+
+
+
+
+
+› 這樣講好了，我反而是要讓模型 "process something" ，建立 COT ，得到一些結論或者摘要，再傳給 main participant
+  但是這個怎麼 "process something"，是人 involved
+
+  AI 公司，像是你的創造者 OpenAI 他們會透過一連串的情境訓練資料，讓主要模型在大算特算之前，先用一串 LLM (也可能是同一個LLM) 產生一系列的 "TOKEN STREAM" 且確
+  保這串 TOKEN STREAM 能讓後續主要模型在大算特算的時候更正確。我只是希望這個 `用一串 LLM (也可能是同一個LLM) 產生一系列的 "TOKEN STREAM"` 是由我 INSTRUCT 的
+
+
+• 明白了。我前兩次分別偏向「系統替模型整理」與「只提供查詢工具」，都沒有抓到你的核心。
+
+  你要的是「人類指定如何加工，LLM 負責實際加工」：
+
+  使用者提供 process instruction
+          +
+  指定／選取的 ReActData
+          ↓
+  一個或多個 COT participant 執行 LLM processing
+          ↓
+  產生可觀察、可保存的 token stream
+          ↓
+  把結論、摘要或中間產物 SteerTurn 給 main participant
+          ↓
+  main participant 再進行主要工作
+
+  例如：
+
+  /wrapper_cot
+  請將目前生成 WWW 的基礎依序處理：
+
+  1. 原始檔案分析
+  2. 整理並匯總
+  3. 去重去誤
+  4. 流程 SOP 化
+  5. 重新生成 WWW 的具體定義
+
+  這五個步驟不是 wrapper 寫死的 deterministic algorithm，也不是我們訓練出的 inference policy；它們就是人類交給 COT participant 的 instruction。
+
+  Wrapper／ReActLoop 只負責 deterministic control plane：
+
+  • 辨識 /wrapper_cot。
+  • 建立並 pin COT participant。
+  • 決定要提供哪些 persisted ReActData。
+  • 將使用者的原始 instruction 原封不動交給它。
+  • 捕捉其輸出的 token stream。
+  • 以 AgentCot／AgentWork 保存並建立 causedBy 關係。
+  • 將指定輸出 SteerTurn 給 main participant。
+  • 控制 token、participant 數量及生命週期，避免無界運算。
+
+  真正的「process something」完全由 LLM 按照人類 instruction 執行。
+
+  Implicit COT 也必須遵守同一原則：regex 只能選擇人類預先定義的 instruction template，不能由 wrapper 自己發明處理流程。若沒有對應的人類 instruction，就不應自
+  動觸發。
+
+  所以高階 operation 的正確邊界是：
+
+  deterministic：建立、餵入、保存、串接、steer
+  non-deterministic：LLM 按照人類 instruction 產生 token stream
+
+  既有 AcquireParticipant、ReActDataStream、AgentCot、causedBy、StartTurn、SteerTurn 已經能承載這個模型。Contract 主要缺的是把「Wrapper COT 是 user-
+  instructed、model-generated、observable token stream」寫清楚，而不是再發明一套 COT engine。
+
+  Worked for 31s • 4:26 AM
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 總之它不能用 MAIN PARTICIPANT 的 SESSION 進行生成
+
+
+• 收到，這是 hard invariant：
+
+  • COT participant 必須有獨立的 logical participant 與 runtime session。
+  • 絕對不能 attach、resume 或直接在 main participant 的 Codex session/thread 上生成。
+  • 可以讀取 main session 已持久化的 ReActDataStream，但那只是輸入資料的複本。
+  • COT 輸出只能透過 ReActDataStream 回到 ReActLoop，再以 SteerTurn 注入 main participant。
+  • 是否重用既有 COT session 可由 implementation/version policy 決定，但永遠不得重用 main session。
+
+  也就是：
+
+  Main session history
+      ──copy/select──▶ Independent COT session
+                           │
+                           └──token stream──▶ ReActLoop
+                                                  │
+                                                  └──SteerTurn──▶ Main session
+
+  即使使用相同模型、相同 executable 或相同 actor node，也不等於可以共用 session。這應直接寫成 Wrapper COT 的 contract invariant。
+
+  Worked for 9s • 4:30 AM    
+
+
+
+
+
+
+
+
+
+
+4. 目前應該 ALIGN 了?
+5. exec／app-server capability -> 你說的我同意
+5. WRAPPER RESTART -> 有個點，有些情況下 CODEX CLIE 會因為各種問題再起不能，如果是 COT 或者其他非 MAIN PARTICIPANT 那就砍掉就好，不重建，但是 MAIN PARTICIPANT 的 CODEX CLI (就算 MAIN PARTICIPANT 是 WRAPPER 總之 NESTED 最終有個 CODEX CLI)SESSION 掛掉，有可能 WRAPPER 會整體不正常
+USER 必須能使用 IAgent 快速看到那個 session id ，自己使用 codex cli 去驗證，如果確定掛了，那 ReActData 要能被匯出作為新 agent 的 handoff
+ => IAgent 要有一個 member 可以將 ReActDataStream 匯出成巨型 jsonl 的功能。確保本功能是能在 fsi 單純 load .dll 檔之後就能運作的 (吃 wrapper 的 session id 就要能匯出)
+ => 也就是 wrapper 的 sid 是 wrapper 的 sid 但是如果是 native participant，那就是 codex session 的 id。 exec 的 id 可以參考 G:\PulseTrade.fs\notes_new2\202610\20261022\00271.newagent.txt 怎麼取， app-server 就要你研究了
+7. 依照你上面說的
+
+
+
+
+
+
+• 我把這輪拆成兩個明確結果：先確認並寫入 contract invariant（COT 絕不共用 main session、exec/app-server capability、session ID 與 handoff export），再補齊可編
+  譯的 quotation／registration 與純測試。這裡有一個必須實證的細節：exec 與 app-server 各自哪個 protocol 欄位才是可 resume 的 session/thread ID；我會先讀你指定
+  的 00271.newagent.txt、本機 app-server guide/demo，以及現有 store/archive，再決定最小型別，不會猜。
+
+  本輪會使用 powershell-output-guard skill；修改 concepts.fsx 前仍先做時間戳快照、單獨 commit/push、核對遠端。
+
+• 目前第 4 點已對齊：COT 必須使用獨立 participant／Codex session，只能經由持久化的 ReActDataStream 把結果 steer 回 main，絕不借用 main session。接下來我會把
+  「可恢復 session ID、exec/app-server capability、JSONL handoff 匯出」收斂成最少量的 contract 型別與 FodexFun，先確認現有 store／registry 邊界，再依規則建立
+  並推送本回合的 concepts 快照後才動主檔。
+
+
+• 我會把這次新增面收斂為三個小規範，不引入 store/provider record：
+
+  • IAgent.GetSessionId：回傳可供人手動驗證／resume 的 ID；app-server 取 thread.id，不是共享 session tree 的 thread.sessionId；exec 取 Codex 提供的
+    CODEX_SESSION_ID。
+
+  • IAgent.ExportReActDataStreamJsonl：以 wrapper session ID 與輸出路徑為輸入，逐行串流寫檔並回傳筆數，不把巨型 JSONL 堆成字串。
+  • ReActLoop.GetParticipantCapabilities：只描述 StartTurn / SteerTurn / InterruptTurn / ResumeSession 能力；具體 exec/app-server/proc supervisor 留在實作版
+    本。
+
+  另外會把「COT/aux resume 失敗可移除、main resume 失敗須暴露 ID 並可匯出 handoff」寫成 contract invariant。現在先執行你要求的快照 commit/push。
+
+• 第 4、5 點已對齊並寫入 contract：
+
+  • COT 必須使用獨立 logical participant 與 Codex session，禁止借用 main session 生成。
+  • 新增 AgentSessionId：
+      • exec → CODEX_SESSION_ID
+      • app-server → result.thread.id；官方也要求保存它供 thread/resume 使用。OpenAI Docs
+
+  • IAgent 新增版本化 GetSessionId、ExportReActDataStreamJsonl，底層皆為 FodexFun。
+  • JSONL export 規範為逐行複製 persisted event，不得整包 materialize，也不要求 FSI 知道 'TypedCmdToWrapper。
+  • ReActLoop.DispatchToParticipant 現在包含 ReActTurnInputMode。
+  • 新增 GetParticipantCapabilities 與四項 capability：start、steer、interrupt、resume。
+  • COT／auxiliary resume 失敗可移除；main resume 失敗必須保留 session ID 與 handoff export。
+
+  主要內容在 concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx:463)。
+
+  驗證結果：
+
+  • 快照 concepts.202610280448.fsx 已 commit/push：24f2829
+  • Contract build：成功，0 error；僅既有 ParseLine.fsx:155 warning
+  • Expecto：6/6 passed
+  • UTF-8 no BOM、無 NUL、無 U+FFFD
+  • 目前改進版尚未 commit，保留給你檢視
+
+  還有一個必須先討論的缺口：目前 UpsertParticipant 無法明確辨別「main」與「可丟棄的 auxiliary」。只靠第一個 participant 或 routing edge 推測，wrapper restart
+  時不可靠。
+
+  我建議下一小段加入最小 DU：
+
+  type ReActParticipantRole =
+      | Main
+      | Auxiliary
+
+  並讓 UpsertParticipant 接受 (role, participant, iAgent)。這樣 restart policy 才是 contract，而不是 implementation 猜測。你同意這個最小標記嗎？
+
+  另外，FSI 匯出的 contract 已成立，但真正 #r Fodex.Supervisor.dll 後只給 SID 即可匯出的實作，仍須等 Supervisor 的 store adapter；目前沒有可誠實執行的 DB
+  implementation，我沒有用 failwith 假裝完成。
+
+  Worked for 15m 5s • 4:59 AM
