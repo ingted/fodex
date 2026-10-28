@@ -1,10 +1,12 @@
-#load @"C:\Users\Administrator\.codex\lib\ParseLine.fsx"
-
 #I @"bin\Debug\net10.0"
 #r "Akka.dll"
 #r "Argu.dll"
 #r "Fodex.Supervisor.Contracts.dll"
 #r "Fodex.Supervisor.dll"
+
+// 必須在 Contract 載入後再載入：Contract 也有全域 PL module，
+// Visual Studio FSI 全選執行時，最後載入的才是 defaultArgumentsText 要用的五參數 parser。
+#load @"C:\Users\Administrator\.codex\lib\ParseLine.fsx"
 
 open System
 open System.IO
