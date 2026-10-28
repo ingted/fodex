@@ -6,6 +6,7 @@ open System.Runtime.CompilerServices
 open Akka.Actor
 open Fodex.Supervisor.Contracts.Concepts
 open Fodex.Supervisor.Contracts.CoreMod
+open Fodex.Supervisor.Contracts.TypesMod
 
 /// v1.0.0 function quotations 共用的無外部資源狀態。
 /// 它讓 quotation 可獨立測試；後續 DB/actor-backed 版本可放在新的版本檔並另行註冊。
@@ -21,11 +22,9 @@ type RegistryFunctionState<'TypedCmdToWrapper, 'TAgentCommMsg>() =
     let activeParticipantTurns = Dictionary<ReActParticipantSessionId, int>()
     let wrapperGenerating = HashSet<ReActParticipantSessionId>()
     let streamSessions = Dictionary<StreamId, ReActParticipantSessionId>()
-    let streams =
-        Dictionary<
-            ReActParticipantSessionId,
-            ResizeArray<ReActDataStream<'TypedCmdToWrapper>>
-        >()
+    let wrapperParticipants =
+        Dictionary<ReActParticipantSessionId, ReActParticipant>()
+    let latestStreamIds = Dictionary<ReActParticipantSessionId, StreamId>()
 
     let countFor
         (counts: Dictionary<ReActParticipantSessionId, int>)
@@ -63,18 +62,13 @@ type RegistryFunctionState<'TypedCmdToWrapper, 'TAgentCommMsg>() =
         | StdErr (streamId, _, _) -> streamId
         | AgentEnd (streamId, _, _, _) -> streamId
 
-    let appendStream sessionId stream =
-        let sessionStreams =
-            match streams.TryGetValue sessionId with
-            | true, found -> found
-            | false, _ ->
-                let created = ResizeArray<ReActDataStream<'TypedCmdToWrapper>>()
-                streams[sessionId] <- created
-                created
-
+    let rememberStream sessionId stream =
         let streamId = streamIdOf stream
         streamSessions[streamId] <- sessionId
-        sessionStreams.Add stream
+        latestStreamIds[sessionId] <-
+            match latestStreamIds.TryGetValue sessionId with
+            | true, current -> max current streamId
+            | false, _ -> streamId
 
     let missingParticipant participant =
         KeyNotFoundException(
@@ -123,12 +117,12 @@ type RegistryFunctionState<'TypedCmdToWrapper, 'TAgentCommMsg>() =
     ) : Result<int, exn> =
         lock gate (fun () ->
             let _, sessionId = participant
+            wrapperParticipants[sessionId] <- participant
             pendingHumanInitSessions.Enqueue sessionId
             increment pendingHumanPrompts sessionId |> Ok)
 
-    member _.DispatchToParticipant(
-        participant: ReActParticipant,
-        _message: 'TAgentCommMsg
+    member _.RecordParticipantTurn(
+        participant: ReActParticipant
     ) : Result<int, exn> =
         lock gate (fun () ->
             if participants.ContainsKey participant then
@@ -138,10 +132,22 @@ type RegistryFunctionState<'TypedCmdToWrapper, 'TAgentCommMsg>() =
                 Error (missingParticipant participant))
 
     member _.RouteReActDataStream(
-        stream: ReActDataStream<'TypedCmdToWrapper>
+        stream: ReActDataStream<'TypedCmdToWrapper>,
+        persist:
+            ReActParticipantSessionId
+                -> ReActDataStream<'TypedCmdToWrapper>
+                -> Result<PersistedReActDataCount, exn>
     ) : Result<int, exn> =
         lock gate (fun () ->
             let streamId = streamIdOf stream
+
+            let persistThen sessionId afterPersist =
+                match persist sessionId stream with
+                | Error ex -> Error ex
+                | Ok persistedCount ->
+                    rememberStream sessionId stream
+                    afterPersist ()
+                    Ok persistedCount
 
             if streamSessions.ContainsKey streamId then
                 Error (
@@ -160,11 +166,11 @@ type RegistryFunctionState<'TypedCmdToWrapper, 'TAgentCommMsg>() =
                         )
                     )
                 | HumanInit _ ->
-                    let sessionId = pendingHumanInitSessions.Dequeue()
-                    decrement pendingHumanPrompts sessionId |> ignore
-                    wrapperGenerating.Add sessionId |> ignore
-                    appendStream sessionId stream
-                    Ok 1
+                    let sessionId = pendingHumanInitSessions.Peek()
+                    persistThen sessionId (fun () ->
+                        pendingHumanInitSessions.Dequeue() |> ignore
+                        decrement pendingHumanPrompts sessionId |> ignore
+                        wrapperGenerating.Add sessionId |> ignore)
                 | AgentEnd (_, causedBy, (_, participantSessionId), _) ->
                     match streamSessions.TryGetValue causedBy with
                     | false, _ ->
@@ -186,20 +192,19 @@ type RegistryFunctionState<'TypedCmdToWrapper, 'TAgentCommMsg>() =
                             )
                         )
                     | true, _ ->
-                        appendStream participantSessionId stream
-                        let active =
-                            decrement activeParticipantTurns participantSessionId
-                        if active = 0 then
-                            wrapperGenerating.Remove participantSessionId |> ignore
-                        Ok 1
+                        persistThen participantSessionId (fun () ->
+                            let active =
+                                decrement activeParticipantTurns participantSessionId
+                            if active = 0 then
+                                wrapperGenerating.Remove participantSessionId
+                                |> ignore)
                 | AgentCot (_, causedBy, _)
                 | AgentWork (_, causedBy, _)
                 | StdOut (_, causedBy, _)
                 | StdErr (_, causedBy, _) ->
                     match streamSessions.TryGetValue causedBy with
                     | true, sessionId ->
-                        appendStream sessionId stream
-                        Ok 1
+                        persistThen sessionId ignore
                     | false, _ ->
                         Error (
                             invalidStream (
@@ -209,18 +214,6 @@ type RegistryFunctionState<'TypedCmdToWrapper, 'TAgentCommMsg>() =
                                     causedBy
                             )
                         ))
-
-    member _.Collect(
-        sessionId: ReActParticipantSessionId
-    ) : Result<ReActDataStream<'TypedCmdToWrapper> [], exn> =
-        lock gate (fun () ->
-            match streams.TryGetValue sessionId with
-            | true, sessionStreams ->
-                sessionStreams
-                |> Seq.sortBy streamIdOf
-                |> Seq.toArray
-                |> Ok
-            | false, _ -> Ok [||])
 
     member _.GetStatus(
         sessionId: ReActParticipantSessionId
@@ -235,6 +228,45 @@ type RegistryFunctionState<'TypedCmdToWrapper, 'TAgentCommMsg>() =
 
     member _.ContainsParticipant(participant: ReActParticipant) =
         lock gate (fun () -> participants.ContainsKey participant)
+
+    member _.NextStreamId(sessionId: ReActParticipantSessionId) =
+        lock gate (fun () ->
+            let next =
+                match latestStreamIds.TryGetValue sessionId with
+                | true, current -> current + 1L
+                | false, _ -> 1L
+            latestStreamIds[sessionId] <- next
+            next)
+
+    member _.LatestStreamId(sessionId: ReActParticipantSessionId) =
+        lock gate (fun () ->
+            match latestStreamIds.TryGetValue sessionId with
+            | true, streamId -> Ok streamId
+            | false, _ ->
+                Error (
+                    invalidStream (
+                        sprintf "Session %A has no routed ReActDataStream" sessionId
+                    )
+                ))
+
+    member _.ResolveWrapperParticipant(sessionId: ReActParticipantSessionId) =
+        lock gate (fun () ->
+            match wrapperParticipants.TryGetValue sessionId with
+            | true, participant -> Ok participant
+            | false, _ ->
+                Error (
+                    invalidStream (
+                        sprintf "Session %A has no main wrapper participant" sessionId
+                    )
+                ))
+
+    member _.SeedPersistedStreams(
+        sessionId: ReActParticipantSessionId,
+        streams: ReActDataStream<'TypedCmdToWrapper> []
+    ) =
+        lock gate (fun () ->
+            streams
+            |> Array.iter (fun stream -> rememberStream sessionId stream))
 
 /// Evaluated ReActLoop functions use the bound handler to locate shared state.
 /// The weak-key table follows the handler lifetime and keeps quotations free of captured values.

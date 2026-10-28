@@ -42,6 +42,7 @@
     <PackageReference Include="FAkka.Argu" Version="10.2.1" />
     <PackageReference Include="FAkka.FSharp.Quotations.Evaluator" Version="2.2.1" />
     <PackageReference Include="FAkka.FSI.Supervisor" Version="1.572.2" />
+    <PackageReference Include="FAkka.Proc.Supervisor" Version="1.572.3" />
     <PackageReference Include="FSharp.Compiler.Service" Version="43.12.402" />
     <PackageReference Include="FAkka.Quartz.Actor" Version="1.572.2" />
     <PackageReference Include="FAkka.Shared" Version="10.2.6" />
@@ -60,9 +61,20 @@
   <ItemGroup>
 	  <Compile Include="SupervisorArgs.fsx" />
 	  <Compile Include="LoggingRuntime.fsx" />
+	  <Compile Include="CodexRuntimeV100.fsx" />
+	  <Compile Include="ProcSupervisorRuntimeV100.fsx" />
+	  <Compile Include="FodexFunRegistry.fsx" />
+	  <Compile Include="ReActDataStoreV100.fsx" />
+	  <Compile Include="IAgentFodexFunV100.fsx" />
 	  <Compile Include="RegistryFunctionState.fsx" />
+	  <Compile Include="ReActLoopFodexFunV100.fsx" />
+	  <Compile Include="CliFodexFunV100.fsx" />
+	  <Compile Include="FodexFunRegistrationV100.fsx" />
 	  <Compile Include="Application.fsx" />
 	  <Compile Include="main.fsx" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fodex.Supervisor.Contract\Fodex.Supervisor.Contracts.fsproj" />

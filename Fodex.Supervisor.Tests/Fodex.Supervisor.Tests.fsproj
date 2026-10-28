@@ -12,7 +12,15 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ImplementationTestHelpers.fs" />
     <Compile Include="RegistryFunctionQuotationTests.fs" />
+    <Compile Include="CodexRuntimeV100Tests.fs" />
+    <Compile Include="ProcSupervisorV100Tests.fs" />
+    <Compile Include="CliFodexFunV100Tests.fs" />
+    <Compile Include="IAgentFodexFunV100Tests.fs" />
+    <Compile Include="ReActDataStoreV100Tests.fs" />
+    <Compile Include="ReActLoopFodexFunV100Tests.fs" />
+    <Compile Include="FodexFunRegistrationV100Tests.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
@@ -20,6 +28,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fodex.Supervisor.Contract\Fodex.Supervisor.Contracts.fsproj" />
+    <ProjectReference Include="..\Fodex.Supervisor\Fodex.Supervisor.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="10.1.402" />

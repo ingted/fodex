@@ -9,7 +9,7 @@ module Main =
             2
         | Ok options ->
             try
-                match Application.run options with
+                match Application.run argv options with
                 | Ok exitCode -> exitCode
                 | Error err ->
                     eprintfn "Fodex.Supervisor failed: %s" err.Message
