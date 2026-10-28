@@ -170,6 +170,16 @@ module IAgentFodexFunV100Tests =
                             [| CanStartTurn |]
                             "exec v1.0.0 must not claim steer or interrupt support"
 
+                    AgentRuntime.dispatch
+                        acquired
+                        StartTurn
+                        "actor acknowledgement probe"
+                        1L
+                    |> expectOk "dispatch through Native actor"
+                    |> fun accepted ->
+                        Expect.equal accepted 1
+                            "Native dispatch must return the actor/worker acknowledgement"
+
                     let nativeParentInput =
                         node,
                         acquired,

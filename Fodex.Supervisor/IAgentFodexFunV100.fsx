@@ -4,6 +4,7 @@ open System
 open System.Runtime.CompilerServices
 open System.Text.Json
 open Akka.Actor
+open Akka.Pattern
 open FSharp.Quotations
 open LoggerUtil
 open Fodex.Supervisor.Contracts.CommandMod
@@ -205,14 +206,19 @@ type NativeAgentRuntimeActor(binding: NativeRuntimeBinding) as this =
             | AgentLifecycleMessage.Stop -> binding.Stop() |> ignore)
 
         this.Receive<NativeTurnDispatch>(fun dispatch ->
-            binding.Dispatch(
-                dispatch.InputMode,
-                dispatch.Message,
-                dispatch.CausedBy
-            )
-            |> ignore)
+            let result =
+                binding.Dispatch(
+                    dispatch.InputMode,
+                    dispatch.Message,
+                    dispatch.CausedBy
+                )
+
+            this.ReplyToSender result)
 
         this.ReceiveAny(ignore)
+
+    member this.ReplyToSender(result: Result<int, exn>) : unit =
+        this.Sender.Tell(result, this.Self)
 
     override _.PostStop() =
         binding.Stop() |> ignore
@@ -448,15 +454,16 @@ module AgentRuntime =
                             let dispatcher: NativeDispatcher =
                                 fun inputMode message causedBy ->
                                     try
-                                        actorRef.Tell(
+                                        actorRef.Ask<Result<int, exn>>(
                                             {
                                                 InputMode = inputMode
                                                 Message = message
                                                 CausedBy = causedBy
                                             },
-                                            ActorRefs.NoSender
+                                            runtimeOptions.Timeout
                                         )
-                                        Ok 1
+                                            .GetAwaiter()
+                                            .GetResult()
                                     with ex ->
                                         Error ex
                             let metadata =
