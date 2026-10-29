@@ -1,494 +1,219 @@
 namespace Fodex.Supervisor
 
 open System
-open System.Collections.Concurrent
-open System.Threading.Tasks
+open System.Collections.Generic
 open Akka.Actor
+open Akka.FSharp
 open FSharp.Quotations
 open Fodex.Supervisor.Contracts.CommandMod
 open Fodex.Supervisor.Contracts.Concepts
 open Fodex.Supervisor.Contracts.CoreMod
 open Fodex.Supervisor.Contracts.LiteralsMod
-open Fodex.Supervisor.Contracts.TypesMod
 
-type ReActLoopSessionOutput(userSink: string -> unit) =
-    let gate = obj ()
-    let completion =
-        TaskCompletionSource<string>(
-            TaskCreationOptions.RunContinuationsAsynchronously
-        )
-    let mutable outputLength = 0
-
-    member _.Emit(text: string) =
-        lock gate (fun () ->
-            outputLength <- outputLength + text.Length
-            userSink text)
-
-    member _.Complete(text: string) =
-        lock gate (fun () ->
-            if outputLength = 0 && not (String.IsNullOrEmpty text) then
-                outputLength <- text.Length
-                userSink text
-            completion.TrySetResult text |> ignore)
-
-    member _.Fail(error: exn) =
-        completion.TrySetException error |> ignore
-
-    member _.Task = completion.Task
-
-module ReActLoopRuntimeV100 =
-    let sessions =
-        ConcurrentDictionary<ReActParticipantSessionId, ReActLoopSessionOutput>()
-
-    let prepare
-        (sessionId: ReActParticipantSessionId)
-        (userSink: string -> unit) =
-        let output = ReActLoopSessionOutput(userSink)
-        sessions[sessionId] <- output
-        output.Task
-
-    let emit (sessionId: ReActParticipantSessionId) (text: string) =
-        let mutable output = Unchecked.defaultof<ReActLoopSessionOutput>
-        if sessions.TryGetValue(sessionId, &output) then
-            output.Emit text
-
-    let complete (sessionId: ReActParticipantSessionId) (text: string) =
-        let mutable output = Unchecked.defaultof<ReActLoopSessionOutput>
-        if sessions.TryRemove(sessionId, &output) then
-            output.Complete text
-
-    let fail (sessionId: ReActParticipantSessionId) (error: exn) =
-        let mutable output = Unchecked.defaultof<ReActLoopSessionOutput>
-        if sessions.TryRemove(sessionId, &output) then
-            output.Fail error
-
-type ReActLoopHandlerActor<'TypedCmdToWrapper, 'TAgentCommMsg>() as this =
-    inherit ReceiveActor()
-
-    let state () =
-        RegistryFunctionStateStore<
-            'TypedCmdToWrapper,
-            'TAgentCommMsg
-        >.For this.Self
-
-    let route stream =
-        state().RouteReActDataStream(
-            stream,
-            ReActDataStoreV100.persist<'TypedCmdToWrapper>
-        )
-
-    let fail sessionId error =
-        ReActLoopRuntimeV100.fail sessionId error
-
-    do
-        this.Receive<NativeRuntimeRouteMessage>(fun message ->
-            match message with
-            | NativeDeltaToRoute(participant, causedBy, text) ->
-                let sessionId = snd participant
-                let streamId = state().NextStreamId sessionId
-                match route (StdOut(streamId, causedBy, text)) with
-                | Ok _ -> ReActLoopRuntimeV100.emit sessionId text
-                | Error ex -> fail sessionId ex
-
-            | NativeProgressToRoute(participant, causedBy, text) ->
-                let sessionId = snd participant
-                let streamId = state().NextStreamId sessionId
-                match route (StdErr(streamId, causedBy, text)) with
-                | Ok _ -> ()
-                | Error ex -> fail sessionId ex
-
-            | NativeFailureToRoute(participant, causedBy, message) ->
-                let sessionId = snd participant
-                let error = InvalidOperationException(message) :> exn
-                if causedBy > 0L then
-                    let streamId = state().NextStreamId sessionId
-                    route (StdErr(streamId, causedBy, message)) |> ignore
-                fail sessionId error
-
-            | NativeCompletedToRoute(participant, causedBy, status, text) ->
-                let sessionId = snd participant
-                if not (String.Equals(status, "completed", StringComparison.OrdinalIgnoreCase)) then
-                    let message =
-                        sprintf "Codex turn ended with status %s" status
-                    let streamId = state().NextStreamId sessionId
-                    route (StdErr(streamId, causedBy, message)) |> ignore
-                    fail sessionId (InvalidOperationException(message) :> exn)
-                else
-                    let nativeEndId = state().NextStreamId sessionId
-                    match
-                        route (
-                            AgentEnd(
-                                nativeEndId,
-                                causedBy,
-                                participant,
-                                NativeToWrapper text
-                            )
-                        )
-                    with
-                    | Error ex -> fail sessionId ex
-                    | Ok _ ->
-                        match state().ResolveWrapperParticipant sessionId with
-                        | Error ex -> fail sessionId ex
-                        | Ok wrapperParticipant ->
-                            let wrapperEndId = state().NextStreamId sessionId
-                            match
-                                route (
-                                    AgentEnd(
-                                        wrapperEndId,
-                                        nativeEndId,
-                                        wrapperParticipant,
-                                        MainWrapperToHuman text
-                                    )
-                                )
-                            with
-                            | Error ex -> fail sessionId ex
-                            | Ok _ ->
-                                ReActLoopRuntimeV100.complete sessionId text)
-
-        this.ReceiveAny(ignore)
+type ReActLoopCall<'Prompt, 'Message> =
+    | Upsert of ReActParticipant * IAgent<'Prompt, 'Message>
+    | Remove of ReActParticipant
+    | Resolve of ReActParticipant
+    | List of ReActParticipantSessionId
+    | PostPrompt of ReActParticipant * 'Prompt
+    | Dispatch of ReActParticipant * ReActTurnInputMode * 'Message
+    | Route of ReActDataStream<'Prompt>
+    | Collect of ReActParticipantSessionId
+    | Status of ReActParticipantSessionId
+    | Capabilities of ReActParticipant
 
 module ReActLoopFodexFunV100 =
     let version = Version(1, 0, 0)
+    let functionTargets = [| targetReActLoopUpsertParticipant; targetReActLoopRemoveParticipant
+                             targetReActLoopResolveParticipant; targetReActLoopListParticipants
+                             targetReActLoopPostHumanPrompt; targetReActLoopDispatchToParticipant
+                             targetReActLoopRouteReActDataStream; targetReActLoopCollect
+                             targetReActLoopGetStatus; targetReActLoopGetParticipantCapabilities |]
 
-    let functionTargets =
-        [|
-            targetReActLoopUpsertParticipant
-            targetReActLoopRemoveParticipant
-            targetReActLoopResolveParticipant
-            targetReActLoopListParticipants
-            targetReActLoopPostHumanPrompt
-            targetReActLoopDispatchToParticipant
-            targetReActLoopRouteReActDataStream
-            targetReActLoopCollect
-            targetReActLoopGetStatus
-            targetReActLoopGetParticipantCapabilities
-        |]
+    let request<'T> (handler: IActorRef) (message: obj) : Result<'T, exn> =
+        try handler.Ask<Result<'T, exn>>(message, TimeSpan.FromSeconds 30.) |> Async.RunSynchronously
+        with ex -> Error ex
 
-    let createHandler<'TypedCmdToWrapper, 'TAgentCommMsg>
-        (node: FodexNode) =
-        let actorName =
-            sprintf "fodex-react-loop-%s" (Guid.NewGuid().ToString("N"))
-        node.ActorOf(
-            Props.Create<
-                ReActLoopHandlerActor<'TypedCmdToWrapper, 'TAgentCommMsg>
-            >(),
-            actorName
-        )
+    let upsertParticipant<'P, 'M> : Expr<ReActLoopFunInput<ReActParticipant * IAgent<'P, 'M>> -> FeasibleT<ReActLoopFunInput<ReActParticipant * IAgent<'P, 'M>>, unit, exn>> =
+        <@ fun (_: FodexNode, handler: IActorRef, _: ReActParticipant * IAgent<'P, 'M>) ->
+            fun (_: FodexNode, _: IActorRef, (participant, agent)) -> request<unit> handler (ReActLoopCall<'P, 'M>.Upsert(participant, agent)) @>
+    let removeParticipant<'P, 'M> : Expr<ReActLoopFunInput<ReActParticipant> -> FeasibleT<ReActLoopFunInput<ReActParticipant>, unit, exn>> =
+        <@ fun (_: FodexNode, handler: IActorRef, _: ReActParticipant) ->
+            fun (_: FodexNode, _: IActorRef, participant) -> request<unit> handler (ReActLoopCall<'P, 'M>.Remove participant) @>
+    let resolveParticipant<'P, 'M> : Expr<ReActLoopFunInput<ReActParticipant> -> FeasibleT<ReActLoopFunInput<ReActParticipant>, IAgent<'P, 'M>, exn>> =
+        <@ fun (_: FodexNode, handler: IActorRef, _: ReActParticipant) ->
+            fun (_: FodexNode, _: IActorRef, participant) -> request<IAgent<'P, 'M>> handler (ReActLoopCall<'P, 'M>.Resolve participant) @>
+    let listParticipants<'P, 'M> : Expr<ReActLoopFunInput<ReActParticipantSessionId> -> FeasibleT<ReActLoopFunInput<ReActParticipantSessionId>, ReActParticipant [], exn>> =
+        <@ fun (_: FodexNode, handler: IActorRef, _: ReActParticipantSessionId) ->
+            fun (_: FodexNode, _: IActorRef, sid) -> request<ReActParticipant []> handler (ReActLoopCall<'P, 'M>.List sid) @>
+    let postHumanPrompt<'P, 'M> : Expr<ReActLoopFunInput<ReActParticipant * 'P> -> FeasibleT<ReActLoopFunInput<ReActParticipant * 'P>, int, exn>> =
+        <@ fun (_: FodexNode, handler: IActorRef, _: ReActParticipant * 'P) ->
+            fun (_: FodexNode, _: IActorRef, (participant, prompt)) -> request<int> handler (ReActLoopCall<'P, 'M>.PostPrompt(participant, prompt)) @>
+    let dispatchToParticipant<'P, 'M> : Expr<ReActLoopFunInput<ReActParticipant * ReActTurnInputMode * 'M> -> FeasibleT<ReActLoopFunInput<ReActParticipant * ReActTurnInputMode * 'M>, int, exn>> =
+        <@ fun (_: FodexNode, handler: IActorRef, _: ReActParticipant * ReActTurnInputMode * 'M) ->
+            fun (_: FodexNode, _: IActorRef, (participant, mode, message)) -> request<int> handler (ReActLoopCall<'P, 'M>.Dispatch(participant, mode, message)) @>
+    let routeReActDataStream<'P, 'M> : Expr<ReActLoopFunInput<ReActDataStream<'P>> -> FeasibleT<ReActLoopFunInput<ReActDataStream<'P>>, int, exn>> =
+        <@ fun (_: FodexNode, handler: IActorRef, _: ReActDataStream<'P>) ->
+            fun (_: FodexNode, _: IActorRef, stream) -> request<int> handler (ReActLoopCall<'P, 'M>.Route stream) @>
+    let collect<'P, 'M> : Expr<ReActLoopFunInput<ReActParticipantSessionId> -> FeasibleT<ReActLoopFunInput<ReActParticipantSessionId>, ReActDataStream<'P> [], exn>> =
+        <@ fun (_: FodexNode, handler: IActorRef, _: ReActParticipantSessionId) ->
+            fun (_: FodexNode, _: IActorRef, sid) -> request<ReActDataStream<'P> []> handler (ReActLoopCall<'P, 'M>.Collect sid) @>
+    let getStatus<'P, 'M> : Expr<ReActLoopFunInput<ReActParticipantSessionId> -> FeasibleT<ReActLoopFunInput<ReActParticipantSessionId>, ReActLoopStatus, exn>> =
+        <@ fun (_: FodexNode, handler: IActorRef, _: ReActParticipantSessionId) ->
+            fun (_: FodexNode, _: IActorRef, sid) -> request<ReActLoopStatus> handler (ReActLoopCall<'P, 'M>.Status sid) @>
+    let getParticipantCapabilities<'P, 'M> : Expr<ReActLoopFunInput<ReActParticipant> -> FeasibleT<ReActLoopFunInput<ReActParticipant>, ReActParticipantCapability [], exn>> =
+        <@ fun (_: FodexNode, handler: IActorRef, _: ReActParticipant) ->
+            fun (_: FodexNode, _: IActorRef, participant) -> request<ReActParticipantCapability []> handler (ReActLoopCall<'P, 'M>.Capabilities participant) @>
 
-    let requiredCapability = function
-        | StartTurn -> CanStartTurn
-        | SteerTurn -> CanSteerTurn
+    let register<'P, 'M> node =
+        FodexFunRegistry.register node targetReActLoopUpsertParticipant version upsertParticipant<'P, 'M>
+        FodexFunRegistry.register node targetReActLoopRemoveParticipant version removeParticipant<'P, 'M>
+        FodexFunRegistry.register node targetReActLoopResolveParticipant version resolveParticipant<'P, 'M>
+        FodexFunRegistry.register node targetReActLoopListParticipants version listParticipants<'P, 'M>
+        FodexFunRegistry.register node targetReActLoopPostHumanPrompt version postHumanPrompt<'P, 'M>
+        FodexFunRegistry.register node targetReActLoopDispatchToParticipant version dispatchToParticipant<'P, 'M>
+        FodexFunRegistry.register node targetReActLoopRouteReActDataStream version routeReActDataStream<'P, 'M>
+        FodexFunRegistry.register node targetReActLoopCollect version collect<'P, 'M>
+        FodexFunRegistry.register node targetReActLoopGetStatus version getStatus<'P, 'M>
+        FodexFunRegistry.register node targetReActLoopGetParticipantCapabilities version getParticipantCapabilities<'P, 'M>
 
-    let dispatchToParticipantRuntime
-        (state: RegistryFunctionState<'TypedCmdToWrapper, 'TAgentCommMsg>)
-        (participant, inputMode, message) =
-        match state.ResolveParticipant participant with
-        | Error ex -> Error ex
-        | Ok agent ->
-            match AgentRuntime.getCapabilities agent.Instance with
-            | Error ex -> Error ex
-            | Ok capabilities ->
-                let required = requiredCapability inputMode
-                if not (capabilities |> Array.contains required) then
-                    Error (
-                        InvalidOperationException(
-                            sprintf
-                                "Participant %A does not support %A"
-                                participant
-                                inputMode
-                        ) :> exn
-                    )
+    let withStreamId id = function
+        | HumanInit(_, data) -> HumanInit(id, data)
+        | AgentCot(_, cause, data) -> AgentCot(id, cause, data)
+        | AgentWork(_, cause, data) -> AgentWork(id, cause, data)
+        | StdOut(_, cause, text) -> StdOut(id, cause, text)
+        | StdErr(_, cause, text) -> StdErr(id, cause, text)
+        | AgentEnd(_, cause, participant, data) -> AgentEnd(id, cause, participant, data)
+
+    // A handler owns the graph, counters and stream ordering for a root session.
+    // All nested wrappers/participants enter through this same ReActLoop.
+    let createHandler (node: FodexNode) sessionId (sink: ReActDataStream<string> -> unit) =
+        spawn node ("react-" + Guid.NewGuid().ToString("N")) <| fun mailbox ->
+            let participants = Dictionary<ReActParticipant, IAgent<string, obj> * ReActParticipantCapability []>()
+            let replies = Dictionary<StreamId, ReActParticipant>()
+            let active = HashSet<ReActParticipant>()
+            let pending = HashSet<StreamId>()
+            let mutable generating = false
+            let mutable lastId = 0L
+
+            let resolve participant =
+                match participants.TryGetValue participant with
+                | true, value -> Ok value
+                | _ -> Error(KeyNotFoundException(sprintf "Participant %A is not registered" participant) :> exn)
+            let deliver participant message =
+                resolve participant |> Result.bind (fun (agent, _) -> agent.Send message)
+            let dispatch participant mode message cause =
+                resolve participant |> Result.bind (fun (agent, capabilities) ->
+                    let required = if mode = StartTurn then CanStartTurn else CanSteerTurn
+                    if not (Array.contains required capabilities) then
+                        Error(NotSupportedException(sprintf "%A is not supported" mode) :> exn)
+                    else
+                        agent.Send(box (RunTurn(mode, message, cause)))
+                        |> Result.map (fun count -> active.Add participant |> ignore; count))
+
+            let persist stream =
+                // v1: id=0 asks this mailbox to allocate the next id. Positive ids are exact.
+                let id = ReActDataStoreV100.streamIdOf stream
+                if id < 0L || (id <> 0L && id <= lastId) then
+                    Error(InvalidOperationException("Stream id must increase; use 0 for actor allocation") :> exn)
                 else
-                    let dispatchResult =
-                        if AgentRuntime.hasDispatcher agent.Instance then
-                            let _, sessionId = participant
-                            match state.LatestStreamId sessionId with
-                            | Error ex -> Error ex
-                            | Ok causedBy ->
-                                AgentRuntime.dispatch
-                                    agent.Instance
-                                    inputMode
-                                    message
-                                    causedBy
+                    let stream = withStreamId (if id = 0L then lastId + 1L else id) stream
+                    ReActDataStoreV100.persist sessionId stream
+                    |> Result.map (fun _ -> lastId <- ReActDataStoreV100.streamIdOf stream; stream)
+
+            let route stream =
+                persist stream |> Result.bind (fun stored ->
+                    let id = ReActDataStoreV100.streamIdOf stored
+                    let cause, data =
+                        match stored with
+                        | HumanInit(_, data) -> 0L, [| data |]
+                        | AgentCot(_, cause, data) | AgentWork(_, cause, data) -> cause, data
+                        | AgentEnd(_, cause, participant, data) ->
+                            active.Remove participant |> ignore
+                            cause, [| data |]
+                        | StdOut(_, cause, _) | StdErr(_, cause, _) -> cause, [||]
+                    match replies.TryGetValue cause with
+                    | true, owner -> replies[id] <- owner
+                    | _ -> ()
+                    let mutable result = Ok 1
+                    let mutable toHuman = false
+                    for item in data do
+                        if Result.isOk result then
+                            result <-
+                                match item with
+                                | WrapperToNatives(mode, message, target, owner) ->
+                                    replies[id] <- owner
+                                    pending.Remove cause |> ignore
+                                    dispatch target mode (box message) id
+                                | NativeToNative(mode, message, target) -> dispatch target mode (box message) id
+                                | NativeToWrapper _ ->
+                                    match replies.TryGetValue cause with
+                                    | true, owner -> deliver owner (box (ReceiveStream stored))
+                                    | _ -> Error(InvalidOperationException("Native output has no causedBy reply route") :> exn)
+                                | MainWrapperToWrapper(message, target) -> deliver target (box message)
+                                | MainWrapperToHuman _ ->
+                                    toHuman <- true
+                                    Ok 1
+                                | HumanPromptToWrapper _ -> Ok 1
+                    if Result.isOk result then
+                        if toHuman then
+                            sink stored
+                            match stored with AgentEnd _ -> generating <- false | _ -> ()
                         else
-                            agent.Send message
+                            match stored with StdOut _ | StdErr _ -> sink stored | _ -> ()
+                    result |> Result.map (fun _ -> 1))
 
-                    match dispatchResult with
-                    | Error ex -> Error ex
-                    | Ok accepted ->
-                        match state.RecordParticipantTurn participant with
-                        | Error ex -> Error ex
-                        | Ok _ -> Ok accepted
+            // Resume stream allocation from durable history, without retaining a second copy.
+            let history = ReActDataStoreV100.collect<string> sessionId
+            match history with
+            | Ok streams ->
+                for stream in streams do lastId <- max lastId (ReActDataStoreV100.streamIdOf stream)
+            | Error _ -> () // each operation still reports the store error through Result
 
-    let getParticipantCapabilitiesRuntime
-        (state: RegistryFunctionState<'TypedCmdToWrapper, 'TAgentCommMsg>)
-        participant =
-        match state.ResolveParticipant participant with
-        | Error ex -> Error ex
-        | Ok agent -> AgentRuntime.getCapabilities agent.Instance
-
-    let upsertParticipant<'TypedCmdToWrapper, 'TAgentCommMsg>:
-        Expr<
-            ReActLoopFunInput<
-                ReActParticipant
-                    * IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
-            >
-                -> FeasibleT<
-                    ReActLoopFunInput<
-                        ReActParticipant
-                            * IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>
-                    >,
-                    unit,
-                    exn
-                >
-        > =
-        <@
-            fun (_node, handler, _initialInput) ->
-                let state =
-                    RegistryFunctionStateStore<
-                        'TypedCmdToWrapper,
-                        'TAgentCommMsg
-                    >.For handler
-                fun (_sameNode, _sameHandler, input) ->
-                    state.UpsertParticipant input
-        @>
-
-    let removeParticipant<'TypedCmdToWrapper, 'TAgentCommMsg>:
-        Expr<
-            ReActLoopFunInput<ReActParticipant>
-                -> FeasibleT<
-                    ReActLoopFunInput<ReActParticipant>,
-                    unit,
-                    exn
-                >
-        > =
-        <@
-            fun (_node, handler, _initialParticipant) ->
-                let state =
-                    RegistryFunctionStateStore<
-                        'TypedCmdToWrapper,
-                        'TAgentCommMsg
-                    >.For handler
-                fun (_sameNode, _sameHandler, participant) ->
-                    state.RemoveParticipant participant
-        @>
-
-    let resolveParticipant<'TypedCmdToWrapper, 'TAgentCommMsg>:
-        Expr<
-            ReActLoopFunInput<ReActParticipant>
-                -> FeasibleT<
-                    ReActLoopFunInput<ReActParticipant>,
-                    IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>,
-                    exn
-                >
-        > =
-        <@
-            fun (_node, handler, _initialParticipant) ->
-                let state =
-                    RegistryFunctionStateStore<
-                        'TypedCmdToWrapper,
-                        'TAgentCommMsg
-                    >.For handler
-                fun (_sameNode, _sameHandler, participant) ->
-                    state.ResolveParticipant participant
-        @>
-
-    let listParticipants<'TypedCmdToWrapper, 'TAgentCommMsg>:
-        Expr<
-            ReActLoopFunInput<ReActParticipantSessionId>
-                -> FeasibleT<
-                    ReActLoopFunInput<ReActParticipantSessionId>,
-                    ReActParticipant [],
-                    exn
-                >
-        > =
-        <@
-            fun (_node, handler, _initialSessionId) ->
-                let state =
-                    RegistryFunctionStateStore<
-                        'TypedCmdToWrapper,
-                        'TAgentCommMsg
-                    >.For handler
-                fun (_sameNode, _sameHandler, sessionId) ->
-                    state.ListParticipants sessionId
-        @>
-
-    let postHumanPrompt<'TypedCmdToWrapper, 'TAgentCommMsg>:
-        Expr<
-            ReActLoopFunInput<ReActParticipant * 'TypedCmdToWrapper>
-                -> FeasibleT<
-                    ReActLoopFunInput<
-                        ReActParticipant * 'TypedCmdToWrapper
-                    >,
-                    int,
-                    exn
-                >
-        > =
-        <@
-            fun (_node, handler, _initialInput) ->
-                let state =
-                    RegistryFunctionStateStore<
-                        'TypedCmdToWrapper,
-                        'TAgentCommMsg
-                    >.For handler
-                fun (_sameNode, _sameHandler, input) ->
-                    state.PostHumanPrompt input
-        @>
-
-    let dispatchToParticipant<'TypedCmdToWrapper, 'TAgentCommMsg>:
-        Expr<
-            ReActLoopFunInput<
-                ReActParticipant * ReActTurnInputMode * 'TAgentCommMsg
-            >
-                -> FeasibleT<
-                    ReActLoopFunInput<
-                        ReActParticipant
-                            * ReActTurnInputMode
-                            * 'TAgentCommMsg
-                    >,
-                    int,
-                    exn
-                >
-        > =
-        <@
-            fun (_node, handler, _initialInput) ->
-                let state =
-                    RegistryFunctionStateStore<
-                        'TypedCmdToWrapper,
-                        'TAgentCommMsg
-                    >.For handler
-                fun (_sameNode, _sameHandler, input) ->
-                    dispatchToParticipantRuntime state input
-        @>
-
-    let routeReActDataStream<'TypedCmdToWrapper, 'TAgentCommMsg>:
-        Expr<
-            ReActLoopFunInput<ReActDataStream<'TypedCmdToWrapper>>
-                -> FeasibleT<
-                    ReActLoopFunInput<ReActDataStream<'TypedCmdToWrapper>>,
-                    PersistedReActDataCount,
-                    exn
-                >
-        > =
-        <@
-            fun (_node, handler, _initialStream) ->
-                let state =
-                    RegistryFunctionStateStore<
-                        'TypedCmdToWrapper,
-                        'TAgentCommMsg
-                    >.For handler
-                fun (_sameNode, _sameHandler, stream) ->
-                    state.RouteReActDataStream(
-                        stream,
-                        ReActDataStoreV100.persist<'TypedCmdToWrapper>
-                    )
-        @>
-
-    let collect<'TypedCmdToWrapper, 'TAgentCommMsg>:
-        Expr<
-            ReActLoopFunInput<ReActParticipantSessionId>
-                -> FeasibleT<
-                    ReActLoopFunInput<ReActParticipantSessionId>,
-                    ReActDataStream<'TypedCmdToWrapper> [],
-                    exn
-                >
-        > =
-        <@
-            fun (_node, _handler, _initialSessionId) ->
-                fun (_sameNode, _sameHandler, sessionId) ->
-                    ReActDataStoreV100.collect<'TypedCmdToWrapper> sessionId
-        @>
-
-    let getStatus<'TypedCmdToWrapper, 'TAgentCommMsg>:
-        Expr<
-            ReActLoopFunInput<ReActParticipantSessionId>
-                -> FeasibleT<
-                    ReActLoopFunInput<ReActParticipantSessionId>,
-                    ReActLoopStatus,
-                    exn
-                >
-        > =
-        <@
-            fun (_node, handler, _initialSessionId) ->
-                let state =
-                    RegistryFunctionStateStore<
-                        'TypedCmdToWrapper,
-                        'TAgentCommMsg
-                    >.For handler
-                fun (_sameNode, _sameHandler, sessionId) ->
-                    state.GetStatus sessionId
-        @>
-
-    let getParticipantCapabilities<'TypedCmdToWrapper, 'TAgentCommMsg>:
-        Expr<
-            ReActLoopFunInput<ReActParticipant>
-                -> FeasibleT<
-                    ReActLoopFunInput<ReActParticipant>,
-                    ReActParticipantCapability [],
-                    exn
-                >
-        > =
-        <@
-            fun (_node, handler, _initialParticipant) ->
-                let state =
-                    RegistryFunctionStateStore<
-                        'TypedCmdToWrapper,
-                        'TAgentCommMsg
-                    >.For handler
-                fun (_sameNode, _sameHandler, participant) ->
-                    getParticipantCapabilitiesRuntime state participant
-        @>
-
-    let register<'TypedCmdToWrapper, 'TAgentCommMsg>
-        (node: FodexNode) =
-        FodexFunRegistry.register
-            node
-            targetReActLoopUpsertParticipant
-            version
-            upsertParticipant<'TypedCmdToWrapper, 'TAgentCommMsg>
-        FodexFunRegistry.register
-            node
-            targetReActLoopRemoveParticipant
-            version
-            removeParticipant<'TypedCmdToWrapper, 'TAgentCommMsg>
-        FodexFunRegistry.register
-            node
-            targetReActLoopResolveParticipant
-            version
-            resolveParticipant<'TypedCmdToWrapper, 'TAgentCommMsg>
-        FodexFunRegistry.register
-            node
-            targetReActLoopListParticipants
-            version
-            listParticipants<'TypedCmdToWrapper, 'TAgentCommMsg>
-        FodexFunRegistry.register
-            node
-            targetReActLoopPostHumanPrompt
-            version
-            postHumanPrompt<'TypedCmdToWrapper, 'TAgentCommMsg>
-        FodexFunRegistry.register
-            node
-            targetReActLoopDispatchToParticipant
-            version
-            dispatchToParticipant<'TypedCmdToWrapper, 'TAgentCommMsg>
-        FodexFunRegistry.register
-            node
-            targetReActLoopRouteReActDataStream
-            version
-            routeReActDataStream<'TypedCmdToWrapper, 'TAgentCommMsg>
-        FodexFunRegistry.register
-            node
-            targetReActLoopCollect
-            version
-            collect<'TypedCmdToWrapper, 'TAgentCommMsg>
-        FodexFunRegistry.register
-            node
-            targetReActLoopGetStatus
-            version
-            getStatus<'TypedCmdToWrapper, 'TAgentCommMsg>
-        FodexFunRegistry.register
-            node
-            targetReActLoopGetParticipantCapabilities
-            version
-            getParticipantCapabilities<'TypedCmdToWrapper, 'TAgentCommMsg>
-
+            let rec receive () = actor {
+                let! message = mailbox.Receive()
+                let reply value = mailbox.Sender().Tell(value, mailbox.Self)
+                try
+                    match message with
+                    | Upsert(participant, agent) ->
+                        IAgentFodexFunV100.capabilities agent
+                        |> Result.map (fun capabilities -> participants[participant] <- agent, capabilities)
+                        |> reply
+                    | Remove participant ->
+                        participants.Remove participant |> ignore
+                        active.Remove participant |> ignore
+                        reply (Ok () : Result<unit, exn>)
+                    | Resolve participant -> resolve participant |> Result.map fst |> reply
+                    | List sid ->
+                        let values = participants.Keys |> Seq.filter (fun (_, current) -> current = sid) |> Seq.sortBy fst |> Seq.toArray
+                        reply (Ok values : Result<ReActParticipant [], exn>)
+                    | Capabilities participant -> resolve participant |> Result.map snd |> reply
+                    | Dispatch(participant, mode, message) -> dispatch participant mode message 0L |> reply
+                    | PostPrompt(wrapper, prompt) ->
+                        resolve wrapper |> Result.bind (fun _ -> persist (HumanInit(0L, HumanPromptToWrapper prompt)))
+                        |> Result.bind (fun stored ->
+                            let id = ReActDataStoreV100.streamIdOf stored
+                            replies[id] <- wrapper
+                            pending.Add id |> ignore
+                            generating <- true
+                            deliver wrapper (box (ProcessPrompt(id, prompt))))
+                        |> reply
+                    | Route stream -> route stream |> reply
+                    | Collect sid -> ReActDataStoreV100.collect<string> sid |> reply
+                    | Status sid ->
+                        reply (Ok { PendingHumanPromptCount = if sid = sessionId then pending.Count else 0
+                                    ActiveParticipantTurnCount = active |> Seq.filter (fun (_, current) -> current = sid) |> Seq.length
+                                    IsWrapperGenerating = sid = sessionId && generating } : Result<ReActLoopStatus, exn>)
+                with ex ->
+                    // Reply with the correct Result specialization for each operation.
+                    match message with
+                    | Upsert _ | Remove _ -> reply (Error ex : Result<unit, exn>)
+                    | Resolve _ -> reply (Error ex : Result<IAgent<string, obj>, exn>)
+                    | List _ -> reply (Error ex : Result<ReActParticipant [], exn>)
+                    | Collect _ -> reply (Error ex : Result<ReActDataStream<string> [], exn>)
+                    | Status _ -> reply (Error ex : Result<ReActLoopStatus, exn>)
+                    | Capabilities _ -> reply (Error ex : Result<ReActParticipantCapability [], exn>)
+                    | _ -> reply (Error ex : Result<int, exn>)
+                return! receive ()
+            }
+            receive ()

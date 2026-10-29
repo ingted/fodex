@@ -13,7 +13,7 @@ module ReActDataStoreV100Tests =
 
     [<Tests>]
     let tests =
-        testCase "JSONL store round-trips every ReActDataStream shape" <| fun _ ->
+        testCase "SQL store round-trips every ReActDataStream shape and exports JSONL" <| fun _ ->
             let sessionId: ReActParticipantSessionId =
                 Guid.NewGuid(), Some(IPAddress.Parse "127.0.0.1")
             let wrapper: ReActParticipant = 1L, sessionId
@@ -55,10 +55,9 @@ module ReActDataStoreV100Tests =
             Expect.sequenceEqual collected events
                 "every DU case must survive the durable JSONL round trip"
 
-            let lines =
-                ReActDataStoreV100.sessionFilePath sessionId
-                |> File.ReadLines
-                |> Seq.toArray
+            let outputPath = Path.Combine(storeRoot, "all-shapes.jsonl")
+            ReActDataStoreV100.exportJsonl(sessionId, outputPath) |> expectOk "export" |> ignore
+            let lines = File.ReadLines outputPath |> Seq.toArray
             Expect.equal lines.Length events.Length
                 "one stream event must map to one JSONL line"
 

@@ -1,379 +1,140 @@
 namespace Fodex.Supervisor
 
 open System
-open System.Collections.Concurrent
+open System.Data
+open System.Collections.Generic
 open System.IO
-open System.Net
 open System.Text
-open System.Text.Json
+open Microsoft.Data.SqlClient
 open Fodex.Supervisor.Contracts.CoreMod
 
-/// v1.0.0 的本機 durable JSONL store。
-/// 路徑可用 FODEX_REACT_STORE_ROOT 指定；未指定時使用 LocalApplicationData/Fodex/react-data。
+/// SQL Server is authoritative; JSONL is an offline handoff format.
 module ReActDataStoreV100 =
-    let fileGates =
-        ConcurrentDictionary<ReActParticipantSessionId, obj>()
+    let streamIdOf = ReActJsonV100.streamIdOf
+    let serialize<'Prompt> (stream: ReActDataStream<'Prompt>) = ReActJsonV100.serialize stream
+    let deserialize<'Prompt> line = ReActJsonV100.deserialize<'Prompt> line
 
-    let rootDirectory () =
-        match Environment.GetEnvironmentVariable("FODEX_REACT_STORE_ROOT") with
-        | value when not (String.IsNullOrWhiteSpace value) ->
-            Path.GetFullPath value
-        | _ ->
-            Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "Fodex",
-                "react-data"
-            )
-            |> Path.GetFullPath
+    let connectionString () =
+        match Environment.GetEnvironmentVariable "FODEX_SQL_CONNECTION_STRING" with
+        | value when not (String.IsNullOrWhiteSpace value) -> value
+        | _ -> raise (InvalidOperationException("Set FODEX_SQL_CONNECTION_STRING to the Fodex SQL Server database"))
 
-    let sessionFileName
-        ((sessionId, ipAddress): ReActParticipantSessionId) =
-        let address =
-            match ipAddress with
-            | None -> "local"
-            | Some value ->
-                value.ToString()
-                |> Encoding.UTF8.GetBytes
-                |> Convert.ToHexString
-                |> fun text -> text.ToLowerInvariant()
+    let openConnection () =
+        let connection = new SqlConnection(connectionString ())
+        try connection.Open(); connection
+        with _ -> connection.Dispose(); reraise ()
 
-        sprintf "%s-%s.jsonl" (sessionId.ToString("N")) address
-
-    let sessionFilePath sessionId =
-        Path.Combine(rootDirectory (), sessionFileName sessionId)
-
-    let streamIdOf stream =
-        match stream with
-        | HumanInit (streamId, _) -> streamId
-        | AgentCot (streamId, _, _) -> streamId
-        | AgentWork (streamId, _, _) -> streamId
-        | StdOut (streamId, _, _) -> streamId
-        | StdErr (streamId, _, _) -> streamId
-        | AgentEnd (streamId, _, _, _) -> streamId
-
-    let writeParticipant
-        (writer: Utf8JsonWriter)
-        (participant: ReActParticipant) =
-        let participantId, (sessionId, ipAddress) = participant
-        writer.WriteStartObject()
-        writer.WriteNumber("participantId", participantId)
-        writer.WriteString("sessionId", sessionId)
-        match ipAddress with
-        | Some value -> writer.WriteString("ipAddress", value.ToString())
-        | None -> writer.WriteNull("ipAddress")
-        writer.WriteEndObject()
-
-    let readParticipant (element: JsonElement) : ReActParticipant =
-        let participantId = element.GetProperty("participantId").GetInt64()
-        let sessionId = element.GetProperty("sessionId").GetGuid()
-        let ipElement = element.GetProperty("ipAddress")
-        let ipAddress =
-            if ipElement.ValueKind = JsonValueKind.Null then
-                None
-            else
-                ipElement.GetString()
-                |> IPAddress.Parse
-                |> Some
-        participantId, (sessionId, ipAddress)
-
-    let inputModeText = function
-        | StartTurn -> "StartTurn"
-        | SteerTurn -> "SteerTurn"
-
-    let readInputMode text =
-        match text with
-        | "StartTurn" -> StartTurn
-        | "SteerTurn" -> SteerTurn
-        | unsupported ->
-            raise (
-                InvalidDataException(
-                    sprintf "Unsupported ReActTurnInputMode: %s" unsupported
-                )
-            )
-
-    let rec writeData<'TypedCmdToWrapper>
-        (writer: Utf8JsonWriter)
-        (data: ReActData<'TypedCmdToWrapper>) =
-        writer.WriteStartObject()
-
-        match data with
-        | HumanPromptToWrapper prompt ->
-            writer.WriteString("kind", "HumanPromptToWrapper")
-            writer.WritePropertyName("prompt")
-            JsonSerializer.Serialize<'TypedCmdToWrapper>(writer, prompt)
-        | WrapperToNatives (inputMode, message, toParticipant, fromWrapper) ->
-            writer.WriteString("kind", "WrapperToNatives")
-            writer.WriteString("inputMode", inputModeText inputMode)
-            writer.WriteString("message", message)
-            writer.WritePropertyName("toParticipant")
-            writeParticipant writer toParticipant
-            writer.WritePropertyName("fromWrapper")
-            writeParticipant writer fromWrapper
-        | NativeToNative (inputMode, message, toParticipant) ->
-            writer.WriteString("kind", "NativeToNative")
-            writer.WriteString("inputMode", inputModeText inputMode)
-            writer.WriteString("message", message)
-            writer.WritePropertyName("toParticipant")
-            writeParticipant writer toParticipant
-        | NativeToWrapper message ->
-            writer.WriteString("kind", "NativeToWrapper")
-            writer.WriteString("message", message)
-        | MainWrapperToHuman message ->
-            writer.WriteString("kind", "MainWrapperToHuman")
-            writer.WriteString("message", message)
-        | MainWrapperToWrapper (message, toWrapper) ->
-            writer.WriteString("kind", "MainWrapperToWrapper")
-            writer.WriteString("message", message)
-            writer.WritePropertyName("toWrapper")
-            writeParticipant writer toWrapper
-
-        writer.WriteEndObject()
-
-    let rec readData<'TypedCmdToWrapper>
-        (element: JsonElement)
-        : ReActData<'TypedCmdToWrapper> =
-        let kind = element.GetProperty("kind").GetString()
-        let message () = element.GetProperty("message").GetString()
-
-        match kind with
-        | "HumanPromptToWrapper" ->
-            element.GetProperty("prompt").GetRawText()
-            |> JsonSerializer.Deserialize<'TypedCmdToWrapper>
-            |> HumanPromptToWrapper
-        | "WrapperToNatives" ->
-            WrapperToNatives(
-                element.GetProperty("inputMode").GetString()
-                |> readInputMode,
-                message (),
-                element.GetProperty("toParticipant") |> readParticipant,
-                element.GetProperty("fromWrapper") |> readParticipant
-            )
-        | "NativeToNative" ->
-            NativeToNative(
-                element.GetProperty("inputMode").GetString()
-                |> readInputMode,
-                message (),
-                element.GetProperty("toParticipant") |> readParticipant
-            )
-        | "NativeToWrapper" -> NativeToWrapper(message ())
-        | "MainWrapperToHuman" -> MainWrapperToHuman(message ())
-        | "MainWrapperToWrapper" ->
-            MainWrapperToWrapper(
-                message (),
-                element.GetProperty("toWrapper") |> readParticipant
-            )
-        | unsupported ->
-            raise (
-                InvalidDataException(
-                    sprintf "Unsupported ReActData kind: %s" unsupported
-                )
-            )
-
-    let serialize<'TypedCmdToWrapper>
-        (stream: ReActDataStream<'TypedCmdToWrapper>) =
-        use buffer = new MemoryStream()
-        use writer = new Utf8JsonWriter(buffer)
-        writer.WriteStartObject()
-
-        match stream with
-        | HumanInit (streamId, data) ->
-            writer.WriteString("kind", "HumanInit")
-            writer.WriteNumber("streamId", streamId)
-            writer.WritePropertyName("data")
-            writeData writer data
-        | AgentCot (streamId, causedBy, data) ->
-            writer.WriteString("kind", "AgentCot")
-            writer.WriteNumber("streamId", streamId)
-            writer.WriteNumber("causedBy", causedBy)
-            writer.WriteStartArray("data")
-            data |> Array.iter (writeData writer)
-            writer.WriteEndArray()
-        | AgentWork (streamId, causedBy, data) ->
-            writer.WriteString("kind", "AgentWork")
-            writer.WriteNumber("streamId", streamId)
-            writer.WriteNumber("causedBy", causedBy)
-            writer.WriteStartArray("data")
-            data |> Array.iter (writeData writer)
-            writer.WriteEndArray()
-        | StdOut (streamId, causedBy, text) ->
-            writer.WriteString("kind", "StdOut")
-            writer.WriteNumber("streamId", streamId)
-            writer.WriteNumber("causedBy", causedBy)
-            writer.WriteString("text", text)
-        | StdErr (streamId, causedBy, progressAndStatus) ->
-            writer.WriteString("kind", "StdErr")
-            writer.WriteNumber("streamId", streamId)
-            writer.WriteNumber("causedBy", causedBy)
-            writer.WriteString("progressAndStatus", progressAndStatus)
-        | AgentEnd (streamId, causedBy, participant, data) ->
-            writer.WriteString("kind", "AgentEnd")
-            writer.WriteNumber("streamId", streamId)
-            writer.WriteNumber("causedBy", causedBy)
-            writer.WritePropertyName("participant")
-            writeParticipant writer participant
-            writer.WritePropertyName("data")
-            writeData writer data
-
-        writer.WriteEndObject()
-        writer.Flush()
-        Encoding.UTF8.GetString(buffer.ToArray())
-
-    let deserialize<'TypedCmdToWrapper>
-        (line: string)
-        : Result<ReActDataStream<'TypedCmdToWrapper>, exn> =
+    let initialize () =
         try
-            use document = JsonDocument.Parse line
-            let root = document.RootElement
-            let kind = root.GetProperty("kind").GetString()
-            let streamId = root.GetProperty("streamId").GetInt64()
-            let causedBy () = root.GetProperty("causedBy").GetInt64()
-            let data () = root.GetProperty("data") |> readData
+            use connection = openConnection ()
+            use command = connection.CreateCommand()
+            command.CommandText <- """
+IF OBJECT_ID(N'dbo.FodexReActEvent', N'U') IS NULL
+CREATE TABLE dbo.FodexReActEvent (
+    SessionId uniqueidentifier NOT NULL,
+    Address nvarchar(45) NOT NULL,
+    StreamId bigint NOT NULL,
+    EventJson nvarchar(max) NOT NULL CHECK (ISJSON(EventJson)=1),
+    CONSTRAINT PK_FodexReActEvent PRIMARY KEY (SessionId, Address, StreamId)
+);
+IF OBJECT_ID(N'dbo.FodexNativeSession', N'U') IS NULL
+CREATE TABLE dbo.FodexNativeSession (
+    SessionId uniqueidentifier NOT NULL,
+    Address nvarchar(45) NOT NULL,
+    ParticipantId bigint NOT NULL,
+    CodexSessionId nvarchar(200) NOT NULL,
+    CONSTRAINT PK_FodexNativeSession PRIMARY KEY (SessionId, Address, ParticipantId)
+);"""
+            command.ExecuteNonQuery() |> ignore
+            Ok ()
+        with ex -> Error ex
 
-            match kind with
-            | "HumanInit" -> HumanInit(streamId, data ())
-            | "AgentCot" ->
-                root.GetProperty("data").EnumerateArray()
-                |> Seq.map readData
-                |> Seq.toArray
-                |> fun values -> AgentCot(streamId, causedBy (), values)
-            | "AgentWork" ->
-                root.GetProperty("data").EnumerateArray()
-                |> Seq.map readData
-                |> Seq.toArray
-                |> fun values -> AgentWork(streamId, causedBy (), values)
-            | "StdOut" ->
-                StdOut(streamId, causedBy (), root.GetProperty("text").GetString())
-            | "StdErr" ->
-                StdErr(
-                    streamId,
-                    causedBy (),
-                    root.GetProperty("progressAndStatus").GetString()
-                )
-            | "AgentEnd" ->
-                AgentEnd(
-                    streamId,
-                    causedBy (),
-                    root.GetProperty("participant") |> readParticipant,
-                    data ()
-                )
-            | unsupported ->
-                raise (
-                    InvalidDataException(
-                        sprintf "Unsupported ReActDataStream kind: %s" unsupported
-                    )
-                )
-            |> Ok
-        with ex ->
-            Error ex
+    let bindSession (command: SqlCommand) ((sid, address): ReActParticipantSessionId) =
+        command.Parameters.Add("@sid", SqlDbType.UniqueIdentifier).Value <- sid
+        command.Parameters.Add("@address", SqlDbType.NVarChar, 45).Value <-
+            address |> Option.map string |> Option.defaultValue ""
 
-    let persist<'TypedCmdToWrapper>
-        (sessionId: ReActParticipantSessionId)
-        (stream: ReActDataStream<'TypedCmdToWrapper>)
-        : Result<int, exn> =
-        let gate = fileGates.GetOrAdd(sessionId, fun _ -> obj ())
-
-        lock gate (fun () ->
-            try
-                let root = rootDirectory ()
-                Directory.CreateDirectory root |> ignore
-                let path = sessionFilePath sessionId
-                let line = serialize stream
-                use output =
-                    new FileStream(
-                        path,
-                        FileMode.Append,
-                        FileAccess.Write,
-                        FileShare.Read,
-                        4096,
-                        FileOptions.WriteThrough
-                    )
-                use writer = new StreamWriter(output, UTF8Encoding(false), 4096, true)
-                writer.WriteLine line
-                writer.Flush()
-                output.Flush true
-                Ok 1
-            with ex ->
-                Error ex)
-
-    let collect<'TypedCmdToWrapper>
-        (sessionId: ReActParticipantSessionId)
-        : Result<ReActDataStream<'TypedCmdToWrapper> [], exn> =
+    let persist sessionId stream : Result<int, exn> =
         try
-            let path = sessionFilePath sessionId
+            use connection = openConnection ()
+            use command = connection.CreateCommand()
+            command.CommandText <- "INSERT dbo.FodexReActEvent(SessionId,Address,StreamId,EventJson) VALUES(@sid,@address,@stream,@json)"
+            bindSession command sessionId
+            command.Parameters.Add("@stream", SqlDbType.BigInt).Value <- streamIdOf stream
+            command.Parameters.Add("@json", SqlDbType.NVarChar, -1).Value <- serialize stream
+            // One atomic INSERT. ExecuteNonQuery returns after the transaction commits.
+            command.ExecuteNonQuery() |> Ok
+        with ex -> Error ex
 
-            if not (File.Exists path) then
-                Ok [||]
-            else
-                let result = ResizeArray<ReActDataStream<'TypedCmdToWrapper>>()
-                let mutable error: exn option = None
+    let selectEvents (connection: SqlConnection) sessionId =
+        let command = connection.CreateCommand()
+        command.CommandText <- "SELECT EventJson FROM dbo.FodexReActEvent WHERE SessionId=@sid AND Address=@address ORDER BY StreamId"
+        bindSession command sessionId
+        command
 
-                for line in File.ReadLines path do
-                    if error.IsNone then
-                        match deserialize<'TypedCmdToWrapper> line with
-                        | Ok stream -> result.Add stream
-                        | Error ex -> error <- Some ex
-
-                match error with
-                | Some ex -> Error ex
-                | None -> result.ToArray() |> Ok
-        with ex ->
-            Error ex
-
-    let exportJsonl
-        (sessionId: ReActParticipantSessionId, outputPath: JsonlFilePath)
-        : Result<int64, exn> =
+    let collect<'Prompt> sessionId : Result<ReActDataStream<'Prompt> [], exn> =
         try
-            let sourcePath = sessionFilePath sessionId |> Path.GetFullPath
-            let destinationPath = outputPath |> Path.GetFullPath
+            use connection = openConnection ()
+            use command = selectEvents connection sessionId
+            use reader = command.ExecuteReader(CommandBehavior.SequentialAccess)
+            let events = ResizeArray<ReActDataStream<'Prompt>>()
+            while reader.Read() do
+                match deserialize<'Prompt> (reader.GetString 0) with
+                | Ok event -> events.Add event
+                | Error ex -> raise ex
+            Ok(events.ToArray())
+        with ex -> Error ex
 
-            if not (File.Exists sourcePath) then
-                Error (
-                    FileNotFoundException(
-                        sprintf
-                            "Persisted ReActDataStream JSONL was not found: %s"
-                            sourcePath,
-                        sourcePath
-                    ) :> exn
-                )
-            elif
-                String.Equals(
-                    sourcePath,
-                    destinationPath,
-                    StringComparison.OrdinalIgnoreCase
-                )
-            then
-                Error (
-                    InvalidOperationException(
-                        "Export destination must differ from the persisted source"
-                    ) :> exn
-                )
+    // Public DLL entry point; no ActorSystem, IAgent, registry or prompt type needed.
+    let exportJsonl (sessionId, outputPath: JsonlFilePath) : Result<int64, exn> =
+        try
+            use connection = openConnection ()
+            use command = selectEvents connection sessionId
+            use reader = command.ExecuteReader(CommandBehavior.SequentialAccess)
+            if not reader.HasRows then
+                Error(KeyNotFoundException("No persisted events for this wrapper session") :> exn)
             else
-                let destinationDirectory = Path.GetDirectoryName destinationPath
-                if not (String.IsNullOrWhiteSpace destinationDirectory) then
-                    Directory.CreateDirectory destinationDirectory |> ignore
-
-                use input = new StreamReader(sourcePath, Encoding.UTF8)
-                use output =
-                    new FileStream(
-                        destinationPath,
-                        FileMode.Create,
-                        FileAccess.Write,
-                        FileShare.Read,
-                        4096,
-                        FileOptions.WriteThrough
-                    )
+                let fullPath = Path.GetFullPath outputPath
+                Directory.CreateDirectory(Path.GetDirectoryName fullPath) |> ignore
+                use output = new FileStream(fullPath, FileMode.CreateNew, FileAccess.Write, FileShare.Read)
                 use writer = new StreamWriter(output, UTF8Encoding(false), 4096, true)
                 let mutable count = 0L
-                let mutable line = input.ReadLine()
-
-                while not (isNull line) do
-                    writer.WriteLine line
+                while reader.Read() do
+                    writer.WriteLine(reader.GetString 0)
                     count <- count + 1L
-                    line <- input.ReadLine()
-
                 writer.Flush()
                 output.Flush true
                 Ok count
-        with ex ->
-            Error ex
+        with ex -> Error ex
+
+    let saveNativeSession ((participantId, sessionId): ReActParticipant) (codexId: string) =
+        try
+            use connection = openConnection ()
+            use command = connection.CreateCommand()
+            command.CommandText <- """
+SET XACT_ABORT ON;
+BEGIN TRANSACTION;
+UPDATE dbo.FodexNativeSession WITH (UPDLOCK,SERIALIZABLE)
+SET CodexSessionId=@codex WHERE SessionId=@sid AND Address=@address AND ParticipantId=@participant;
+IF @@ROWCOUNT=0
+INSERT dbo.FodexNativeSession VALUES(@sid,@address,@participant,@codex);
+COMMIT;"""
+            bindSession command sessionId
+            command.Parameters.Add("@participant", SqlDbType.BigInt).Value <- participantId
+            command.Parameters.Add("@codex", SqlDbType.NVarChar, 200).Value <- codexId
+            command.ExecuteNonQuery() |> ignore
+            Ok ()
+        with ex -> Error ex
+
+    let readNativeSession ((participantId, sessionId): ReActParticipant) =
+        try
+            use connection = openConnection ()
+            use command = connection.CreateCommand()
+            command.CommandText <- "SELECT CodexSessionId FROM dbo.FodexNativeSession WHERE SessionId=@sid AND Address=@address AND ParticipantId=@participant"
+            bindSession command sessionId
+            command.Parameters.Add("@participant", SqlDbType.BigInt).Value <- participantId
+            match command.ExecuteScalar() with
+            | :? string as value -> Ok(Some value)
+            | _ -> Ok None
+        with ex -> Error ex
 

@@ -12,19 +12,48 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="ImplementationTestHelpers.fs" />
-    <Compile Include="RegistryFunctionQuotationTests.fs" />
-    <Compile Include="CodexRuntimeV100Tests.fs" />
-    <Compile Include="ProcSupervisorV100Tests.fs" />
-    <Compile Include="CliFodexFunV100Tests.fs" />
-    <Compile Include="IAgentFodexFunV100Tests.fs" />
-    <Compile Include="ReActDataStoreV100Tests.fs" />
-    <Compile Include="ReActLoopFodexFunV100Tests.fs" />
-    <Compile Include="FodexFunRegistrationV100Tests.fs" />
-    <Compile Include="Program.fs" />
+    <!-- 舊測試仍在專案中；其舊方向 DU 與舊實作不相容於 FGL-native Contract。 -->
+    <None Include="ImplementationTestHelpers.fs">
+      <Link>Archive/ImplementationTestHelpers.fs</Link>
+    </None>
+    <None Include="ReActDataStoreV100Tests.fs">
+      <Link>Archive/ReActDataStoreV100Tests.fs</Link>
+    </None>
+    <None Include="FodexFunV100Tests.fs">
+      <Link>Archive/FodexFunV100Tests.fs</Link>
+    </None>
+    <None Include="ReActLoopV101Tests.fs">
+      <Link>Archive/ReActLoopV101Tests.fs</Link>
+    </None>
+    <None Include="LiveCodexV100Tests.fs">
+      <Link>Archive/LiveCodexV100Tests.fs</Link>
+    </None>
+    <None Include="Program.fs">
+      <Link>Archive/Program.fs</Link>
+    </None>
+    <Compile Include="ImplementationTestSupportV200.fsx" />
+    <Compile Include="ReActJsonV200Tests.fsx" />
+    <Compile Include="ReActDataStoreV200Tests.fsx" />
+    <Compile Include="IAgentFodexFunV200Tests.fsx" />
+    <Compile Include="ReActLoopFodexFunV200Tests.fsx" />
+    <Compile Include="NativeAgentV200Tests.fsx" />
+    <Compile Include="WrapperAgentV200Tests.fsx" />
+    <Compile Include="FodexFunRegistrationV200Tests.fsx" />
+    <Compile Include="WrapperOutputV200Tests.fsx" />
+    <Compile Include="LiveCodexV200Tests.fsx" />
+    <Compile Include="ImplementationTestSupportV201.fsx" />
+    <Compile Include="ProcSupervisorV201Tests.fsx" />
+    <Compile Include="NativeAgentV201Tests.fsx" />
+    <Compile Include="WrapperAgentV201Tests.fsx" />
+    <Compile Include="FodexFunRegistrationV201Tests.fsx" />
+    <Compile Include="WrapperOutputV201Tests.fsx" />
+    <Compile Include="LiveCodexV201Tests.fsx" />
+    <Compile Include="ProgramV200.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Expecto" Version="11.1.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" Version="0.16.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fodex.Supervisor.Contract\Fodex.Supervisor.Contracts.fsproj" />

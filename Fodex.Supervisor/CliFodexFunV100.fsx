@@ -10,59 +10,34 @@ open Fodex.Supervisor.Contracts.LiteralsMod
 
 module CliFodexFunV100 =
     let version = Version(1, 0, 0)
+    let functionTargets = [| targetCliStart; targetPromptConvert |]
 
-    let functionTargets =
-        [|
-            targetCliStart
-            targetPromptConvert
-        |]
+    let start node args =
+        let ctx = SupervisorArgs.context node
+        SupervisorArgs.parse args |> Result.bind (fun parsed ->
+            // Argu owns argument parsing; JSON quoting preserves whitespace for Contract's parser.
+            let arguments = args |> Array.map JsonSerializer.Serialize |> String.concat " "
+            FodexAgent<string, obj>.createWrapper(node, arguments, ctx)
+            |> Result.bind (fun wrapper ->
+                wrapper.Start() |> Result.bind (fun _ ->
+                    match parsed.TryGetResult SupervisorArgument.Prompt with
+                    | Some prompt -> wrapper.Send(box prompt) |> Result.map ignore
+                    | None ->
+                        let mutable result = Ok ()
+                        let mutable line = Console.ReadLine()
+                        while not (isNull line) && Result.isOk result do
+                            result <- wrapper.Send(box line) |> Result.map ignore
+                            line <- Console.ReadLine()
+                        result)))
 
-    let cliStart:
-        Expr<CliFunInput -> FeasibleT<CliFunInput, unit, exn>> =
-        <@
-            fun (node, _initialArgs) ->
-                fun (sameNode, args) ->
-                    if not (Object.ReferenceEquals(node, sameNode)) then
-                        Error (
-                            InvalidOperationException(
-                                "CliStart must execute on the FodexNode used to resolve it"
-                            ) :> exn
-                        )
-                    elif sameNode.WhenTerminated.IsCompleted then
-                        Error (
-                            InvalidOperationException(
-                                "CliStart cannot execute on a terminated FodexNode"
-                            ) :> exn
-                        )
-                    else
-                        SupervisorArgs.parse args
-                        |> Result.map ignore
-        @>
+    let cliStart : Expr<CliFunInput -> FeasibleT<CliFunInput, unit, exn>> =
+        <@ fun (node, _) -> fun (_, args) ->
+            try start node args with ex -> Error ex @>
 
-    let promptConvert<'TypedCmdToWrapper>:
-        Expr<
-            'TypedCmdToWrapper
-                -> FeasibleT<'TypedCmdToWrapper, JsonStr, exn>
-        > =
-        <@
-            fun _initialInput ->
-                fun input ->
-                    try
-                        JsonSerializer.Serialize<'TypedCmdToWrapper>(input)
-                        |> Ok
-                    with ex ->
-                        Error ex
-        @>
+    let promptConvert<'Prompt> : Expr<'Prompt -> FeasibleT<'Prompt, JsonStr, exn>> =
+        <@ fun _ -> fun input ->
+            try Ok(JsonSerializer.Serialize<'Prompt> input) with ex -> Error ex @>
 
-    let register<'TypedCmdToWrapper> (node: FodexNode) =
-        FodexFunRegistry.register
-            node
-            targetCliStart
-            version
-            cliStart
-        FodexFunRegistry.register
-            node
-            targetPromptConvert
-            version
-            promptConvert<'TypedCmdToWrapper>
-
+    let register<'Prompt> node =
+        FodexFunRegistry.register node targetCliStart version cliStart
+        FodexFunRegistry.register node targetPromptConvert version promptConvert<'Prompt>

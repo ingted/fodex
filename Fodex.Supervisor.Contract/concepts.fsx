@@ -520,6 +520,16 @@ module CoreMod =
     // None 表示未指定回覆路徑，不暗中推導成另一個 participant。
     | ParticipantInput of inputMode: ReActTurnInputMode * msg:string * replyTo: ReActParticipant option
     | Message of msg:string
+    /// 同一則訊息的增量片段；text 只能 append，不能當作完整訊息。
+    /// messageId 由 producer 配給，在該 wrapper session 的不同訊息間必須唯一；
+    /// 經 wrapper 轉送仍保留原 id，不能改用每條 edge 各自的 StreamId。
+    /// 例：MessageDelta("answer-1", "FODEX_")，接著 MessageDelta("answer-1", "OK")。
+    | MessageDelta of messageId:string * text:string
+    /// 同一 messageId 的完整權威內容，取代該訊息的 fragments，不是再 append 一次。
+    /// 允許沒有 Delta 而直接 Completed（例如 exec --json 的 item.completed）。
+    /// 一個 turn 可以完成多則訊息；Completed 不代表整個 turn 結束，AgentEnd 才代表。
+    /// 例：MessageCompleted("answer-1", "FODEX_OK")；原 Message 仍供非分片的一般內容使用。
+    | MessageCompleted of messageId:string * text:string
 
     (* Topology:
 

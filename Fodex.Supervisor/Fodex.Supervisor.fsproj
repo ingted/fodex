@@ -1,95 +1,95 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
-    <SelfContained>false</SelfContained>
-    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-	  <TargetFramework>net10.0</TargetFramework>
-	  <PackageId>Fodex.Supervisor</PackageId>
+    <PackageId>Fodex.Supervisor</PackageId>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>Fodex.Supervisor</AssemblyName>
     <RootNamespace>Fodex.Supervisor</RootNamespace>
     <LangVersion>preview</LangVersion>
     <WarningsAsErrors>true</WarningsAsErrors>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-    <GenerateTestingPlatformEntryPoint>false</GenerateTestingPlatformEntryPoint>
-    <GenerateTestingPlatformConfigurationFile>false</GenerateTestingPlatformConfigurationFile>
-    <EnableTestingPlatform>false</EnableTestingPlatform>
-    <TestingPlatformDotnetTestSupport>false</TestingPlatformDotnetTestSupport>
-    <IsTestProject>false</IsTestProject>
-    <IsTestingPlatformApplication>false</IsTestingPlatformApplication>
     <Version>0.0.1</Version>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
-	<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <PublishProcSupervisorPackage Condition="'$(PublishProcSupervisorPackage)' == ''">false</PublishProcSupervisorPackage>
-    <RestoreAdditionalProjectSources>$(RestoreAdditionalProjectSources);$(MSBuildSDKsPath)\..\FSharp\library-packs</RestoreAdditionalProjectSources>
-    <OutputType>Exe</OutputType>
-  </PropertyGroup>
-  <PropertyGroup>
-    <PowerShellExe Condition="'$(OS)' == 'Windows_NT'">powershell</PowerShellExe>
-    <PowerShellExe Condition="'$(OS)' != 'Windows_NT'">pwsh</PowerShellExe>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <OutputType>Library</OutputType>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Akka" Version="1.5.73" />
-    <PackageReference Include="Akka.Cluster" Version="1.5.73" />
-    <PackageReference Include="Akka.Cluster.Sharding" Version="1.5.73" />
-    <PackageReference Include="Akka.DistributedData" Version="1.5.73" />
-    <PackageReference Include="Akka.Logger.NLog" Version="1.5.69" />
-    <PackageReference Include="Akka.Persistence" Version="1.5.73" />
-    <PackageReference Include="Akka.Persistence.Sql" Version="1.5.70" />
-    <PackageReference Include="Akka.Remote" Version="1.5.73" />
-    <PackageReference Include="Akka.Serialization.Hyperion" Version="1.5.73" />
-    <PackageReference Include="FAkka.Argu" Version="10.2.1" />
-    <PackageReference Include="FAkka.FSharp.Quotations.Evaluator" Version="2.2.1" />
-    <PackageReference Include="FAkka.FSI.Supervisor" Version="1.572.2" />
-    <PackageReference Include="FAkka.Proc.Supervisor" Version="1.572.3" />
-    <PackageReference Include="FSharp.Compiler.Service" Version="43.12.402" />
-    <PackageReference Include="FAkka.Quartz.Actor" Version="1.572.2" />
-    <PackageReference Include="FAkka.Shared" Version="10.2.6" />
-    <PackageReference Include="FAkka.WebSocket" Version="1.572.1" />
-    <PackageReference Include="PulseTrade.Comm.Actor.Registry" Version="0.1.8" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.13" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.13" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.13" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
-    <PackageReference Include="FAkka.Fsi.Contracts" Version="10.2.1" />
-    <PackageReference Include="MimeKit" Version="4.18.2" />
-    <PackageReference Include="Petabridge.Cmd.Common" Version="1.5.2" />
-    <PackageReference Include="Petabridge.Cmd.Host" Version="1.5.2" />
-    <PackageReference Include="PulseTrade.Infra.Logging" Version="1.572.0" />
+    <Compile Include="FodexFunRegistry.fsx" />
+    <!-- 舊版依賴已移除的方向 DU；保留來源與 project item，但不與新版 Contract 一起編譯。 -->
+    <None Include="ReActJsonV100.fsx">
+      <Link>Archive/ReActJsonV100.fsx</Link>
+    </None>
+    <None Include="ReActDataStoreV100.fsx">
+      <Link>Archive/ReActDataStoreV100.fsx</Link>
+    </None>
+    <Compile Include="ReActJsonV200.fsx" />
+    <Compile Include="ReActDataStoreV200.fsx" />
+    <Compile Include="SupervisorArgs.fsx" />
+    <None Include="IAgentFodexFunV100.fsx">
+      <Link>Archive/IAgentFodexFunV100.fsx</Link>
+    </None>
+    <Compile Include="IAgentFodexFunV200.fsx" />
+    <Compile Include="ReActLoopFodexFunV200.fsx" />
+    <None Include="ReActLoopFodexFunV100.fsx">
+      <Link>Archive/ReActLoopFodexFunV100.fsx</Link>
+    </None>
+    <None Include="ReActLoopFodexFunV101.fsx">
+      <Link>Archive/ReActLoopFodexFunV101.fsx</Link>
+    </None>
+    <Compile Include="ProcSupervisorV100.fsx" />
+    <Compile Include="ProcSupervisorV201.fsx" />
+    <Compile Include="CodexAppServerV100.fsx" />
+    <Compile Include="NativeAgentV200.fsx" />
+    <Compile Include="NativeAgentV201.fsx" />
+    <Compile Include="WrapperAgentV200.fsx" />
+    <Compile Include="WrapperAgentV201.fsx" />
+    <None Include="NativeAgentV100.fsx">
+      <Link>Archive/NativeAgentV100.fsx</Link>
+    </None>
+    <None Include="WrapperAgentV100.fsx">
+      <Link>Archive/WrapperAgentV100.fsx</Link>
+    </None>
+    <Compile Include="CliFodexFunV100.fsx" />
+    <Compile Include="FodexFunRegistrationV200.fsx" />
+    <Compile Include="FodexFunRegistrationV201.fsx" />
+    <Compile Include="WrapperOutputV200.fsx" />
+    <Compile Include="WrapperOutputV201.fsx" />
+    <None Include="FodexFunRegistrationV100.fsx">
+      <Link>Archive/FodexFunRegistrationV100.fsx</Link>
+    </None>
+    <None Include="FodexFunRegistrationV101.fsx">
+      <Link>Archive/FodexFunRegistrationV101.fsx</Link>
+    </None>
+    <None Include="WrapperOutputV101.fsx">
+      <Link>Archive/WrapperOutputV101.fsx</Link>
+    </None>
+    <None Include="WrapperIAgentDemo.M002.fsx">
+      <Link>Archive/WrapperIAgentDemo.M002.fsx</Link>
+    </None>
+    <None Include="WrapperIAgentDemo.M003.fsx">
+      <Link>Archive/WrapperIAgentDemo.M003.fsx</Link>
+    </None>
+    <None Include="README.V200.md" />
+    <None Include="WrapperIAgentDemo.M004.fsx">
+      <Link>Archive/WrapperIAgentDemo.M004.fsx</Link>
+    </None>
+    <None Include="README.M004.md" />
+    <None Include="WrapperIAgentDemo.M005.fsx">
+      <Link>Archive/WrapperIAgentDemo.M005.fsx</Link>
+    </None>
+    <None Include="README.M005.md" />
   </ItemGroup>
-  <ItemGroup>
-	  <Compile Include="SupervisorArgs.fsx" />
-	  <Compile Include="LoggingRuntime.fsx" />
-	  <Compile Include="CodexRuntimeV100.fsx" />
-	  <Compile Include="ProcSupervisorRuntimeV100.fsx" />
-	  <Compile Include="FodexFunRegistry.fsx" />
-	  <Compile Include="ReActDataStoreV100.fsx" />
-	  <Compile Include="IAgentFodexFunV100.fsx" />
-	  <Compile Include="RegistryFunctionState.fsx" />
-	  <Compile Include="ReActLoopFodexFunV100.fsx" />
-	  <Compile Include="CliFodexFunV100.fsx" />
-	  <Compile Include="FodexFunRegistrationV100.fsx" />
-	  <Compile Include="Application.fsx" />
-	  <Compile Include="main.fsx" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\Fodex.Supervisor.Contract\Fodex.Supervisor.Contracts.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="10.1.402" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
+    <PackageReference Include="FAkka.Proc.Supervisor" Version="1.572.7-fodex001" />
+    <!-- 直接使用既有 transitive 版本的純資料 JSON serializer，明列依賴以避免間接漂移。 -->
+    <PackageReference Include="FAkka.FsPickler.Json" Version="10.2.2" />
   </ItemGroup>
-	<Target Name="PostBuildR" AfterTargets="Pack" Condition="'$(Configuration)' == 'Release' and '$(PublishProcSupervisorPackage)' == 'true'">
-		<Exec Command="$(PowerShellExe) -c &quot;write-host '====== Start Post-Build Event ======'&quot;&#xD;&#xA;$(PowerShellExe) ./PostBuildEvent.ps1 Fodex.Supervisor Release" />
-	</Target>
-
-	<Target Name="PostBuildD" AfterTargets="Pack" Condition="'$(Configuration)' == 'Debug' and '$(PublishProcSupervisorPackage)' == 'true'">
-		<Exec Command="$(PowerShellExe) -c &quot;write-host '====== Start Post-Build Event ======'&quot;&#xD;&#xA;$(PowerShellExe) ./PostBuildEvent.ps1 Fodex.Supervisor Debug" />
-	</Target>
-	<Target Name="ShowDefineConstants" BeforeTargets="CoreCompile">
-		<Message Importance="High" Text="DefineConstants=$(DefineConstants)" />
-	</Target>
 </Project>

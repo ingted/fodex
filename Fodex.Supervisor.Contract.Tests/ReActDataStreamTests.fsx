@@ -61,6 +61,24 @@ let tests =
             live.AddEdge(eventEdge 4L) |> ignore
             Expect.isFalse (snapshot.ContainsEdge(eventEdge 4L)) "later live update is not in prior snapshot"
 
+        testCase "message identity spans fragments and forwards but is not a StreamId or turn end" <| fun () ->
+            let labels: ReActEvent<string> list = [
+                AgentWork(2L, 1L, MessageDelta("answer-1", "FODEX_"))
+                AgentWork(3L, 1L, MessageDelta("answer-1", "OK"))
+                AgentWork(4L, 1L, MessageCompleted("answer-1", "FODEX_OK"))
+                AgentWork(5L, 4L, MessageCompleted("answer-1", "FODEX_OK"))
+                AgentCot(6L, 1L, MessageCompleted("commentary-2", "another complete message"))
+                AgentEnd(7L, 1L, Message "FODEX_OK") ]
+            let graph = WrappedReActDataFlow<string>(
+                [nativeEndpoint, (); wrapperEndpoint, ()],
+                labels |> List.map (fun label -> nativeEndpoint, wrapperEndpoint, label))
+            let completeMessages = labels |> List.choose (function
+                | AgentWork(_,_,MessageCompleted(id,text)) | AgentCot(_,_,MessageCompleted(id,text)) -> Some(id,text)
+                | _ -> None)
+            Expect.equal (completeMessages |> List.distinct |> List.length) 2 "forwarding does not create another logical message"
+            Expect.equal (graph.GetEdges().Length) 6 "graph retains fragments, forwards, completion and turn end"
+            Expect.equal (labels |> List.filter (function AgentEnd _ -> true | _ -> false) |> List.length) 1 "message completion is not turn completion"
+
         testCase "Copy is shallow for mutable command payloads" <| fun () ->
             let payload = [| "before" |]
             let live = WrappedReActDataFlow<string array>(
