@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- Microsoft.NET.Test.Sdk 也會將最終輸出設為 Exe；明確提供 F# EntryPoint，
+         確保 Expecto tests 值完成初始化，避免 VSTest discovery 取得 null。 -->
+    <OutputType>Exe</OutputType>
+    <LangVersion>preview</LangVersion>
+    <WarningsAsErrors>true</WarningsAsErrors>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="ContractTestSupport.fsx" />
+    <Compile Include="FodexFunTests.fsx" />
+    <Compile Include="ReActDataStreamTests.fsx" />
+    <Compile Include="ReActLoopRouteReActDataStreamTests.fsx" />
+    <Compile Include="ReActLoopCollectTests.fsx" />
+    <Compile Include="ReActLoopReadDataFlowTests.fsx" />
+    <Compile Include="Program.fs" />
+    <None Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Fodex.Supervisor.Contract\Fodex.Supervisor.Contracts.fsproj" />
+    <PackageReference Include="Expecto" Version="11.1.1" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="10.0.14" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" Version="0.16.1" />
+    <PackageReference Update="FSharp.Core" Version="10.1.402" />
+  </ItemGroup>
+</Project>

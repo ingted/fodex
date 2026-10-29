@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/Solution Items/" />
   <Project Path="Fodex.Supervisor.Contract/Fodex.Supervisor.Contracts.fsproj" />
+  <Project Path="Fodex.Supervisor.Contract.Tests/Fodex.Supervisor.Contract.Tests.fsproj" />
   <Project Path="Fodex.Supervisor.Tests/Fodex.Supervisor.Tests.fsproj" />
   <Project Path="Fodex.Supervisor/Fodex.Supervisor.fsproj" />
 </Solution>

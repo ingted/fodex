@@ -5,6 +5,8 @@ open LoggerUtil
 #if INTERACTIVE
 #r "nuget: FAkka.FSharp.Quotations.Evaluator, 2.2.1"
 #r "nuget: Akka, 1.5.73"
+#r "nuget: FSharp.FGL, 0.0.4"
+#r "nuget: FSharp.FGL.ArrayAdjacencyGraph, 0.0.2"
 #endif
 
 
@@ -45,6 +47,8 @@ module LiteralsMod =
     let targetReActLoopRouteReActDataStream = "ReActLoopRouteReActDataStream"
     [<Literal>]
     let targetReActLoopCollect = "ReActLoopCollect"
+    [<Literal>]
+    let targetReActLoopReadDataFlow = "ReActLoopReadDataFlow"
     [<Literal>]
     let targetReActLoopGetStatus = "ReActLoopGetStatus"
     [<Literal>]
@@ -100,6 +104,7 @@ module CommandMod =
     | ReActLoopDispatchToParticipant of CommandVersion
     | ReActLoopRouteReActDataStream of CommandVersion
     | ReActLoopCollect of CommandVersion
+    | ReActLoopReadDataFlow of CommandVersion
     | ReActLoopGetStatus of CommandVersion
     | ReActLoopGetParticipantCapabilities of CommandVersion
     | Clear
@@ -340,6 +345,10 @@ module TypesMod =
     type TReActLoopCollect<'TSessionId, 'TStream> =
         FeasibleT<'TSessionId, 'TStream [], exn>
 
+    /// 已 commit 的 in-memory graph 讀取形狀；刻意不重用 Collect 的 array result，避免混淆資料來源。
+    type TReActLoopReadDataFlow<'TSessionId, 'TDataFlow> =
+        FeasibleT<'TSessionId, 'TDataFlow, exn>
+
     type TReActLoopGetStatus<'TSessionId, 'TStatus> =
         FeasibleT<'TSessionId, 'TStatus, exn>
 
@@ -462,6 +471,15 @@ module CoreMod =
     type ReActParticipantSessionId = Guid * IPAddress option
     type ReActParticipant = ReActParticipantId * ReActParticipantSessionId //actor 位置可能會變，但是 main wrapper
 
+    // Vertex key 是 logical identity；Human 由所屬 ReActLoop session 定界。
+    // 即時 IAgent 留在 topology registry，不是 graph 的可保存資料。
+    /// 例如 ReActEndpoint.Participant (participantId, wrapperSessionId)。
+    /// 此 key 不含 actor/process reference，讓歷史資料不依賴目前 runtime instance 是否存活。
+    [<RequireQualifiedAccess>]
+    type ReActEndpoint =
+    | Human
+    | Participant of ReActParticipant
+
     type CodexSessionId = string
 
     // Wrapper 暴露 Fodex 自己的 session id；Native 暴露可由 Codex 恢復的 id。
@@ -493,13 +511,15 @@ module CoreMod =
     | CanInterruptTurn
     | CanResumeSession
 
+    /// 只表示內容，不再把 source/target 塞進每個 case。
+    /// HumanPrompt 是 user 的 typed command；ParticipantInput 帶 native turn 操作模式；
+    /// Message 是 participant/wrapper 的一般輸出，接收者由外層 LEdge 決定。
     type ReActData<'TypedCmdToWrapper> =
-    | HumanPromptToWrapper of 'TypedCmdToWrapper
-    | WrapperToNatives of inputMode: ReActTurnInputMode * msg:string * toParticipant: ReActParticipant * fromWrapper: ReActParticipant //ReActLoop 負責傳遞，fromWrapper 是 reply back 路徑
-    | NativeToNative of inputMode: ReActTurnInputMode * msg:string * toParticipant: ReActParticipant //COT participant 可用 SteerTurn 將逐筆輸出送進 active main participant
-    | NativeToWrapper of msg:string
-    | MainWrapperToHuman of msg:string
-    | MainWrapperToWrapper of msg:string * toWrapper: ReActParticipant //非智慧小鎮，禁止 非 main wrapper 對 非 main wrapper 通訊
+    | HumanPrompt of 'TypedCmdToWrapper
+    // source/target 只存在 LEdge；replyTo 是回覆路徑，可能不同於 source。
+    // None 表示未指定回覆路徑，不暗中推導成另一個 participant。
+    | ParticipantInput of inputMode: ReActTurnInputMode * msg:string * replyTo: ReActParticipant option
+    | Message of msg:string
 
     (* Topology:
 
@@ -519,11 +539,15 @@ module CoreMod =
         ReActLoop 是 ReActDataStream 的 routing hub；user collect 時由 ReActLoop 從 DB 取得該 session 已保存的 stream。
 
         /wrapper_cot 的 routing:
-            HumanPromptToWrapper
+            Human -> main wrapper : HumanPrompt
             -> main wrapper IAgent AcquireParticipant
             -> ReActLoop UpsertParticipant
-            -> WrapperToNatives(StartTurn, ...)
-            -> NativeToNative(SteerTurn, ..., mainParticipant)
+            -> main wrapper -> COT participant : ParticipantInput(StartTurn, ..., Some mainWrapper)
+            -> COT participant -> main participant : ParticipantInput(SteerTurn, ..., None)
+
+        LEdge 的 source/target 是唯一傳遞方向；Message 到 Human 才是 user output。
+        ParticipantInput 的 target 必須是 participant，且仍須檢查 StartTurn/SteerTurn capability。
+        HumanPrompt 只允許 Human -> main wrapper；禁止非 main wrapper 彼此直接通訊。
 
         COT participant 必須使用不同於 main participant 的 logical participant 與 Codex session。
         它可以讀取 main session 已保存的 ReActDataStream 作為 input，但不能 attach、resume 或直接在
@@ -536,15 +560,35 @@ module CoreMod =
 
     type ProgressAndStatus = string
 
-    type StreamId = int64 //ReActLoop session 中每個 ReActDataStream event 的順序編號
-    type ReActDataStream<'TypedCmdToWrapper> =
+    type StreamId = int64 //ReActLoop session 中每個 edge event 的唯一順序編號
+    // 一筆事件只有一組 source/target。原 Cot/Work batch 必須拆成不同 StreamId 的 edges，
+    // 可使用相同 causedBy；不可將不同目的地的 data 放入同一個 edge。
+    /// Edge label 保留事件階段、唯一 StreamId 與 causedBy；例如 AgentCot (2L, 1L, Message "分析")。
+    /// 同文字不同事件仍有不同 id；causedBy 指向所屬 session 中的來源事件，而不是 actor instance。
+    type ReActEvent<'TypedCmdToWrapper> =
     | HumanInit of streamId: StreamId * data: ReActData<'TypedCmdToWrapper>
     // Agent 實際輸出的非 tool、非 final 中間內容；不表示模型未輸出的 hidden reasoning。
-    | AgentCot of streamId: StreamId * causedBy: StreamId * data: ReActData<'TypedCmdToWrapper> []
-    | AgentWork of streamId: StreamId * causedBy: StreamId * data: ReActData<'TypedCmdToWrapper> []
+    | AgentCot of streamId: StreamId * causedBy: StreamId * data: ReActData<'TypedCmdToWrapper>
+    | AgentWork of streamId: StreamId * causedBy: StreamId * data: ReActData<'TypedCmdToWrapper>
     | StdOut of streamId: StreamId * causedBy: StreamId * text: String
     | StdErr of streamId: StreamId * causedBy: StreamId * progressAndStatus: ProgressAndStatus
-    | AgentEnd of streamId: StreamId * causedBy: StreamId * participant: ReActParticipant * data: ReActData<'TypedCmdToWrapper> //該 participant 回合的終止事件
+    | AgentEnd of streamId: StreamId * causedBy: StreamId * data: ReActData<'TypedCmdToWrapper> //edge source participant 回合的終止事件
+
+    // 原生 FGL labelled edge；不另包 envelope 或複製方向欄位。
+    /// 例如 (ReActEndpoint.Human, wrapperEndpoint, HumanInit (1L, HumanPrompt "review"))。
+    /// Alias 直接相容 FGL API；不存在另一套 from/to envelope 要維護。
+    type ReActDataStream<'TypedCmdToWrapper> =
+        FSharp.FGL.LEdge<ReActEndpoint, ReActEvent<'TypedCmdToWrapper>>
+
+    // handler 持有持續更新的 committed graph，不是待寫入的 queue，也不是 IAgent registry。
+    // 同一對端點允許多個事件。StreamId 在所屬 session 唯一；相同 id 重試必須由實作去重，
+    // 同 id 不同資料必須拒絕，不能依文字內容判定是不是同一事件。
+    // FGL Copy() 只隔離 graph 容器；可變的 'TypedCmdToWrapper payload 還須由實作複製。
+    // 讀者取得的副本不得回寫 handler 的 graph；移除 live participant 不刪除歷史節點。
+    // 本輪不規範 topic 分類、摘要覆蓋範圍或 compact policy。
+    type WrappedReActDataFlow<'TypedCmdToWrapper when 'TypedCmdToWrapper : equality> =
+        FSharp.FGL.ArrayAdjacencyGraph.ArrayAdjacencyGraph<
+            ReActEndpoint, unit, ReActEvent<'TypedCmdToWrapper>>
 
     type ReActLoopStatus = {
         PendingHumanPromptCount: int
@@ -695,7 +739,7 @@ module CoreMod =
         : ReActLoopFodexFun<'Input, 'Success> =
         ReActLoopFodexFun<'Input, 'Success>(node, target)
 
-    type ReActLoop<'TypedCmdToWrapper, 'TAgentCommMsg>
+    type ReActLoop<'TypedCmdToWrapper, 'TAgentCommMsg when 'TypedCmdToWrapper : equality>
         (node: FodexNode, reActLoopHandler: IActorRef, argString: string, ctx: UniContext) =
 
         let cmd = FodexCommanddHelper.ParseStr ctx argString
@@ -716,6 +760,8 @@ module CoreMod =
             cmd.TryGetResult CommonCommand.ReActLoopRouteReActDataStream
         let collectVersion =
             cmd.TryGetResult CommonCommand.ReActLoopCollect
+        let readDataFlowVersion =
+            cmd.TryGetResult CommonCommand.ReActLoopReadDataFlow
         let getStatusVersion =
             cmd.TryGetResult CommonCommand.ReActLoopGetStatus
         let getParticipantCapabilitiesVersion =
@@ -760,6 +806,11 @@ module CoreMod =
                 ReActParticipantSessionId,
                 ReActDataStream<'TypedCmdToWrapper> []
             > node targetReActLoopCollect
+        let versionedReadDataFlow =
+            reActLoopFodexFun<
+                ReActParticipantSessionId,
+                WrappedReActDataFlow<'TypedCmdToWrapper>
+            > node targetReActLoopReadDataFlow
         let versionedGetStatus =
             reActLoopFodexFun<ReActParticipantSessionId, ReActLoopStatus>
                 node
@@ -786,6 +837,7 @@ module CoreMod =
         let dispatchToParticipant = pinAtStartup dispatchToParticipantVersion versionedDispatchToParticipant
         let routeReActDataStream = pinAtStartup routeReActDataStreamVersion versionedRouteReActDataStream
         let collect = pinAtStartup collectVersion versionedCollect
+        let readDataFlow = pinAtStartup readDataFlowVersion versionedReadDataFlow
         let getStatus = pinAtStartup getStatusVersion versionedGetStatus
         let getParticipantCapabilities =
             pinAtStartup
@@ -831,6 +883,9 @@ module CoreMod =
                     upsertParticipant
                     input
 
+        /// 移除 live topology binding，不刪除 graph/persisted history 中的 logical endpoint。
+        /// 例如 auxiliary participant 無法 resume 可呼叫 loop.RemoveParticipant participant，
+        /// 既有訊息仍可供 Collect、ReadDataFlow 或 offline handoff 使用。
         abstract member RemoveParticipant:
             TReActLoopRemoveParticipant<ReActParticipant>
         default this.RemoveParticipant =
@@ -887,8 +942,13 @@ module CoreMod =
                     dispatchToParticipant
                     input
 
-        // 單一 routing 入口。Ok persistedCount 表示 durable persistence 已完成，不能只表示 mailbox enqueue。
-        // MainWrapperToHuman 只有在這個 Ok 之後才可 stream 給 user；Contract 不指定 output sink 型別。
+        /// 單一 routing 入口，input 是原生 FGL (source, target, event)。
+        /// Ok persistedCount 表示 durable persistence 與 committed graph 更新皆已完成，
+        /// 不是 mailbox enqueue acknowledgement，也不表示外部 user 已收到訊息。
+        /// Human output 及 participant dispatch 只能在 commit 後發生；recover 只重建 graph，
+        /// 不得重新發送 prompt/tool。重試同 StreamId 要檢查資料相同並去重；衝突回傳 Error。
+        /// 用法：loop.RouteReActDataStream (ReActEndpoint.Human, wrapperEndpoint, HumanInit (1L, HumanPrompt prompt))。
+        /// Actor/mailbox、持久化、graph mutation 與拓樸驗證都在版本化 implementation，不在此 facade。
         abstract member RouteReActDataStream:
             TReActLoopRouteReActDataStream<ReActDataStream<'TypedCmdToWrapper>>
         default this.RouteReActDataStream =
@@ -899,7 +959,10 @@ module CoreMod =
                     routeReActDataStream
                     stream
 
-        // Collect 是整個 ReActLoop session 的 persisted stream read，不屬於單一 IAgent。
+        /// 讀整個 ReActLoop session 的持久化歷史，依 StreamId 遞增回傳原生 edges。
+        /// 用法：loop.Collect wrapperSessionId；不是讀未 commit mailbox，也不是 ReadDataFlow 的別名。
+        /// 即使 in-memory graph 已 compact，Collect 仍保留完整歷史；graph enumeration 本身不保證排序。
+        /// 大量歷史需要逐行匯出時，使用 IAgent.ExportReActDataStreamJsonl，不在這裡組巨型字串。
         abstract member Collect:
             TReActLoopCollect<ReActParticipantSessionId, ReActDataStream<'TypedCmdToWrapper>>
         default this.Collect =
@@ -908,6 +971,22 @@ module CoreMod =
                     targetReActLoopCollect
                     collectVersion
                     collect
+                    sessionId
+
+        /// 讀 handler 目前的 committed graph；live graph 仍由 handler 持續持有與更新。
+        /// 用法：loop.ReadDataFlow wrapperSessionId |> Result.map (fun graph -> graph.GetEdges())。
+        /// 需要特定兩端的全部歷史使用 graph.GetEdges(source, target)，不要只呼叫 GetEdge。
+        /// 回傳獨立副本，包含可變 payload 的隔離；FGL Copy() 本身只複製容器。
+        /// 純 Contract 不知道如何複製泛型 payload，必須由該版本 implementation 負責。
+        /// 不承諾 GetEdges enumeration 的時間順序；需要線性時間序列時依 StreamId 排序。
+        abstract member ReadDataFlow:
+            TReActLoopReadDataFlow<ReActParticipantSessionId, WrappedReActDataFlow<'TypedCmdToWrapper>>
+        default this.ReadDataFlow =
+            fun sessionId ->
+                runPinned
+                    targetReActLoopReadDataFlow
+                    readDataFlowVersion
+                    readDataFlow
                     sessionId
 
         abstract member GetStatus:
@@ -934,8 +1013,10 @@ module CoreMod =
                     getParticipantCapabilities
                     participant
     //Wrapped agent (簡稱 Native Agent，natives) 與 agents wrapper (簡稱 wrapper) 都是一種 Agent
+    // 同一 factory 同時建立 wrapper/loop；loop 暴露 FGL graph，因此命令需支援 equality。
+    // IAgent 本身與單筆 ReActDataStream 仍沒有這個限制。
     [<AbstractClass>]
-    type FodexAgent<'TypedCmdToWrapper, 'TAgentCommMsg> () =
+    type FodexAgent<'TypedCmdToWrapper, 'TAgentCommMsg when 'TypedCmdToWrapper : equality> () =
         static member createWrapper
             (node: FodexNode, argString: string, ctx: UniContext)
             : Result<IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>, exn> =

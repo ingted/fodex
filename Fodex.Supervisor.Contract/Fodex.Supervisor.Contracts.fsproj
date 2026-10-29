@@ -25,6 +25,8 @@
     <PackageReference Include="FAkka.Argu" Version="10.2.1" />
     <PackageReference Include="FAkka.Shared" Version="10.2.6" />
     <PackageReference Include="FAkka.FSharp.Quotations.Evaluator" Version="2.2.1" />
+    <PackageReference Include="FSharp.FGL" Version="0.0.4" />
+    <PackageReference Include="FSharp.FGL.ArrayAdjacencyGraph" Version="0.0.2" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="10.1.402" />
