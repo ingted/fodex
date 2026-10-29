@@ -43,6 +43,8 @@
     <Compile Include="CodexAppServerV100.fsx" />
     <Compile Include="NativeAgentV200.fsx" />
     <Compile Include="NativeAgentV201.fsx" />
+    <Compile Include="NativeAppServerV202.fsx" />
+    <Compile Include="NativeAgentV202.fsx" />
     <Compile Include="WrapperAgentV200.fsx" />
     <Compile Include="WrapperAgentV201.fsx" />
     <None Include="NativeAgentV100.fsx">
@@ -54,6 +56,7 @@
     <Compile Include="CliFodexFunV100.fsx" />
     <Compile Include="FodexFunRegistrationV200.fsx" />
     <Compile Include="FodexFunRegistrationV201.fsx" />
+    <Compile Include="FodexFunRegistrationV202.fsx" />
     <Compile Include="WrapperOutputV200.fsx" />
     <Compile Include="WrapperOutputV201.fsx" />
     <None Include="FodexFunRegistrationV100.fsx">
@@ -80,6 +83,22 @@
       <Link>Archive/WrapperIAgentDemo.M005.fsx</Link>
     </None>
     <None Include="README.M005.md" />
+    <None Include="README.M006-M009.md" />
+    <None Include="WrapperIAgentDemo.M006.fsx">
+      <Link>Archive/WrapperIAgentDemo.M006.fsx</Link>
+    </None>
+    <None Include="WrapperIAgentDemo.M007.fsx">
+      <Link>Archive/WrapperIAgentDemo.M007.fsx</Link>
+    </None>
+    <None Include="DemoOrderHubV100.fsx">
+      <Link>Archive/DemoOrderHubV100.fsx</Link>
+    </None>
+    <None Include="DemoReferencesM008.fsx"><Link>Archive/DemoReferencesM008.fsx</Link></None>
+    <None Include="WrapperIAgentDemo.M008.fsx"><Link>Archive/WrapperIAgentDemo.M008.fsx</Link></None>
+    <None Include="WrapperIAgentDemo.M008.Hub.fsx"><Link>Archive/WrapperIAgentDemo.M008.Hub.fsx</Link></None>
+    <None Include="WrapperIAgentDemo.M009.fsx"><Link>Archive/WrapperIAgentDemo.M009.fsx</Link></None>
+    <None Include="WrapperIAgentDemo.M009.Hub.fsx"><Link>Archive/WrapperIAgentDemo.M009.Hub.fsx</Link></None>
+    <None Include="WrapperIAgentDemo.M009.HubClient.fsx"><Link>Archive/WrapperIAgentDemo.M009.HubClient.fsx</Link></None>
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

@@ -6,5 +6,6 @@ open Expecto
 [<EntryPoint>]
 let main argv =
     testList "Supervisor V200" [ ReActJsonV200Tests.tests; ReActDataStoreV200Tests.tests; IAgentFodexFunV200Tests.tests; ReActLoopFodexFunV200Tests.tests; NativeAgentV200Tests.tests; WrapperAgentV200Tests.tests; FodexFunRegistrationV200Tests.tests; WrapperOutputV200Tests.tests; LiveCodexV200Tests.tests ]
-    |> fun existing -> testList "Supervisor" [ existing; ProcSupervisorV201Tests.tests; NativeAgentV201Tests.tests; WrapperAgentV201Tests.tests; FodexFunRegistrationV201Tests.tests; WrapperOutputV201Tests.tests; LiveCodexV201Tests.tests ]
+    |> fun existing -> testList "Supervisor" [ existing; ProcSupervisorV201Tests.tests; NativeAgentV201Tests.tests; WrapperAgentV201Tests.tests; FodexFunRegistrationV201Tests.tests; WrapperOutputV201Tests.tests; LiveCodexV201Tests.tests; DemoOrderHubV100Tests.tests ]
+    |> fun existing -> testList "Supervisor with demo integration" [existing; NativeAppServerV202Tests.tests; NativeAgentV202Tests.tests; FodexFunRegistrationV202Tests.tests]
     |> runTestsWithCLIArgs [] argv

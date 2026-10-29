@@ -4,4 +4,5 @@
   <Project Path="Fodex.Supervisor.Contract.Tests/Fodex.Supervisor.Contract.Tests.fsproj" />
   <Project Path="Fodex.Supervisor.Tests/Fodex.Supervisor.Tests.fsproj" />
   <Project Path="Fodex.Supervisor/Fodex.Supervisor.fsproj" />
+  <Project Path="Fodex.Supervisor.Demos/Fodex.Supervisor.Demos.fsproj" />
 </Solution>
