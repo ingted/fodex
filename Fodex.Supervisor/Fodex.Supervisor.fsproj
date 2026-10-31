@@ -26,12 +26,22 @@
     </None>
     <Compile Include="ReActJsonV200.fsx" />
     <Compile Include="ReActDataStoreV200.fsx" />
+    <Compile Include="ReActDataStoreV205.fsx" />
     <Compile Include="SupervisorArgs.fsx" />
     <None Include="IAgentFodexFunV100.fsx">
       <Link>Archive/IAgentFodexFunV100.fsx</Link>
     </None>
     <Compile Include="IAgentFodexFunV200.fsx" />
     <Compile Include="ReActLoopFodexFunV200.fsx" />
+    <Compile Include="NativeOrderFodexFunV205.fsx" />
+    <Compile Include="ReActTraceV203.fsx" />
+    <Compile Include="SubagentFodexFunV204.fsx" />
+    <Compile Include="SubagentFodexFunV206.fsx" />
+    <Compile Include="NativeSubagentFodexFunV207.fsx" />
+    <Compile Include="HubScopeFodexFunV210.fsx" />
+    <Compile Include="ExplicitCotFodexFunV208.fsx" />
+    <Compile Include="ReActLoopHandlerV203.fsx" />
+    <Compile Include="ReActLoopHandlerV205.fsx" />
     <None Include="ReActLoopFodexFunV100.fsx">
       <Link>Archive/ReActLoopFodexFunV100.fsx</Link>
     </None>
@@ -45,8 +55,18 @@
     <Compile Include="NativeAgentV201.fsx" />
     <Compile Include="NativeAppServerV202.fsx" />
     <Compile Include="NativeAgentV202.fsx" />
+    <Compile Include="NativeAppServerV203.fsx" />
+    <Compile Include="NativeAgentV203.fsx" />
+    <Compile Include="NativeOwnershipFodexFunV209.fsx" />
+    <Compile Include="NativeAppServerV208.fsx" />
+    <Compile Include="NativeAgentV208.fsx" />
     <Compile Include="WrapperAgentV200.fsx" />
     <Compile Include="WrapperAgentV201.fsx" />
+    <Compile Include="WrapperAgentV203.fsx" />
+    <Compile Include="WrapperAgentV204.fsx" />
+    <Compile Include="WrapperAgentV206.fsx" />
+    <Compile Include="WrapperAgentV207.fsx" />
+    <Compile Include="WrapperAgentV208.fsx" />
     <None Include="NativeAgentV100.fsx">
       <Link>Archive/NativeAgentV100.fsx</Link>
     </None>
@@ -57,6 +77,12 @@
     <Compile Include="FodexFunRegistrationV200.fsx" />
     <Compile Include="FodexFunRegistrationV201.fsx" />
     <Compile Include="FodexFunRegistrationV202.fsx" />
+    <Compile Include="FodexFunRegistrationV203.fsx" />
+    <Compile Include="FodexFunRegistrationV204.fsx" />
+    <Compile Include="FodexFunRegistrationV206.fsx" />
+    <Compile Include="FodexFunRegistrationV207.fsx" />
+    <Compile Include="FodexFunRegistrationV208.fsx" />
+    <Compile Include="RemoteFodexFunV209.fsx" />
     <Compile Include="WrapperOutputV200.fsx" />
     <Compile Include="WrapperOutputV201.fsx" />
     <None Include="FodexFunRegistrationV100.fsx">
@@ -100,6 +126,32 @@
     <None Include="WrapperIAgentDemo.M009.Hub.fsx"><Link>Archive/WrapperIAgentDemo.M009.Hub.fsx</Link></None>
     <None Include="WrapperIAgentDemo.M009.HubClient.fsx"><Link>Archive/WrapperIAgentDemo.M009.HubClient.fsx</Link></None>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="DemoReferencesM010.fsx"><Link>Archive/DemoReferencesM010.fsx</Link></None>
+    <None Include="DemoReferencesM012.fsx"><Link>Archive/DemoReferencesM012.fsx</Link></None>
+    <None Include="WrapperIAgentDemo.M012.fsx"><Link>Archive/WrapperIAgentDemo.M012.fsx</Link></None>
+    <None Include="WrapperIAgentDemo.M012.Hub.fsx"><Link>Archive/WrapperIAgentDemo.M012.Hub.fsx</Link></None>
+    <None Include="README.M012.md" />
+    <None Include="DemoReferencesM013.fsx"><Link>Archive/DemoReferencesM013.fsx</Link></None>
+    <None Include="WrapperIAgentDemo.M013.fsx"><Link>Archive/WrapperIAgentDemo.M013.fsx</Link></None>
+    <None Include="WrapperIAgentDemo.M013.Hub.fsx"><Link>Archive/WrapperIAgentDemo.M013.Hub.fsx</Link></None>
+    <None Include="README.M013.md" />
+    <None Include="WrapperIAgentDemo.M014.fsx"><Link>Archive/WrapperIAgentDemo.M014.fsx</Link></None>
+    <None Include="WrapperIAgentDemo.M015.fsx"><Link>Archive/WrapperIAgentDemo.M015.fsx</Link></None>
+    <None Include="DemoReferencesM014.fsx"><Link>Archive/DemoReferencesM014.fsx</Link></None>
+    <None Include="README.M014-M015.md" />
+    <None Include="WrapperIAgentDemo.M016.Host.fsx"><Link>Archive/WrapperIAgentDemo.M016.Host.fsx</Link></None>
+    <None Include="WrapperIAgentDemo.M016.fsx"><Link>Archive/WrapperIAgentDemo.M016.fsx</Link></None>
+    <None Include="DemoReferencesM016.fsx"><Link>Archive/DemoReferencesM016.fsx</Link></None>
+    <None Include="README.M016.md" />
+    <None Include="README.M013-M016.Validation.md" />
+    <None Include="WrapperIAgentDemo.M010.fsx"><Link>Archive/WrapperIAgentDemo.M010.fsx</Link></None>
+    <None Include="WrapperIAgentDemo.M010.Hub.fsx"><Link>Archive/WrapperIAgentDemo.M010.Hub.fsx</Link></None>
+    <None Include="WrapperIAgentDemo.M011.fsx"><Link>Archive/WrapperIAgentDemo.M011.fsx</Link></None>
+    <None Include="WrapperIAgentDemo.M011.Hub.fsx"><Link>Archive/WrapperIAgentDemo.M011.Hub.fsx</Link></None>
+    <None Include="WrapperIAgentDemo.M011.HubClient.fsx"><Link>Archive/WrapperIAgentDemo.M011.HubClient.fsx</Link></None>
+    <None Include="README.M010-M011.md" />
+  </ItemGroup>
   <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\Fodex.Supervisor.Contract\Fodex.Supervisor.Contracts.fsproj" />
@@ -107,7 +159,7 @@
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="10.1.402" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
-    <PackageReference Include="FAkka.Proc.Supervisor" Version="1.572.7-fodex001" />
+    <PackageReference Include="FAkka.Proc.Supervisor" Version="[1.572.10-fodex002]" />
     <!-- 直接使用既有 transitive 版本的純資料 JSON serializer，明列依賴以避免間接漂移。 -->
     <PackageReference Include="FAkka.FsPickler.Json" Version="10.2.2" />
   </ItemGroup>

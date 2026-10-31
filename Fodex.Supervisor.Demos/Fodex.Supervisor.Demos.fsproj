@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
@@ -12,7 +12,26 @@
       <Link>DemoOrderHubV100.fsx</Link>
     </Compile>
     <Compile Include="DemoParticipantsV100.fsx" />
+    <Compile Include="DemoTraceV100.fsx" />
+    <Compile Include="DemoOrderHubV101.fsx" />
+    <Compile Include="DemoOrderHubV102.fsx" />
+    <Compile Include="DemoOrderHubV103.fsx" />
+    <Compile Include="DemoOrderHubV104.fsx" />
+    <Compile Include="DemoHubClientV101.fsx" />
+    <Compile Include="WrapperTurnTimingV100.fsx" />
+    <Compile Include="DemoParticipantsV101.fsx" />
+    <Compile Include="DemoParticipantsV102.fsx" />
+    <Compile Include="DemoParticipantsV103.fsx" />
     <Compile Include="DemoHostingV100.fsx" />
+    <Compile Include="DemoHostingV101.fsx" />
+    <Compile Include="DemoHostingV102.fsx" />
+    <Compile Include="DemoHostingV103.fsx" />
+    <Compile Include="DemoHostingV104.fsx" />
+    <Compile Include="DemoHostingV105.fsx" />
+    <Compile Include="DemoHostingV106.fsx" />
+    <Compile Include="..\Fodex.Supervisor\WrapperIAgentDemo.M011.HubClient.fsx">
+      <Link>WrapperIAgentDemo.M011.HubClient.fsx</Link>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />

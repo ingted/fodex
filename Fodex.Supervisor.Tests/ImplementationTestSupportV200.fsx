@@ -44,8 +44,25 @@ let eventEdge id : ReActDataStream<string> =
 let withNode action =
     let config = Akka.Configuration.ConfigurationFactory.ParseString "akka.loglevel=OFF\nakka.stdout-loglevel=OFF"
     let node = Akka.Actor.ActorSystem.Create("fodex-v200-" + Guid.NewGuid().ToString("N"), config)
-    try action node
-    finally node.Terminate().WaitAsync(TimeSpan.FromSeconds 10.).GetAwaiter().GetResult() |> ignore
+    let mutable actionError: string option = None
+    try
+        try action node
+        with ex -> actionError <- Some(ex.GetType().Name); reraise()
+    finally
+        let pendingBefore = System.Threading.ThreadPool.PendingWorkItemCount
+        let threadsBefore = System.Threading.ThreadPool.ThreadCount
+        let started = System.Diagnostics.Stopwatch.StartNew()
+        let termination = node.Terminate()
+        try termination.WaitAsync(TimeSpan.FromSeconds 10.).GetAwaiter().GetResult() |> ignore
+        with :? TimeoutException ->
+            // 只補失敗證據；期限及原始 exception 不變。同步 fixture 等待與 actor 卡住必須分辨。
+            // 不印任意 exception.Message，避免 teardown 蓋掉先前 assertion 時無從追查。
+            Console.Error.WriteLine("FODEX_TEST_NODE_TIMEOUT " + System.Text.Json.JsonSerializer.Serialize
+                {| node=node.Name; elapsedMs=started.Elapsed.TotalMilliseconds; processors=Environment.ProcessorCount
+                   actionError=Option.toObj actionError; terminationStatus=string termination.Status
+                   pendingBefore=pendingBefore; pendingAfter=System.Threading.ThreadPool.PendingWorkItemCount
+                   threadsBefore=threadsBefore; threadsAfter=System.Threading.ThreadPool.ThreadCount |})
+            reraise()
 
 /// 每個 integration case 擁有自己建立的 DB；不改環境變數、不連使用者指定的正式 DB。
 /// DROP 的唯一識別由本函數產生，CREATE 成功後才進入 finally；Pooling=false 不干擾其他連線池。

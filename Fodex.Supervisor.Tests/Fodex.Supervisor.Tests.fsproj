@@ -49,9 +49,35 @@
     <Compile Include="WrapperOutputV201Tests.fsx" />
     <Compile Include="LiveCodexV201Tests.fsx" />
     <Compile Include="DemoOrderHubV100Tests.fsx" />
+    <Compile Include="DemoOrderHubV101Tests.fsx" />
+    <Compile Include="DemoHubClientV101Tests.fsx" />
     <Compile Include="NativeAppServerV202Tests.fsx" />
     <Compile Include="NativeAgentV202Tests.fsx" />
     <Compile Include="FodexFunRegistrationV202Tests.fsx" />
+    <Compile Include="NativeAgentV203Tests.fsx" />
+    <Compile Include="WrapperAgentV203Tests.fsx" />
+    <Compile Include="FodexFunRegistrationV203Tests.fsx" />
+    <Compile Include="ReActTraceV203Tests.fsx" />
+    <Compile Include="WrapperTurnTimingV100Tests.fsx" />
+    <Compile Include="SubagentFodexFunV204Tests.fsx" />
+    <Compile Include="WrapperAgentV204Tests.fsx" />
+    <Compile Include="DemoOrderHubV102Tests.fsx" />
+    <Compile Include="DemoParticipantsV102Tests.fsx" />
+    <Compile Include="NativeOrderFodexFunV205Tests.fsx" />
+    <Compile Include="SubagentFodexFunV206Tests.fsx" />
+    <Compile Include="WrapperAgentV206Tests.fsx" />
+    <Compile Include="DemoHostingV103Tests.fsx" />
+    <Compile Include="NativeSubagentFodexFunV207Tests.fsx" />
+    <Compile Include="DemoOrderHubV104Tests.fsx" />
+    <Compile Include="WrapperAgentV207Tests.fsx" />
+    <Compile Include="DemoHostingV104Tests.fsx" />
+    <Compile Include="ExplicitCotFodexFunV208Tests.fsx" />
+    <Compile Include="WrapperAgentV208Tests.fsx" />
+    <Compile Include="RemoteFodexFunV209Tests.fsx" />
+    <Compile Include="NativeOwnershipFodexFunV209Tests.fsx" />
+    <Compile Include="HubScopeFodexFunV210Tests.fsx" />
+    <Compile Include="ImplementationTestSupportV210.fsx" />
+    <Compile Include="DemoHostingOwnerV210Tests.fsx" />
     <Compile Include="ProgramV200.fs" />
   </ItemGroup>
   <ItemGroup>
