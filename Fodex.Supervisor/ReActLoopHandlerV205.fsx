@@ -39,6 +39,7 @@ module ReActLoopHandlerV205 =
                 history |> Array.iter remember
 
                 let handler = spawn node ("react-v205-" + Guid.NewGuid().ToString("N")) <| fun (mailbox: Actor<obj>) ->
+                    let ctx = ActorLogging.withLogger ctx (Akka.Event.Logging.GetLogger(mailbox.Context))
                     let participants = Dictionary<ReActParticipant, IAgent<string,obj> * ReActParticipantCapability array>()
                     let active = HashSet<ReActParticipant>()
                     let pending = HashSet<StreamId>()

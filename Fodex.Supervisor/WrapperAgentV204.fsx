@@ -30,6 +30,7 @@ module WrapperAgentV204 =
             // HumanInit 仍保存原始 slash 命令，只有送給 main 的 input 使用組裝結果。
             let prepare = SubagentFodexFunV204.bindPrepare node arguments ctx
             let instance = spawn node ("wrapper-v204-" + Guid.NewGuid().ToString("N")) <| fun (mailbox: Actor<obj>) ->
+                let ctx = ActorLogging.withLogger ctx (Akka.Event.Logging.GetLogger(mailbox.Context))
                 let children = Dictionary<ReActParticipant,IAgent<string,obj>>()
                 let main = 2L, snd wrapper
                 let mutable running = false

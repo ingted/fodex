@@ -1,7 +1,7 @@
 #if INTERACTIVE
 #r "nuget: Expecto, 11.1.1"
 #load "ImplementationTestSupportV200.fsx"
-#load "../Fodex.Supervisor.Demos/WrapperTurnTimingV100.fsx"
+#load "../Fodex.Supervisor/WrapperTurnTimingV100.fsx"
 #else
 module WrapperTurnTimingV100Tests
 #endif
@@ -10,10 +10,26 @@ open System
 open System.Diagnostics
 open Expecto
 open Fodex.Supervisor.Contracts.CoreMod
-open Fodex.Supervisor.Demos
+open Fodex.Supervisor
+open ImplementationTestSupportV200
 
 [<Tests>]
 let tests = testList "Whole wrapper turn timing" [
+    testCase "fixture wait consumes an already signalled AutoResetEvent exactly once" <| fun () ->
+        use signal = new System.Threading.AutoResetEvent(true)
+        Expect.isTrue (waitForSignal signal (TimeSpan.FromSeconds 10.)) "existing signal is not lost"
+        Expect.isFalse (waitForSignal signal TimeSpan.Zero) "one signal cannot complete another turn"
+    testCase "fixture wait returns false on timeout without inventing a signal" <| fun () ->
+        use signal = new System.Threading.AutoResetEvent(false)
+        Expect.isFalse (waitForSignal signal (TimeSpan.FromMilliseconds 20.)) "same timeout result as WaitOne"
+    testCase "fixture wait observes a later asynchronous signal" <| fun () ->
+        use signal = new System.Threading.AutoResetEvent(false)
+        let completion = task {
+            do! System.Threading.Tasks.Task.Delay 20
+            signal.Set() |> ignore
+        }
+        Expect.isTrue (waitForSignal signal (TimeSpan.FromSeconds 10.)) "actual completion required"
+        completion.GetAwaiter().GetResult()
     testCase "Completed commentary/work messages do not finish the turn" <| fun () ->
         let watch = Stopwatch.StartNew()
         let messages: ReActEvent<string> list =

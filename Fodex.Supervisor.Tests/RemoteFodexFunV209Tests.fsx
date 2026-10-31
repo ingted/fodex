@@ -1,7 +1,7 @@
 #if INTERACTIVE
 #r "nuget: Expecto, 11.1.1"
 #load "ImplementationTestSupportV201.fsx"
-#r "bin/Debug/net10.0/win-x64/Fodex.Supervisor.Demos.dll"
+#r "bin/Debug/net10.0/win-x64/Fodex.Supervisor.dll"
 #else
 module RemoteFodexFunV209Tests
 #endif
@@ -15,7 +15,8 @@ open Akka.FSharp
 open Expecto
 open ImplementationTestSupportV200
 open Fodex.Supervisor
-open Fodex.Supervisor.Demos
+open LoggerUtil
+open FodexLoggerAdapter
 open Fodex.Supervisor.Contracts.Concepts
 open Fodex.Supervisor.Contracts.CoreMod
 open Fodex.Supervisor.Contracts.LiteralsMod
@@ -58,8 +59,8 @@ let tests = testList "Remote FodexFun V209" [
             withNodes <| fun owner client ->
                 let directory = Path.Combine(__SOURCE_DIRECTORY__,"TestResults","V209")
                 Directory.CreateDirectory directory |> ignore
-                let ownerCtx = DemoTraceV100.context owner (Path.Combine(directory,owner.Name+".jsonl"))
-                let clientCtx = DemoTraceV100.context client (Path.Combine(directory,client.Name+".jsonl"))
+                let ownerCtx = UniLogger.toCtx(FodexLoggerAdapter.toUL(UniversalLogger<_>(NLog.LogManager.GetLogger("Fodex.IO").WithProperty("traceFile", Path.Combine(directory,owner.Name+".jsonl")))), "test")
+                let clientCtx = UniLogger.toCtx(FodexLoggerAdapter.toUL(UniversalLogger<_>(NLog.LogManager.GetLogger("Fodex.IO").WithProperty("traceFile", Path.Combine(directory,client.Name+".jsonl")))), "test")
                 let received = ConcurrentQueue<string>()
                 let normalOutput = ConcurrentQueue<ReActDataStream<string>>()
                 let args = "--model gpt-6.1-sol --effort high --wrapperagent 2.0.8 --reactloophandler 2.0.3"

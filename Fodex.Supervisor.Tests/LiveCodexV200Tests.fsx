@@ -42,7 +42,7 @@ let tests = testList "Live Codex V200" [
                         let id = native.GetSessionId() |> expectOk
                         expectedId |> Option.iter (fun saved -> Expect.equal id saved "resume, not new thread")
                         agent.Send(box (sprintf "Reply exactly %s. Do not use tools." expectedText)) |> expectOk |> ignore
-                        Expect.isTrue (completed.WaitOne(TimeSpan.FromSeconds 180.)) "real app-server completed"
+                        Expect.isTrue (waitForSignal completed (TimeSpan.FromSeconds 180.)) "real app-server completed"
                         let actual = output.ToArray() |> Array.choose (fun (_,_,event) -> match event with AgentEnd(_,_,Message text) -> Some text | _ -> None)
                         Expect.equal actual [|expectedText|] "real Codex final answer"
                         let errors = output.ToArray() |> Array.choose (fun (_,_,event) -> match event with StdErr(_,_,text) -> Some text | _ -> None)

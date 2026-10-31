@@ -114,7 +114,7 @@ akka {
 
     /// config/codec 安裝屬 node bootstrap，不是 per-order 工作；整個 demo 只呼叫一次。
     let createNode name ip port =
-        let node = ActorSystem.Create(name,config ip port)
+        let node = ActorSystem.Create(name,ActorLogging.config.WithFallback(config ip port))
         try
             installSerialization node
             node

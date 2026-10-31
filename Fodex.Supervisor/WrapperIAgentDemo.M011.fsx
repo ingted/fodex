@@ -1,25 +1,13 @@
+// 20261031 整理版；前一版完整保留於 Contract/archive/20261031。
 // M011：先獨立啟動 WrapperIAgentDemo.M011.Hub.fsx；本檔只連既有 host。
 // M011：同一 ActorSystem 內的 Wrapper / ReActLoop / Native actor 示範（host/client 合檔例外）。
 // 從 M009 保存新版；預設兩輪 ECHO，不是 review。模型/effort/YOLO 不變。
-// 先依 README.M010-M011.md build（包含同一份 HubClient 的編譯入口），再修改 defaultArgumentsText 於 VS FSI 執行。
+// 先依 README.M010-M016.md build（client 入口就在實作專案），再修改 defaultArgumentsText 於 VS FSI 執行。
 // M002/M003/M004/M005 不修改；SQL/FGL 仍是 V200，新 native/composition 使用 V203。
 // --native-adapter 可選 app-server 或 exec；exec 不支援回合中的 steer。
-#I @"bin\M010.Actor"
-#r "Akka.dll"
-#r "Argu.dll"
-#r "NLog.dll"
-#r "FAkka.Shared.dll"
-#r "Microsoft.Data.SqlClient.dll"
-#r "FSharp.FGL.dll"
-#r "FSharp.FGL.ArrayAdjacencyGraph.dll"
-#r "Fodex.Supervisor.Contracts.dll"
-#r "Fodex.Supervisor.dll"
-#load @"C:\Users\Administrator\.codex\lib\ParseLine.fsx"
-
+#load "MilestoneReferences.fsx"
 open System
 open System.IO
-// 自動化重導輸出用 UTF-8；互動 FSI 的 console 設定不變。
-do if Console.IsOutputRedirected then Console.OutputEncoding <- System.Text.UTF8Encoding(false)
 open System.Reflection
 open System.Runtime.InteropServices
 open System.Runtime.Loader
@@ -30,36 +18,9 @@ open Argu
 open Microsoft.Data.SqlClient
 open Fodex.Supervisor
 open Fodex.Supervisor.Contracts.CoreMod
-
-// 由 build 的 deps.json 解相依組件，不複製硬編碼 NuGet lib/netX 路徑。
-// FSI 不是產品 host；shared framework fallback 保留 M003 已可用的載入方式。
-let assemblyDirectory = Path.Combine(__SOURCE_DIRECTORY__,"bin","M010.Actor")
-let dependencyResolver = AssemblyDependencyResolver(Path.Combine(assemblyDirectory,"Fodex.Supervisor.dll"))
-let sharedDirectory = Directory.GetParent(RuntimeEnvironment.GetRuntimeDirectory().TrimEnd(Path.DirectorySeparatorChar)).Parent.FullName
-let aspNetDirectory = Path.Combine(sharedDirectory,"Microsoft.AspNetCore.App")
-let sharedLibraries =
-    if Directory.Exists aspNetDirectory then
-        Directory.GetDirectories aspNetDirectory
-        // .NET 10 FSI 不載入較新的 .NET 11 shared-framework DLL。
-        |> Array.filter (fun path -> System.Version.Parse((Path.GetFileName path).Split('-')[0]).Major <= Environment.Version.Major)
-        |> Array.sortByDescending (fun path -> System.Version.Parse((Path.GetFileName path).Split('-')[0]))
-    else [||]
-AssemblyLoadContext.Default.add_Resolving(Func<AssemblyLoadContext,AssemblyName,Assembly>(fun loader name ->
-    let resolved = dependencyResolver.ResolveAssemblyToPath name
-    let local = Path.Combine(assemblyDirectory,name.Name + ".dll")
-    if not (isNull resolved) then loader.LoadFromAssemblyPath resolved
-    elif File.Exists local then loader.LoadFromAssemblyPath local
-    else
-        sharedLibraries |> Array.map (fun directory -> Path.Combine(directory,name.Name + ".dll"))
-        |> Array.tryFind File.Exists |> Option.map loader.LoadFromAssemblyPath |> Option.defaultValue null))
-AssemblyLoadContext.Default.add_ResolvingUnmanagedDll(Func<Assembly,string,nativeint>(fun _ name ->
-    match dependencyResolver.ResolveUnmanagedDllToPath name with
-    | null -> 0n
-    | path -> NativeLibrary.Load path))
-
-#r "Fodex.Supervisor.Demos.dll"
 open System.Diagnostics
-open Fodex.Supervisor.Demos
+open LoggerUtil
+open FodexLoggerAdapter
 
 type DemoArgument =
     | Hub_Url of string
@@ -75,7 +36,7 @@ type DemoArgument =
 // 互動操作只需改此字串。--wrapper-session 改成上次顯示的 GUID，即恢復原 graph/main thread。
 // wrapper/handler object pin 2.0.3；未改動的 FodexFun 保持 2.0.0，CLI quotation 1.0.0。
 let defaultArgumentsText = """
---hub-url http://127.0.0.1:18793
+--hub-url http://127.0.0.1:18911
 --sql-server localhost
 --database FodexV200
 --wrapper-session new
@@ -84,10 +45,10 @@ let defaultArgumentsText = """
 --effort high
 --working-directory "F:/fodex"
 --sandbox danger-full-access
---prompt "你只透過原生 shell tool 呼叫 F:/fodex/Fodex.Supervisor/bin/M011.Client/Fodex.Supervisor.Demos.dll，不使用 MCP。這是既有 HubClient.fsx 的編譯入口，不必啟動 FSI。每輪用一次 client invocation 派完兩筆：dotnet F:/fodex/Fodex.Supervisor/bin/M011.Client/Fodex.Supervisor.Demos.dll --url {{HUB_URL}} --action order --order contract TEXT_A --order implementation TEXT_B（請正確引用含空白的文字）。兩筆 order 都確認接單後才用相同 client 的 --url {{HUB_URL}} --action receive。可以在同一次 shell tool 呼叫裡先執行這個批次 order，再執行 receive；不要拆成每個 who 各啟一次 client，也不能先等第一個 sub 的結果才向第二個派工。receive 只回當下 ready，不足兩筆就再 receive，正在執行的工具要等原 handle 完成，不重送 order。這是兩輪 ECHO 計時測試，不是程式碼 review。不要讀檔、分析專案、修改檔案或使用其他 subagent。首輪對 contract 派工：只原樣回覆 orz，不使用工具；對 implementation 派工：只原樣回覆 OGC，不使用工具。收齊首輪兩筆後才向相同的兩個 who 下第二輪 instruction：不要使用工具，只原樣重複你上一輪的回答。host 會 resume 同一個 sid，不要新建 session。請收齊四筆結果，最後用繁體中文簡短列出兩個 who 的兩次回答及 sid 是否一致。不要求自訂 JSON。"
+--prompt "你只透過原生 shell tool 呼叫 F:/fodex/Fodex.Supervisor/bin/Milestones.20261031/Fodex.Supervisor.dll，不使用 MCP。這是既有 HubClient.fsx 的編譯入口，不必啟動 FSI。每輪用一次 client invocation 派完兩筆：dotnet F:/fodex/Fodex.Supervisor/bin/Milestones.20261031/Fodex.Supervisor.dll --url {{HUB_URL}} --action order --order contract TEXT_A --order implementation TEXT_B（請正確引用含空白的文字）。兩筆 order 都確認接單後才用相同 client 的 --url {{HUB_URL}} --action receive。可以在同一次 shell tool 呼叫裡先執行這個批次 order，再執行 receive；不要拆成每個 who 各啟一次 client，也不能先等第一個 sub 的結果才向第二個派工。receive 只回當下 ready，不足兩筆就再 receive，正在執行的工具要等原 handle 完成，不重送 order。這是兩輪 ECHO 計時測試，不是程式碼 review。不要讀檔、分析專案、修改檔案或使用其他 subagent。首輪對 contract 派工：只原樣回覆 orz，不使用工具；對 implementation 派工：只原樣回覆 OGC，不使用工具。收齊首輪兩筆後才向相同的兩個 who 下第二輪 instruction：不要使用工具，只原樣重複你上一輪的回答。host 會 resume 同一個 sid，不要新建 session。請收齊四筆結果，最後用繁體中文簡短列出兩個 who 的兩次回答及 sid 是否一致。不要求自訂 JSON。"
 --auto-stop true
 --output-width 100
---output-directory "F:/fodex/artifacts/M011"
+--output-directory "F:/fodex/artifacts/M011.R002"
 --timeout-seconds 1200
 --wrapperagent 2.0.3
 --reactloophandler 2.0.3
@@ -140,18 +101,25 @@ let sessionId =
 // PL.parseLine 不是 JSON decoder；不要把中文 prompt 編成它不認識的 \uXXXX。
 // 保留文字原樣，只 escape 引號／反斜線，下一層仍由 PL + Argu 解析。
 let argumentJson = JsonSerializerOptions(Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping)
-let arguments = argv |> Array.map (fun value -> JsonSerializer.Serialize(value,argumentJson)) |> String.concat " "
-let node = ActorSystem.Create("fodex-m011-" + Guid.NewGuid().ToString("N"),Akka.Configuration.ConfigurationFactory.ParseString("akka.loglevel=ERROR"))
+let node = ActorSystem.Create("fodex-m011-" + Guid.NewGuid().ToString("N"),ActorLogging.config)
+HubScopeFodexFunV210.register node
+let scopeFunction = SubagentFodexFunV206.bind<Uri * ReActParticipant,Uri> node HubScopeFodexFunV210.targetScope (Some "2.0.10")
+let hubUrl = (Fodex.Supervisor.Contracts.Concepts.FeasibleFun.invoke (Uri(settings.GetResult Hub_Url),(1L,sessionId)) scopeFunction |> required).AbsoluteUri.TrimEnd('/')
+// Argu GetResult 使用最後一筆；保留完整 argv，只追加型別明確的 owner URL override，不手刻 parser。
+let originalArguments = argv |> Array.map (fun value -> JsonSerializer.Serialize(value,argumentJson)) |> String.concat " "
+let arguments = originalArguments + " --hub-url " + JsonSerializer.Serialize(hubUrl,argumentJson)
 let completed = new AutoResetEvent(false)
 let outputGate = obj()
 // 證據檔只屬於這次 demo run；不是產品 history queue，原始資料仍由 handler 寫 SQL/FGL。
 let outputDirectory = Path.Combine(settings.GetResult Output_Directory,DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N"))
 Directory.CreateDirectory outputDirectory |> ignore
-let ctx = DemoTraceV100.context node (Path.Combine(outputDirectory,"main.io.jsonl"))
+let logger = NLog.LogManager.GetLogger("Fodex.IO").WithProperty("traceFile", Path.Combine(outputDirectory,"main.io.jsonl"))
+let ctx = UniLogger.toCtx(FodexLoggerAdapter.toUL(UniversalLogger<_>(logger)), "Fodex")
+ctx.logger.Tags["traceFile"] <- logger.Properties["traceFile"]
 let wrapperWatch = Stopwatch()
 let mutable turnNumber = 0
 let recordTiming stage =
-    DemoParticipantsV100.append (Path.Combine(outputDirectory,"main.timings.jsonl"))
+    HubParticipantsV101.append (Path.Combine(outputDirectory,"main.timings.jsonl"))
         {| turn=turnNumber; stage=stage; utc=DateTime.UtcNow; elapsedMs=wrapperWatch.Elapsed.TotalMilliseconds |}
     printfn "[wrapper turn %d %s] elapsed=%.3fs" turnNumber stage wrapperWatch.Elapsed.TotalSeconds
 let wrapperEventPath = Path.Combine(outputDirectory,"wrapper.completed.events.txt")
@@ -185,12 +153,12 @@ let sink ((_,target,event) as edge) = lock outputGate (fun () ->
         | StdErr(_,_,text) -> printfn "Wrapper error: %s" text
         | _ -> ())
 
-// 只連既有 host；本 script 不 build/spawn/stop host。/start 是明確建立兩個 sub 的操作。
-let hubUrl = settings.GetResult Hub_Url
+// 只連既有 host；本 script 不 build/spawn/stop host。初始化只作用於自己的 owner group。
 let http = new System.Net.Http.HttpClient(Timeout=TimeSpan.FromMinutes 20.)
-let started = http.PostAsync(hubUrl + "/start",new System.Net.Http.StringContent("")).GetAwaiter().GetResult()
-started.EnsureSuccessStatusCode() |> ignore
-printfn "HUB_PARTICIPANTS=%s" (started.Content.ReadAsStringAsync().GetAwaiter().GetResult())
+let initializeSubs () =
+    let initialize = SubagentFodexFunV206.bind<SubagentStartupInputV206,string array> node SubagentFodexFunV206.targetInitialize (Some "2.0.10")
+    let names = Fodex.Supervisor.Contracts.Concepts.FeasibleFun.invoke (Uri hubUrl,(1L,sessionId),2) initialize |> required
+    printfn "HUB_PARTICIPANTS=%s" (JsonSerializer.Serialize names)
 let acceptedBefore,completedBefore =
     use status = JsonDocument.Parse(http.GetStringAsync(hubUrl + "/health").GetAwaiter().GetResult())
     status.RootElement.GetProperty("accepted").GetInt32(),status.RootElement.GetProperty("completed").GetInt32()
@@ -225,6 +193,7 @@ let stop () =
     if not stopped then
         wrapper.Stop() |> required |> ignore
         node.Terminate().GetAwaiter().GetResult() |> ignore
+        NLog.LogManager.Flush(TimeSpan.FromSeconds 10.)
         completed.Dispose()
         stopped <- true
 
@@ -242,6 +211,7 @@ let showHis () =
 // 真正 Start + Send，不是只宣告函數。啟動失敗仍留下 wrapper/getCodexSessionId/exportJsonl
 // 供 FSI 人工排錯，不會偷偷換 Codex session。automation (--auto-stop true) 失敗會回非零。
 let runDemo () =
+    initializeSubs ()
     wrapper.Start() |> Result.bind (fun _ ->
         printfn "Wrapper session: %A" (getWrapperSessionId() |> required)
         if nativeSettings.GetResult(Native_Adapter,defaultValue="app-server") = "exec" then
@@ -255,13 +225,19 @@ let runDemo () =
                 printfn "Codex thread id after turn: %A" (getCodexSessionId() |> required)
                 // AgentEnd 也可能代表失敗；automation 不可因收到任何 terminal event 就報成功。
                 let graph = reActLoop.ReadDataFlow sessionId |> required
-                let failure = graph.GetEdges() |> Seq.exists (fun ((_,target,event) as edge) -> ReActJsonV200.streamIdOf edge > beforeSend && target = ReActEndpoint.Human && (match event with StdErr _ -> true | _ -> false))
-                if failure then Error(InvalidOperationException("Turn produced StdErr; inspect showHis()") :> exn)
-                else Ok ()
+                let failure =
+                    graph.GetEdges() |> Seq.sortBy ReActJsonV200.streamIdOf
+                    |> Seq.tryPick (fun ((_,target,event) as edge) ->
+                        if ReActJsonV200.streamIdOf edge > beforeSend && target = ReActEndpoint.Human then
+                            match event with StdErr(_,_,text) -> Some text | _ -> None
+                        else None)
+                match failure with
+                | Some reason -> Error(InvalidOperationException(reason) :> exn)
+                | None -> Ok graph
             else Error(TimeoutException("No persisted wrapper AgentEnd before --timeout-seconds") :> exn)))
 let outcome = try runDemo() with ex -> Error ex
 match outcome with
-| Ok () -> ()
+| Ok _ -> ()
 | Error ex -> printfn "M011 failed: %s\nInspect getCodexSessionId(), exportJsonl and showHis(); stop() releases this demo's resources." ex.Message
 // 繼續互動（不要重跑全檔）：
 // send "請檢查...";;
@@ -272,48 +248,59 @@ match outcome with
 
 // 寫第二路證據並驗證 typed edges 一致；兩份 .events.txt 才是給人看的原始 ReActEvent。
 // .edges.jsonl 只包含同一批 Completed，保留機械可讀的路由／因果資料，不是整個 graph。
+let mutable validationFailure: exn option = None
 try
-    let graphEdges = completedFromGraph ()
-    use graphEvents = new StreamWriter(new FileStream(graphEventPath,FileMode.CreateNew,FileAccess.Write),utf8)
-    use graphJson = new StreamWriter(new FileStream(graphEdgePath,FileMode.CreateNew,FileAccess.Write),utf8)
-    for edge in graphEdges do
-        let event = completedEvent edge |> Option.get
-        // 原始事件存檔，需要列印時呼叫 showHis()。
-        graphEvents.WriteLine(sprintf "%A" event)
-        graphJson.WriteLine(ReActJsonV200.serialize edge |> required)
-    graphEvents.Flush()
-    graphJson.Flush()
-    let observed =
-        if File.Exists wrapperEdgePath then File.ReadLines(wrapperEdgePath) |> Seq.map (ReActJsonV200.deserialize<string> >> required) |> Seq.toArray
-        else [||]
-    if graphEdges.Length = 0 then invalidOp "Turn produced no Completed event; inspect wrapper error output"
-    if observed <> graphEdges then invalidOp "Wrapper output and graph Completed edges differ"
-    if observed |> Array.exists (fun (_,_,event) -> match event with AgentCot _ -> true | _ -> false) then
-        invalidOp "Subagent demo emitted AgentCot instead of AgentWork"
-    let health = http.GetStringAsync(hubUrl + "/health").GetAwaiter().GetResult()
-    File.WriteAllText(Path.Combine(outputDirectory,"hub.health.json"),health,utf8)
-    use status = JsonDocument.Parse health
-    if status.RootElement.GetProperty("accepted").GetInt32() - acceptedBefore < 4 || status.RootElement.GetProperty("completed").GetInt32() - completedBefore < 4 then
-        invalidOp "Main did not complete two rounds on both sub participants; inspect hub calls"
-    if status.RootElement.GetProperty("failed").GetInt32() <> failedBefore then invalidOp "A sub order failed or was cancelled"
-    let subSessions =
-        status.RootElement.GetProperty("participants").EnumerateArray() |> Seq.map (fun item ->
-            let who = item.GetProperty("who").GetString()
-            let before = turnsBefore |> Map.tryFind who |> Option.defaultValue 0
-            if item.GetProperty("completed").GetInt32() - before < 2 then invalidOp (who + " did not complete two turns")
-            let ids = item.GetProperty("sessionIds").EnumerateArray() |> Seq.map _.GetString() |> Seq.toArray
-            if ids.Length <> 1 then invalidOp (who + " changed or did not acquire its Codex sid")
-            who,ids[0]) |> Seq.toArray
-    if subSessions.Length <> 2 || (subSessions |> Array.map snd |> Array.distinct |> Array.length) <> 2 then
-        invalidOp "Expected two independent sub Codex sessions"
-    let mainSid = match getCodexSessionId() |> required with NativeCodexSessionId id -> id | _ -> invalidOp "Expected main Codex sid"
-    if subSessions |> Array.exists (fun (_,id) -> id=mainSid) then invalidOp "Sub must not reuse main session"
-    printfn "HUB_HEALTH=%s" health
-    printfn "COMPLETED_MATCH=%d" graphEdges.Length
-    printfn "WRAPPER_EVENTS=%s" wrapperEventPath
-    printfn "GRAPH_EVENTS=%s" graphEventPath
-    printfn "IO_TRACE=%s" (Path.Combine(outputDirectory,"main.io.jsonl"))
-    printfn "TURN_TIMINGS=%s" (Path.Combine(outputDirectory,"main.timings.jsonl"))
-    if settings.GetResult Auto_Stop then outcome |> required
+    try
+        let finishedGraph = outcome |> required
+        let allEdges = finishedGraph.GetEdges() |> Seq.toArray
+        let graphEdges = allEdges |> Array.filter (fun edge -> ReActJsonV200.streamIdOf edge > beforeSend && Option.isSome (completedEvent edge)) |> Array.sortBy ReActJsonV200.streamIdOf
+        use graphEvents = new StreamWriter(new FileStream(graphEventPath,FileMode.CreateNew,FileAccess.Write),utf8)
+        use graphJson = new StreamWriter(new FileStream(graphEdgePath,FileMode.CreateNew,FileAccess.Write),utf8)
+        for edge in graphEdges do
+            let event = completedEvent edge |> Option.get
+            // 原始事件存檔，需要列印時呼叫 showHis()。
+            graphEvents.WriteLine(sprintf "%A" event)
+            graphJson.WriteLine(ReActJsonV200.serialize edge |> required)
+        graphEvents.Flush()
+        graphJson.Flush()
+        let observed =
+            if File.Exists wrapperEdgePath then File.ReadLines(wrapperEdgePath) |> Seq.map (ReActJsonV200.deserialize<string> >> required) |> Seq.toArray
+            else [||]
+        if graphEdges.Length = 0 then invalidOp "Turn produced no Completed event; inspect wrapper error output"
+        if observed <> graphEdges then invalidOp "Wrapper output and graph Completed edges differ"
+        if observed |> Array.exists (fun (_,_,event) -> match event with AgentCot _ -> true | _ -> false) then
+            invalidOp "Subagent demo emitted AgentCot instead of AgentWork"
+        let health = http.GetStringAsync(hubUrl + "/health").GetAwaiter().GetResult()
+        File.WriteAllText(Path.Combine(outputDirectory,"hub.health.json"),health,utf8)
+        use status = JsonDocument.Parse health
+        if status.RootElement.GetProperty("accepted").GetInt32() - acceptedBefore < 4 || status.RootElement.GetProperty("completed").GetInt32() - completedBefore < 4 then
+            invalidOp "Main did not complete two rounds on both sub participants; inspect hub calls"
+        if status.RootElement.GetProperty("failed").GetInt32() <> failedBefore then invalidOp "A sub order failed or was cancelled"
+        let subSessions =
+            status.RootElement.GetProperty("participants").EnumerateArray() |> Seq.map (fun item ->
+                let who = item.GetProperty("who").GetString()
+                let before = turnsBefore |> Map.tryFind who |> Option.defaultValue 0
+                if item.GetProperty("completed").GetInt32() - before < 2 then invalidOp (who + " did not complete two turns")
+                let ids = item.GetProperty("sessionIds").EnumerateArray() |> Seq.map _.GetString() |> Seq.toArray
+                if ids.Length <> 1 then invalidOp (who + " changed or did not acquire its Codex sid")
+                who,ids[0]) |> Seq.toArray
+        if subSessions.Length <> 2 || (subSessions |> Array.map snd |> Array.distinct |> Array.length) <> 2 then
+            invalidOp "Expected two independent sub Codex sessions"
+        let mainSid = match getCodexSessionId() |> required with NativeCodexSessionId id -> id | _ -> invalidOp "Expected main Codex sid"
+        if subSessions |> Array.exists (fun (_,id) -> id=mainSid) then invalidOp "Sub must not reuse main session"
+        printfn "HUB_HEALTH=%s" health
+        printfn "COMPLETED_MATCH=%d" graphEdges.Length
+        printfn "WRAPPER_EVENTS=%s" wrapperEventPath
+        printfn "GRAPH_EVENTS=%s" graphEventPath
+        printfn "IO_TRACE=%s" (Path.Combine(outputDirectory,"main.io.jsonl"))
+        printfn "TURN_TIMINGS=%s" (Path.Combine(outputDirectory,"main.timings.jsonl"))
+    with ex ->
+        validationFailure <- Some ex
+        reraise()
 finally
-    if settings.GetResult Auto_Stop then stop ()
+    if settings.GetResult Auto_Stop then
+        try stop ()
+        with cleanupError ->
+            match validationFailure with
+            | Some _ -> eprintfn "Cleanup also failed (original failure retained): %s" cleanupError.Message
+            | None -> raise cleanupError

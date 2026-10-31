@@ -1,24 +1,12 @@
+// M015.R002：使用整理後的實作 DLL（Proc Supervisor fodex002）；原 milestone 已封存。
 // M015：同一 ActorSystem 內的 Wrapper / ReActLoop / Native actor 示範（host/client 合檔例外）。
 // 明確 COT：先一般對話，再 /wrapper_cot；COT 獨立 session，yyyy 準備完才送 main。
-// 先依 README.M015.md build，再修改下方 defaultArgumentsText 於 VS FSI 全選執行。
+// 先依 README.M010-M016.md build，再修改下方 defaultArgumentsText 於 VS FSI 全選執行。
 // wrapper/native=V208，handler=V203；不用 MCP/subagent hub，舊 demo 不修改。
 // --native-adapter 可選 app-server 或 exec；exec 不支援回合中的 steer。
-#I @"bin\M014-M015.Cot.V208"
-#r "Akka.dll"
-#r "NLog.dll"
-#r "Argu.dll"
-#r "FAkka.Shared.dll"
-#r "Microsoft.Data.SqlClient.dll"
-#r "FSharp.FGL.dll"
-#r "FSharp.FGL.ArrayAdjacencyGraph.dll"
-#r "Fodex.Supervisor.Contracts.dll"
-#r "Fodex.Supervisor.dll"
-#load @"C:\Users\Administrator\.codex\lib\ParseLine.fsx"
-
+#load "MilestoneReferences.fsx"
 open System
 open System.IO
-// 自動化重導輸出用 UTF-8；互動 FSI 的 console 設定不變。
-do if Console.IsOutputRedirected then Console.OutputEncoding <- System.Text.UTF8Encoding(false)
 open System.Reflection
 open System.Runtime.InteropServices
 open System.Runtime.Loader
@@ -29,36 +17,9 @@ open Argu
 open Microsoft.Data.SqlClient
 open Fodex.Supervisor
 open Fodex.Supervisor.Contracts.CoreMod
-
-// 由 build 的 deps.json 解相依組件，不複製硬編碼 NuGet lib/netX 路徑。
-// FSI 不是產品 host；shared framework fallback 保留 M003 已可用的載入方式。
-let assemblyDirectory = Path.Combine(__SOURCE_DIRECTORY__,"bin","M014-M015.Cot.V208")
-let dependencyResolver = AssemblyDependencyResolver(Path.Combine(assemblyDirectory,"Fodex.Supervisor.dll"))
-let sharedDirectory = Directory.GetParent(RuntimeEnvironment.GetRuntimeDirectory().TrimEnd(Path.DirectorySeparatorChar)).Parent.FullName
-let aspNetDirectory = Path.Combine(sharedDirectory,"Microsoft.AspNetCore.App")
-let sharedLibraries =
-    if Directory.Exists aspNetDirectory then
-        Directory.GetDirectories aspNetDirectory
-        // .NET 10 FSI 不載入較新的 .NET 11 shared-framework DLL。
-        |> Array.filter (fun path -> System.Version.Parse((Path.GetFileName path).Split('-')[0]).Major <= Environment.Version.Major)
-        |> Array.sortByDescending (fun path -> System.Version.Parse((Path.GetFileName path).Split('-')[0]))
-    else [||]
-AssemblyLoadContext.Default.add_Resolving(Func<AssemblyLoadContext,AssemblyName,Assembly>(fun loader name ->
-    let resolved = dependencyResolver.ResolveAssemblyToPath name
-    let local = Path.Combine(assemblyDirectory,name.Name + ".dll")
-    if not (isNull resolved) then loader.LoadFromAssemblyPath resolved
-    elif File.Exists local then loader.LoadFromAssemblyPath local
-    else
-        sharedLibraries |> Array.map (fun directory -> Path.Combine(directory,name.Name + ".dll"))
-        |> Array.tryFind File.Exists |> Option.map loader.LoadFromAssemblyPath |> Option.defaultValue null))
-AssemblyLoadContext.Default.add_ResolvingUnmanagedDll(Func<Assembly,string,nativeint>(fun _ name ->
-    match dependencyResolver.ResolveUnmanagedDllToPath name with
-    | null -> 0n
-    | path -> NativeLibrary.Load path))
-
-#r "Fodex.Supervisor.Demos.dll"
 open System.Diagnostics
-open Fodex.Supervisor.Demos
+open LoggerUtil
+open FodexLoggerAdapter
 
 type DemoArgument =
     | History_Prompt of string
@@ -86,7 +47,7 @@ let defaultArgumentsText = """
 --prompt "/wrapper_cot 請根據歷史整理兩點已有依據、指出一個尚缺驗證的點，再依這份結論說明下一步如何驗證。不要使用工具或新增 subagent。"
 --auto-stop true
 --output-width 100
---output-directory "F:/fodex/artifacts/M015"
+--output-directory "F:/fodex/artifacts/M015.R002"
 --timeout-seconds 1200
 --wrapperagent 2.0.8
 --cotcommand 2.0.8
@@ -144,17 +105,19 @@ let sessionId =
 // 保留文字原樣，只 escape 引號／反斜線，下一層仍由 PL + Argu 解析。
 let argumentJson = JsonSerializerOptions(Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping)
 let arguments = argv |> Array.map (fun value -> JsonSerializer.Serialize(value,argumentJson)) |> String.concat " "
-let node = ActorSystem.Create("fodex-m015-" + Guid.NewGuid().ToString("N"),Akka.Configuration.ConfigurationFactory.ParseString("akka.loglevel=ERROR"))
+let node = ActorSystem.Create("fodex-m015-" + Guid.NewGuid().ToString("N"),ActorLogging.config)
 let completed = new AutoResetEvent(false)
 let outputGate = obj()
 // 證據檔只屬於這次 demo run；不是產品 history queue，原始資料仍由 handler 寫 SQL/FGL。
 let outputDirectory = Path.Combine(settings.GetResult Output_Directory,DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N"))
 Directory.CreateDirectory outputDirectory |> ignore
-let ctx = DemoTraceV100.context node (Path.Combine(outputDirectory,"main.io.jsonl"))
+let logger = NLog.LogManager.GetLogger("Fodex.IO").WithProperty("traceFile", Path.Combine(outputDirectory,"main.io.jsonl"))
+let ctx = UniLogger.toCtx(FodexLoggerAdapter.toUL(UniversalLogger<_>(logger)), "Fodex")
+ctx.logger.Tags["traceFile"] <- logger.Properties["traceFile"]
 let wrapperWatch = Stopwatch()
 let mutable turnNumber = 0
 let recordTiming stage =
-    DemoParticipantsV100.append (Path.Combine(outputDirectory,"main.timings.jsonl"))
+    HubParticipantsV101.append (Path.Combine(outputDirectory,"main.timings.jsonl"))
         {| turn=turnNumber; stage=stage; utc=DateTime.UtcNow; elapsedMs=wrapperWatch.Elapsed.TotalMilliseconds |}
     printfn "[wrapper turn %d %s] elapsed=%.3fs" turnNumber stage wrapperWatch.Elapsed.TotalSeconds
 let wrapperEventPath = Path.Combine(outputDirectory,"wrapper.completed.events.txt")
@@ -217,6 +180,7 @@ let stop () =
     if not stopped then
         wrapper.Stop() |> required |> ignore
         node.Terminate().GetAwaiter().GetResult() |> ignore
+        NLog.LogManager.Flush(TimeSpan.FromSeconds 10.)
         completed.Dispose()
         stopped <- true
 
@@ -251,14 +215,18 @@ let runDemo () =
             run (nativeSettings.GetResult SupervisorArgument.Prompt))
         |> Result.bind (fun () ->
             let graph = reActLoop.ReadDataFlow sessionId |> required
-            if graph.GetEdges() |> Seq.exists (fun ((_,target,event) as edge) ->
-                ReActJsonV200.streamIdOf edge>beforeSend && target=ReActEndpoint.Human &&
-                match event with StdErr _ -> true | _ -> false) then
-                Error(InvalidOperationException "COT/main produced StdErr; inspect graph and IO trace" :> exn)
-            else Ok ()))
+            let failure =
+                graph.GetEdges() |> Seq.sortBy ReActJsonV200.streamIdOf
+                |> Seq.tryPick (fun ((_,target,event) as edge) ->
+                    if ReActJsonV200.streamIdOf edge>beforeSend && target=ReActEndpoint.Human then
+                        match event with StdErr(_,_,text) -> Some text | _ -> None
+                    else None)
+            match failure with
+            | Some reason -> Error(InvalidOperationException(reason) :> exn)
+            | None -> Ok graph))
 let outcome = try runDemo() with ex -> Error ex
 match outcome with
-| Ok () -> ()
+| Ok _ -> ()
 | Error ex -> printfn "M015 failed: %s\nInspect getCodexSessionId(), exportJsonl and showHis(); stop() releases this demo's resources." ex.Message
 // 繼續互動（不要重跑全檔）：
 // send "/wrapper_cot 請依剛才歷史整理依據，再完成原始工作";;
@@ -269,68 +237,79 @@ match outcome with
 
 // 寫第二路證據並驗證 typed edges 一致；兩份 .events.txt 才是給人看的原始 ReActEvent。
 // .edges.jsonl 只包含同一批 Completed，保留機械可讀的路由／因果資料，不是整個 graph。
+let mutable validationFailure: exn option = None
 try
-    let graphEdges = completedFromGraph ()
-    use graphEvents = new StreamWriter(new FileStream(graphEventPath,FileMode.CreateNew,FileAccess.Write),utf8)
-    use graphJson = new StreamWriter(new FileStream(graphEdgePath,FileMode.CreateNew,FileAccess.Write),utf8)
-    for edge in graphEdges do
-        let event = completedEvent edge |> Option.get
-        // 原始事件存檔，需要列印時呼叫 showHis()。
-        graphEvents.WriteLine(sprintf "%A" event)
-        graphJson.WriteLine(ReActJsonV200.serialize edge |> required)
-    graphEvents.Flush()
-    graphJson.Flush()
-    let observed =
-        if File.Exists wrapperEdgePath then File.ReadLines(wrapperEdgePath) |> Seq.map (ReActJsonV200.deserialize<string> >> required) |> Seq.toArray
-        else [||]
-    if graphEdges.Length = 0 then invalidOp "Turn produced no Completed event; inspect wrapper error output"
-    if observed <> graphEdges then invalidOp "Wrapper output and graph Completed edges differ"
-    let all = (reActLoop.ReadDataFlow sessionId |> required).GetEdges() |> Seq.sortBy ReActJsonV200.streamIdOf |> Seq.toArray
-    let recent = all |> Array.filter (fun edge -> ReActJsonV200.streamIdOf edge>beforeCot)
-    let cotInput =
-        recent |> Array.choose (fun ((source,target,event) as edge) ->
-            match source,target,event with
-            | ReActEndpoint.Participant owner,ReActEndpoint.Participant participant,AgentCot(_,_,ParticipantInput(StartTurn,_,_)) when owner=(1L,sessionId) && fst participant>=3L -> Some(participant,edge)
-            | _ -> None) |> Array.exactlyOne
-    let cotParticipant,cotInputEdge = cotInput
-    let mainInput =
-        recent |> Array.choose (fun ((source,target,event) as edge) ->
-            match source,target,event with
-            | ReActEndpoint.Participant owner,ReActEndpoint.Participant participant,AgentWork(id,cause,ParticipantInput(StartTurn,text,_)) when owner=(1L,sessionId) && participant=(2L,sessionId) ->
-                Some(id,cause,text,edge)
-            | _ -> None) |> Array.exactlyOne
-    let inputId,cotCompletionId,inputText,mainInputEdge = mainInput
-    let cotCompleted =
-        recent |> Array.choose (fun ((source,target,event) as edge) ->
-            match event with
-            | AgentCot(id,_,MessageCompleted(_,text)) when id=cotCompletionId && source=ReActEndpoint.Participant cotParticipant && target=ReActEndpoint.Participant(1L,sessionId) -> Some(text,edge)
-            | _ -> None) |> Array.exactlyOne
-    let conclusion,cotCompletedEdge = cotCompleted
-    if cotCompletionId>=inputId then invalidOp "main input preceded COT completion"
-    if String.IsNullOrWhiteSpace conclusion then invalidOp "No completed COT conclusion"
-    let prefix = "[wrapper_cot context yyyy]\n" + conclusion + "\n[original human instruction xxxxx]\n"
-    if not(inputText.StartsWith(prefix,StringComparison.Ordinal)) then invalidOp "Actual main input does not contain yyyy first"
-    let parse = SubagentFodexFunV206.bind<string,string option> node ExplicitCotFodexFunV208.targetCommand (Some "2.0.8")
-    let instruction = Fodex.Supervisor.Contracts.Concepts.FeasibleFun.invoke (nativeSettings.GetResult SupervisorArgument.Prompt) parse |> required |> Option.get
-    if not(inputText.Substring(prefix.Length).StartsWith(instruction,StringComparison.Ordinal)) then invalidOp "Original xxxxx changed or arrived before yyyy"
-    let mainSid = match getCodexSessionId() |> required with NativeCodexSessionId id -> id | _ -> invalidOp "Expected main sid"
-    // COT 已釋放，不再 AcquireParticipant（那會重建）；查它已保存的真實 native sid。
-    let cotSid = ReActDataStoreV200.readNativeSession (ReActDataStoreV200.connectionString()) cotParticipant |> required |> Option.get
-    if mainSid<>originalMainSid then invalidOp "Main sid changed during COT"
-    if mainSid=cotSid then invalidOp "COT used the main session"
-    let proofPath = Path.Combine(outputDirectory,"cot.actual-input-order.jsonl")
-    [cotInputEdge;cotCompletedEdge;mainInputEdge]
-    |> List.map (ReActJsonV200.serialize >> required)
-    |> fun lines -> File.WriteAllLines(proofPath,lines,utf8)
-    File.WriteAllText(Path.Combine(outputDirectory,"cot.sessions.json"),JsonSerializer.Serialize
-        {| wrapperSid=fst sessionId; mainSid=mainSid; cotSid=cotSid; cotParticipantId=fst cotParticipant
-           cotCompletedStreamId=cotCompletionId; mainInputStreamId=inputId; adapter=nativeSettings.GetResult Native_Adapter |},utf8)
-    printfn "COT_ORDER_VERIFIED=true\nMAIN_SID=%s\nCOT_SID=%s\nACTUAL_INPUT_EVIDENCE=%s" mainSid cotSid proofPath
-    printfn "COMPLETED_MATCH=%d" graphEdges.Length
-    printfn "WRAPPER_EVENTS=%s" wrapperEventPath
-    printfn "GRAPH_EVENTS=%s" graphEventPath
-    printfn "IO_TRACE=%s" (Path.Combine(outputDirectory,"main.io.jsonl"))
-    printfn "TURN_TIMINGS=%s" (Path.Combine(outputDirectory,"main.timings.jsonl"))
-    if settings.GetResult Auto_Stop then outcome |> required
+    try
+        let finishedGraph = outcome |> required
+        let allEdges = finishedGraph.GetEdges() |> Seq.toArray
+        let graphEdges = allEdges |> Array.filter (fun edge -> ReActJsonV200.streamIdOf edge > beforeSend && Option.isSome (completedEvent edge)) |> Array.sortBy ReActJsonV200.streamIdOf
+        use graphEvents = new StreamWriter(new FileStream(graphEventPath,FileMode.CreateNew,FileAccess.Write),utf8)
+        use graphJson = new StreamWriter(new FileStream(graphEdgePath,FileMode.CreateNew,FileAccess.Write),utf8)
+        for edge in graphEdges do
+            let event = completedEvent edge |> Option.get
+            // 原始事件存檔，需要列印時呼叫 showHis()。
+            graphEvents.WriteLine(sprintf "%A" event)
+            graphJson.WriteLine(ReActJsonV200.serialize edge |> required)
+        graphEvents.Flush()
+        graphJson.Flush()
+        let observed =
+            if File.Exists wrapperEdgePath then File.ReadLines(wrapperEdgePath) |> Seq.map (ReActJsonV200.deserialize<string> >> required) |> Seq.toArray
+            else [||]
+        if graphEdges.Length = 0 then invalidOp "Turn produced no Completed event; inspect wrapper error output"
+        if observed <> graphEdges then invalidOp "Wrapper output and graph Completed edges differ"
+        let all = allEdges |> Array.sortBy ReActJsonV200.streamIdOf
+        let recent = all |> Array.filter (fun edge -> ReActJsonV200.streamIdOf edge>beforeCot)
+        let cotInput =
+            recent |> Array.choose (fun ((source,target,event) as edge) ->
+                match source,target,event with
+                | ReActEndpoint.Participant owner,ReActEndpoint.Participant participant,AgentCot(_,_,ParticipantInput(StartTurn,_,_)) when owner=(1L,sessionId) && fst participant>=3L -> Some(participant,edge)
+                | _ -> None) |> Array.exactlyOne
+        let cotParticipant,cotInputEdge = cotInput
+        let mainInput =
+            recent |> Array.choose (fun ((source,target,event) as edge) ->
+                match source,target,event with
+                | ReActEndpoint.Participant owner,ReActEndpoint.Participant participant,AgentWork(id,cause,ParticipantInput(StartTurn,text,_)) when owner=(1L,sessionId) && participant=(2L,sessionId) ->
+                    Some(id,cause,text,edge)
+                | _ -> None) |> Array.exactlyOne
+        let inputId,cotCompletionId,inputText,mainInputEdge = mainInput
+        let cotCompleted =
+            recent |> Array.choose (fun ((source,target,event) as edge) ->
+                match event with
+                | AgentCot(id,_,MessageCompleted(_,text)) when id=cotCompletionId && source=ReActEndpoint.Participant cotParticipant && target=ReActEndpoint.Participant(1L,sessionId) -> Some(text,edge)
+                | _ -> None) |> Array.exactlyOne
+        let conclusion,cotCompletedEdge = cotCompleted
+        if cotCompletionId>=inputId then invalidOp "main input preceded COT completion"
+        if String.IsNullOrWhiteSpace conclusion then invalidOp "No completed COT conclusion"
+        let prefix = "[wrapper_cot context yyyy]\n" + conclusion + "\n[original human instruction xxxxx]\n"
+        if not(inputText.StartsWith(prefix,StringComparison.Ordinal)) then invalidOp "Actual main input does not contain yyyy first"
+        let parse = SubagentFodexFunV206.bind<string,string option> node ExplicitCotFodexFunV208.targetCommand (Some "2.0.8")
+        let instruction = Fodex.Supervisor.Contracts.Concepts.FeasibleFun.invoke (nativeSettings.GetResult SupervisorArgument.Prompt) parse |> required |> Option.get
+        if not(inputText.Substring(prefix.Length).StartsWith(instruction,StringComparison.Ordinal)) then invalidOp "Original xxxxx changed or arrived before yyyy"
+        let mainSid = match getCodexSessionId() |> required with NativeCodexSessionId id -> id | _ -> invalidOp "Expected main sid"
+        // COT 已釋放，不再 AcquireParticipant（那會重建）；查它已保存的真實 native sid。
+        let cotSid = ReActDataStoreV200.readNativeSession (ReActDataStoreV200.connectionString()) cotParticipant |> required |> Option.get
+        if mainSid<>originalMainSid then invalidOp "Main sid changed during COT"
+        if mainSid=cotSid then invalidOp "COT used the main session"
+        let proofPath = Path.Combine(outputDirectory,"cot.actual-input-order.jsonl")
+        [cotInputEdge;cotCompletedEdge;mainInputEdge]
+        |> List.map (ReActJsonV200.serialize >> required)
+        |> fun lines -> File.WriteAllLines(proofPath,lines,utf8)
+        File.WriteAllText(Path.Combine(outputDirectory,"cot.sessions.json"),JsonSerializer.Serialize
+            {| wrapperSid=fst sessionId; mainSid=mainSid; cotSid=cotSid; cotParticipantId=fst cotParticipant
+               cotCompletedStreamId=cotCompletionId; mainInputStreamId=inputId; adapter=nativeSettings.GetResult Native_Adapter |},utf8)
+        printfn "COT_ORDER_VERIFIED=true\nMAIN_SID=%s\nCOT_SID=%s\nACTUAL_INPUT_EVIDENCE=%s" mainSid cotSid proofPath
+        printfn "COMPLETED_MATCH=%d" graphEdges.Length
+        printfn "WRAPPER_EVENTS=%s" wrapperEventPath
+        printfn "GRAPH_EVENTS=%s" graphEventPath
+        printfn "IO_TRACE=%s" (Path.Combine(outputDirectory,"main.io.jsonl"))
+        printfn "TURN_TIMINGS=%s" (Path.Combine(outputDirectory,"main.timings.jsonl"))
+    with ex ->
+        validationFailure <- Some ex
+        reraise()
 finally
-    if settings.GetResult Auto_Stop then stop ()
+    if settings.GetResult Auto_Stop then
+        try stop()
+        with cleanupError ->
+            match validationFailure with
+            | Some _ -> eprintfn "Cleanup also failed (original failure retained): %s" cleanupError.Message
+            | None -> raise cleanupError

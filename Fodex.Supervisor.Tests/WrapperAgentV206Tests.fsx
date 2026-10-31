@@ -1,7 +1,7 @@
 #if INTERACTIVE
 #r "nuget: Expecto, 11.1.1"
 #load "ImplementationTestSupportV201.fsx"
-#r "bin/Debug/net10.0/win-x64/Fodex.Supervisor.Demos.dll"
+#r "bin/Debug/net10.0/win-x64/Fodex.Supervisor.dll"
 #else
 module WrapperAgentV206Tests
 #endif
@@ -15,7 +15,8 @@ open Akka.FSharp
 open Expecto
 open ImplementationTestSupportV200
 open Fodex.Supervisor
-open Fodex.Supervisor.Demos
+open LoggerUtil
+open FodexLoggerAdapter
 open Fodex.Supervisor.Contracts.CoreMod
 
 /// 僅 native 生成結果是 deterministic。SQL、wrapper、handler、IAgent/FodexFun 都用 production。
@@ -26,7 +27,7 @@ let withWrapper cs rejectInitialization (savedHistory: ReActDataStream<string> s
         // 例如 TestResults/V206/fodex-v200-<node guid>.io.jsonl，可定位 timeout 前最後一個 IO。
         let tracePath = Path.Combine(__SOURCE_DIRECTORY__,"TestResults","V206",node.Name + ".io.jsonl")
         Directory.CreateDirectory(Path.GetDirectoryName tracePath) |> ignore
-        let ctx = DemoTraceV100.context node tracePath
+        let ctx = UniLogger.toCtx(FodexLoggerAdapter.toUL(UniversalLogger<_>(NLog.LogManager.GetLogger("Fodex.IO").WithProperty("traceFile", tracePath))), "test")
         Console.Error.WriteLine("FODEX_WRAPPER_TEST_TRACE " + tracePath)
         let marker : ReActDataStream<string> = ReActEndpoint.Human,endpoint wrapper,HumanInit(0L,HumanPrompt "")
         let measure stage operation = ReActTraceV203.measure ctx stage marker operation |> expectOk
@@ -89,7 +90,7 @@ let withWrapper cs rejectInitialization (savedHistory: ReActDataStream<string> s
             measure "test.send" (fun () -> agent.Send(box text)) |> ignore
             // assertion 與 10 秒期限原封保留；measure 只記 exception kind/時間，不吞掉失敗。
             measure "test.wait-terminal" (fun () ->
-                Expect.isTrue (completed.WaitOne(TimeSpan.FromSeconds 10.)) "persisted terminal user output"
+                Expect.isTrue (waitForSignal completed (TimeSpan.FromSeconds 10.)) "persisted terminal user output"
                 Ok ())
             // AgentEnd sinks before Route's reply; next Ask establishes handler completion.
             loop.GetStatus session |> expectOk |> ignore

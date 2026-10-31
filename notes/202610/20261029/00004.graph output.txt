@@ -1,0 +1,134 @@
+> 
+
+=== Graph：18 條邊、3 個節點 ===
+
+[Edge StreamId=1]
+  起始節點 (source)：Human
+  結束節點 (target)：Participant (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  方向：source -> target
+  邊內容：HumanInit (1L, HumanPrompt "Reply exactly FODEX_M004_OK. Do not use tools.")
+
+[Edge StreamId=2]
+  起始節點 (source)：Participant (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  結束節點 (target)：Participant (2L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  方向：source -> target
+  邊內容：AgentWork
+  (2L, 1L,
+   ParticipantInput
+     (StartTurn, "Reply exactly FODEX_M004_OK. Do not use tools.",
+      Some (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))))
+
+[Edge StreamId=3]
+  起始節點 (source)：Participant (2L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  結束節點 (target)：Participant (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  方向：source -> target
+  邊內容：StdOut
+  (3L, 2L,
+   "{"type":"userMessage","id":"01a185f7-cd34-73b0-844d-861aaaf8ee75","clientId":null,"content":[{"type":"text","text":"Reply exactly FODEX_M004_OK. Do not use tools.","text_elements":[]}]}")
+
+[Edge StreamId=4]
+  起始節點 (source)：Participant (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  結束節點 (target)：Human
+  方向：source -> target
+  邊內容：StdOut
+  (4L, 3L,
+   "{"type":"userMessage","id":"01a185f7-cd34-73b0-844d-861aaaf8ee75","clientId":null,"content":[{"type":"text","text":"Reply exactly FODEX_M004_OK. Do not use tools.","text_elements":[]}]}")
+
+[Edge StreamId=5]
+  起始節點 (source)：Participant (2L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  結束節點 (target)：Participant (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  方向：source -> target
+  邊內容：AgentWork (5L, 2L, Message "F")
+
+[Edge StreamId=6]
+  起始節點 (source)：Participant (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  結束節點 (target)：Human
+  方向：source -> target
+  邊內容：AgentWork (6L, 5L, Message "F")
+
+[Edge StreamId=7]
+  起始節點 (source)：Participant (2L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  結束節點 (target)：Participant (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  方向：source -> target
+  邊內容：AgentWork (7L, 2L, Message "ODE")
+
+[Edge StreamId=8]
+  起始節點 (source)：Participant (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  結束節點 (target)：Human
+  方向：source -> target
+  邊內容：AgentWork (8L, 7L, Message "ODE")
+
+[Edge StreamId=9]
+  起始節點 (source)：Participant (2L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  結束節點 (target)：Participant (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  方向：source -> target
+  邊內容：AgentWork (9L, 2L, Message "X")
+
+[Edge StreamId=10]
+  起始節點 (source)：Participant (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  結束節點 (target)：Human
+  方向：source -> target
+  邊內容：AgentWork (10L, 9L, Message "X")
+
+[Edge StreamId=11]
+  起始節點 (source)：Participant (2L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  結束節點 (target)：Participant (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  方向：source -> target
+  邊內容：AgentWork (11L, 2L, Message "_M")
+
+[Edge StreamId=12]
+  起始節點 (source)：Participant (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  結束節點 (target)：Human
+  方向：source -> target
+  邊內容：AgentWork (12L, 11L, Message "_M")
+
+[Edge StreamId=13]
+  起始節點 (source)：Participant (2L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  結束節點 (target)：Participant (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  方向：source -> target
+  邊內容：AgentWork (13L, 2L, Message "004")
+
+[Edge StreamId=14]
+  起始節點 (source)：Participant (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  結束節點 (target)：Human
+  方向：source -> target
+  邊內容：AgentWork (14L, 13L, Message "004")
+
+[Edge StreamId=15]
+  起始節點 (source)：Participant (2L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  結束節點 (target)：Participant (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  方向：source -> target
+  邊內容：AgentWork (15L, 2L, Message "_OK")
+
+[Edge StreamId=16]
+  起始節點 (source)：Participant (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  結束節點 (target)：Human
+  方向：source -> target
+  邊內容：AgentWork (16L, 15L, Message "_OK")
+
+[Edge StreamId=17]
+  起始節點 (source)：Participant (2L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  結束節點 (target)：Participant (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  方向：source -> target
+  邊內容：AgentEnd (17L, 2L, Message "FODEX_M004_OK")
+
+[Edge StreamId=18]
+  起始節點 (source)：Participant (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  結束節點 (target)：Human
+  方向：source -> target
+  邊內容：AgentEnd (18L, 17L, Message "FODEX_M004_OK")
+
+--- 所有節點 ---
+
+  節點身分：Participant (1L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  節點 label：()
+
+  節點身分：Human
+  節點 label：()
+
+  節點身分：Participant (2L, (cdd0ccf8-425d-4ec6-995f-7c49d557edf8, None))
+  節點 label：()
+=== Graph traversal 結束 ===
+val it: unit = ()
+
+> 

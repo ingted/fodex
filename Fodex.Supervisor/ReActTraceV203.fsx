@@ -9,6 +9,14 @@ open Fodex.Supervisor.Contracts.CoreMod
 /// 實作層 IO 計時，不新增 Contract / registry target / 全域 runtime。
 /// 每個 measure 都有獨立 ioId；同 edge 跨層用 streamId/causedBy/source/target 對齊。
 module ReActTraceV203 =
+    /// Trace 是診斷文字，不是 wire serializer。已知 DU 直接拆解，避免每個 IO 的 %A 反射。
+    /// 例：Human -> "Human"；Participant 的 logical id/session/address 全部保留。
+    let endpointText = function
+        | ReActEndpoint.Human -> "Human"
+        | ReActEndpoint.Participant(id,(sid,address)) ->
+            let location = address |> Option.map string |> Option.defaultValue "local"
+            $"Participant({id},{sid:D},{location})"
+
     /// 不輸出 prompt、生成文字、exception.Message；只記事件種類及路由 metadata。
     /// streamId=0 代表尚待 handler 分配，已分配後的 handler trace 會帶真正的 id。
     let format (stage: string) (ioId: string) (status: string) (elapsedMs: float) ((source,target,event): ReActDataStream<'P>) =
@@ -35,7 +43,7 @@ module ReActTraceV203 =
         "FODEX_IO " + JsonSerializer.Serialize
             {| utc=DateTime.UtcNow; ticks=Stopwatch.GetTimestamp(); stage=stage; ioId=ioId
                status=status; elapsedMs=elapsedMs; streamId=id; causedBy=cause; event=kind; data=dataKind; messageId=messageId
-               source=sprintf "%A" source; target=sprintf "%A" target
+               source=endpointText source; target=endpointText target
                // 累積 counters 供同 ioId 的 begin/end 對帳，不宣稱某個 actor 獨佔整個 process。
                // 例如 route 尚未進 handler：若 GC pause 未增加而 pool work 堆積，才追 dispatcher。
                // 不改 ThreadPool 設定、不開背景 sampler，也不輸出任何生成內容。

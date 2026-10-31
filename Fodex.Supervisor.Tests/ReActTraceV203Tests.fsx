@@ -2,7 +2,6 @@
 #r "nuget: Expecto, 11.1.1"
 #load "ImplementationTestSupportV201.fsx"
 #load "../Fodex.Supervisor/ReActTraceV203.fsx"
-#load "../Fodex.Supervisor.Demos/DemoTraceV100.fsx"
 #else
 module ReActTraceV203Tests
 #endif
@@ -12,7 +11,8 @@ open System.Text.Json
 open Expecto
 open ImplementationTestSupportV200
 open Fodex.Supervisor
-open Fodex.Supervisor.Demos
+open LoggerUtil
+open FodexLoggerAdapter
 open Fodex.Supervisor.Contracts.CoreMod
 
 [<Tests>]
@@ -33,14 +33,18 @@ let tests = testList "ReActData IO trace V203" [
         withNode <| fun node ->
             let path = Path.Combine(Path.GetTempPath(),"fodex-trace-test-" + Guid.NewGuid().ToString("N") + ".jsonl")
             try
-                let ctx = DemoTraceV100.context node path
+                let ctx = UniLogger.toCtx(FodexLoggerAdapter.toUL(UniversalLogger<_>(NLog.LogManager.GetLogger("Fodex.IO").WithProperty("traceFile", path))), "test")
                 let failure = InvalidOperationException("SECRET-ERROR") :> exn
                 Expect.equal (ReActTraceV203.measure ctx "ok" (eventEdge 1L) (fun () -> Ok 42)) (Ok 42) "unchanged value"
                 match ReActTraceV203.measure ctx "error" (eventEdge 2L) (fun () -> Error failure : Result<int,exn>) with
                 | Error ex -> Expect.isTrue (obj.ReferenceEquals(ex,failure)) "unchanged error"
                 | _ -> failtest "swallowed error"
                 Expect.throws (fun () -> ReActTraceV203.measure ctx "throw" (eventEdge 3L) (fun () -> raise failure : Result<int,exn>) |> ignore) "not swallowed"
-                let lines = File.ReadAllLines path
+                NLog.LogManager.Flush(TimeSpan.FromSeconds 10.)
+                // Keep NLog's writer open: this is a shared reader, not another logging backend.
+                use file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite ||| FileShare.Delete)
+                use reader = new StreamReader(file)
+                let lines = [| while not reader.EndOfStream do yield reader.ReadLine() |]
                 Expect.equal lines.Length 6 "each stage begin/end"
                 for ending in [lines[1];lines[3];lines[5]] do
                     use json = JsonDocument.Parse ending

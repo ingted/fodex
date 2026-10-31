@@ -27,6 +27,7 @@ module WrapperAgentV208 =
             let nativeOptions = SupervisorArgs.parseText ctx arguments |> function Ok value -> value | Error ex -> raise ex
             let adapter = nativeOptions.GetResult(Native_Adapter,defaultValue="app-server")
             let instance = spawn node ("wrapper-v208-" + Guid.NewGuid().ToString("N")) <| fun (mailbox: Actor<obj>) ->
+                let ctx = ActorLogging.withLogger ctx (Akka.Event.Logging.GetLogger(mailbox.Context))
                 let children = Dictionary<ReActParticipant,IAgent<string,obj>>()
                 let main = 2L,snd wrapper
                 let pending = Queue<CotPendingV208>()

@@ -9,9 +9,11 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GenerateProgramFile>false</GenerateProgramFile>
     <IsTestProject>true</IsTestProject>
+    <RunSettingsFilePath>$(MSBuildProjectDirectory)\Tests.runsettings</RunSettingsFilePath>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="Tests.runsettings" />
     <!-- 舊測試仍在專案中；其舊方向 DU 與舊實作不相容於 FGL-native Contract。 -->
     <None Include="ImplementationTestHelpers.fs">
       <Link>Archive/ImplementationTestHelpers.fs</Link>
@@ -31,6 +33,9 @@
     <None Include="Program.fs">
       <Link>Archive/Program.fs</Link>
     </None>
+    <Compile Include="..\Fodex.Supervisor.Contract\LoggerAdapter.fsx">
+      <Link>LoggerAdapter.fsx</Link>
+    </Compile>
     <Compile Include="ImplementationTestSupportV200.fsx" />
     <Compile Include="ReActJsonV200Tests.fsx" />
     <Compile Include="ReActDataStoreV200Tests.fsx" />
@@ -48,9 +53,9 @@
     <Compile Include="FodexFunRegistrationV201Tests.fsx" />
     <Compile Include="WrapperOutputV201Tests.fsx" />
     <Compile Include="LiveCodexV201Tests.fsx" />
-    <Compile Include="DemoOrderHubV100Tests.fsx" />
-    <Compile Include="DemoOrderHubV101Tests.fsx" />
-    <Compile Include="DemoHubClientV101Tests.fsx" />
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor.Tests\DemoOrderHubV100Tests.fsx"><Link>Archive/20261031/DemoOrderHubV100Tests.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor.Tests\DemoOrderHubV101Tests.fsx"><Link>Archive/20261031/DemoOrderHubV101Tests.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor.Tests\DemoHubClientV101Tests.fsx"><Link>Archive/20261031/DemoHubClientV101Tests.fsx</Link></None>
     <Compile Include="NativeAppServerV202Tests.fsx" />
     <Compile Include="NativeAgentV202Tests.fsx" />
     <Compile Include="FodexFunRegistrationV202Tests.fsx" />
@@ -61,23 +66,29 @@
     <Compile Include="WrapperTurnTimingV100Tests.fsx" />
     <Compile Include="SubagentFodexFunV204Tests.fsx" />
     <Compile Include="WrapperAgentV204Tests.fsx" />
-    <Compile Include="DemoOrderHubV102Tests.fsx" />
-    <Compile Include="DemoParticipantsV102Tests.fsx" />
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor.Tests\DemoOrderHubV102Tests.fsx"><Link>Archive/20261031/DemoOrderHubV102Tests.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor.Tests\DemoParticipantsV102Tests.fsx"><Link>Archive/20261031/DemoParticipantsV102Tests.fsx</Link></None>
     <Compile Include="NativeOrderFodexFunV205Tests.fsx" />
     <Compile Include="SubagentFodexFunV206Tests.fsx" />
     <Compile Include="WrapperAgentV206Tests.fsx" />
-    <Compile Include="DemoHostingV103Tests.fsx" />
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor.Tests\DemoHostingV103Tests.fsx"><Link>Archive/20261031/DemoHostingV103Tests.fsx</Link></None>
     <Compile Include="NativeSubagentFodexFunV207Tests.fsx" />
-    <Compile Include="DemoOrderHubV104Tests.fsx" />
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor.Tests\DemoOrderHubV104Tests.fsx"><Link>Archive/20261031/DemoOrderHubV104Tests.fsx</Link></None>
     <Compile Include="WrapperAgentV207Tests.fsx" />
-    <Compile Include="DemoHostingV104Tests.fsx" />
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor.Tests\DemoHostingV104Tests.fsx"><Link>Archive/20261031/DemoHostingV104Tests.fsx</Link></None>
     <Compile Include="ExplicitCotFodexFunV208Tests.fsx" />
     <Compile Include="WrapperAgentV208Tests.fsx" />
     <Compile Include="RemoteFodexFunV209Tests.fsx" />
     <Compile Include="NativeOwnershipFodexFunV209Tests.fsx" />
     <Compile Include="HubScopeFodexFunV210Tests.fsx" />
     <Compile Include="ImplementationTestSupportV210.fsx" />
-    <Compile Include="DemoHostingOwnerV210Tests.fsx" />
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor.Tests\DemoHostingOwnerV210Tests.fsx"><Link>Archive/20261031/DemoHostingOwnerV210Tests.fsx</Link></None>
+    <Compile Include="OrderHubV103Tests.fsx" />
+    <Compile Include="NativeOrderHubV104Tests.fsx" />
+    <Compile Include="HubHostingOwnerV210Tests.fsx" />
+    <Compile Include="HubClientV101Tests.fsx" />
+    <Compile Include="HubParticipantsV102Tests.fsx" />
+    <Compile Include="NLogLoggingTests.fsx" />
     <Compile Include="ProgramV200.fs" />
   </ItemGroup>
   <ItemGroup>
@@ -88,7 +99,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Fodex.Supervisor.Contract\Fodex.Supervisor.Contracts.fsproj" />
     <ProjectReference Include="..\Fodex.Supervisor\Fodex.Supervisor.fsproj" />
-    <ProjectReference Include="..\Fodex.Supervisor.Demos\Fodex.Supervisor.Demos.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="10.1.402" />

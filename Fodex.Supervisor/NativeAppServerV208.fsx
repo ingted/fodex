@@ -86,6 +86,7 @@ module NativeAppServerV208 =
                 let mutable facade: IAgent<string,obj> option = None
                 let selfSend message = facade.Value.Send(box message) |> ignore
                 let instance = spawn node ("native-app-v208-" + Guid.NewGuid().ToString("N")) <| fun (mailbox: Actor<obj>) ->
+                    let ctx = ActorLogging.withLogger ctx (Akka.Event.Logging.GetLogger(mailbox.Context))
                     let mutable supervised: ProcSupervisorV100.StartState option = None
                     let mutable connection: CodexAppServerConnection option = None
                     let mutable incarnation = Guid.Empty

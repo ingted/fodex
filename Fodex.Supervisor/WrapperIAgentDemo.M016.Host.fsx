@@ -1,6 +1,7 @@
+// M016.Host：使用實作專案共用 Milestones DLL（Proc Supervisor fodex002）；舊版在 archive/20261031。
 // M016 owner：只 hosting。請在獨立 FSI process 執行；109 擁有 wrapper/native/process。
 // 另一個 FSI process 執行 WrapperIAgentDemo.M016.fsx；client 不 build/spawn/stop owner。
-#load "DemoReferencesM016.fsx"
+#load "MilestoneReferences.fsx"
 open System
 open System.IO
 open System.Net
@@ -10,7 +11,8 @@ open Argu
 open Akka.Actor
 open Microsoft.Data.SqlClient
 open Fodex.Supervisor
-open Fodex.Supervisor.Demos
+open LoggerUtil
+open FodexLoggerAdapter
 open Fodex.Supervisor.Contracts.CoreMod
 
 type HostArgument =
@@ -21,16 +23,18 @@ type HostArgument =
     | Output_Directory of string
     | Owner_Info of string
     | Block of bool
+    | Stop_On_Stdin of bool
     interface IArgParserTemplate with member _.Usage = "M016 owner setting"
 
 let defaultArgumentsText = """
 --bind-ip 10.28.112.109
---port 21816
+--port 21916
 --sql-server localhost
 --database FodexV200
---output-directory F:/fodex/artifacts/M016-owner
---owner-info F:/fodex/artifacts/M016/owner.latest.json
+--output-directory F:/fodex/artifacts/M016.R002-owner
+--owner-info F:/fodex/artifacts/M016.R002/owner.latest.json
 --block true
+--stop-on-stdin false
 --native-adapter app-server
 --model gpt-6.1-sol
 --effort high
@@ -91,7 +95,9 @@ if String.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable "FODEX_SQL_CONNE
 let argumentJson = JsonSerializerOptions(Encoder=System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping)
 let arguments = argv |> Array.map (fun value -> JsonSerializer.Serialize(value,argumentJson)) |> String.concat " "
 let node = RemoteFodexFunV209.createNode "fodex-m016-owner" ip port
-let ctx = DemoTraceV100.context node (Path.Combine(directory,"owner.io.jsonl"))
+let logger = NLog.LogManager.GetLogger("Fodex.IO").WithProperty("traceFile", Path.Combine(directory,"owner.io.jsonl"))
+let ctx = UniLogger.toCtx(FodexLoggerAdapter.toUL(UniversalLogger<_>(logger)), "Fodex")
+ctx.logger.Tags["traceFile"] <- logger.Properties["traceFile"]
 let session = Guid.NewGuid(),Some(IPAddress.Parse ip)
 let completedPath = Path.Combine(directory,"owner.completed.edges.jsonl")
 let sink ((_,target,event) as edge) =
@@ -142,8 +148,15 @@ let stop () =
         stopped <- true
         wrapper.Stop() |> required |> ignore
         node.Terminate().GetAwaiter().GetResult() |> ignore
+        NLog.LogManager.Flush(TimeSpan.FromSeconds 10.)
         lifetime.Set()
 Console.CancelKeyPress.Add(fun event -> event.Cancel <- true; stop())
 try writeOwnerInfo()
 with ex -> stop(); raise ex
-if settings.GetResult Block then lifetime.Wait()
+// 僅供獨立測試 orchestrator 的 graceful shutdown；不向 main/native 暴露 lifecycle tool。
+// 預設仍由操作者 stop()/Ctrl+C。automation 的 stdin 關閉也會釋放本 owner 的資源。
+if settings.GetResult Block then
+    if settings.GetResult(Stop_On_Stdin,defaultValue=false) then
+        Console.ReadLine() |> ignore
+        stop()
+    else lifetime.Wait()

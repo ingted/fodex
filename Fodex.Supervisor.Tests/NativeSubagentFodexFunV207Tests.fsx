@@ -79,7 +79,7 @@ let tests = testList "Native subagent FodexFun V207" [
                 Expect.equal (json.RootElement.GetProperty("causedBy").GetInt64()) 17L "actual HumanInit cause"
     testCase "Native prompt leads actual who via compiled client, without MCP or slash dispatch" <| fun () ->
         withFunctions <| fun _ _ work _ ->
-            let client = Path.Combine(__SOURCE_DIRECTORY__,"bin","Debug","net10.0","win-x64","Fodex.Supervisor.Demos.dll")
+            let client = Path.Combine(__SOURCE_DIRECTORY__,"bin","Debug","net10.0","win-x64","Fodex.Supervisor.dll")
             let text = FeasibleFun.invoke (Uri "http://127.0.0.1:18813",client,[|"sub-1";"sub-2";"sub-3"|],"review code") work |> expectOk
             for who in ["sub-1";"sub-2";"sub-3"] do Expect.stringContains text who "actual who for all N"
             Expect.stringContains text "交給你帶領" "main leads the existing raw subs"

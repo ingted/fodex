@@ -15,6 +15,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="LoggerUtil.fsx" />
+    <!-- SRTP adapter 由使用專案 Compile/Link；Contract 只提供共同的 UniLogger/UniContext。 -->
+    <None Include="LoggerAdapter.fsx" />
     <Compile Include="ParseLine.fsx" />
     <Compile Include="concepts.fsx" />
     <None Include="README.md" Pack="true" PackagePath="\" />

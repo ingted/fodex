@@ -39,7 +39,7 @@ let liveCase adapter =
                         agent.Start() |> expectOk |> ignore
                         let native = agent.AcquireParticipant((2L,sid),args) |> expectOk
                         agent.Send(box (sprintf "Reply exactly %s. Do not use tools." expectedText)) |> expectOk |> ignore
-                        Expect.isTrue (completed.WaitOne(TimeSpan.FromSeconds 180.)) "real adapter completed"
+                        Expect.isTrue (waitForSignal completed (TimeSpan.FromSeconds 180.)) "real adapter completed"
                         let id = native.GetSessionId() |> expectOk
                         expectedId |> Option.iter (fun saved -> Expect.equal id saved "resume, not new thread")
                         let actual = output.ToArray() |> Array.choose (fun (_,_,event) -> match event with AgentEnd(_,_,Message text) -> Some text | _ -> None)

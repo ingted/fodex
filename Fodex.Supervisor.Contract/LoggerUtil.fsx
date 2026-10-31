@@ -172,100 +172,9 @@ type NLog.Logger with
             failwith msg
         ) format
 
-type UniversalLogger< ^L
-    when ^L : (member Info : string -> unit)
-    and ^L : (member Debug : string -> unit)
-    and ^L : (member Warn : string -> unit)
-    and ^L : (member Error : string -> unit)
-    >(logger: 'L) =
-    member inline this.Info (msg: string) = logger.Info msg
-
-    member inline this.Debug (msg: string) = logger.Debug msg
-
-    member inline this.Warn (msg: string) = logger.Warn msg
-
-    member inline this.Error (msg: string) = logger.Error msg
-
-    member inline x.infof (format: Printf.StringFormat<'T,unit>) : 'T =
-        Printf.kprintf (fun msg -> x.Info msg) format
-
-    /// Debug 等級
-    member inline x.debugf (format: Printf.StringFormat<'T,unit>) : 'T =
-        Printf.kprintf (fun msg -> x.Debug msg) format
-
-    /// Warn 等級
-    member inline x.warnf (format: Printf.StringFormat<'T,unit>) : 'T =
-        Printf.kprintf (fun msg -> x.Warn msg) format
-
-    /// Error 等級
-    member inline x.errorf (format: Printf.StringFormat<'T,unit>) : 'T =
-        Printf.kprintf (fun msg -> x.Error msg) format
-
-
-    // ---------- log + printfn：pInfof / pDebugf / pWarnf / pErrorf ----------
-
-    member inline x.pInfof (format: Printf.StringFormat<'T,unit>) : 'T =
-        Printf.kprintf (fun msg ->
-            x.Info msg
-            tprintfn iinfo "%s" msg
-        ) format
-
-    member inline x.pDebugf (format: Printf.StringFormat<'T,unit>) : 'T =
-        Printf.kprintf (fun msg ->
-            x.Debug msg
-            tprintfn idebug "%s" msg
-        ) format
-
-    member inline x.pWarnf (format: Printf.StringFormat<'T,unit>) : 'T =
-        Printf.kprintf (fun msg ->
-            x.Warn msg
-            tprintfn iwarn "%s" msg
-        ) format
-
-    member inline x.pErrorf (format: Printf.StringFormat<'T,unit>) : 'T =
-        Printf.kprintf (fun msg ->
-            x.Error msg
-            tprintfn ierror "%s" msg
-        ) format
-
-
-    // ---------- log + failwith：fInfof / fDebugf / fWarnf / fErrorf ----------
-    // 型別上可以當 failwithf 用
-
-    member inline x.fInfof format =
-        Printf.kprintf (fun msg ->
-            x.Info msg
-            failwith msg
-        ) format
-
-    member inline x.fDebugf format =
-        Printf.kprintf (fun msg ->
-            x.Debug msg
-            failwith msg
-        ) format
-
-    member inline x.fWarnf format =
-        Printf.kprintf (fun msg ->
-            x.Warn msg
-            failwith msg
-        ) format
-
-    member inline x.fErrorf format =
-        Printf.kprintf (fun msg ->
-            x.Error msg
-            failwith msg
-        ) format
-
-    member inline x.pfErrorf format =
-        Printf.kprintf (fun msg ->
-            x.Error msg
-            tprintfn ierror "%s" msg
-            failwith msg
-        ) format
-
-// 抽象 base：包一整套方法（跟 UniversalLogger 對齊）
-
-and [<AbstractClass>] UniLogger () =
+// 執行期共用的 logger contract。UniversalLogger 與 inline adapter 改由 LoggerAdapter.fsx
+// 透過 Compile/Link 在使用專案編譯；不複製此 UniLogger/UniContext 的型別身分。
+type [<AbstractClass>] UniLogger () =
     let d = Dictionary<string, obj>()
     // string 版
     abstract member Info  : string -> unit
@@ -293,42 +202,6 @@ and [<AbstractClass>] UniLogger () =
     abstract member pfErrorf : Printf.StringFormat<'a,'b> -> 'a
     abstract member Tags : Dictionary<string, obj>
     default this.Tags = d
-
-    // UniversalLogger<_> → UniLogger 的 adapter
-    static member inline toUL< ^L
-    when ^L : (member Info : string -> unit)
-    and ^L : (member Debug : string -> unit)
-    and ^L : (member Warn : string -> unit)
-    and ^L : (member Error : string -> unit)
-    > (uvl: UniversalLogger< ^L>) =
-        { new UniLogger() with
-
-            // string 版
-            member _.Info msg  = uvl.Info msg
-            member _.Debug msg = uvl.Debug msg
-            member _.Warn msg  = uvl.Warn msg
-            member _.Error msg = uvl.Error msg
-
-            // 純 log printf 版
-            member _.infof  f = uvl.infof f
-            member _.debugf f = uvl.debugf f
-            member _.warnf  f = uvl.warnf f
-            member _.errorf f = uvl.errorf f
-
-            // log + printfn
-            member _.pInfof  f = uvl.pInfof f
-            member _.pDebugf f = uvl.pDebugf f
-            member _.pWarnf  f = uvl.pWarnf f
-            member _.pErrorf f = uvl.pErrorf f
-
-            // log + failwith
-            member _.fInfof  f = uvl.fInfof f
-            member _.fDebugf f = uvl.fDebugf f
-            member _.fWarnf  f = uvl.fWarnf f
-            member _.fErrorf f = uvl.fErrorf f
-            member _.pfErrorf f = uvl.pfErrorf f
-        }
-
 
     [<Extension>]
     static member toCtx (
@@ -362,11 +235,3 @@ and UniContext = {
         }
 
         member this.usages = "[" + System.String.Join("|", this.usage) + "]"
-
-
-
-let inline uvl2ul (uvl: UniversalLogger< ^L>) = UniLogger.toUL< ^L> uvl
-
-if false then
-    let uvl = uvl2ul <| UniversalLogger<_>(NLog.LogManager.GetCurrentClassLogger())
-    ()

@@ -12,11 +12,14 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <Version>0.0.1</Version>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="FodexFunRegistry.fsx" />
+    <Compile Include="..\Fodex.Supervisor.Contract\LoggerAdapter.fsx">
+      <Link>LoggerAdapter.fsx</Link>
+    </Compile>
     <!-- 舊版依賴已移除的方向 DU；保留來源與 project item，但不與新版 Contract 一起編譯。 -->
     <None Include="ReActJsonV100.fsx">
       <Link>Archive/ReActJsonV100.fsx</Link>
@@ -28,6 +31,7 @@
     <Compile Include="ReActDataStoreV200.fsx" />
     <Compile Include="ReActDataStoreV205.fsx" />
     <Compile Include="SupervisorArgs.fsx" />
+    <Compile Include="ActorLogging.fsx" />
     <None Include="IAgentFodexFunV100.fsx">
       <Link>Archive/IAgentFodexFunV100.fsx</Link>
     </None>
@@ -85,6 +89,19 @@
     <Compile Include="RemoteFodexFunV209.fsx" />
     <Compile Include="WrapperOutputV200.fsx" />
     <Compile Include="WrapperOutputV201.fsx" />
+    <Compile Include="OrderHubSupportV100.fsx" />
+    <Compile Include="OrderHubV103.fsx" />
+    <Compile Include="NativeOrderHubV104.fsx" />
+    <Compile Include="HubToolsV103.fsx" />
+    <Compile Include="HubClientV101.fsx" />
+    <Compile Include="WrapperTurnTimingV100.fsx" />
+    <Compile Include="HubParticipantsV101.fsx" />
+    <Compile Include="HubParticipantsV102.fsx" />
+    <Compile Include="NativeHubParticipantsV103.fsx" />
+    <Compile Include="WrapperHubHostingV105.fsx" />
+    <Compile Include="NativeHubHostingV106.fsx" />
+    <Compile Include="HubClientMain.fs" />
+    <None Include="NLog.conf" CopyToOutputDirectory="PreserveNewest" />
     <None Include="FodexFunRegistrationV100.fsx">
       <Link>Archive/FodexFunRegistrationV100.fsx</Link>
     </None>
@@ -116,8 +133,8 @@
     <None Include="WrapperIAgentDemo.M007.fsx">
       <Link>Archive/WrapperIAgentDemo.M007.fsx</Link>
     </None>
-    <None Include="DemoOrderHubV100.fsx">
-      <Link>Archive/DemoOrderHubV100.fsx</Link>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\DemoOrderHubV100.fsx">
+      <Link>Archive/20261031/DemoOrderHubV100.fsx</Link>
     </None>
     <None Include="DemoReferencesM008.fsx"><Link>Archive/DemoReferencesM008.fsx</Link></None>
     <None Include="WrapperIAgentDemo.M008.fsx"><Link>Archive/WrapperIAgentDemo.M008.fsx</Link></None>
@@ -127,36 +144,58 @@
     <None Include="WrapperIAgentDemo.M009.HubClient.fsx"><Link>Archive/WrapperIAgentDemo.M009.HubClient.fsx</Link></None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="DemoReferencesM010.fsx"><Link>Archive/DemoReferencesM010.fsx</Link></None>
-    <None Include="DemoReferencesM012.fsx"><Link>Archive/DemoReferencesM012.fsx</Link></None>
-    <None Include="WrapperIAgentDemo.M012.fsx"><Link>Archive/WrapperIAgentDemo.M012.fsx</Link></None>
-    <None Include="WrapperIAgentDemo.M012.Hub.fsx"><Link>Archive/WrapperIAgentDemo.M012.Hub.fsx</Link></None>
-    <None Include="README.M012.md" />
-    <None Include="DemoReferencesM013.fsx"><Link>Archive/DemoReferencesM013.fsx</Link></None>
-    <None Include="WrapperIAgentDemo.M013.fsx"><Link>Archive/WrapperIAgentDemo.M013.fsx</Link></None>
-    <None Include="WrapperIAgentDemo.M013.Hub.fsx"><Link>Archive/WrapperIAgentDemo.M013.Hub.fsx</Link></None>
-    <None Include="README.M013.md" />
-    <None Include="WrapperIAgentDemo.M014.fsx"><Link>Archive/WrapperIAgentDemo.M014.fsx</Link></None>
-    <None Include="WrapperIAgentDemo.M015.fsx"><Link>Archive/WrapperIAgentDemo.M015.fsx</Link></None>
-    <None Include="DemoReferencesM014.fsx"><Link>Archive/DemoReferencesM014.fsx</Link></None>
-    <None Include="README.M014-M015.md" />
-    <None Include="WrapperIAgentDemo.M016.Host.fsx"><Link>Archive/WrapperIAgentDemo.M016.Host.fsx</Link></None>
-    <None Include="WrapperIAgentDemo.M016.fsx"><Link>Archive/WrapperIAgentDemo.M016.fsx</Link></None>
-    <None Include="DemoReferencesM016.fsx"><Link>Archive/DemoReferencesM016.fsx</Link></None>
-    <None Include="README.M016.md" />
-    <None Include="README.M013-M016.Validation.md" />
-    <None Include="WrapperIAgentDemo.M010.fsx"><Link>Archive/WrapperIAgentDemo.M010.fsx</Link></None>
-    <None Include="WrapperIAgentDemo.M010.Hub.fsx"><Link>Archive/WrapperIAgentDemo.M010.Hub.fsx</Link></None>
-    <None Include="WrapperIAgentDemo.M011.fsx"><Link>Archive/WrapperIAgentDemo.M011.fsx</Link></None>
-    <None Include="WrapperIAgentDemo.M011.Hub.fsx"><Link>Archive/WrapperIAgentDemo.M011.Hub.fsx</Link></None>
-    <None Include="WrapperIAgentDemo.M011.HubClient.fsx"><Link>Archive/WrapperIAgentDemo.M011.HubClient.fsx</Link></None>
-    <None Include="README.M010-M011.md" />
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\DemoReferencesM010.fsx"><Link>Archive/20261031/DemoReferencesM010.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\DemoReferencesM012.fsx"><Link>Archive/20261031/DemoReferencesM012.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\WrapperIAgentDemo.M012.fsx"><Link>Archive/20261031/WrapperIAgentDemo.M012.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\WrapperIAgentDemo.M012.Hub.fsx"><Link>Archive/20261031/WrapperIAgentDemo.M012.Hub.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\README.M012.md" />
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\DemoReferencesM013.fsx"><Link>Archive/20261031/DemoReferencesM013.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\WrapperIAgentDemo.M013.fsx"><Link>Archive/20261031/WrapperIAgentDemo.M013.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\WrapperIAgentDemo.M013.Hub.fsx"><Link>Archive/20261031/WrapperIAgentDemo.M013.Hub.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\README.M013.md" />
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\WrapperIAgentDemo.M014.fsx"><Link>Archive/20261031/WrapperIAgentDemo.M014.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\WrapperIAgentDemo.M015.fsx"><Link>Archive/20261031/WrapperIAgentDemo.M015.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\DemoReferencesM014.fsx"><Link>Archive/20261031/DemoReferencesM014.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\README.M014-M015.md" />
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\WrapperIAgentDemo.M016.Host.fsx"><Link>Archive/20261031/WrapperIAgentDemo.M016.Host.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\WrapperIAgentDemo.M016.fsx"><Link>Archive/20261031/WrapperIAgentDemo.M016.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\DemoReferencesM016.fsx"><Link>Archive/20261031/DemoReferencesM016.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\README.M016.md" />
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\README.M013-M016.Validation.md" />
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\WrapperIAgentDemo.M010.fsx"><Link>Archive/20261031/WrapperIAgentDemo.M010.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\WrapperIAgentDemo.M010.Hub.fsx"><Link>Archive/20261031/WrapperIAgentDemo.M010.Hub.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\WrapperIAgentDemo.M011.fsx"><Link>Archive/20261031/WrapperIAgentDemo.M011.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\WrapperIAgentDemo.M011.Hub.fsx"><Link>Archive/20261031/WrapperIAgentDemo.M011.Hub.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\WrapperIAgentDemo.M011.HubClient.fsx"><Link>Archive/20261031/WrapperIAgentDemo.M011.HubClient.fsx</Link></None>
+    <None Include="..\Fodex.Supervisor.Contract\archive\20261031\Fodex.Supervisor\README.M010-M011.md" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <!-- Active FSI milestones; implementation lives in this project, not a Demos executable. -->
+    <None Include="MilestoneReferences.fsx" />
+    <None Include="ValidateMilestones.fsx" />
+    <None Include="README.M010-M016.md" />
+    <None Include="WrapperIAgentDemo.M010.fsx" />
+    <None Include="WrapperIAgentDemo.M010.Hub.fsx" />
+    <None Include="WrapperIAgentDemo.M011.fsx" />
+    <None Include="WrapperIAgentDemo.M011.Hub.fsx" />
+    <None Include="WrapperIAgentDemo.M011.HubClient.fsx" />
+    <None Include="WrapperIAgentDemo.M012.fsx" />
+    <None Include="WrapperIAgentDemo.M012.Hub.fsx" />
+    <None Include="WrapperIAgentDemo.M013.fsx" />
+    <None Include="WrapperIAgentDemo.M013.Hub.fsx" />
+    <None Include="WrapperIAgentDemo.M014.fsx" />
+    <None Include="WrapperIAgentDemo.M015.fsx" />
+    <None Include="WrapperIAgentDemo.M016.fsx" />
+    <None Include="WrapperIAgentDemo.M016.Host.fsx" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Fodex.Supervisor.Contract\Fodex.Supervisor.Contracts.fsproj" />
   </ItemGroup>
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="ModelContextProtocol.Core" Version="2.3.0" />
+    <PackageReference Include="ModelContextProtocol" Version="2.3.0" />
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="2.3.0" />
     <PackageReference Update="FSharp.Core" Version="10.1.402" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
     <PackageReference Include="FAkka.Proc.Supervisor" Version="[1.572.10-fodex002]" />

@@ -1,6 +1,7 @@
+// M016：使用實作專案共用 Milestones DLL（Proc Supervisor fodex002）；舊版在 archive/20261031。
 // M016 client：只連既有 .109 owner；本機 .108 不建立 native/wrapper implementation/process。
 // owner 與 client 必須是兩個獨立 FSI process。client stop() 只停止自己的 ActorSystem。
-#load "DemoReferencesM016.fsx"
+#load "MilestoneReferences.fsx"
 open System
 open System.IO
 open System.Net
@@ -10,7 +11,8 @@ open System.Threading
 open Argu
 open Akka.Actor
 open Fodex.Supervisor
-open Fodex.Supervisor.Demos
+open LoggerUtil
+open FodexLoggerAdapter
 open Fodex.Supervisor.Contracts.Concepts
 open Fodex.Supervisor.Contracts.CoreMod
 open Fodex.Supervisor.Contracts.LiteralsMod
@@ -30,10 +32,10 @@ type ClientArgument =
 
 let defaultArgumentsText = """
 --bind-ip 10.28.112.108
---port 21817
+--port 21917
 --expected-owner-ip 10.28.112.109
---owner-info F:/fodex/artifacts/M016/owner.latest.json
---output-directory F:/fodex/artifacts/M016-client
+--owner-info F:/fodex/artifacts/M016.R002/owner.latest.json
+--output-directory F:/fodex/artifacts/M016.R002-client
 --prompt "只回覆 FODEX_M016_REMOTE_OK。不要使用工具。"
 --timeout-seconds 1200
 --resolve-version 2.0.9
@@ -57,13 +59,16 @@ let directory = Path.Combine(settings.GetResult Output_Directory,DateTime.UtcNow
 Directory.CreateDirectory directory |> ignore
 let utf8 = Text.UTF8Encoding(false)
 let node = RemoteFodexFunV209.createNode "fodex-m016-client" (settings.GetResult Bind_Ip) (settings.GetResult Port)
-let ctx = DemoTraceV100.context node (Path.Combine(directory,"client.io.jsonl"))
+let logger = NLog.LogManager.GetLogger("Fodex.IO").WithProperty("traceFile", Path.Combine(directory,"client.io.jsonl"))
+let ctx = UniLogger.toCtx(FodexLoggerAdapter.toUL(UniversalLogger<_>(logger)), "Fodex")
+ctx.logger.Tags["traceFile"] <- logger.Properties["traceFile"]
 let mutable stopped = false
 let stop () =
     if not stopped then
         stopped <- true
         // 不呼叫 wrapper.Stop；那會停止 109 owner。
         node.Terminate().GetAwaiter().GetResult() |> ignore
+        NLog.LogManager.Flush(TimeSpan.FromSeconds 10.)
         manifest.Dispose()
 
 // 初始化也在 client 的生命週期範圍內；owner 離線或身分不符時釋放本機 port，

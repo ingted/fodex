@@ -37,6 +37,7 @@ module WrapperAgentV207 =
             let collect = SubagentFodexFunV206.bind<NativeSubagentReadV207,NativeOrderEvidenceV205 array> node NativeSubagentFodexFunV207.targetCollect (nativePolicies.TryGetResult NativeSubagentCollect)
             let record = loop.PinNativeOrderRecorder(nativePolicies.TryGetResult NativeOrderRecorder)
             let instance = spawn node ("wrapper-v207-" + Guid.NewGuid().ToString("N")) <| fun (mailbox: Actor<obj>) ->
+                let ctx = ActorLogging.withLogger ctx (Akka.Event.Logging.GetLogger(mailbox.Context))
                 let children = Dictionary<ReActParticipant,IAgent<string,obj>>()
                 let main = 2L, snd wrapper
                 let mutable running = false

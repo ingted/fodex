@@ -52,6 +52,7 @@ module NativeExecV203 =
                 let mutable facade: IAgent<string,obj> option = None
                 let selfSend message = facade.Value.Send(box message) |> ignore
                 let instance = spawn node ("native-exec-v203-" + Guid.NewGuid().ToString("N")) <| fun (mailbox: Actor<obj>) ->
+                    let ctx = ActorLogging.withLogger ctx (Akka.Event.Logging.GetLogger(mailbox.Context))
                     let mutable resource: ProcSupervisorV100.StartState option = None
                     let mutable launchId = Guid.Empty
                     let mutable session = options.TryGetResult Resume_Session

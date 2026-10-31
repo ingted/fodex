@@ -65,7 +65,7 @@ let withWrapper cs (savedHistory: ReActDataStream<string> seq) action =
         let loop = FodexAgent<string,obj>.createReActLoop(node,args,ctx) |> expectOk
         let send text =
             agent.Send(box text) |> expectOk |> ignore
-            Expect.isTrue (completed.WaitOne(TimeSpan.FromSeconds 10.)) "persisted terminal user output"
+            Expect.isTrue (waitForSignal completed (TimeSpan.FromSeconds 10.)) "persisted terminal user output"
             // AgentEnd sinks before Route's reply; next Ask establishes handler completion.
             loop.GetStatus session |> expectOk |> ignore
         try

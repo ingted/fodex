@@ -33,6 +33,7 @@ module WrapperAgentV206 =
             let initialize = SubagentFodexFunV206.bind<SubagentStartupInputV206,string array> node SubagentFodexFunV206.targetInitialize (policies.TryGetResult SubagentInitialize)
             let workPrompt = SubagentFodexFunV206.bind<SubagentWorkInputV206,string> node SubagentFodexFunV206.targetWorkPrompt (policies.TryGetResult SubagentWorkPrompt)
             let instance = spawn node ("wrapper-v206-" + Guid.NewGuid().ToString("N")) <| fun (mailbox: Actor<obj>) ->
+                let ctx = ActorLogging.withLogger ctx (Akka.Event.Logging.GetLogger(mailbox.Context))
                 let children = Dictionary<ReActParticipant,IAgent<string,obj>>()
                 let main = 2L, snd wrapper
                 let mutable running = false

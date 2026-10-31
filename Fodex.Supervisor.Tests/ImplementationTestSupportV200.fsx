@@ -18,18 +18,32 @@
 #r "nuget: Microsoft.Extensions.ObjectPool, 10.0.14"
 #r "Fodex.Supervisor.Contracts.dll"
 #r "Fodex.Supervisor.dll"
+#load "../Fodex.Supervisor.Contract/LoggerAdapter.fsx"
 #else
 module ImplementationTestSupportV200
 #endif
 
 open System
 open Expecto
+open NLog
+
+do LogManager.Setup().LoadConfigurationFromFile(IO.Path.Combine(__SOURCE_DIRECTORY__,"../Fodex.Supervisor/NLog.conf"),false) |> ignore
+
 open Fodex.Supervisor.Contracts.CoreMod
 
 let expectOk (result: Result<'T, exn>) =
     match result with
     | Ok value -> value
     | Error ex -> failtestf "Expected Ok, received %O" ex
+
+/// 保留同步 fixture 介面及原本 signal/timeout 語義，但不直接 WaitOne 測試 worker。
+/// FSharp.Core 負責註冊 wait；最外層 Task 等待讓 .NET 的 blocking compensation 可辨識。
+/// 這不是 fully async，也不改 ThreadPool 設定；產品 actor/timeout/assertion 均不變。
+/// 例：waitForSignal completed (TimeSpan.FromSeconds 10.)；true 才代表真的收到一次訊號。
+let waitForSignal (signal: System.Threading.WaitHandle) (timeout: TimeSpan) =
+    Async.AwaitWaitHandle(signal, millisecondsTimeout = int timeout.TotalMilliseconds)
+    |> fun waiting -> Async.StartAsTask(waiting, taskCreationOptions = System.Threading.Tasks.TaskCreationOptions.RunContinuationsAsynchronously)
+    |> fun waiting -> waiting.GetAwaiter().GetResult()
 
 // 固定的純資料 identity；測試不啟動 Codex、不共享使用者資料庫。
 let session = Guid.Parse "b896217d-5443-45ad-8550-c3d5886ed3af", None
@@ -42,7 +56,7 @@ let eventEdge id : ReActDataStream<string> =
 
 /// 一個測試一個 ActorSystem；結束必須 terminate，不將 registry 或 mailbox 留給下一個測試。
 let withNode action =
-    let config = Akka.Configuration.ConfigurationFactory.ParseString "akka.loglevel=OFF\nakka.stdout-loglevel=OFF"
+    let config = Fodex.Supervisor.ActorLogging.config
     let node = Akka.Actor.ActorSystem.Create("fodex-v200-" + Guid.NewGuid().ToString("N"), config)
     let mutable actionError: string option = None
     try

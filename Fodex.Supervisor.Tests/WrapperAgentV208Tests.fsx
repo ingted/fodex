@@ -1,7 +1,7 @@
 #if INTERACTIVE
 #r "nuget: Expecto, 11.1.1"
 #load "ImplementationTestSupportV201.fsx"
-#r "bin/Debug/net10.0/win-x64/Fodex.Supervisor.Demos.dll"
+#r "bin/Debug/net10.0/win-x64/Fodex.Supervisor.dll"
 #else
 module WrapperAgentV208Tests
 #endif
@@ -15,7 +15,8 @@ open Akka.FSharp
 open Expecto
 open ImplementationTestSupportV200
 open Fodex.Supervisor
-open Fodex.Supervisor.Demos
+open LoggerUtil
+open FodexLoggerAdapter
 open Fodex.Supervisor.Contracts.CoreMod
 open Fodex.Supervisor.Contracts.Concepts
 
@@ -26,7 +27,7 @@ let withWrapper adapter holdCot failCot sameSid action =
         withNode <| fun node ->
             let directory = Path.Combine(__SOURCE_DIRECTORY__,"TestResults","V208")
             Directory.CreateDirectory directory |> ignore
-            let ctx = DemoTraceV100.context node (Path.Combine(directory,node.Name+".io.jsonl"))
+            let ctx = UniLogger.toCtx(FodexLoggerAdapter.toUL(UniversalLogger<_>(NLog.LogManager.GetLogger("Fodex.IO").WithProperty("traceFile", Path.Combine(directory,node.Name+".io.jsonl")))), "test")
             let inputs = ConcurrentQueue<ReActParticipant * ReActTurnInputMode * string * StreamId>()
             let created = ConcurrentQueue<ReActParticipant * string>()
             let stopped = ConcurrentQueue<ReActParticipant>()

@@ -1,5 +1,7 @@
 # Fodex.Supervisor v1.0.0 implementations
 
+目前的 M010–M016 腳本、共用 logger 與驗收方式請看 [README.M010-M016.md](README.M010-M016.md)。
+
 目前 FGL-native 核心開發請看 [README.V200.md](README.V200.md)。以下保留 V100/V101 歷史說明；
 其不相容來源已列為 `None`，不可把以下舊 MVP 步驟當成目前 V200 的完成狀態。
 

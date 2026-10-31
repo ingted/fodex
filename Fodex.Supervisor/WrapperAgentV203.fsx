@@ -26,6 +26,7 @@ module WrapperAgentV203 =
                arguments ctx (createNative: ReActParticipant -> string -> Result<IAgent<string,obj>,exn>) =
         loop.ReadDataFlow(snd wrapper) |> Result.bind (fun _ ->
             let instance = spawn node ("wrapper-v203-" + Guid.NewGuid().ToString("N")) <| fun (mailbox: Actor<obj>) ->
+                let ctx = ActorLogging.withLogger ctx (Akka.Event.Logging.GetLogger(mailbox.Context))
                 let children = Dictionary<ReActParticipant,IAgent<string,obj>>()
                 let main = 2L, snd wrapper
                 let mutable running = false

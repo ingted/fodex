@@ -1,0 +1,1907 @@
+› 然後不要再 Get-Content -LiteralPath 'C:
+  \Users\Administrator\.codex\skills\powershell-output-guard\SKILL.md' 了，
+  不要浪費資源好嗎?
+
+
+• 收到，規則已在目前上下文，接下來直接遵守，不再重讀這份 skill。繼續只檢查你
+  的 NuGet #r 改法與 FSI 執行結果。
+
+• Ran Read-CodexStdout { foreach ($testScript in
+  │ @('FodexFunTests.fsx','ReActDataStreamTests.fsx','ReActLoopRouteReActDa
+  │ taStreamTests.fsx','ReActLoopCollectTests.fsx','ReActLoopReadDataFlowTe
+  │ … +7 lines
+  └ FodexFunTests.fsx exit=0
+    [07:08:16 INF] EXPECTO? Running tests... <Expecto>
+    [07:08:16 INF] EXPECTO! 5 tests run in 00:00:00.3145685 for FodexFun
+    +19 lines (ctrl+t to view transcript)
+
+• 五個 .fsx 已全部跑完：27/27 通過，沒有再遇到 ObjectPool 載入錯誤。目前看到
+  的殘留主要是舊註解與 README 的複製路徑說明；我再確認一次實際載入位置，排除
+  誤用舊 DLL。
+
+• Ran Read-CodexStdout { $fsiProbe = @'
+  │ #load @"F:
+  │ \fodex\Fodex.Supervisor.Contract.Tests\ContractTestSupport.fsx";;
+  │ … +11 lines
+  └ ObjectPool version: 10.0.0.0
+    ObjectPool location: C:
+    \Users\Administrator\.nuget\packages\microsoft.extensions.objectpool\10.0
+    +2 lines (ctrl+t to view transcript)
+
+• 這個改法可行。五個獨立 FSI 腳本 27/27 通過，並確認 ObjectPool 實際從 NuGet
+  10.0.14/lib/net10.0 載入，沒有用到舊複製 DLL。
+
+  剩下是清理與說明同步：
+
+  • fsproj:24 (/F:/fodex/Fodex.Supervisor.Contract.Tests/
+    Fodex.Supervisor.Contract.Tests.fsproj:24)：已註解的複製設定及相關註解可
+    刪；GeneratePathProperty="true" 也已無用途。
+
+  • ContractTestSupport.fsx:3 (/F:/fodex/Fodex.Supervisor.Contract.Tests/
+    ContractTestSupport.fsx:3)、README:40 (/F:/fodex/
+    Fodex.Supervisor.Contract.Tests/README.md:40)：仍寫著不另行 NuGet
+    restore、複製 ObjectPool 6.0.36，需要更新。
+
+  其他 DLL 仍引用 Debug 輸出，因此首次先 build 的前提不變。這輪沒有修改檔案。
+
+  Worked for 3m 22s • 7:10 AM
+
+
+
+› commit push 之後，開始實作專案的新版 FodexFun 開發，舊版請保留。如果碰到因為 contract 已經移除的 type/module... etc造成無法編譯，請將 .fsx 標記為 NONE 不要
+  編譯，但不要把檔案從 fsproj 中移除
+
+  每次開始一個標的新刪修時，comm (你要用 fodex 註冊) 先精確說明為什麼新刪修，程式碼 show 一下，類似 diff 那樣，不用標 +- 號，概念到就行，程式碼可以 code
+  snippt + 說明， mixed 講解，這樣新刪修的好處
+
+  結束時候如果下一個要改的跟這個是有關係的，要說明因為什麼緣故(關聯) 所以接下來要改什麼
+
+  因為我在 web 看不到你之前敲我的訊息，你先 say hi 我看看，如果我沒看到，那 comm 要先修，妳先不要動。總之你 hi 完畢等我消息
+
+
+• 我先以 fodex 註冊並透過 COMM 傳送 hi，然後等你確認。現在不會 commit、push 或修改程式碼。
+
+
+
+
+
+幫我將 None 不編譯的 .fsx .fs 用連結方式 "放進" archive 資料夾
+    <None Include="xxxx.fsx">
+      <Link>Archive/xxxx.fsx</Link>
+    </None>
+
+
+
+
+
+
+
+
+
+
+• 已完成：18 個 None 項目以 Link 顯示在 Archive，實體檔案與 Include 路徑不變。
+
+  驗證結果：
+
+  • Solution build：0 warnings、0 errors。
+  • Contract：27/27；新版實作：22/22。
+  • 四份獨立 FSI 測試：22/22。
+
+  f40d5b9 已推送。新版核心與 Archive 連結尚未提交；進度見 README.V200.md (Fodex.Supervisor/README.V200.md)，下一批是 Native／Wrapper 接線，尚非完整新版 MVP。
+
+  Worked for 53m 3s • 11:23 AM
+
+
+
+
+
+
+
+
+› 為什麼兩個node的 GUID 相同啊?
+
+
+• 我確認一下這個 GUID 的定義，區分 graph 裡的 session 身分與 Codex session ID。
+
+• Ran Read-CodexStdout { rg -n '^scope:|^59:|preserving `Fodex.Supervisor.Contract`' 'C:/Users/Administrator/.codex/memories/MEMORY.md' | head -n 3; rg -n -A7
+  │ -B2 'type ReActParticipantSessionId|type ReActParticipant =|type ReActEndpoint|type AgentSessionId' Fodex.Supervisor.Contract/concepts.fsx; rg -n 'let
+  │ participant = 1L|let main = 2L|let id = response.GetProperty|saveNativeSession|NativeCodexSessionId' Fodex.Supervisor/FodexFunRegistrationV200.fsx
+  │ … +1 line
+  └ 3:scope: Fodex documentation/architecture review, executable Supervisor MVP wiring, end-to-end validation, literal response constraints, and an unfinished
+    read-only follow-up review.
+    59:- when implementing Fodex Supervisor, the user required preserving `Fodex.Supervisor.Contract` -> treat the Contract project as read-only unless scope
+    +35 lines (ctrl+t to view transcript)
+
+• 因為目前我把 graph 節點寫成 (participantId, 所屬 wrapperSessionId)：
+
+  wrapper = (1L, (相同 GUID, None))
+  main    = (2L, (相同 GUID, None))
+
+  兩個節點靠 1L／2L 區分。main 沿用 wrapper GUID 的位置在 WrapperAgentV200.fsx:52 (/F:/fodex/Fodex.Supervisor/WrapperAgentV200.fsx:52)。
+
+  Native 真正的 Codex session ID 另外保存，可用 getCodexSessionId() 取得；不是兩者共用 Codex session。
+
+  也就是說：目前 graph 上的 GUID 表示「歸屬哪個 wrapper session」，不是「該 participant 自己的 session」。如果你先前「native sid 就是 Codex session id」也包含
+  graph 節點，那這段接線就沒有符合你的意思。
+
+  Worked for 1m 27s • 1:12 PM
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 為什麼兩個node的 GUID 相同啊?
+
+
+• 我確認一下這個 GUID 的定義，區分 graph 裡的 session 身分與 Codex session ID。
+
+• Ran Read-CodexStdout { rg -n '^scope:|^59:|preserving `Fodex.Supervisor.Contract`' 'C:/Users/Administrator/.codex/memories/MEMORY.md' | head -n 3; rg -n -A7
+  │ -B2 'type ReActParticipantSessionId|type ReActParticipant =|type ReActEndpoint|type AgentSessionId' Fodex.Supervisor.Contract/concepts.fsx; rg -n 'let
+  │ participant = 1L|let main = 2L|let id = response.GetProperty|saveNativeSession|NativeCodexSessionId' Fodex.Supervisor/FodexFunRegistrationV200.fsx
+  │ … +1 line
+  └ 3:scope: Fodex documentation/architecture review, executable Supervisor MVP wiring, end-to-end validation, literal response constraints, and an unfinished
+    read-only follow-up review.
+    59:- when implementing Fodex Supervisor, the user required preserving `Fodex.Supervisor.Contract` -> treat the Contract project as read-only unless scope
+    +35 lines (ctrl+t to view transcript)
+
+• 因為目前我把 graph 節點寫成 (participantId, 所屬 wrapperSessionId)：
+
+  wrapper = (1L, (相同 GUID, None))
+  main    = (2L, (相同 GUID, None))
+
+  兩個節點靠 1L／2L 區分。main 沿用 wrapper GUID 的位置在 WrapperAgentV200.fsx:52 (/F:/fodex/Fodex.Supervisor/WrapperAgentV200.fsx:52)。
+
+  Native 真正的 Codex session ID 另外保存，可用 getCodexSessionId() 取得；不是兩者共用 Codex session。
+
+  也就是說：目前 graph 上的 GUID 表示「歸屬哪個 wrapper session」，不是「該 participant 自己的 session」。如果你先前「native sid 就是 Codex session id」也包含
+  graph 節點，那這段接線就沒有符合你的意思。
+
+  Worked for 1m 27s • 1:12 PM
+
+
+› 你先前「native sid 就是 Codex session id」也包含 graph 節點 -> 什麼意思?
+
+
+• 我剛才講繞了。現在同一個 native，程式用了兩種不同的 SID：
+
+  graph 中 native 節點的 SID → wrapper 的 SID
+  native.GetSessionId()      → native 自己的 Codex SID
+
+  所以你看到 wrapper 與 native 節點的 GUID 相同。
+
+  「也包含 graph 節點」只是指：graph 裡 native 節點的 SID，也應該是它自己的 Codex SID。
+
+  你先前已經說過 native SID 就是 Codex session ID；是我把 graph 裡的 SID 當成「所屬 wrapper」使用，才造成這個落差，不是你少講了什麼。
+
+  Worked for 57s • 1:25 PM
+
+
+
+
+
+
+
+
+
+› F:\fodex\notes\202610\20261029\00004.graph output.txt
+  你閱讀圖的內容，StreamId=5~16 是 FODEX_M004_OK 分散的字串，但是 StreamId=17 18 才是完整的
+  這是 app-server 模式嗎?  exec --json 模式好像不會這樣分次? json 不是都是完整輸出嗎?
+  另外 demo 腳本好像沒有提供指定 app-server 還是 exec 的切換? 請加上
+
+• 確認了：目前 M004 的確走 app-server。5～16 是文字 delta，各自又經過兩條路由；17、18 則是完整回覆的兩條路由。exec --json 也是多筆 JSONL 事件，但 agent
+  message 通常以完成的 item 輸出，不是這種逐片文字通知。
+
+  我會保留 M004，另做 M005，讓 --native-adapter app-server／exec 真正切換。Contract 不動；exec 不支援回合中的 steer，會明確回報這個限制。
+
+
+• Called
+  └ comm.comm_message_send({"fromId":"fodex","toId":"user.github.ingted","scope":"direct","body":"本輪開始：檢視 graph output 後確認 M004 使用 app-server。
+        StreamId 5～16 是六段 delta 各走 native→wrapper、wrapper→Human；17/18 是同一完整 final 的兩段路由。JSON envelope 完整不代表 delta 字串完整。\n目前
+        --native-adapter 雖有參數，NativeAgentV200 實際拒絕非 app-server，因此不能只改 demo 字串假裝 exec 可用。\n策略：保留 Contract、V200 與 M004；新增 exec
+        adapter 與新的 registration/demo milestone M005，重用既有 IAgent/ReActLoop/FodexFun，不新增 Application/runtime。預期入口仍是 wrapper.Send → ReActLoop
+        → native IAgent.Send。\n概念：match nativeAdapter with | \"app-server\" -> NativeAgentV200.create ... | \"exec\" -> NativeExecAgentV201.create ...。
+        exec 以 thread.started.thread_id 保存 SID，item.completed 轉 typed event，turn.completed+process exit 收尾；第二次送入使用 exec resume 指定 SID。exec
+        不偽裝成可以 SteerTurn。接著先確認 Proc Supervisor 的 stdout/exit 支援，再逐檔說明與實作，新增獨立 FSI / Test Explorer 可跑的 Expecto 測試。"})
+    {"kind": "ptc-gw-comm-message-result", "status": "ok", "messageId": "msg-fsi-71a1cf6654364aa6a1782410bc1c3cfc", "deliveryHint":
+    "direct:user.github.ingted", "body": "本輪開始：檢視 graph output 後確認 M004 使用 app-server。StreamId 5～16 是六段 delta 各走 native→wrapper、
+    wrapper→Human；17/18 是同一完整 final 的兩段路由。JSON envelope 完整不代表 delta 字串完整。\n目前 --native-adapter 雖有參數，NativeAgentV200 實際拒絕非
+    +1 line (ctrl+t to view transcript)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› app-server 的 ReActDataStream 或 ReActData 可能要能標記區分碎片的跟最終完成的
+
+
+• 對，這個區分應該留在 typed data 裡，不能只靠看字串猜。
+
+  現在 AgentWork(..., Message "...") 裝的是 delta，AgentEnd(..., Message "...") 裝完整回覆；但 AgentWork 本身不代表「碎片」。另外，一則 message 完成與整個
+  turn 完成也是兩件事。
+
+  我先確認現有 DU，給你最小的擴充方案；這會涉及 Contract，所以先不直接改它。exec 切換的工作也會保留。
+
+• 我建議在 ReActData 直接新增 MessageDelta(messageId, text) 與 MessageCompleted(messageId, text)，保留原本一般用途的 Message；AgentEnd 仍只表示整個 turn 結
+  束。同一則訊息的碎片與完整內容用相同 messageId 關聯，DB／graph 都保留，顯示時不重複累加。是否同意依既有流程先 snapshot＋commit＋push，再修改 Contract？
+
+  • 同意，直接擴充 DU
+  • 先完成 exec 切換，Contract 稍後討論
+
+
+
+
+
+
+
+
+
+
+› Proc Supervisor 1.572.3 的 ProcStartSpec 不提供 stdin/stdout callback <- 有麼影響?需要改嗎>
+
+
+• 影響在 exec 的輸出接收，不是 Proc Supervisor 不能啟動 exec。
+
+  • app-server 不受影響：Proc Supervisor 啟動 process，Fodex 另外透過 WebSocket 收送資料。
+  • exec 需要 stdin／stdout：prompt 可送 stdin，JSONL 從 stdout 回來。目前檢視到的實作由 Proc Supervisor 持有並讀取 stdout，再寫入 logger；Fodex 沒有正式入口
+    接收這些原始資料。不能另外開一個 Process 物件就重新取得那條 pipe。
+
+  • 還要關掉自動重啟：exec 是一次性回合，結束後不能被 supervisor 自動再執行一次。
+
+  所以不是一定要改。這次可以讓 exec adapter 自己持有 process，用 FeasibleT [] 管理；若你要兩種模式都統一交給 Proc Supervisor，才需要替它補「本機 I/O 接收與退
+  出通知」入口，而且不必把 callback 塞進可持久化的 ProcStartSpec。
+
+  我先不改 Proc Supervisor 專案，也先不寫死 exec 的 process 管理方式；已確認的 DU／app-server 標記可以繼續做。
+
+• 這次 exec 的 process 管理要採哪個方向？app-server 仍維持現有 Proc Supervisor。
+
+  • 本次 exec 使用獨立 FeasibleT SOP，不修改 Proc Supervisor
+  • 統一使用 Proc Supervisor，先討論它需要增加的本機 I/O API  
+
+
+
+
+
+
+• 看過了，可以局部擴充，不需要重寫 Proc Supervisor；但要把 I/O 與退出順序測好。
+
+  目前已有：
+
+  • stdout／stderr 的讀取 handler，只是內容送到 logger：ProcSupervisor.fs:524 (/G:/PulseTrade.fs/Libs/Akka.Proc.Supervisor/ProcSupervisor.fs:524)。
+  • process exit 與 generation 檢查，可排除舊 process 的退出事件：ProcSupervisor.fs:1581 (/G:/PulseTrade.fs/Libs/Akka.Proc.Supervisor/
+    ProcSupervisor.fs:1581)。
+
+  • StartRegisteredProc + ProcRestartPolicy.Never，exec 不必新增重啟政策：ProcSupervisor.fs:1208 (/G:/PulseTrade.fs/Libs/Akka.Proc.Supervisor/
+    ProcSupervisor.fs:1208)。
+
+  我建議這樣補：
+
+  1. 保留 ProcStartSpec 不動，另加本機 I/O 設定入口；callback、stdin 內容不進持久化規格。
+  2. ProcNodeActor 保留原三參數 constructor，新增接受 I/O 設定的多載，既有 caller 不受影響。
+  3. 提供 stdin 寫入／關閉，以及 stdout、stderr、exit 通知。通知帶 generation，Fodex 再透過 IAgent.Send 接回 native actor。
+  4. 僅套用於這次本機啟動的 process，不宣稱 supervisor 重啟後能重新接回舊 pipe。
+
+  主要測試是：快速退出不漏資料、輸出讀完才通知完成、stdin EOF、非零退出、Stop，以及 Never 不重跑 prompt。
+
+  看過來源後，我傾向補這個 library 入口，讓 Fodex 的兩種 adapter 都沿用它管理 process。這輪尚未修改該專案；另外目前來源版本已是 1.572.7，Fodex 引用仍是
+  1.572.3，後續須明確處理版本更新。
+
+  Worked for 23m 34s • 7:25 PM
+
+
+
+
+
+
+
+› 你的改動沒有動既有 API spec 以及 IO spec，只是增加對嗎? 畢竟 Process.Start 牽涉太多魔法，怕改到了，其他依賴的東西都壞掉
+
+
+• 對，我提議的是新增「明確啟用的本機 I/O 入口」，不是更改既有啟動路徑；Proc Supervisor 目前也還沒修改。
+
+  我會把相容性界線寫清楚，尤其是 ProcessStartInfo、既有 stdout／stderr 行為與 constructor，避免「只是新增參數」卻改到舊 caller 的行為。
+
+• Ran Read-CodexStdout { rg -n 'ProcSupervisor|Proc Supervisor|Fodex.*Contract' C:/Users/Administrator/.codex/memories/MEMORY.md | head -n 12 | cut -c 1-240;
+  │ git -C G:/PulseTrade.fs diff --stat -- Libs/Akka.Proc.Supervisor Libs/Akka.Proc.Supervisor.Tests; sed -n '30,41p' G:/PulseTrade.fs/Libs/
+  │ Akka.Proc.Supervisor/ProcSupervisor.fs; sed -n '460,495p' G:/PulseTrade.fs/Libs/Akka.Proc.Supervisor/ProcSupervisor.fs; sed -n '1195,1215p' G:/
+  │ … +1 line
+  └ 24:- Fodex.Supervisor, FodexFun, CliStart, ProcSupervisor, codex app-server, ReActLoop, JSONL, session-resume, FODEX_REACT_STORE_ROOT,
+    sandbox-normalization, Expecto, dotnet build
+    59:- when implementing Fodex Supervisor, the user required preserving `Fodex.Supervisor.Contract` -> treat the Contract project as read-only unless scope
+    +81 lines (ctrl+t to view transcript)
+
+• 對，既有 API spec 與既有 I/O 行為不改，只增加明確啟用的本機 I/O 能力。目前 Proc Supervisor 還沒修改。
+
+  我會守住這些界線：
+
+  • API 不變：ProcStartSpec、既有 message／snapshot，以及三參數 constructor 都保留；新增多載，不把舊 constructor 改成另一個 signature。
+  • 啟動行為不變：既有 Process.Start 呼叫方式、ArgumentList、working directory、環境變數、UseShellExecute、CreateNoWindow 都不順便整理或重構。
+  • 舊 I/O 不變：未啟用新功能時，沿用原本的 redirect、encoding、logger、stdout 位址解析。stdin 的 redirect／寫入／關閉只適用於新入口。
+  • 生命週期不變：不改既有 stop、restart、cooperative recovery 政策；exec 使用現成的 Never。
+
+  新增輸出通知也不能另開第二個 reader 搶讀同一條 pipe，而是從現有讀取位置分送。
+
+  但「只增加」不等於已證明相容。我會驗證舊版已編譯 consumer 仍能載入呼叫，再跑既有啟停／I/O 回歸與新功能測試；不只看新 demo 能跑就算完成。
+
+  Worked for 59s • 7:51 PM
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 1. commit push
+  2. 複製一份 M005 -> M006 / M007 / M008 / M009
+
+  M006 請讓 fodex (wrapper) 使用 app-server 模式 review contract 專案與實作專案，然後請給我它的輸出 ReActEvent，分別是正常透過 wrapper 取得輸出以及自己從
+  graph 取得(記得不要整個 graph，只要 filter complete 輸出)
+
+  M007 同 M006，但走 exec 模式
+
+  M008 請使用 #r "nuget: ModelContextProtocol.Core, 2.3.0" / #r "nuget: ModelContextProtocol, 2.3.0" 起一個 ADHOC mcp server (order hub概念) 讓 wrapper 能註
+  冊該 mcp server 向其它 participant (subagent 概念，但是是 wrapper)  exec + resume 模式發指令。也就是 main wrapper 先叫起兩個 wrapper 作為 sub participant，
+  然後 main wrapper 的 main participant 單向透過 mcp tool 發送 instruction 給那兩個 sub participant，participant 的 wrapper 輸出就做為 mcp tool 的 tool
+  calling result 記得 mcp tool 要設計成 async task 的，main participant 送出 instruction (order) 後 order hub 會敲 wrapper，所有被敲的 wrapper 如果有
+  result ，hub 就會回給 mcp tool，也就是 main wrapper 要嘛發 instruction (hub_order(who, instruct)) 要嘛 (hub_receive ())，hub_receive 就是全部接收，所以不管
+  hub 有多少 sub participant ，只要呼叫 hub_receive，有 result 就是全部回來
+
+  M009 同 M008，但是 sub participant 不要是 wrapper，也不要使用 mcp tool 去發 instruction，而是用你說的 exec + stdout/stdin ，用 proc supervisor 起 codex cli
+  給 main participant 用
+
+  以上有疑慮請先討論
+
+
+
+
+
+
+
+
+
+
+› > M008 我建議主 wrapper 用 app-server，兩個 sub wrapper 用 exec＋resume；hub_order 立即回 orderId，hub_receive 若暫無結果就非阻塞回空陣列，有結果則一次取走
+  當下所有已完成結果（每筆含 who／orderId）。這個語意符合你的意思嗎？
+
+  hub_receive 沒結果時要等待
+
+
+• 收到：hub_receive() 沒結果時等待；第一筆結果到達後，回傳當下所有已完成、尚未領取的結果，不等所有 sub participant 都完成。每筆會帶 who 和 orderId，避免多筆派
+  工混在一起。      
+
+
+
+• 收到，已全部採用 YOLO，包含主／sub participant 與 resume：
+
+  • exec：--yolo
+  • app-server：等效的 approvalPolicy=never、sandbox=danger-full-access
+
+  已 commit＋push：13d252f。Contract、M005 與舊版保留。
+
+  M006、M007、M009 實跑通過；M006／M007 各 6 筆 Completed，wrapper 與 graph 輸出一致。M008 尚未完成：首輪 routing timeout，重跑被執行環境政策拒絕。
+
+  測試：98 passed、3 skipped；四份新增測試皆通過獨立 FSI。
+
+  操作方式與輸出路徑見 README.M006-M009.md (Fodex.Supervisor/README.M006-M009.md)。
+
+  Worked for 1h 32m 8s • 12:20 AM
+
+
+
+• 最有幫助的是：你在平常的 VS FSI 手動跑一次 M008，保留失敗現場；診斷與修正交給我。
+
+  1. 開兩個獨立的 .NET 10／x64 FSI process。
+  2. 第一個執行 M008.Hub.fsx (Fodex.Supervisor/WrapperIAgentDemo.M008.Hub.fsx)，等出現 HUB_READY。
+  3. 第二個執行 M008.fsx (Fodex.Supervisor/WrapperIAgentDemo.M008.fsx)。沿用預設 YOLO；這次先不要同時跑其他 demo、build 或測試，單純減少變因。
+  4. 若再次 timeout，先別重跑或停止 Host，告訴我：
+      • 第一個錯誤及其時間。
+      • Host 印出的 HUB_EVIDENCE 路徑。
+
+  其餘 artifacts 我直接讀，不用你貼整包 log。若順利完成，回報 COMPLETED_MATCH 與 HUB_HEALTH 即可。
+
+  目前確定的是 ReActLoop routing 的 actor Ask 等了 30 秒，不是已證實的模型生成超時。先不調大 timeout、不改 DB 或 Contract；我這邊重跑命令被拒絕則是另一件事。
+
+  Worked for 2m 1s • 12:23 AM
+
+
+
+
+
+
+
+
+
+
+
+PS C:\Program Files\dotnet\sdk\10.0.203\FSharp> dotnet fsi F:\fodex\Fodex.Supervisor\WrapperIAgentDemo.M008.Hub.fsx
+HUB_READY=http://127.0.0.1:18788
+HUB_EVIDENCE=F:/fodex/artifacts/M008-hub\20261029-162516-db3547935cc141179819d344439fdcdf
+MCP_ENABLED=true
+
+
+
+
+
+
+
+
+
+
+
+Welcome to F# Interactive for .NET Core in Visual Studio. To execute code, either
+  1. Use 'Send to Interactive' (Alt-Enter or right-click) from an F# script. The F# Interactive process will
+     use any global.json settings associated with that script.
+  2. Press 'Enter' to start. The F# Interactive process will use default settings.
+> 
+
+Microsoft (R) F# Interactive version 15.2.101.0 for F# 11.0
+Copyright (c) Microsoft Corporation. All Rights Reserved.
+
+For help type #help;;
+
+> 
+--> Added 'F:\fodex\Fodex.Supervisor\bin\M008' to library include path
+
+
+--> Referenced 'F:\fodex\Fodex.Supervisor\bin\M008\Akka.dll' (file may be locked by F# Interactive process)
+
+
+--> Referenced 'F:\fodex\Fodex.Supervisor\bin\M008\Argu.dll' (file may be locked by F# Interactive process)
+
+
+--> Referenced 'F:\fodex\Fodex.Supervisor\bin\M008\FAkka.Shared.dll' (file may be locked by F# Interactive process)
+
+
+--> Referenced 'F:\fodex\Fodex.Supervisor\bin\M008\Microsoft.Data.SqlClient.dll' (file may be locked by F# Interactive process)
+
+
+--> Referenced 'F:\fodex\Fodex.Supervisor\bin\M008\FSharp.FGL.dll' (file may be locked by F# Interactive process)
+
+
+--> Referenced 'F:\fodex\Fodex.Supervisor\bin\M008\FSharp.FGL.ArrayAdjacencyGraph.dll' (file may be locked by F# Interactive process)
+
+
+--> Referenced 'F:\fodex\Fodex.Supervisor\bin\M008\Fodex.Supervisor.Contracts.dll' (file may be locked by F# Interactive process)
+
+
+--> Referenced 'F:\fodex\Fodex.Supervisor\bin\M008\Fodex.Supervisor.dll' (file may be locked by F# Interactive process)
+
+[Loading C:\Users\Administrator\.codex\lib\ParseLine.fsx]
+module FSI_0003.PL
+val parseLine:
+  delimiters: char array ->
+    quoteChar: char option ->
+    escapeCharOpt: char option ->
+    ifMergeDelimiters: bool -> inputLine: string -> string array
+
+HUB_PARTICIPANTS={"participants":["contract","implementation"]}
+Wrapper session: WrapperSessionId (e6d39554-8a06-4031-b150-c63135706d78, None)
+Codex thread id: NativeCodexSessionId "01a1887b-2b63-7041-8a23-a04d8732c73f"
+Adapter: app-server; model: gpt-6.1-sol; effort: high
+
+[wrapper Completed]
+AgentCot
+  (122L, 121L,
+   MessageCompleted
+     ("01a1887b-2b63-7041-8a23-a04d8732c73f/01a1887b-35b8-7c70-ad9e-59c49bbe63f0/msg_04ac028abf611a6c016ae373869f508191982f876d8ee7b987",
+      "我會透過 `fodex_order_hub` 分別派給 `contract` 與 `implementation`，收齊首輪結果後，再要求兩者沿用原 session 複核。全程只讀，最後整理四筆回覆與兩輪 SID 是否一致。
+"))
+
+[wrapper Completed]
+AgentCot
+  (214L, 213L,
+   MessageCompleted
+     ("01a1887b-2b63-7041-8a23-a04d8732c73f/01a1887b-35b8-7c70-ad9e-59c49bbe63f0/msg_04ac028abf611a6c016ae373908d7c8191b83af2b39c786d03",
+      "派工工具已可用。讀取本機規範時會套用 `powershell-output-guard`；原始碼 review 與複核都交由指定的兩個 wrapper 執行。
+"))
+
+[wrapper Completed]
+AgentCot
+  (310L, 309L,
+   MessageCompleted
+     ("01a1887b-2b63-7041-8a23-a04d8732c73f/01a1887b-35b8-7c70-ad9e-59c49bbe63f0/msg_04ac028abf611a6c016ae373d939708191b850971fa882d89d",
+      "首輪兩筆派工已取得 orderId，hub 目前仍在等待結果。收齊兩人的首輪回覆後，才會發出第二輪複核指示。
+"))
+
+[wrapper Completed]
+AgentCot
+  (386L, 385L,
+   MessageCompleted
+     ("01a1887b-2b63-7041-8a23-a04d8732c73f/01a1887b-35b8-7c70-ad9e-59c49bbe63f0/msg_04ac028abf611a6c016ae3741b896c81918857bae37bfb1ecd",
+      "兩個 wrapper 尚未回覆，`hub_receive()` 仍在等待。我會維持這筆接收呼叫，避免重複派工。
+"))
+
+[wrapper Completed]
+AgentCot
+  (528L, 527L,
+   MessageCompleted
+     ("01a1887b-2b63-7041-8a23-a04d8732c73f/01a1887b-35b8-7c70-ad9e-59c49bbe63f0/msg_04ac028abf611a6c016ae37457a37881918d8a0281ac35c787",
+      "已收到 `contract` 首輪回覆：它指出未閉合引號可能讓參數遺失，進而走入預設版本操作；目前屬靜態原始碼判讀。`implementation` 尚未回覆，收齊後會請兩者各自複核原結論。
+"))
+
+[wrapper Completed]
+AgentCot
+  (592L, 591L,
+   MessageCompleted
+     ("01a1887b-2b63-7041-8a23-a04d8732c73f/01a1887b-35b8-7c70-ad9e-59c49bbe63f0/msg_04ac028abf611a6c016ae37493ba78819183a853cfbf54af43",
+      "`implementation` 首輪仍在執行中；目前只收到 `contract` 一筆結果，尚未發出第二輪派工。
+"))
+
+[wrapper Completed]
+AgentCot
+  (760L, 759L,
+   MessageCompleted
+     ("01a1887b-2b63-7041-8a23-a04d8732c73f/01a1887b-35b8-7c70-ad9e-59c49bbe63f0/msg_04ac028abf611a6c016ae374a6ee48819183fbfa5f3d5365b7",
+      "首輪已收齊，第二輪兩筆派工也都已送出，要求沿用各自原 SID。`contract` 會重查解析錯誤到預設操作的呼叫鏈；`implementation` 會重查明確指定的 `StartTurn` 被轉成 `SteerTurn`，是否確實違反現行模式契約。
+"))
+
+[wrapper Completed]
+AgentCot
+  (862L, 861L,
+   MessageCompleted
+     ("01a1887b-2b63-7041-8a23-a04d8732c73f/01a1887b-35b8-7c70-ad9e-59c49bbe63f0/msg_04ac028abf611a6c016ae374e34ef48191aa9005dd85fe62b3",
+      "兩個 wrapper 正在複核原結論，尚未收到第二輪結果。這輪已要求它們查找足以推翻原判斷的證據；若無法確證，就撤回原結論。
+"))
+
+[wrapper Completed]
+AgentWork
+  (1548L, 1547L,
+   MessageCompleted
+     ("01a1887b-2b63-7041-8a23-a04d8732c73f/01a1887b-35b8-7c70-ad9e-59c49bbe63f0/msg_04ac028abf611a6c016ae3752a84a4819197b6dd0b5ba8bf53",
+      "四筆 order 已全部收回，全程透過指定 hub 派工與接收。
+
+`contract` 第二輪確認，但縮小結論：未閉合引號在 [ParseLine.fsx:99](F:/fodex/Fodex.Supervisor.Contract/ParseLine.fsx:99) 只記錄錯誤，仍回傳空參數。使用內建 logger、沒有設定版本覆寫且已註冊多個版本時，可能因此選到最大版本；後續呼叫操作才會執行。最小修法是將該處 `pErrorf` 改為會拋錯的 `pfErrorf`。
+
+`implementation` 第二輪撤回首輪 bug 判定。[WrapperAgentV201.fsx:188](F:/fodex/Fodex.Supervisor/WrapperAgentV201.fsx:188) 丟棄傳入模式、依狀態改選 `SteerTurn` 的行為成立，但現行契約容許 Wrapper 編排互動，沒有足夠證據認定違約；修法建議一併撤回，目前無確證 bug。
+
+兩者兩輪的 hub `sessionId` 均一致：
+
+- `contract`：`01a1887b-9e68-7923-a8ef-a362d00c1914`
+- `implementation`：`01a1887b-b024-7720-bb4d-0eeb6b775d1e`
+
+以上為 sub 的靜態原始碼複核結果；未修檔、未執行 Git/build/restore、未啟停服務。
+
+"))
+Codex thread id after turn: NativeCodexSessionId "01a1887b-2b63-7041-8a23-a04d8732c73f"
+
+[graph Completed]
+AgentCot
+  (122L, 121L,
+   MessageCompleted
+     ("01a1887b-2b63-7041-8a23-a04d8732c73f/01a1887b-35b8-7c70-ad9e-59c49bbe63f0/msg_04ac028abf611a6c016ae373869f508191982f876d8ee7b987",
+      "我會透過 `fodex_order_hub` 分別派給 `contract` 與 `implementation`，收齊首輪結果後，再要求兩者沿用原 session 複核。全程只讀，最後整理四筆回覆與兩輪 SID 是否一致。
+"))
+
+[graph Completed]
+AgentCot
+  (214L, 213L,
+   MessageCompleted
+     ("01a1887b-2b63-7041-8a23-a04d8732c73f/01a1887b-35b8-7c70-ad9e-59c49bbe63f0/msg_04ac028abf611a6c016ae373908d7c8191b83af2b39c786d03",
+      "派工工具已可用。讀取本機規範時會套用 `powershell-output-guard`；原始碼 review 與複核都交由指定的兩個 wrapper 執行。
+"))
+
+[graph Completed]
+AgentCot
+  (310L, 309L,
+   MessageCompleted
+     ("01a1887b-2b63-7041-8a23-a04d8732c73f/01a1887b-35b8-7c70-ad9e-59c49bbe63f0/msg_04ac028abf611a6c016ae373d939708191b850971fa882d89d",
+      "首輪兩筆派工已取得 orderId，hub 目前仍在等待結果。收齊兩人的首輪回覆後，才會發出第二輪複核指示。
+"))
+
+[graph Completed]
+AgentCot
+  (386L, 385L,
+   MessageCompleted
+     ("01a1887b-2b63-7041-8a23-a04d8732c73f/01a1887b-35b8-7c70-ad9e-59c49bbe63f0/msg_04ac028abf611a6c016ae3741b896c81918857bae37bfb1ecd",
+      "兩個 wrapper 尚未回覆，`hub_receive()` 仍在等待。我會維持這筆接收呼叫，避免重複派工。
+"))
+
+[graph Completed]
+AgentCot
+  (528L, 527L,
+   MessageCompleted
+     ("01a1887b-2b63-7041-8a23-a04d8732c73f/01a1887b-35b8-7c70-ad9e-59c49bbe63f0/msg_04ac028abf611a6c016ae37457a37881918d8a0281ac35c787",
+      "已收到 `contract` 首輪回覆：它指出未閉合引號可能讓參數遺失，進而走入預設版本操作；目前屬靜態原始碼判讀。`implementation` 尚未回覆，收齊後會請兩者各自複核原結論。
+"))
+
+[graph Completed]
+AgentCot
+  (592L, 591L,
+   MessageCompleted
+     ("01a1887b-2b63-7041-8a23-a04d8732c73f/01a1887b-35b8-7c70-ad9e-59c49bbe63f0/msg_04ac028abf611a6c016ae37493ba78819183a853cfbf54af43",
+      "`implementation` 首輪仍在執行中；目前只收到 `contract` 一筆結果，尚未發出第二輪派工。
+"))
+
+[graph Completed]
+AgentCot
+  (760L, 759L,
+   MessageCompleted
+     ("01a1887b-2b63-7041-8a23-a04d8732c73f/01a1887b-35b8-7c70-ad9e-59c49bbe63f0/msg_04ac028abf611a6c016ae374a6ee48819183fbfa5f3d5365b7",
+      "首輪已收齊，第二輪兩筆派工也都已送出，要求沿用各自原 SID。`contract` 會重查解析錯誤到預設操作的呼叫鏈；`implementation` 會重查明確指定的 `StartTurn` 被轉成 `SteerTurn`，是否確實違反現行模式契約。
+"))
+
+[graph Completed]
+AgentCot
+  (862L, 861L,
+   MessageCompleted
+     ("01a1887b-2b63-7041-8a23-a04d8732c73f/01a1887b-35b8-7c70-ad9e-59c49bbe63f0/msg_04ac028abf611a6c016ae374e34ef48191aa9005dd85fe62b3",
+      "兩個 wrapper 正在複核原結論，尚未收到第二輪結果。這輪已要求它們查找足以推翻原判斷的證據；若無法確證，就撤回原結論。
+"))
+
+[graph Completed]
+AgentWork
+  (1548L, 1547L,
+   MessageCompleted
+     ("01a1887b-2b63-7041-8a23-a04d8732c73f/01a1887b-35b8-7c70-ad9e-59c49bbe63f0/msg_04ac028abf611a6c016ae3752a84a4819197b6dd0b5ba8bf53",
+      "四筆 order 已全部收回，全程透過指定 hub 派工與接收。
+
+`contract` 第二輪確認，但縮小結論：未閉合引號在 [ParseLine.fsx:99](F:/fodex/Fodex.Supervisor.Contract/ParseLine.fsx:99) 只記錄錯誤，仍回傳空參數。使用內建 logger、沒有設定版本覆寫且已註冊多個版本時，可能因此選到最大版本；後續呼叫操作才會執行。最小修法是將該處 `pErrorf` 改為會拋錯的 `pfErrorf`。
+
+`implementation` 第二輪撤回首輪 bug 判定。[WrapperAgentV201.fsx:188](F:/fodex/Fodex.Supervisor/WrapperAgentV201.fsx:188) 丟棄傳入模式、依狀態改選 `SteerTurn` 的行為成立，但現行契約容許 Wrapper 編排互動，沒有足夠證據認定違約；修法建議一併撤回，目前無確證 bug。
+
+兩者兩輪的 hub `sessionId` 均一致：
+
+- `contract`：`01a1887b-9e68-7923-a8ef-a362d00c1914`
+- `implementation`：`01a1887b-b024-7720-bb4d-0eeb6b775d1e`
+
+以上為 sub 的靜態原始碼複核結果；未修檔、未執行 Git/build/restore、未啟停服務。
+
+"))
+HUB_HEALTH={"accepted":4,"completed":4,"evidenceDirectory":"F:/fodex/artifacts/M008-hub\\20261029-162516-db3547935cc141179819d344439fdcdf","failed":0,"mcp":true,"participants":[{"completed":2,"sessionIds":["01a1887b-9e68-7923-a8ef-a362d00c1914"],"who":"contract"},{"completed":2,"sessionIds":["01a1887b-b024-7720-bb4d-0eeb6b775d1e"],"who":"implementation"}],"ready":true,"started":true}
+COMPLETED_MATCH=9
+WRAPPER_EVENTS=F:/fodex/artifacts/M008\20261029-162533-0674761a93734f378ab8f1112086374e\wrapper.completed.events.txt
+GRAPH_EVENTS=F:/fodex/artifacts/M008\20261029-162533-0674761a93734f378ab8f1112086374e\graph.completed.events.txt
+val assemblyDirectory: string = "F:\fodex\Fodex.Supervisor\bin\M008"
+val dependencyResolver: System.Runtime.Loader.AssemblyDependencyResolver
+val sharedDirectory: string = "C:\Program Files\dotnet\shared"
+val aspNetDirectory: string =
+  "C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App"
+val sharedLibraries: string array =
+  [|"C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App\11.0."+[16 chars];
+    "C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App\10.0.13";
+    "C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App\10.0.10";
+    "C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App\10.0.7";
+    "C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App\9.0.21";
+    "C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App\8.0.32";
+    "C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App\7.0.0"|]
+type DemoArgument =
+  | Hub_Url of string
+  | Sql_Server of string
+  | Database of string
+  | Wrapper_Session of string
+  | Auto_Stop of bool
+  | Output_Width of int
+  | Output_Directory of string
+  | Timeout_Seconds of int
+  interface Argu.IArgParserTemplate
+val defaultArgumentsText: string =
+  "
+--hub-url http://127.0.0.1:18788
+--sql-server localhost
+--da"+[1432 chars]
+val defaults: string array =
+  [|"--hub-url"; "http://127.0.0.1:18788"; "--sql-server"; "localhost";
+    "--database"; "FodexV200"; "--wrapper-session"; "new"; "--native-adapter";
+    "app-server"; "--model"; "gpt-6.1-sol"; "--effort"; "high";
+    "--working-directory"; "F:/fodex"; "--sandbox"; "danger-full-access";
+    "--prompt";
+    "這是兩個 sub wrapper 的真實派工示範。你必須使用 fodex_order_hub 的 hub_order(wh"+[546 chars];
+    "--auto-stop"; "true"; "--output-width"; "100"; "--output-directory";
+    "F:/fodex/artifacts/M008"; "--timeout-seconds"; "1200"; "--wrapperagent";
+    "2.0.2"; "--reactloophandler"; "2.0.2"; "--start"; "2.0.0"; "--stop";
+    "2.0.0"; "--send"; "2.0.0"; ""; "--getsessionid"; "2.0.0";
+    "--acquireparticipant"; "2.0.0"; "--exportreactdatastreamjsonl"; "2.0.0";
+    "--reactloopupsertparticipant"; "2.0.0"; "--reactloopremoveparticipant";
+    "2.0.0"; "--reactloopresolveparticipant"; "2.0.0";
+    "--reactlooplistparticipants"; "2.0.0"; "--reactloopposthumanprompt";
+    "2.0.0"; "--reactloopdispatchtoparticipant"; "2.0.0";
+    "--reactlooproutereactdatastream"; "2.0.0"; "--reactloopcollect"; "2.0.0";
+    "--reactloopreaddataflow"; "2.0.0"; "--reactloopgetstatus"; "2.0.0";
+    "--reactloopgetparticipantcapabilities"; "2.0.0"|]
+val argv: string array =
+  [|"--hub-url"; "http://127.0.0.1:18788"; "--sql-server"; "localhost";
+    "--database"; "FodexV200"; "--wrapper-session"; "new"; "--native-adapter";
+    "app-server"; "--model"; "gpt-6.1-sol"; "--effort"; "high";
+    "--working-directory"; "F:/fodex"; "--sandbox"; "danger-full-access";
+    "--prompt";
+    "這是兩個 sub wrapper 的真實派工示範。你必須使用 fodex_order_hub 的 hub_order(wh"+[546 chars];
+    "--auto-stop"; "true"; "--output-width"; "100"; "--output-directory";
+    "F:/fodex/artifacts/M008"; "--timeout-seconds"; "1200"; "--wrapperagent";
+    "2.0.2"; "--reactloophandler"; "2.0.2"; "--start"; "2.0.0"; "--stop";
+    "2.0.0"; "--send"; "2.0.0"; ""; "--getsessionid"; "2.0.0";
+    "--acquireparticipant"; "2.0.0"; "--exportreactdatastreamjsonl"; "2.0.0";
+    "--reactloopupsertparticipant"; "2.0.0"; "--reactloopremoveparticipant";
+    "2.0.0"; "--reactloopresolveparticipant"; "2.0.0";
+    "--reactlooplistparticipants"; "2.0.0"; "--reactloopposthumanprompt";
+    "2.0.0"; "--reactloopdispatchtoparticipant"; "2.0.0";
+    "--reactlooproutereactdatastream"; "2.0.0"; "--reactloopcollect"; "2.0.0";
+    "--reactloopreaddataflow"; "2.0.0"; "--reactloopgetstatus"; "2.0.0";
+    "--reactloopgetparticipantcapabilities"; "2.0.0"|]
+val settings: Argu.ParseResults<DemoArgument> =
+  [Hub_Url "http://127.0.0.1:18788"; Sql_Server "localhost"; Database "FodexV200";
+ Wrapper_Session "new"; Auto_Stop true; Output_Width 100;
+ Output_Directory "F:/fodex/artifacts/M008"; Timeout_Seconds 1200]
+val required: _arg1: Result<'a,exn> -> 'a
+val nativeSettings: Argu.ParseResults<Fodex.Supervisor.SupervisorArgument> =
+  [Native_Adapter "app-server"; Model "gpt-6.1-sol"; Effort "high";
+ Working_Directory "F:/fodex"; Sandbox "danger-full-access";
+ Prompt
+   "這是兩個 sub wrapper 的真實派工示範。你必須使用 fodex_order_hub 的 hub_order(who,instruct) 與 hub_receive()，不要自己取代 sub review，也不要用其他 subagent 工具。who 固定 contract 和 implementation。先分別派工：contract review Fodex.Supervisor.Contract 現行 Compile 原始碼；implementation review Fodex.Supervisor 現行 Compile 原始碼（排除 None/Archive）。每個 sub 只報一個最重要且有證據的 bug，含檔案行號/觸發/後果/最小修法，若無確證就說無確證；唯讀，不修檔、不 Git/build/restore，不啟停服務。收到所有首輪結果後，對兩個 who 各再下一輪 instruction，要求根據原 session 的上一輪結論重新查證最重要的一點（不可換新 session），回覆確認或撤回及證據。hub_order 立即回 orderId；hub_receive 空時等待、有結果只回當下所有 ready，所以必要時重複 receive，直到四筆 order 全部收回。最後以繁體中文自然文字總結結論、各 who 的兩輪 sid 是否一致，不要求任何自訂 JSON 答案。"]
+val sessionId: System.Guid * System.Net.IPAddress option =
+  (e6d39554-8a06-4031-b150-c63135706d78, None)
+val argumentJson: System.Text.Json.JsonSerializerOptions
+val arguments: string =
+  ""--hub-url" "http://127.0.0.1:18788" "--sql-server" "localhos"+[1556 chars]
+val node: Akka.Actor.ActorSystem =
+  akka://fodex-m006-a91b3385a18242d1bc3ee8d83f4e8bb0
+val ctx: LoggerUtil.UniContext =
+  { logger = Fodex.Supervisor.SupervisorArgs+logger@36
+    usage = ["Fodex"]
+    caller = [] }
+val completed: System.Threading.AutoResetEvent
+val outputGate: obj
+val outputDirectory: string =
+  "F:/fodex/artifacts/M008\20261029-162533-0674761a93734f378ab8f1112086374e"
+val wrapperEventPath: string =
+  "F:/fodex/artifacts/M008\20261029-162533-0674761a93734f378ab8f"+[40 chars]
+val wrapperEdgePath: string =
+  "F:/fodex/artifacts/M008\20261029-162533-0674761a93734f378ab8f"+[41 chars]
+val graphEventPath: string =
+  "F:/fodex/artifacts/M008\20261029-162533-0674761a93734f378ab8f"+[38 chars]
+val graphEdgePath: string =
+  "F:/fodex/artifacts/M008\20261029-162533-0674761a93734f378ab8f"+[39 chars]
+val utf8: System.Text.UTF8Encoding
+val mutable beforeSend: int64 = 0L
+val completedEvent:
+  'a * target: Fodex.Supervisor.Contracts.CoreMod.ReActEndpoint *
+  event: Fodex.Supervisor.Contracts.CoreMod.ReActEvent<string> ->
+    Fodex.Supervisor.Contracts.CoreMod.ReActEvent<string> option
+val sink:
+  Fodex.Supervisor.Contracts.CoreMod.ReActEndpoint *
+  Fodex.Supervisor.Contracts.CoreMod.ReActEndpoint *
+  Fodex.Supervisor.Contracts.CoreMod.ReActEvent<string> -> unit
+val hubUrl: string = "http://127.0.0.1:18788"
+val http: System.Net.Http.HttpClient
+val started: System.Net.Http.HttpResponseMessage =
+  StatusCode: 200, ReasonPhrase: 'OK', Version: 1.1, Content: System.Net.Http.HttpConnectionResponseContent, Headers:
+{
+  Date: Thu, 29 Oct 2026 16:25:33 GMT
+  Server: Kestrel
+  Transfer-Encoding: chunked
+  Content-Type: application/json; charset=utf-8
+
+}
+val completedBefore: int = 0
+val acceptedBefore: int = 0
+val turnsBefore: Map<string,int> =
+  map [("contract", 0); ("implementation", 0)]
+val failedBefore: int = 0
+val mcpConfig: System.Collections.Generic.Dictionary<string,obj> =
+  dict
+    [("mcp_servers", <seq>);
+     ("mcp_servers.fodex_order_hub.enabled_tools",
+      [|"hub_order"; "hub_receive"|]);
+     ("mcp_servers.fodex_order_hub.tools.hub_order.approval_mode", "approve");
+     ("mcp_servers.fodex_order_hub.tools.hub_receive.approval_mode", "approve")]
+val wrapper: Fodex.Supervisor.Contracts.CoreMod.IAgent<string,obj>
+val reActLoop: Fodex.Supervisor.Contracts.CoreMod.ReActLoop<string,obj>
+val send: text: string -> Result<int,exn>
+val getWrapperSessionId:
+  unit -> Result<Fodex.Supervisor.Contracts.CoreMod.AgentSessionId,exn>
+val getCodexSessionId:
+  unit -> Result<Fodex.Supervisor.Contracts.CoreMod.AgentSessionId,exn>
+val exportJsonl:
+  path: Fodex.Supervisor.Contracts.CoreMod.JsonlFilePath -> Result<int64,exn>
+val waitForOutput: unit -> bool
+val mutable stopped: bool = true
+val stop: unit -> unit
+val completedFromGraph:
+  unit ->
+    FSharp.FGL.LEdge<Fodex.Supervisor.Contracts.CoreMod.ReActEndpoint,
+                     Fodex.Supervisor.Contracts.CoreMod.ReActEvent<string>> array
+val showHis: unit -> unit
+val runDemo: unit -> Result<unit,exn>
+val outcome: Result<unit,exn> = Ok ()
+val it: unit = ()
+
+> 
+
+
+
+• 有作用，但這一輪還沒完成。目前 hub 已接受 2 筆派工、完成 0 筆、失敗 0 筆；兩個 sub 都已輸出 30 筆事件，而且仍持續寫入，尚無 StdErr 或 AgentEnd。
+
+  所以現在是在等第一輪 review 回來，hub_receive() 空時等待正是預期行為。先保持兩個 FSI，我接著確認結果與第二輪 resume。
+
+• Ran Read-CodexStdout { $health=Invoke-RestMethod -Uri 'http://127.0.0.1:18788/health' -TimeoutSec 5;
+  │ [pscustomobject]@{checkedAt=[DateTimeOffset]::Now;accepted=$health.accepted;completed=$health.completed;failed=$health.failed;participants=$health.parti
+  │ cipants} | ConvertTo-Json -Depth 4 -Compress; Get-ChildItem -LiteralPath 'F:/fodex/artifacts/M008/20261029-162533-0674761a93734f378ab8f1112086374e'
+  │ … +3 lines
+  └ {"checkedAt":"2026-10-30T00:29:38.3155099+08:00","accepted":2,"completed":1,"failed":0,"participants":[{"completed":1,"sessionIds":
+    ["01a1887b-9e68-7923-a8ef-a362d00c1914"],"who":"contract"},{"completed":0,"sessionIds":[],"who":"implementation"}]}
+    [{"Name":"wrapper.completed.edges.jsonl","Length":4173,"LastWriteTime":"2026-10-30T00:29:13.7761017+08:00"},
+    +3 lines (ctrl+t to view transcript)
+
+• contract 已完成第一輪，結果也已由 hub_receive() 回給 main；目前仍是 0 失敗。implementation 還在 review，所以整輪尚未結束。
+
+
+• 有，這次 M008 確實成功了，00:32:51 已完成；你剛問時還在生成。
+
+  我已核對：
+
+  • 4 筆派工全部完成，0 失敗，結果皆由 hub_receive() 回收。
+  • 兩個 sub 各執行兩輪，各自沿用同一個 Codex sid。
+  • 兩邊各有 2 個 AgentEnd、0 個 StdErr。
+  • wrapper 與 graph 各有 9 筆 Completed，兩份輸出完全相同。
+
+  可直接看：正常 wrapper 輸出 (artifacts/M008/20261029-162533-0674761a93734f378ab8f1112086374e/wrapper.completed.events.txt)、graph 輸出 (artifacts/
+  M008/20261029-162533-0674761a93734f378ab8f1112086374e/graph.completed.events.txt)。
+
+  Host 繼續待命是正常的。先前的 timeout 這次沒有重現，但原因仍未確定，不能說已修復。
+
+  Worked for 7m 49s • 12:34 AM
+
+
+
+
+
+
+
+
+
+
+› | AgentCot of streamId: StreamId * causedBy: StreamId * data: ReActData<'TypedCmdToWrapper>
+      | AgentWork of streamId: StreamId * causedBy: StreamId * data: ReActData<'TypedCmdToWrapper>
+
+  如果只是弄錯 DU 那還好，就怕你把 SUBAGENT 功能跟 explicit cot 功能搞混了
+
+
+• 沒有混用。已核對這次的呼叫路徑與 DB 資料，不只是看 DU 名稱。
+
+  兩條流程是分開的：
+
+  • M008 subagent：hub_order → sub wrapper.Send → exec／resume → wrapper 輸出 → hub_receive。
+  • explicit COT：/wrapper_cot → 建立獨立 COT participant → 依人類指示生成 → 結果送回 main。這次沒有走這條。
+
+  實際證據：三個 wrapper 的 graph 各自都只有 wrapper／native 節點，沒有額外 COT participant；AgentCot + ParticipantInput 派送也都是 0 筆。
+
+  這次看到的 8 筆 AgentCot，只是 main 的公開進度訊息，例如「首輪兩筆派工已取得 orderId」。目前 adapter (Fodex.Supervisor/NativeAppServerV202.fsx:179) 把
+  phase=commentary 分類成它，符合 Contract 現有註解 (Fodex.Supervisor.Contract/concepts.fsx:580)。
+
+  AgentCot 是事件分類，不是啟動 explicit COT 的指令，也不能拿來判斷 participant 角色。 後續會維持這個界線。
+
+  前面耗時是 demo 的兩輪 review／查證，不是偷偷多跑 COT；這輪沒有改程式。
+
+  Worked for 7m 31s • 12:44 AM
+
+
+
+
+
+› 可是我看你 M008 執行過程你印出
+
+  [wrapper Completed]
+  AgentCot
+
+  而不是 AgentWork
+
+  另外它真的卡很久，不然你自己在 wrapper 輸入前與輸出後加 timewatch，你自己看看
+
+
+• 我會把這兩件事一起查清：[wrapper Completed] 的標籤是否讓「單則訊息完成」看起來像「工作完成」，以及 wrapper 輸入到各種輸出的實際耗時。
+
+  舊 M008 保留；我先確認接點，再新增計時版，用 Stopwatch 量測送入、首筆輸出、AgentEnd 與 sub 結果回收，不改 Contract 或 COT 路由。
+
+• Ran Read-CodexStdout { rg -n -m 2 'when implementing Fodex Supervisor|Read-CodexStdout' C:/Users/Administrator/.codex/memories/MEMORY.md; git status
+  │ --short; rg --files -g AGENTS.md -g GEMINI.md -g '*README*' Fodex.Supervisor.Demos Fodex.Supervisor.Tests Fodex.Supervisor | Select-Object -First 16;
+  │ sed -n '1,115p' Fodex.Supervisor.Demos/DemoParticipantsV100.fsx; sed -n '105,175p' Fodex.Supervisor/WrapperIAgentDemo.M008.fsx }
+  └ 93:- when implementing Fodex Supervisor, the user required preserving `Fodex.Supervisor.Contract` -> treat the Contract project as read-only unless scope
+    is explicitly expanded; deliver real Proc Supervisor, app-server, ReActLoop, persistence, resume, and smoke validation rather than stubs. [Task 2]
+    124:- agent.basder, agent.baster, baster.20261022.md, HELPER.txt, Read-CodexStdout, RFC-PTC-GW-0020, comm-sender-caller-mismatch
+    +194 lines (ctrl+t to view transcript)
+
+
+› 不是 首筆輸出，是整個完成
+
+
+• 收到，只量「整個回合完成」：wrapper.Send 前開始，到該回合的 AgentEnd 才停錶；MessageCompleted、AgentCot、AgentWork 都不能讓它停錶。Main 的總耗時與兩個 sub
+  各輪耗時都用這個界線。
+
+
+› 單純說發個 orz/OGC 出去 ECHO 回來，都超過 5分鐘了合理嗎?
+
+
+• 不合理。單純 ECHO orz／OGC 超過 5 分鐘，不能用「兩輪 review 工作量大」解釋；我前面的說明只適用於那次預設 review。
+
+  我會保留完整回合計時，並查這次 ECHO 是否真的送進 native、native 何時完成、wrapper 何時收到 AgentEnd，先分清是模型慢還是傳遞／完成通知卡住。
+
+• 這次超過 5 分鐘的 ECHO，你是直接用 send "…" 給 main wrapper，還是讓 main 透過 hub_order 請 sub wrapper ECHO？請貼實際送出的那一行即可。
+
+• Calling comm.comm_participant_register({"participantId":"fodex"})
+
+
+› > 這次超過 5 分鐘的 ECHO，你是直接用 `send "…"` 給 main wrapper，還是讓 main 透過 `hub_order` 請 sub wrapper ECHO？請貼實際送出的那一行即可。
+
+  我直接執行你的 M008 腳本，全選執行
+
+
+› 而且你過程中真的印出 AgentCot 這樣你覺得合不合理?不合理的話請 review code 修正一下
+
+
+• 把中間訊息印在 [wrapper Completed] 下面確實容易誤導，這部分我會修正。依現有 Contract，公開 commentary 記為 AgentCot 並沒有錯；但畫面應明確區分「中間訊息」與
+  「整個回合完成」，後者只能由 AgentEnd 表示。
+
+  另外，剛查到你這次全選執行實際派出的四筆 order 仍是「review＋重新查證」，不是 ECHO。我會保留 M008，新增 M010：預設明確做兩輪 orz／OGC ECHO，並在 main、sub
+  的 Send → AgentEnd 加完整回合計時，實跑給你看。
+
+• 對，M008 是一般派工，中間進度也應該是 AgentWork。我先前把「Codex 的 commentary」直接等同「Fodex 的 COT」，混淆了兩個概念；只改顯示標籤並沒有修到問題。
+
+  已找到錯誤分支：app-server adapter 依 phase = "commentary" 產生 AgentCot。分類應依 Fodex 的工作用途，不能依文字是否為中間輸出；MessageDelta／
+  MessageCompleted 才負責區分碎片與單則訊息完成。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+之前我們有提到 explicit 的 人類指引的 cot 命令 是 /wrapper_cot xxxxx 由 wrapper 召喚 cot participant 依照 xxxxx 進行 cot prompt 生成，完成後注入 main participant
+
+2026-10-30 編號校正：現有 M010/M011 是 M008/M009 的 AgentWork 分類、全回合 Stopwatch、ctx.logger IO trace 與慢回合排查修正版，尚須完成驗收。下列正式命令任務由原 M010/M011/M012 改為 M012/M013/M014；歷史對話中的舊編號不回寫。
+
+M008 M009 也要有類似的設計，請給出 M012 M013 分別作為 M008 M009 的正式 subagent 命令版本:
+M012: 讓 wrapper 吃 "/subagent(2) 請向你的兩個 subagent 說通關密語 orz / OGC，請 subagent echo，你要驗證他們是否正確 echo" 記得用 wrapper 的輸出驗證 (regex)， 另外也要直接從 FGL graph 撈 sub wrapper 的輸出驗證 (regex filter orz / OGC)
+M013: 同 M012 但是是 M009 的延續
+
+另外請給出 /wrapper_cot xxxxx 的 DEMO 腳本 M014，請從 wrapper 輸出驗證以及從 FGL graph 中確認
+1. cot participant 有正確收到 xxxxx 並且生成 yyyy
+2. main wrapper 有在收到 yyyy 後才收到 xxxxx (順序很重要)
+PS. 可能要先跟 wrapper 有一些對話之後， cot 才能吃過去的資料 -> M014 理論上應該會擴充 cot 相關的 FodexFun，根據我對之前討論的理解，這個  FodexFun 就是
+```
+走 persist query 把 ReActDataStream 整理成一個文本 搭配 `要求 cot participant 生成 根據文本思考 xxxxx 目標該怎麼進行` (那個 `怎麼進行` 就是 yyyy) 交給 cot participant 生 yyyy 給 main participant
+```
+
+M015: 保留；原 M013 的需求未在此段文件定義，不自行推定為 AGY 或其他任務。
+
+M016（原 M014，跨節點示範）: 本機有 兩個 IP 10.28.112.108 與 10.28.112.109，請在 109 建 actorsystem 起 fodex，在 108 建一個 actorsystem 也是 createWrapper 但用的是 109 上的 Agent (你在使用 109 wrapper 的 Agent.Wrapper iaref 的 akka actor address，使用 actor select 建立一個 iaref 給 108 的 createWrapper 使用)
+如有必要請適當修改 contract 或實作專案以支援此情境
+
+
+另外目前底下的 process 都是吃 codex cli，請在完成 M006~M015（原 M006~M013）之後開始進行 agy 的支援。AGY 為後續另案；M015 規格與啟動條件尚待確認，本次不自行開始。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 哭阿...我應該還沒貼 M010 M011 讓你做啊?! 已經做了也行，那M012 你有看到嗎?
+
+
+• M010／M011 是我自行接續編號，當作 M008／M009 的修正版，並不是你貼了這兩項新任務。
+
+  目前可見的對話沒有 M012 規格；我查一下工作區是否已有檔案，不會自行猜它要做什麼。
+
+• Ran Read-CodexStdout { rg --files -g '*M012*' -g '*m012*' -g '!**/bin/**' -g '!**/obj/**'; rg -n -m 3 'M012' Fodex.Supervisor/README*.md
+  │ notes/202610/20261029 notes/202610/20261030 2>$null | Select-Object -First 10 }
+  └ Exception: C:\Users\Administrator\.codex\lib\Read-CodexStdout.ps1:150
+    Line |
+     150 |          throw "Captured command failed with exit code $exitCode. $($d …
+    +4 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc "sed -n '955,1015p' /f/fodex/notes/202610/20261029/00003.FGL.txt" }
+  └   我直接執行你的 M008 腳本，全選執行
+
+
+    +51 lines (ctrl+t to view transcript)
+
+• 現在看到了，剛才確實漏讀了 00003.FGL.txt:995 (/F:/fodex/notes/202610/20261029/00003.FGL.txt:995)。
+
+  M012 要驗證的是：/wrapper_cot xxxxx → 獨立 COT participant 依歷史與指引生成 yyyy → main 先收到 yyyy，再收到 xxxxx；兩條證據都要有：wrapper 輸出與 FGL
+  graph。
+
+  同一段也寫了正式 M010／M011 要支援 /subagent(2)。我目前新增的只是 ECHO 計時草稿，還不等於你的正式規格。先把眼前分類與 Stopwatch 修正驗收完，不混入 M012。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› M010 你要修 M008
+  M011 你要修 M009
+
+  (M008 M009 有過慢以及subagent 功能誤用 AgentCot DU 錯誤)
+
+  M012: 實作 /subagent(2) 承 M008 M010
+  M013: 同 M012 但走 exec + resume + stdio ，承 M009 M011
+  M014: /wrapper_cot xxxxx -> yyyy 實作 ReActLoop (順序要正確)
+  M015: 同 M014 但走 exec + resume + stdio
+  M016: 跨節點示範
+
+  請重新整理 goal prompt
+
+
+/goal
+  工作區：F:\fodex
+
+  目標：
+  依序完成 M010～M016，嚴格區分：
+  1. M010M011：修正既有 demo 的效能問題與錯誤事件分類。
+  2. M012/M013：正式 /subagent(2) 功能。
+  3. M014/M015：人類明確指引的 /wrapper_cot 功能與正確執行順序。
+  4. M016：跨 ActorSystem／跨 IP 的 wrapper 操作示範。
+
+  不要自行重新編號，不要將 subagent 與 explicit COT 混為一談。
+  現有 V203、M010/M011 只是尚待驗收的工作，不代表已完成。
+
+  一、範圍與工作規則
+
+  - 不修改、整理、重新編號或自行還原我的 notes。
+  - 以本 goal 為需求依據；不要為了考古重讀整包歷史文件或掃描其他 repository。
+  - 開始先確認 git status、現有接線與相關測試，保留使用者的既有變更。
+  - 先完成 M010/M011 的修正與驗收，才往 M012/M013、M014/M015、M016 推進。
+  - 舊 demo milestone、舊版本實作保留；不要為了新版直接改壞舊版。
+  - 不開發 AGY、不新增 memory engine，不順手重構無關模組或重新發布依賴套件。
+  - Contract 預設不動。若本 goal 確實需要 Contract 變更，先指出缺口與最小 diff，取得同意才修改；不得先擴充一堆 type/member。
+  - 不新增 Application、具體 Runtime、全域狀態容器等未經討論的架構。
+  - 不使用 private/internal；IAgent 使用既有 object expression 模式。
+  - 外部操作 actor 必須經 IAgent 或 ReActLoop member，不繞過 façade 自己 Tell handler。
+  - 版本化函數使用 FodexFun／FeasibleFun，保留既有 input 傳入函數的語意，不當作重複 input 錯誤修掉。
+  - Process 操作沿用 Proc Supervisor 與可維護的 FeasibleT SOP，不直接散落 Process.Start。
+  - 所有實際 Codex demo 使用 --yolo，明確指定 model／effort。
+  - 不擅自降低 model／effort、縮減工作內容或提高 timeout 來宣稱效能修好了。
+
+  溝通：
+  使用 fodex 身分註冊 COMM，對 ingted 傳送技術摘要。
+  每個有意義的修改標的開始前，說明 what/why/how 與關鍵 snippet。
+  完成後說明實際變更、驗證結果，以及下一個標的為何相關。
+  不要傳只有機械式名稱修改、沒有技術資訊的訊息。
+  若我要求停止，立即停止，不繼續查詢或開發。
+
+  二、M010：修正 M008
+
+  延續 M008 的架構：
+  main wrapper 的 main participant 使用 app-server，
+  透過 MCP order hub 派工給兩個 sub wrapper，
+  sub wrapper 的 native participant 使用 exec/resume。
+
+  必須處理兩個問題：
+
+  A. 錯誤 AgentCot 分類
+  - 一般 subagent 工作，包括公開中間進度、commentary 與工作回覆，應走 AgentWork。
+  - 不得因 Codex phase=commentary 或原生事件名稱包含 reasoning，就產生 AgentCot。
+  - MessageDelta / MessageCompleted 表達訊息碎片與單則訊息完成。
+  - AgentEnd 才表示整個 participant turn 結束。
+  - 必須修正實際進入 wrapper output、DB 與 FGL graph 的事件。
+  - 不能只改 console 標籤、隱藏 AgentCot 或在顯示時偷偷轉型。
+
+  B. 整輪過慢
+  - 重現並追查完整回合耗時，不只量首筆輸出。
+  - 清楚區分純 ECHO 與 review 工作；不能用 ECHO 取代 review 後宣稱同一工作已加速。
+  - 記錄 main wrapper 與每個 sub wrapper 的完整耗時。
+  - 調查模型生成、hub 等待、actor 收送、DB persist、graph 更新、輸出 sink 的時間分布。
+  - 對證據確認的實作瓶頸修正並回歸測試。
+  - 不得只加 Stopwatch 就把「過慢問題」標成完成。
+  - 若剩餘耗時來自外部服務，提供證據與可控範圍，不猜測、不假稱已修復。
+
+  hub 語意保留：
+  - hub_order(who, instruct) 立即回 orderId，實際工作非同步執行。
+  - hub_receive() 沒結果時非同步等待；有結果時取回當下所有 ready 結果。
+  - 同一 who 的後續指令必須 resume 同一個 Codex sid。
+  - 不要求模型產生自訂派工 JSON schema。
+
+  三、M011：修正 M009
+
+  延續 M009：
+  main wrapper 派工給 Proc Supervisor 管理的原生 Codex CLI sub。
+  sub 不建立 wrapper／IAgent，也不透過 MCP 派工。
+  沿用既有非 MCP 派工入口，不另發明一套新架構。
+
+  - 同樣修正錯誤 AgentCot 分類，並追查整輪過慢。
+  - 每輪新的 instruction 由 exec 或 exec resume 接收，prompt 經 stdin 傳入後 EOF。
+  - 下一輪以相同 sid 啟動 exec resume，不假裝 stdin 是永久派工通道。
+  - stdout 保留 Codex 原生格式，不強迫模型輸出自訂 JSON。
+  - 原生 sub 沒有 AgentEnd，因此整輪計時終點必須包含：
+    turn.completed、process exit，以及 stdout drain。
+  - 失敗、取消、timeout 不得被記為成功完成。
+  - 驗證兩個 sub session 彼此獨立，且各自第二輪沿用第一輪 sid。
+
+  四、所有里程碑共同的 Stopwatch／TRACE
+
+  - main/sub wrapper：在送入前開始，直到真正的 AgentEnd 才停止。
+  - Send 回傳 Ok、第一個 delta、MessageCompleted 都不能停止整輪時鐘。
+  - 追加 prompt/steer 不能偷偷重設尚未完成的計時。
+
+  每個 ReActData IO 邊界都應透過 ctx.logger 記錄可追溯的計時：
+  收件、路由、participant 派送、DB 讀寫、graph 讀寫、wrapper output/sink。
+
+  至少記錄：
+  - stage、begin/end、同一操作的 correlation/io id；
+  - Stopwatch elapsed、UTC；
+  - wrapper/native session 的正確身分；
+  - StreamId、causedBy、可用的 messageId；
+  - source、target、事件種類與成功／失敗狀態。
+
+  不要記錄 prompt 全文、機密或任意 exception payload。
+  指出重疊的計時區間，不把外層 route 和其內層 DB 時間重複加總。
+  Send 的送件耗時與接收者真正開始執行的時間必須分清楚。
+
+  五、M012：正式 /subagent(2)，承 M008/M010
+
+  讓使用者能透過 wrapper.Send 傳入：
+
+  /subagent(2) 請向你的兩個 subagent 說通關密語 orz / OGC，
+  請 subagent echo，你要驗證他們是否正確 echo
+
+  - 命令由 wrapper 的確定性流程辨識、組裝與派工。
+  - 使用 M010 修正後的 MCP／sub wrapper 路徑。
+  - 這是一般派工，不建立 COT participant，也不借用 COT 流程。
+  - 驗證兩個 sub 真正收到 instruction 並回覆。
+  - 至少再派一輪，驗證 session resume。
+
+  取得兩組獨立證據：
+  1. 正常 wrapper output。
+  2. 從實際 FGL graph 查得的 sub wrapper 生成結果。
+
+  使用 regex 驗證 orz／OGC，但必須先篩選正確：
+  participant、方向、本次 order/回合與完成輸出。
+  不能把原始 prompt 中出現的通關密語，或 main 自稱成功，
+  當作 sub 已完成 ECHO 的證據。
+  不要 dump 整個 graph。
+
+  六、M013：正式 /subagent(2)，承 M009/M011
+
+  命令與驗收目的同 M012，但使用 M011 的
+  exec + resume + stdin/stdout 原生 sub 路徑。
+
+  - sub 不建立 wrapper，不使用 MCP。
+  - 不為了方便 graph 驗證偷偷加回 sub wrapper。
+  - 每輪透過 Proc Supervisor 啟動／resume 正確 sid。
+  - 保留正常 wrapper output 驗證。
+  - 明確建立原生 sub 真實回覆到主 FGL graph 的可追溯證據；
+    不虛構不存在的 sub-wrapper graph。
+  - 若現有資料流無法表達這條證據，先提出最小接線方案，
+    不擅自擴充 Contract 或新增大型 abstraction。
+
+  七、M014：app-server 的 /wrapper_cot xxxxx → yyyy
+
+  這才是 explicit COT，不是 subagent demo 的別名。
+
+  流程：
+  1. wrapper 接收 /wrapper_cot xxxxx。
+  2. 透過 ReActLoop／持久化查詢取得相關歷史 ReActData。
+  3. 以可維護、可版本化的函數整理資料。
+  4. 建立獨立 COT participant/session。
+  5. 依人類的 xxxxx 指引，讓該 participant 處理資料，
+     生成結論、摘要或後續作法 yyyy。
+  6. yyyy 準備完成後，先交給 main participant 作為上下文，
+     再將原始 xxxxx 交給 main participant 執行。
+
+  順序要求：
+  - main participant 不得在 yyyy 準備好前就收到 xxxxx 開始執行。
+  - wrapper 入口先接到 /wrapper_cot 命令，
+    不等於已把 xxxxx 轉送給 main participant；兩者必須分開。
+  - 用實際輸入事件、接收 trace 與 causedBy 證明順序，
+    不能只看最後輸出或模型自行聲稱順序正確。
+  - 不為了湊順序，額外讓 main 生成無意義回合。
+
+  隔離要求：
+  - COT 生成絕不能使用 main participant 的 Codex session。
+  - 一般 subagent 工作不能因中間輸出被改標 AgentCot。
+  - AgentCot 的使用依明確 COT 工作用途，不依 Codex commentary phase。
+  - 不新增隱式 COT、自治長鏈或 memory engine。
+
+  先建立一些正常對話歷史，再觸發命令。
+  同時以正常 wrapper output 與 FGL graph 驗證：
+  COT 收到 xxxxx、產生 yyyy，以及 main 的正確接收順序。
+
+  八、M015：exec/resume/stdio 的 /wrapper_cot
+
+  功能、隔離、證據與順序要求同 M014，
+  但 native 路徑改為 exec + resume + stdin/stdout。
+
+  - COT 使用獨立 session。
+  - main 延續自己的 sid，不重用 COT sid。
+  - exec 不支援 active-turn steer，不能假裝支援。
+  - 若 main 正在執行，必須依能力正確排程，
+    在可接收新一輪時 resume 同一個 sid。
+  - 不偷偷終止 main、不換新 session，不提前送 xxxxx。
+  - 計時包含完整 process/stdio 收尾，並保留逐 IO trace。
+  - 同樣以 wrapper output 與 FGL 驗證 yyyy 在 xxxxx 之前生效。
+
+  九、M016：跨節點示範
+
+  使用本機兩個 IP：
+  - 10.28.112.109：建立 ActorSystem，啟動實際 Fodex wrapper。
+  - 10.28.112.108：建立另一個 ActorSystem，
+    透過 109 的 wrapper actor address 取得遠端 IActorRef，
+    用該 Agent.Wrapper 身分建立可操作的 IAgent façade。
+
+  必須證明：
+  - 108 的 IAgent.Send 確實送到 109 的既有 wrapper。
+  - 回覆確實來自 109 擁有的 participant/process。
+  - 108 沒有偷偷另外啟動本機 Codex 來假裝遠端成功。
+  - Actor address、wrapper sid、native Codex sid 不混淆。
+  - 兩端具備可對照的 IO trace，並驗證真正 request/reply。
+
+  先檢查實際 IP、port、serialization 與 registry 接線。
+  若需要 Contract 變更，先討論最小差異再做。
+  不自行修改網卡、防火牆、Windows service 或無關部署設定。
+
+  十、程式與測試交付規則
+
+  - 每個大類盡量一個可 Compile 的 .fsx，遵循 F# 由上往下的依賴順序。
+  - 每組 FodexFun 配對 Expecto .fsx：
+    先 eval quotation，再執行 production function 驗證，
+    不只測替代 stub。
+  - 測試提供 #if INTERACTIVE / #r / #load，
+    可用 FSI 獨立跑，也能在現有 VS Test Explorer 執行。
+  - 不取代或刪除現有測試專案。
+  - 新增必要的分類、順序、session 隔離、resume、
+    timeout/error、IO trace 與回歸測試。
+  - 不以任意放寬 timeout 掩蓋失敗；目前已知的測試 timeout
+    必須調查，不得直接當作外部雜訊忽略。
+  - 完成 build、相關測試及真實 Codex E2E，
+    才能宣稱該 milestone 完成。
+
+  Demo：
+  - 提供完整 defaultArgumentsText，使用 PL.parseLine → FAkka.Argu。
+  - 支援在 Visual Studio FSI 修改字串後執行。
+  - host/client 拆檔；client 不自動 build/spawn/stop host。
+  - 不操作使用者仍在執行的舊 demo host。
+  - 提供明確啟動順序、停止方式、證據檔路徑與篩選結果。
+
+  最終交付逐項列出 M010～M016：
+  做了什麼、測試結果、真實整輪耗時、事件/graph/trace 證據、
+  尚未解決的問題與限制。
+
+  不能用「程式已寫好」「能 build」「模型說完成」
+  代替實際驗收。缺少權限、需求決策或外部條件時，
+  精確回報缺口，不擴張範圍、不修改 notes、不虛報完成。
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+› > M011 的程序管理命令被工具拒絕，尚未實跑。方便請你在兩個新的 Visual Studio FSI session，依序執行 F:\fodex\Fodex.Supervisor\WrapperIAgentDemo.M011.Hub.fsx
+  與 WrapperIAgentDemo.M011.fsx 嗎？不需停止原本的 M008 host；執行後告訴我是否完成，我會讀取產生的 trace／結果驗收。
+
+  hub:
+
+  hub:
+  PS C:\Program Files\dotnet\sdk\10.0.203\FSharp> dotnet fsi F:\fodex\Fodex.Supervisor\WrapperIAgentDemo.M011.Hub.fsx
+  HUB_READY=http://127.0.0.1:18791
+  HUB_EVIDENCE=F:/fodex/artifacts/M011-hub\20261029-175337-c085c2637a0c402c9ad5205cbd72b330
+  MCP_ENABLED=false
+
+  m011:
+  HUB_PARTICIPANTS={"participants":["contract","implementation"]}
+  Wrapper session: WrapperSessionId (4f485c1f-ee26-42f3-ac3d-f6681be4eb9b, None)
+  Codex thread id: NativeCodexSessionId "01a188cc-31fe-7672-bf2c-bb75b4f960b3"
+  Adapter: app-server; model: gpt-6.1-sol; effort: high
+  [wrapper turn 1 Send] elapsed=0.072s
+
+  [wrapper MessageCompleted]
+  AgentWork
+    (74L, 72L,
+     MessageCompleted
+       ("01a188cc-31fe-7672-bf2c-bb75b4f960b3/01a188cc-37b3-7f83-a616-44a5d4159745/msg_069c1c7af57c51c8016ae3884278f0819185be1ee17b680278",
+        "我會透過原生 shell 呼叫指定 client，依序派送兩輪 ECHO，收齊四筆結果後核對各自的 sid。"))
+  卡著不動了，到底在搞啥就跟你說會卡了還不修
+
+
+
+
+
+
+
+
+
+
+
+› 它後面有跑出來
+
+  [wrapper MessageCompleted]
+  AgentWork
+    (303L, 300L,
+     MessageCompleted
+       ("01a188cc-31fe-7672-bf2c-bb75b4f960b3/01a188cc-37b3-7f83-a616-44a5d4159745/msg_069c1c7af57c51c8016ae388733abc8191a334ab107baa1fe7",
+        "已收齊四筆結果：
+
+  | who | 第一輪 | 第二輪 | 兩輪 sid |
+  |---|---|---|---|
+  | contract | `orz` | `orz` | 一致：`01a188cc-6064-7443-aa19-f4d70c741742` |
+  | implementation | `OGC` | `OGC` | 一致：`01a188cc-87b1-7522-8ecb-80fcac32dd68` |"))
+  [wrapper turn 1 AgentEnd] elapsed=54.547s
+  Codex thread id after turn: NativeCodexSessionId "01a188cc-31fe-7672-bf2c-bb75b4f960b3"
+  HUB_HEALTH={"accepted":4,"completed":4,"evidenceDirectory":"F:/fodex/artifacts/M011-hub\\20261029-175337-
+  c085c2637a0c402c9ad5205cbd72b330","failed":0,"mcp":false,"participants":[{"completed":2,"sessionIds":["01a188cc-6064-7443-aa19-
+  f4d70c741742"],"who":"contract"},{"completed":2,"sessionIds":["01a188cc-87b1-7522-8ecb-80fcac32dd68"],"who":"implementation"}],"ready":true,"started":true}
+  COMPLETED_MATCH=2
+  WRAPPER_EVENTS=F:/fodex/artifacts/M011\20261029-175404-f68280c83a914fc1876a922fdde6269e\wrapper.completed.events.txt
+  GRAPH_EVENTS=F:/fodex/artifacts/M011\20261029-175404-f68280c83a914fc1876a922fdde6269e\graph.completed.events.txt
+  IO_TRACE=F:/fodex/artifacts/M011\20261029-175404-f68280c83a914fc1876a922fdde6269e\main.io.jsonl
+  TURN_TIMINGS=F:/fodex/artifacts/M011\20261029-175404-f68280c83a914fc1876a922fdde6269e\main.timings.jsonl
+
+  但也太慢。你自己到底有沒有加 logging 自己 trace 每一段落的時間?
+
+
+• 有加整回合與各段 IO 的計時，但我還沒把你這次 54.547 秒完整對帳。我現在直接讀這次 main／hub／sub 的 trace，列出時間花在哪些段落；若有漏記，我會明確指出，不把
+  等待時間籠統歸給模型。
+
+• 有加，但沒有補齊所有分段，也沒有及早逐筆對帳，這部分是我漏了。剛才已讀完你這次的 trace。
+
+  這次 54.547 秒可對成：
+
+   區段                                       耗時
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━━━━
+   Send → main 發出第一個工具呼叫         5.154 秒
+  ────────────────────────────────────  ───────────
+   6 次工具呼叫，各次呼叫到返回的合計    36.781 秒
+  ────────────────────────────────────  ───────────
+   工具呼叫之間的間隔合計                 9.164 秒
+  ────────────────────────────────────  ───────────
+   最後工具返回 → AgentEnd                3.448 秒
+
+  主要問題已找到：我讓 main 每次 order／receive 都重新跑 dotnet fsi HubClient.fsx，共啟動六次，而且兩個 sub 被串行派工。
+
+  四次 order 從工具發出到 sub 開始，就各花 4.47～7.50 秒。這包含 shell／FSI 啟動、編譯、HTTP 等成本；目前缺細分計時，不能全部算成 FSI，也不能推給模型。
+
+  其他已記錄的數據：
+
+  • 四個 sub 完整回合：6.627、5.703、5.681、4.383 秒。
+  • DB persist：304 次，累計 5.025 秒。
+  • graph append：累計 0.153 秒。
+  • output sink callback：累計 0.074 秒。
+
+  這些與上表有重疊，不能直接相加。
+
+  現有 ctx.logger 計時在 ReActTraceV203.fsx (/F:/fodex/Fodex.Supervisor/ReActTraceV203.fsx:43)，handler 的持久化計時在 ReActLoopHandlerV203.fsx (/F:/fodex/
+  Fodex.Supervisor/ReActLoopHandlerV203.fsx:151)。缺口是 client 啟動、HTTP 往返、hub 排隊／等待結果。
+
+  因此接下來優先處理重複啟動 FSI 的成本、讓同輪獨立派工並行，並補齊上述計時，再用相同模型、effort、兩輪 ECHO 重測。目前只有定位，尚未修完。
+
+  Worked for 21m 8s • 2:02 AM
+
+
+
+
+
+
+• 上一輪有實質進展：已把 M011 的 54.547 秒對帳，定位到重複啟動 FSI 與串行派工。這輪先處理這兩點、補齊 client／hub 的計時，再重跑同樣的兩輪 ECHO；不動
+  Contract、舊 milestone 或 notes。
+
+• 準備把 M011 的同一支 F# client 同時編譯成小型 CLI，保留 .fsx 供 FSI 使用；HTTP /order、/receive 與 resume 語意不變。這樣每次派工不必重新編譯腳本。
+
+
+› hub client 是不是要建立 actorsystem 如果 agent 每次都跑就很久?
+
+
+• 不是，現在的 M011 HubClient 沒有建立 ActorSystem，只做 Argu 解析與 HTTP request。
+
+  ActorSystem 是 host 建立兩個 native participant 時各建一次，後續 exec／resume 沿用，不會每筆 order 重建。
+
+  目前確定的浪費是 main 每次呼叫 client 都重新啟動 dotnet fsi。我準備讓同一份 client 編譯成小型 CLI，仍連既有 /order、/receive；不建立 actor、不啟停 host。5～
+  8 秒裡各項成本會另外量測，不全算成 FSI。
+
+
+› 你能不能重新講一下為什麼 mcp tool calling 要執行 dotnet fsi?
+
+
+• MCP tool calling 不需要執行 dotnet fsi。這裡必須分清楚：
+
+  M010（MCP）：
+
+  main → MCP hub_order／hub_receive
+       → 已在執行的 hub 方法
+       → sub wrapper
+
+  每次 tool call 都直接呼叫既有方法，沒有重新啟動 FSI。只有操作者最初啟動 .Hub.fsx 時用 FSI。
+
+  M011（不用 MCP）：
+
+  main → 原生 shell tool
+       → dotnet fsi HubClient.fsx
+       → HTTP /order 或 /receive
+       → hub → 原生 Codex exec／resume
+
+  這裡的 dotnet fsi 是我為了執行那個 HTTP client 所選的方式，不是 MCP 或 Codex 的要求。六次重新啟動 FSI 發生在 M011。
+
+  所以要修的是 M011 的 client 執行方式：同一份程式預先編譯，呼叫時直接執行，無須每次啟動 FSI 編譯腳本。M010 的 MCP 路徑不需要這項修改。
+
+  Worked for 4m 10s • 2:06 AM
+
+• 我先落實 M011 的 client 修正：保留原本 FSI 入口供人操作，main 派工改用預先編譯的同一套 HTTP client。接著測試參數、HTTP 與失敗處理，再比較啟動耗時；舊 M009
+  與你正在執行的 host 都不動。
+
+
+
+
+
+
+
+
+
+› 就算不編譯，dotnet fsi 也不應該慢到幾十秒，要嘛是你優化參數沒加，要嘛就是你說的序列執行(串行)造成的，拜託這類的東西請盡量使用 akka actor 好嗎?建立
+  actorsystem 都還沒這麼慢
+
+
+• Goal active Objective: pasted text file: C:\Users\Administrator\.codex\attachments\c8814bca-6aa0-4e91-82b6-b81bbd646b6c\pasted-text-1.txt. Read this file
+before continuing. Time: 27m.
+
+• 我先維持暫停，不再修改或建置。那 36.781 秒是六次工具呼叫的合計，還不能歸因為 FSI 本身；在拆清楚之前就優先另建 compiled client，確實太早。
+
+• 重點應先放在串行派工與重複啟動的成本，不能直接把時間歸給 FSI。
+
+  目前證據是：
+
+  • 原命令已帶 --debug- --exec。
+  • 36.781 秒是六次工具呼叫的合計，包含 shell、FSI、HTTP、等待與返回；不是獨立量出的 FSI 耗時。
+  • 同輪兩個 sub 實際沒有重疊工作，這是已確認的問題。
+
+  後續應優先沿用既有 ActorSystem／ReActLoopHandler／Proc Supervisor：
+
+  一次派出同輪全部工作
+    → 不同 participant 的 actor 並行處理
+    → 同一 participant／sid 的指令維持順序
+    → 結果回到中樞，再集中交給 main
+
+  client 只負責送件，不持有執行狀態，也不為每筆訊息建立 ActorSystem。另須讓 main「先派完、再等待」，否則即使 hub 換成 actor，逐次等待工具返回仍會串行。
+
+  我剛才優先另建 compiled client 太早。那部分目前只有未建置、未測試的草稿，尚未切換 main 派工。Goal 已確認為 paused，現在停止修改。
+
+  Worked for 1m 19s • 2:12 AM
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 後續應優先沿用既有 ActorSystem／ReActLoopHandler／Proc Supervisor：
+
+    一次派出同輪全部工作
+      → 不同 participant 的 actor 並行處理
+      → 同一 participant／sid 的指令維持順序
+      → 結果回到中樞，再集中交給 main
+
+    client 只負責送件，不持有執行狀態，也不為每筆訊息建立 ActorSystem。另須讓 main「先派完、再等待」，否則即使 hub 換成 actor，逐次等待工具返回仍會串行。
+
+    我剛才優先另建 compiled client 太早。那部分目前只有未建置、未測試的草稿，尚未切換 main 派工。Goal 已確認為 paused，現在停止修改。
+
+  你自己說的沒有忘記吧?
+
+
+• 沒忘，以這段為準：
+
+  • 沿用既有 ActorSystem／ReActLoopHandler／Proc Supervisor，不為每筆訊息重建。
+  • 同輪先派完再等待；不同 participant 並行，同一 participant／sid 依序。
+  • client 只送件；排程、執行狀態與結果彙整留在常駐 actor。
+  • hub_receive 保持「沒結果就等待，有結果就取回當下所有 ready」。
+
+  compiled client 草稿尚未建置、未接入 main，我不會先推這條路。FSI 的成本會獨立量測，不拿六次工具呼叫總時間當作 FSI 耗時。
+
+  你已重新啟用 goal，後續就依這個方向實作。
+
+  Worked for 1m 17s • 2:14 AM
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 你他媽在搞笑嗎? M012 ~ 16 呢?
+
+
+• 是我漏了 M012～M016。上一輪只把已有檔案加進 .slnx，卻沒有明確交代這五個尚未完成。我先核對檔案與原本約定的範圍；不會拿空殼冒充實作完成。
+
+• Ran Read-CodexStdout { rg --files -g '*M01[2-6]*' -g '!**/bin/**' -g '!**/obj/**' -g '!notes/**' -g '!artifacts/**' -g '!**/archive/**'; if($LASTEXITCODE
+  │ -eq 1){$global:LASTEXITCODE=0}; rg -n -C 1 'M012|M013|M014|M015|M016|完成條件|順序' 'C:
+  │ \Users\Administrator\.codex\attachments\c8814bca-6aa0-4e91-82b6-b81bbd646b6c\pasted-text-1.txt' | head -n 92; git diff --stat -- Fodex.Supervisor.slnx }
+  └ 4-  目標：
+    5:  依序完成 M010～M016，嚴格區分：
+    6-  1. M010M011：修正既有 demo 的效能問題與錯誤事件分類。
+    +61 lines (ctrl+t to view transcript)
+
+• M012～M016 尚未實作，檔案也不存在，不是單純漏加 .slnx。 我上一則只交代已有檔案，沒有清楚說整個任務還沒完成，是我的問題。
+
+  原定範圍沒有改：
+
+  • M012／M013：/subagent(2)，分別走 MCP／exec＋resume＋stdio。
+  • M014／M015：/wrapper_cot，獨立 session，先完成 COT，再將結果及原指令交給 main。
+  • M016：跨節點示範。
+
+  目前連 M010／M011 的效能驗收都還沒完成，不能宣稱 M010～M016 已交付。
+
+  Worked for 45s • 4:27 AM
+
+
+
+
+
+
+
+
+• 已補上 M012 實作、demo 與 slnx 項目，Contract／notes 未改。
+
+  • 完整回歸：108 通過、3 個 live 測試跳過、0 失敗。
+  • 新增 15 項測試，獨立 FSI 也全部通過。
+  • 真實 Codex E2E 尚待驗收，不能算 M012 完成。
+
+  請依序執行 M012 Hub (/F:/fodex/Fodex.Supervisor/WrapperIAgentDemo.M012.Hub.fsx)、M012 主腳本 (/F:/fodex/Fodex.Supervisor/WrapperIAgentDemo.M012.fsx)。使用新
+  port 18794，不必停止舊 host。
+
+  Goal 保持進行；接下來處理 M013 的原生 sub 證據接線，再推進 M014～M016。
+
+  Worked for 31m 41s • 8:41 AM
+
+• 上一回合有實際進展：M012 程式、demo 與測試已加入，完整回歸通過；真實 E2E 仍待驗收。這回合繼續 M013，先補原生 sub 回覆進入主 graph 的實作層操作，再接 exec／
+  resume 路徑，不建立 sub IAgent 或 sub wrapper。  
+
+
+
+
+
+
+
+
+
+› "我會依序完成兩輪 ECHO，每輪先派完兩個 wrapper，再接收並核對實際回答與 sid" -> 我確認一下規格:
+
+  spec 的描述是 "main wrapper 先叫起 N 個 wrapper" 作為 sub agent，"main participant 單向透過 mcp tool 敲 order hub 把 order 送到那N個 wrapper"
+
+  但是我們現在看到 codex cli 生成的回應是 "(我)每輪先派完兩個 wrapper" <- 你應該沒有搞什麼 mcp tool 給 natives participant 使用，讓他們可以自己起 wrapper 對
+  吧?
+
+
+• 我確認一下實際 wiring：你說的「建立 sub wrapper」與「向已存在的 wrapper 派 order」是兩件事。我會查目前 MCP tools 和建立 wrapper 的位置，不用模型那句話判斷。
+
+
+• 沒有。我確認了目前程式，沒有提供讓 native participant 建立 wrapper 的 MCP tool。
+
+  目前只公開：
+
+  • hub_order(who, instruct)：向已存在的 sub wrapper 派工；未知的 who 會拒絕，不會自動建立。
+  • hub_receive()：接收已完成的結果。
+
+  定義在 DemoHostingV102.fsx (/F:/fodex/Fodex.Supervisor.Demos/DemoHostingV102.fsx:24)。
+
+  所以模型那句「每輪先派完兩個 wrapper」，實際意思是「每輪先向兩個既有 wrapper 各送一筆 order」，不是建立兩個 wrapper。
+
+  但有一個 ownership 落差要明講：目前由 M012 demo bootstrap (/F:/fodex/Fodex.Supervisor/WrapperIAgentDemo.M012.fsx:189) 呼叫 /start，再由 Hub factory 建立兩個
+  sub wrapper；還不是 main wrapper 自己封裝這個建立流程。模型沒有取得建立權，但這部分仍需收回你指定的 main wrapper 責任範圍。
+
+  Worked for 15m 20s • 8:57 AM
+
+
+
+
+
+
+
+
+
+
+  › "main wrapper 先叫起 N 個 wrapper" 才符合 wrapper 吃到的 /subagent(N) 語意對吧? wrapper 的 /xxxxxx 並不傳給 底下的 participant 你知道對吧?
+
+
+• 對。/subagent(N) 是 wrapper 自己消化的控制命令：
+
+  1. main wrapper 解析 N，建立並管理 N 個 sub wrapper，再掛到 order hub。
+  2. main participant 只收到去除 /subagent(N) 後的工作指令，以及已可用的派工對象／工具資訊。
+  3. main participant 用 hub_order 派工、hub_receive 收件，不負責建立 wrapper。
+
+  目前 V204 已去掉 slash 前綴才送給 main，但「建立 sub」仍由 demo 呼叫，且寫死兩個；這兩處不符合上述責任分工，我正在修正。
+
+
+
+
+
+
+
+
+
+
+
+• 對，目標就是這個流程；目前新增的準備函數已有雛形，但 wrapper 接線還沒完成，不能說已實作完。
+
+  建立成功後，送給 main 的 prompt 應類似：
+
+  > 以下 N 個 sub participant 已建立，交由你帶領。
+  > 清單：每個 participant 的實際 ID，以及對應的 hub_order 派工名稱。
+
+
+› id 是用在 hub_order(who, instruct) 的 who 參數你知道對吧?
+
+
+• 知道。這裡的 id 就是 hub_order(who, instruct) 的 who，不是 Codex session id、GUID 或 actor path。
+
+  wrapper 建立 N 個 sub wrapper 並完成 hub 註冊後，才將這 N 個 who 搭配說明送給 main participant：
+
+  > 以下是交給你帶領的 subagents：……。請依工作需求分工，使用 hub_order(who, instruct) 派工，使用 hub_receive() 收取結果。
+
+  /subagent(N) 由 wrapper 消化，不往下傳。新版正在依這個流程接線，尚未宣稱完成。
+
+  Worked for 8m 48s • 9:06 AM
+
+• 接著把這條流程接進 wrapper：解析 N → 建立並註冊 N 個 who → 將「交給你帶領的 subagents」清單與工作指令送給 main。舊版保留；測試會檢查初始化失敗時不送 main，
+  以及 native input 不含 /subagent(N) 前綴。
+
+
+
+
+
+
+
+
+
+
+› F:\fodex\notes\202610\20261031\00009.M013.txt 怪怪的
+
+
+• 我先讀這份 M013 輸出，對照相關 trace 判斷異常；先診斷，不改程式碼或 notes。
+
+• Ran Read-CodexStdout { Get-Item -LiteralPath 'F:\fodex\notes\202610\20261031\00009.M013.txt' | Select-Object FullName,Length; rg -n -C 2 --max-count 8
+  │ 'M013|NativeSubagentFodexFunV207|Fodex Supervisor' 'C:\Users\Administrator\.codex\memories\MEMORY.md'; rg --files -g AGENTS.md -g GEMINI.md -g README.md
+  │ -g 'README.M013*' -g '!**/bin/**' -g '!**/obj/**' -g '!artifacts/**' -g '!**/archive/**'; git status --short }
+  └
+    FullName                                      Length
+    --------                                      ------
+    +109 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash.exe -lc "wc -l notes/202610/20261031/00009.M013.txt; sed -n '1,130p' notes/202610/20261031/00009.M013.txt" }
+  └ 379 notes/202610/20261031/00009.M013.txt
+    Welcome to F# Interactive for .NET Core in Visual Studio. To execute code, either
+      1. Use 'Send to Interactive' (Alt-Enter or right-click) from an F# script. The F# Interactive process will
+    +129 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash.exe -lc "sed -n '131,285p' notes/202610/20261031/00009.M013.txt"; foreach ($taskPath in @('F:\AGENTS.md','F:\GEMINI.md','F:
+  │ \fodex\AGENTS.md','F:\fodex\GEMINI.md')) { if (Test-Path -LiteralPath $taskPath) { Get-Item -LiteralPath $taskPath | Select-Object -ExpandProperty
+  │ FullName; Get-Content -LiteralPath $taskPath -Encoding UTF8 } } }
+  └   | Hub_Url of string
+      | Sql_Server of string
+      | Database of string
+    +153 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash.exe -lc "sed -n '286,400p' notes/202610/20261031/00009.M013.txt; wc -c Fodex.Supervisor/README.md
+  │ Fodex.Supervisor/README.M013.md Fodex.Supervisor/README.M013-M016.Validation.md; sed -n '1,190p' Fodex.Supervisor/README.M013.md" }
+  └ [native sub-1 turn 2 ExecExited] elapsed=6.668s
+
+
+    +134 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash.exe -lc "sed -n '1,190p' Fodex.Supervisor/README.md"; Get-ChildItem -LiteralPath 'F:\fodex\artifacts\M013' -Directory |
+  │ Sort-Object LastWriteTime -Descending | Select-Object -First 4 Name,LastWriteTime | Format-Table -AutoSize; Get-ChildItem -LiteralPath
+  │ 'F:\fodex\artifacts\M013-hub\20261030-165412-532df181cc384402a853e64ec1a9db22' -File | Select-Object Name,Length | Format-Table -AutoSize; rg -n
+  │ … +2 lines
+  └ # Fodex.Supervisor v1.0.0 implementations
+
+    目前 FGL-native 核心開發請看 [README.V200.md](README.V200.md)。以下保留 V100/V101 歷史說明；
+    +178 lines (ctrl+t to view transcript)
+
+• 第一輪的四筆 ECHO 和兩個 sid 的 resume 都成功了。異常出在重開 FSI 後：新 wrapper 在約 1.7 秒內收到 HTTP 400。我正在核對 hub 是否仍綁著上一個 wrapper，以及為
+  什麼錯誤訊息沒有顯示拒絕原因。
+
+• Ran Read-CodexStdout { bash.exe -lc "nl -ba Fodex.Supervisor.Demos/DemoHostingV104.fsx | sed -n '26,112p'; nl -ba
+  │ Fodex.Supervisor/NativeSubagentFodexFunV207.fsx | sed -n '30,59p'; nl -ba Fodex.Supervisor/WrapperIAgentDemo.M013.fsx | sed -n '275,310p'; tail -n 10
+  │ artifacts/M013-hub/20261030-165412-532df181cc384402a853e64ec1a9db22/hub.io.jsonl"; Get-ChildItem -LiteralPath
+  │ … +3 lines
+  └ Exception: C:\Users\Administrator\.codex\lib\Read-CodexStdout.ps1:142
+    Line |
+     142 |          throw "Captured output exceeds the read limit: exit=$exitCode …
+    +4 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash.exe -lc "nl -ba Fodex.Supervisor.Demos/DemoHostingV104.fsx | sed -n '26,112p'; nl -ba
+  │ Fodex.Supervisor/NativeSubagentFodexFunV207.fsx | sed -n '30,59p'; nl -ba Fodex.Supervisor/WrapperIAgentDemo.M013.fsx | sed -n '275,310p'" }
+  └     26                (createParticipants: string array -> ActorSystem * Map<string,NativePerformerV104> * (unit -> Task) list)
+        27                (ct: CancellationToken) : Task = task {
+        28            let address = Uri url
+    +151 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { Get-ChildItem -LiteralPath 'F:\fodex\artifacts\M013\20261030-235353-232ef7fa305b499182b74c9194f14212' -File | Select-Object
+  │ Name,Length | Format-Table -AutoSize; bash.exe -lc "head -c 1800 artifacts/M013/20261030-235353-232ef7fa305b499182b74c9194f14212/main.io.jsonl; head -c
+  │ 1200 artifacts/M013-hub/20261030-165412-532df181cc384402a853e64ec1a9db22/hub.io.jsonl"; rg -n --max-count 18
+  │ … +2 lines
+  └
+    Name                        Length
+    ----                        ------
+    +43 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { try { Invoke-RestMethod -Uri 'http://127.0.0.1:18813/health' -TimeoutSec 5 | Select-Object
+  │ ready,owner,accepted,completed,failed,scheduling | ConvertTo-Json -Compress } catch { 'HUB_HEALTH_READ: ' + $_.Exception.Message }; Get-Content
+  │ -LiteralPath 'F:\fodex\artifacts\M013\20261030-235353-232ef7fa305b499182b74c9194f14212\main.io.jsonl' -Encoding UTF8 | ForEach-Object { $_ |
+  │ … +4 lines
+  └ {"ready":true,"owner":"d6f4b47fbe374975a5a4c17d25ee0163/1/","accepted":4,"completed":4,"failed":0,"scheduling":"actor-v104"}
+    [{"utc":"2026-10-30T23:53:58.3300271Z","stage":"wrapper.turn","status":"begin","event":"HumanInit","data":"HumanPrompt","elapsedMs":0.0026},
+    {"utc":"2026-10-30T23:53:58.3548768Z","stage":"wrapper.prompt.post","status":"begin","event":"HumanInit","data":"HumanPrompt","elapsedMs":0.0019},
+    +146 lines (ctrl+t to view transcript)
+
+• 有，我把 hub 綁住第一個 wrapper，卻讓 demo 每次建立新 wrapper，這兩個行為沒配套好。
+
+  你的紀錄顯示：
+
+  • 第一次成功：四筆 ECHO、兩輪同 sid、graph 比對都通過，耗時 61.221 秒。
+  • 第二次重開 FSI，wrapper 從 d6f4… 換成 301c…，但仍使用原本的 hub。
+  • 我剛讀取 hub health，它仍認第一個 owner；DemoHostingV104.fsx:65 (/F:/fodex/Fodex.Supervisor.Demos/DemoHostingV104.fsx:65) 明確拒絕不同 wrapper，所以回
+    HTTP 400。這次尚未派工給 sub，不是 stdout 遺失或 Codex 卡住。
+
+  另外，錯誤呈現把問題藏起來了：
+
+  1. 初始化函數:47 (/F:/fodex/Fodex.Supervisor/NativeSubagentFodexFunV207.fsx:47) 沒讀取錯誤 response body，因此你看不到真正原因：This host belongs to another
+     main wrapper。
+
+  2. demo 已失敗，卻繼續執行成功驗收，於是又在 第 300 行 (/F:/fodex/Fodex.Supervisor/WrapperIAgentDemo.M013.fsx:300) 拋出「沒有 Completed」，掩蓋原始問題。
+
+  應補的是 owner 結束後的釋放／重新綁定流程，以及保留原始錯誤，不能直接刪除 owner 隔離檢查。
+
+  目前重新啟動 Hub 再跑 main 可暫時避開；但「保留 Hub、重開 main」這個驗收確實沒過。這輪只診斷，沒有修改檔案或停止程序。
+
+  Worked for 2m 18s • 7:57 AM
+
+
+› 這樣會不會代表有 regression 需要修正? 之前說 M010~M011 腳本以及實作專案是不是要重新 REVIEW 並修正?
+
+
+• 需要把這當成生命週期回歸問題處理；但目前還不能斷定 M010／M011 也有同一個缺陷。我會沿著各版 hub 的 owner 綁定、wrapper 停止與重開流程做針對性 review，再區分
+  共用實作問題和 M013 新增的問題。
+
+
+
+
+
+
+
+
+
+• 是，需要 review 並修正，而且範圍應涵蓋 M010～M013 對應的實作，不只改 demo。 單次 ECHO 通過不足以涵蓋重開、恢復與清理。
+
+  剛才對照程式後，確認：
+
+  • M012／M013 有相同缺口：hub 綁定第一個 wrapper，沒有釋放／交接流程；新 wrapper 會被拒絕。M012 也有這個 owner 檢查 (/F:/fodex/Fodex.Supervisor.Demos/
+    DemoHostingV103.fsx:104)。
+
+  • M010／M011 不會因同一個 owner 檢查而失敗：它們的 /start (/F:/fodex/Fodex.Supervisor.Demos/DemoHostingV101.fsx:90) 會沿用既有 hub／subs。需要檢查的是另一
+    面：新 main 是否意外承接舊 subs 的 session、未領取結果。
+
+  • M010～M013 都有錯誤被後續 assertion 蓋掉的問題：失敗後仍繼續檢查 Completed；這部分已確認需要修正。
+
+  修正後至少要補以下回歸案例：
+
+  1. 保留 hub，停止舊 wrapper，再建立新 wrapper：不鎖死，也不混入舊資料。
+  2. 恢復同一 wrapper：沿用正確的 subs／sid。
+  3. 有未完成工作或未領取結果時停止／重連：不遺失、不重複派工。
+  4. 初始化失敗：保留真正原因，不再拋出誤導性的成功驗收錯誤。
+
+  不能靠取消 owner 檢查解決。 目前證據指向 Fodex 的 hub／wrapper 生命週期缺口，不是 Proc Supervisor stdio 回歸。
+
+  這輪尚未改碼；後續修正應保留舊 milestone／版本，Contract 不動。
+
+  Worked for 1m 38s • 8:01 AM
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+M017: 完整等價現有 Codex cli 的 FodexFun 進行 agy 的支援

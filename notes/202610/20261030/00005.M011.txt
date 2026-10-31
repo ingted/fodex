@@ -1,0 +1,225 @@
+Welcome to F# Interactive for .NET Core in Visual Studio. To execute code, either
+  1. Use 'Send to Interactive' (Alt-Enter or right-click) from an F# script. The F# Interactive process will
+     use any global.json settings associated with that script.
+  2. Press 'Enter' to start. The F# Interactive process will use default settings.
+> 
+
+Microsoft (R) F# Interactive version 15.2.101.0 for F# 11.0
+Copyright (c) Microsoft Corporation. All Rights Reserved.
+
+For help type #help;;
+
+> val it: unit = ()
+
+> 
+--> Added 'F:\fodex\Fodex.Supervisor\bin\M010.Actor' to library include path
+
+
+--> Referenced 'F:\fodex\Fodex.Supervisor\bin\M010.Actor\Akka.dll' (file may be locked by F# Interactive process)
+
+
+--> Referenced 'F:\fodex\Fodex.Supervisor\bin\M010.Actor\Argu.dll' (file may be locked by F# Interactive process)
+
+
+--> Referenced 'F:\fodex\Fodex.Supervisor\bin\M010.Actor\FAkka.Shared.dll' (file may be locked by F# Interactive process)
+
+
+--> Referenced 'F:\fodex\Fodex.Supervisor\bin\M010.Actor\Microsoft.Data.SqlClient.dll' (file may be locked by F# Interactive process)
+
+
+--> Referenced 'F:\fodex\Fodex.Supervisor\bin\M010.Actor\FSharp.FGL.dll' (file may be locked by F# Interactive process)
+
+
+--> Referenced 'F:\fodex\Fodex.Supervisor\bin\M010.Actor\FSharp.FGL.ArrayAdjacencyGraph.dll' (file may be locked by F# Interactive process)
+
+
+--> Referenced 'F:\fodex\Fodex.Supervisor\bin\M010.Actor\Fodex.Supervisor.Contracts.dll' (file may be locked by F# Interactive process)
+
+
+--> Referenced 'F:\fodex\Fodex.Supervisor\bin\M010.Actor\Fodex.Supervisor.dll' (file may be locked by F# Interactive process)
+
+[Loading C:\Users\Administrator\.codex\lib\ParseLine.fsx]
+module FSI_0003.PL
+val parseLine:
+  delimiters: char array ->
+    quoteChar: char option ->
+    escapeCharOpt: char option ->
+    ifMergeDelimiters: bool -> inputLine: string -> string array
+
+val assemblyDirectory: string = "F:\fodex\Fodex.Supervisor\bin\M010.Actor"
+val dependencyResolver: System.Runtime.Loader.AssemblyDependencyResolver
+val sharedDirectory: string = "C:\Program Files\dotnet\shared"
+val aspNetDirectory: string =
+  "C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App"
+val sharedLibraries: string array =
+  [|"C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App\11.0."+[16 chars];
+    "C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App\10.0.13";
+    "C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App\10.0.10";
+    "C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App\10.0.7";
+    "C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App\9.0.21";
+    "C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App\8.0.32";
+    "C:\Program Files\dotnet\shared\Microsoft.AspNetCore.App\7.0.0"|]
+
+
+--> Referenced 'F:\fodex\Fodex.Supervisor\bin\M010.Actor\Fodex.Supervisor.Demos.dll' (file may be locked by F# Interactive process)
+
+HUB_PARTICIPANTS={"participants":["contract","implementation"]}
+Wrapper session: WrapperSessionId (e5acb060-e16e-4a25-acc2-cfa2b616f5e4, None)
+Codex thread id: NativeCodexSessionId "01a18945-0cde-7140-9dbb-4328213b8fb6"
+Adapter: app-server; model: gpt-6.1-sol; effort: high
+[wrapper turn 1 Send] elapsed=0.028s
+
+[wrapper MessageCompleted]
+AgentWork
+  (68L, 67L,
+   MessageCompleted
+     ("01a18945-0cde-7140-9dbb-4328213b8fb6/01a18945-1212-7f90-9422-74d8dc30c931/msg_094ec3640a336c3c016ae3a73293a88191961afacaae8ae2de",
+      "我會依序執行兩輪批次派工，每輪收齊兩筆結果後才繼續，最後核對回答與 sid。
+"))
+
+[wrapper MessageCompleted]
+AgentWork
+  (319L, 316L,
+   MessageCompleted
+     ("01a18945-0cde-7140-9dbb-4328213b8fb6/01a18945-1212-7f90-9422-74d8dc30c931/msg_094ec3640a336c3c016ae3a76113b081918bc1d70f318d5181",
+      "已收齊四筆結果，皆無錯誤。
+
+| who | 首輪 | 第二輪 | 兩輪 sid |
+|---|---|---|---|
+| contract | `orz` | `orz` | 一致：`01a18945-3c75-7a72-a47c-2f0759c41b7b` |
+| implementation | `OGC` | `OGC` | 一致：`01a18945-3d02-72e3-aa1a-bee2aeb1e7c3` |"))
+[wrapper turn 1 AgentEnd] elapsed=54.726s
+Codex thread id after turn: NativeCodexSessionId "01a18945-0cde-7140-9dbb-4328213b8fb6"
+HUB_HEALTH={"accepted":4,"completed":4,"evidenceDirectory":"F:/fodex/artifacts/M011-hub\\20261029-192742-96da280d58294d0c9f58cf3f672b7d22","failed":0,"mcp":false,"participants":[{"completed":2,"sessionIds":["01a18945-3c75-7a72-a47c-2f0759c41b7b"],"who":"contract"},{"completed":2,"sessionIds":["01a18945-3d02-72e3-aa1a-bee2aeb1e7c3"],"who":"implementation"}],"ready":true,"scheduling":"actor-v101","started":true}
+COMPLETED_MATCH=2
+WRAPPER_EVENTS=F:/fodex/artifacts/M011\20261029-200604-041ed0c7b6584cff84ed7939a8eae098\wrapper.completed.events.txt
+GRAPH_EVENTS=F:/fodex/artifacts/M011\20261029-200604-041ed0c7b6584cff84ed7939a8eae098\graph.completed.events.txt
+IO_TRACE=F:/fodex/artifacts/M011\20261029-200604-041ed0c7b6584cff84ed7939a8eae098\main.io.jsonl
+TURN_TIMINGS=F:/fodex/artifacts/M011\20261029-200604-041ed0c7b6584cff84ed7939a8eae098\main.timings.jsonl
+type DemoArgument =
+  | Hub_Url of string
+  | Sql_Server of string
+  | Database of string
+  | Wrapper_Session of string
+  | Auto_Stop of bool
+  | Output_Width of int
+  | Output_Directory of string
+  | Timeout_Seconds of int
+  interface IArgParserTemplate
+val defaultArgumentsText: string =
+  "
+--hub-url http://127.0.0.1:18793
+--sql-server localhost
+--da"+[1652 chars]
+val defaults: string array =
+  [|"--hub-url"; "http://127.0.0.1:18793"; "--sql-server"; "localhost";
+    "--database"; "FodexV200"; "--wrapper-session"; "new"; "--native-adapter";
+    "app-server"; "--model"; "gpt-6.1-sol"; "--effort"; "high";
+    "--working-directory"; "F:/fodex"; "--sandbox"; "danger-full-access";
+    "--prompt";
+    "你只透過原生 shell tool 呼叫 F:/fodex/Fodex.Supervisor/WrapperIAgentD"+[766 chars];
+    "--auto-stop"; "true"; "--output-width"; "100"; "--output-directory";
+    "F:/fodex/artifacts/M011"; "--timeout-seconds"; "1200"; "--wrapperagent";
+    "2.0.3"; "--reactloophandler"; "2.0.3"; "--start"; "2.0.0"; "--stop";
+    "2.0.0"; "--send"; "2.0.0"; ""; "--getsessionid"; "2.0.0";
+    "--acquireparticipant"; "2.0.0"; "--exportreactdatastreamjsonl"; "2.0.0";
+    "--reactloopupsertparticipant"; "2.0.0"; "--reactloopremoveparticipant";
+    "2.0.0"; "--reactloopresolveparticipant"; "2.0.0";
+    "--reactlooplistparticipants"; "2.0.0"; "--reactloopposthumanprompt";
+    "2.0.0"; "--reactloopdispatchtoparticipant"; "2.0.0";
+    "--reactlooproutereactdatastream"; "2.0.0"; "--reactloopcollect"; "2.0.0";
+    "--reactloopreaddataflow"; "2.0.0"; "--reactloopgetstatus"; "2.0.0";
+    "--reactloopgetparticipantcapabilities"; "2.0.0"|]
+val argv: string array =
+  [|"--hub-url"; "http://127.0.0.1:18793"; "--sql-server"; "localhost";
+    "--database"; "FodexV200"; "--wrapper-session"; "new"; "--native-adapter";
+    "app-server"; "--model"; "gpt-6.1-sol"; "--effort"; "high";
+    "--working-directory"; "F:/fodex"; "--sandbox"; "danger-full-access";
+    "--prompt";
+    "你只透過原生 shell tool 呼叫 F:/fodex/Fodex.Supervisor/WrapperIAgentD"+[766 chars];
+    "--auto-stop"; "true"; "--output-width"; "100"; "--output-directory";
+    "F:/fodex/artifacts/M011"; "--timeout-seconds"; "1200"; "--wrapperagent";
+    "2.0.3"; "--reactloophandler"; "2.0.3"; "--start"; "2.0.0"; "--stop";
+    "2.0.0"; "--send"; "2.0.0"; ""; "--getsessionid"; "2.0.0";
+    "--acquireparticipant"; "2.0.0"; "--exportreactdatastreamjsonl"; "2.0.0";
+    "--reactloopupsertparticipant"; "2.0.0"; "--reactloopremoveparticipant";
+    "2.0.0"; "--reactloopresolveparticipant"; "2.0.0";
+    "--reactlooplistparticipants"; "2.0.0"; "--reactloopposthumanprompt";
+    "2.0.0"; "--reactloopdispatchtoparticipant"; "2.0.0";
+    "--reactlooproutereactdatastream"; "2.0.0"; "--reactloopcollect"; "2.0.0";
+    "--reactloopreaddataflow"; "2.0.0"; "--reactloopgetstatus"; "2.0.0";
+    "--reactloopgetparticipantcapabilities"; "2.0.0"|]
+val settings: ParseResults<DemoArgument> =
+  [Hub_Url "http://127.0.0.1:18793"; Sql_Server "localhost"; Database "FodexV200";
+ Wrapper_Session "new"; Auto_Stop true; Output_Width 100;
+ Output_Directory "F:/fodex/artifacts/M011"; Timeout_Seconds 1200]
+val required: _arg1: Result<'a,exn> -> 'a
+val nativeSettings: ParseResults<SupervisorArgument> =
+  [Native_Adapter "app-server"; Model "gpt-6.1-sol"; Effort "high";
+ Working_Directory "F:/fodex"; Sandbox "danger-full-access";
+ Prompt
+   "你只透過原生 shell tool 呼叫 F:/fodex/Fodex.Supervisor/WrapperIAgentDemo.M011.HubClient.fsx，不使用 MCP。每輪用一次 client invocation 派完兩筆：dotnet fsi --debug- --optimize+ --readline- --exec F:/fodex/Fodex.Supervisor/WrapperIAgentDemo.M011.HubClient.fsx -- --url {{HUB_URL}} --action order --order contract TEXT_A --order implementation TEXT_B（請正確引用含空白的文字）。兩筆 order 都確認接單後才用相同 client 的 --url {{HUB_URL}} --action receive。可以在同一次 shell tool 呼叫裡先執行這個批次 order，再執行 receive；不要拆成每個 who 各啟一次 FSI，也不能先等第一個 sub 的結果才向第二個派工。receive 只回當下 ready，不足兩筆就再 receive，正在執行的工具要等原 handle 完成，不重送 order。這是兩輪 ECHO 計時測試，不是程式碼 review。不要讀檔、分析專案、修改檔案或使用其他 subagent。首輪對 contract 派工：只原樣回覆 orz，不使用工具；對 implementation 派工：只原樣回覆 OGC，不使用工具。收齊首輪兩筆後才向相同的兩個 who 下第二輪 instruction：不要使用工具，只原樣重複你上一輪的回答。host 會 resume 同一個 sid，不要新建 session。請收齊四筆結果，最後用繁體中文簡短列出兩個 who 的兩次回答及 sid 是否一致。不要求自訂 JSON。"]
+Net.IPAddress option =
+  (e5acb060-e16e-4a25-acc2-cfa2b616f5e4, None)
+val argumentJson: JsonSerializerOptions
+val arguments: string =
+  ""--hub-url" "http://127.0.0.1:18793" "--sql-server" "localhos"+[1776 chars]
+val node: ActorSystem = akka://fodex-m011-e23615fc381e4972b109c52990c0326f
+val completed: AutoResetEvent
+val outputGate: obj
+val outputDirectory: string =
+  "F:/fodex/artifacts/M011\20261029-200604-041ed0c7b6584cff84ed7939a8eae098"
+val ctx: LoggerUtil.UniContext =
+  { logger = Fodex.Supervisor.Demos.DemoTraceV100+logger@21
+    usage = ["Fodex"]
+    caller = [] }
+val wrapperWatch: Diagnostics.Stopwatch = 00:00:54.7262474
+val mutable turnNumber: int = 1
+val recordTiming: stage: string -> unit
+val wrapperEventPath: string =
+  "F:/fodex/artifacts/M011\20261029-200604-041ed0c7b6584cff84ed7"+[40 chars]
+val wrapperEdgePath: string =
+  "F:/fodex/artifacts/M011\20261029-200604-041ed0c7b6584cff84ed7"+[41 chars]
+val graphEventPath: string =
+  "F:/fodex/artifacts/M011\20261029-200604-041ed0c7b6584cff84ed7"+[38 chars]
+val graphEdgePath: string =
+  "F:/fodex/artifacts/M011\20261029-200604-041ed0c7b6584cff84ed7"+[39 chars]
+val utf8: Text.UTF8Encoding
+val mutable beforeSend: int64 = 0L
+val completedEvent:
+  'a * target: ReActEndpoint * event: ReActEvent<string> ->
+    ReActEvent<string> option
+val sink: ReActEndpoint * ReActEndpoint * ReActEvent<string> -> unit
+val hubUrl: string = "http://127.0.0.1:18793"
+val http: Net.Http.HttpClient
+val started: Net.Http.HttpResponseMessage =
+  StatusCode: 200, ReasonPhrase: 'OK', Version: 1.1, Content: System.Net.Http.HttpConnectionResponseContent, Headers:
+{
+  Date: Thu, 29 Oct 2026 20:06:04 GMT
+  Server: Kestrel
+  Transfer-Encoding: chunked
+  Content-Type: application/json; charset=utf-8
+
+}
+val completedBefore: int = 0
+val acceptedBefore: int = 0
+val turnsBefore: Map<string,int> =
+  map [("contract", 0); ("implementation", 0)]
+val failedBefore: int = 0
+val wrapper: IAgent<string,obj>
+val reActLoop: ReActLoop<string,obj>
+val send: text: string -> Result<int,exn>
+val getWrapperSessionId: unit -> Result<AgentSessionId,exn>
+val getCodexSessionId: unit -> Result<AgentSessionId,exn>
+val exportJsonl: path: JsonlFilePath -> Result<int64,exn>
+val waitForOutput: unit -> bool
+val mutable stopped: bool = true
+val stop: unit -> unit
+val completedFromGraph:
+  unit -> FSharp.FGL.LEdge<ReActEndpoint,ReActEvent<string>> array
+val showHis: unit -> unit
+val runDemo: unit -> Result<unit,exn>
+val outcome: Result<unit,exn> = Ok ()
+val it: unit = ()
+
+> 
