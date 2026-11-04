@@ -36,9 +36,11 @@
     <File Path="Fodex.Supervisor/README.M006-M009.md" />
   </Folder>
   <Project Path="Fodex.Supervisor.Contract/Fodex.Supervisor.Contracts.fsproj" />
+  <Project Path="ClassLibrary1/ClassLibrary1.fsproj" Id="3108cd3c-6317-4e41-888b-2ebb8d697f43" />
   <Project Path="Fodex.Supervisor.Contract.Tests/Fodex.Supervisor.Contract.Tests.fsproj" />
   <Project Path="Fodex.Supervisor.Tests/Fodex.Supervisor.Tests.fsproj" />
   <Project Path="Fodex.Supervisor/Fodex.Supervisor.fsproj" />
+  <Folder Name="/Archive/" />
   <Folder Name="/Archive/20261031/">
     <File Path="Fodex.Supervisor.Contract/archive/20261031/Fodex.Supervisor/WrapperIAgentDemo.M010.R001.fsx" />
     <File Path="Fodex.Supervisor.Contract/archive/20261031/Fodex.Supervisor/WrapperIAgentDemo.M010.R001.Hub.fsx" />

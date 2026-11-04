@@ -105,6 +105,15 @@ BaseCD 只保存編譯隨附的預設定義，啟動宣告不寫 DB；node CD �
 
 整包 Release 驗證：Contract 48/48、Implementation 271/271，無 skipped。獨立 FSI 的七份測試腳本亦已執行。SQL load 以 SERIALIZABLE transaction 取得整批版本，避免併行批次更新時建立混合內容的 node 分區；其後以受影響的 SQL／bootstrap／factory 測試再次驗證。
 
+## IAgent.Request 第一段 Contract 驗證（2026-11-04，待 review）
+
+- 修改前快照：`Fodex.Supervisor.Contract/concepts.202611041951.fsx`，先以 `2b9f258` commit/push，再修改 concepts.fsx。
+- 先加入 `IAgentRequestTests.fsx`，baseline build 確認缺少 Request/target；證據：`artifacts/refactor-tests-20261104/results/IAgentRequest.before.log`。
+- 新 member 為 `'TypedCmdToWrapper -> Task<Result<string,exn>>`，用於 wrapper 指令的直接回覆；生成內容仍由 ReActDataStream 輸出。
+- 11 個案例覆蓋 quotation eval/雙層相同 input、System.Version 最大版、指定版、overwrite 後既有 pin 不變、缺版/無效版/node 隔離、pending Task 非阻塞、同步與非同步失敗/取消回 Error。
+- 本段 Release 驗證：Contract 59/59、Implementation 271/271；獨立 FSI 11/11，無 skipped。VSTest 路徑驗證 discovery/execution，沒有宣稱操作過 VS UI。
+- 只驗證新增 Contract member 與舊實作相容性；尚未將 production Request 註冊、搬走 demo callback 或退出 FodexEntry。這些工作在 Contract review 後繼續。
+
 ## 尚未完成、不能計為通過的新骨架驗收
 
 - 已宣告 101 個可移植舊版 q，加 15 個 V400 dependency/factory q；舊的捕捉 ctx/node/loop/cs 的 bootstrap 只留給歷史版本。現有 M019 的舊 composition 尚未全部切換到新 member 骨架，不能宣稱已移除全部手動 bootstrap。

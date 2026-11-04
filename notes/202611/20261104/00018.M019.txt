@@ -3167,3 +3167,404 @@ Working (10m 30s • esc to interrupt)
 › Ask Codex to do anything
 
   GPT-6-Astra max · F:\fodex · fodex
+
+
+
+
+
+
+
+
+
+
+
+
+  新版骨架依責任安排：
+
+   部分                     責任
+  ━━━━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   底層實作檔               Proc Supervisor、exec／app-server IO、SQL、序列化；逐項評估沿用
+  ───────────────────────  ─────────────────────────────────────────────────────────────────
+   Native 實作              session、生成、取消、設定；透過 IAgent member 使用
+  ───────────────────────  ─────────────────────────────────────────────────────────────────
+   ReActLoop 實作           participant 建立與混合管理、派工、收件、路由、graph；依大類拆檔
+  ───────────────────────  ─────────────────────────────────────────────────────────────────
+   Wrapper 實作             解讀使用者指令，組合 IAgent／ReActLoop member
+  ───────────────────────  ─────────────────────────────────────────────────────────────────
+   McpTools.fsx             工具宣告、參數與結果轉換；操作由上述 member composition 完成
+  ───────────────────────  ─────────────────────────────────────────────────────────────────
+   FodexAgent 建立與註冊    建立並回傳實作物件，綁定版本；資源由所屬物件管理
+  ───────────────────────  ─────────────────────────────────────────────────────────────────
+   Mxxx 腳本                參數、建立物件、輸入與顯示、等待結束
+
+  每個可版本化能力都要真正經過 registry → FodexFun → quotation／Invoke；正常錯誤以 Result 串接。MCP、Console、遠端 actor 都使用同一組 member。
+
+  FodexEntry、現有 Composition／Coordinator 會列為替換對象。新版解除依賴後，再將舊檔改成 None＋Link Archive/...，保留考古。對應測試也跟著轉到新 member 與
+  quotation，保持既有測試專案。
+
+  先把 member 歸屬與最短使用範例定清楚，再逐檔實作；這次不會只是把長腳本搬進另一個 module。
+
+  Worked for 12m 34s • 4:12 PM  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 既有 M002~M019 過程中論及的點以及 BUG，測試專案都有對應的需求點驗證/功能性驗證/BUG ROOT CAUSE REPRODUCE 後驗證?
+
+
+• 我會按目前測試專案實際編譯的案例，對照 M002～M019 的需求與修錯紀錄，區分哪些有需求／功能驗證、哪些有 root-cause 重現測試，哪些只有人工或 smoke 證據。先做覆
+  蓋盤點，不改程式。
+
+• Ran Read-CodexStdout {
+  │   bash -lc '
+  │     git -c safe.directory=F:/fodex status --short
+  │ … +6 lines
+  └ Exception: C:\Users\Administrator\.codex\lib\Read-CodexStdout.ps1:142
+    Line |
+     142 |          throw "Captured output exceeds the read limit: exit=$exitCode …
+    +4 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout {
+  │   bash -lc '
+  │     python - <<"PY"
+  │ … +14 lines
+  └ Fodex.Supervisor.Tests\Fodex.Supervisor.Tests.fsproj Compile 59 None 42
+      ..\Fodex.Supervisor.Contract\LoggerAdapter.fsx
+      ImplementationTestSupportV200.fsx
+    +85 lines (ctrl+t to view transcript)
+
+
+› 請確保上表中的劃分先落實在TEST CASES 中再開始動工
+
+
+• 會。先把責任劃分與 M002～M019 的需求、已知 bug 對應到測試案例，再改實作骨架。現有 API 能驗證的先寫成可執行測試；缺少 Contract member 才能驗證的會明確標記，
+  不能算成通過。接下來只動測試與測試清單。
+
+• Ran Read-CodexStdout {
+  │   bash -lc '
+  │     python - <<"PY"
+  │ … +22 lines
+  └ ReActJsonV200Tests.fsx lines 74 test-declarations 5 conditional False
+    ReActDataStoreV200Tests.fsx lines 84 test-declarations 4 conditional False
+    IAgentFodexFunV200Tests.fsx lines 99 test-declarations 5 conditional True
+    +113 lines (ctrl+t to view transcript)
+
+
+› 後續禁止使用 [<RequireQualifiedAccess>]
+
+
+• 收到，後續新增或修改的程式碼不使用 [<RequireQualifiedAccess>]。我繼續整理測試案例，先完成責任與需求的對照，再動實作。
+
+• Ran Read-CodexStdout {
+  │   bash -lc '
+  │     python - <<"PY"
+  │ … +15 lines
+  └ Exception: C:\Users\Administrator\.codex\lib\Read-CodexStdout.ps1:142
+    Line |
+     142 |          throw "Captured output exceeds the read limit: exit=$exitCode …
+    +4 lines (ctrl+t to view transcript)
+
+
+› FodexFun 存在的 module 全部使用 [<AutoOpen>] 主動註冊，禁止執行前手動註冊
+
+
+• 收到：包含 FodexFun 的 module 使用 [<AutoOpen>]，由實作自動完成註冊，腳本、MCP 與一般呼叫端不得先手動 register。
+
+  我會把「載入 DLL、建立 node 後，可直接透過 FodexAgent 使用指定版本」列入測試。AutoOpen 本身只控制名稱解析，不保證模組初始化或註冊已執行，因此會驗證實際行
+  為。
+
+• Ran Read-CodexStdout {
+  │   bash -lc '
+  │     python - <<"PY"
+  │ … +14 lines
+  └ ReActLoopFodexFunV300Tests.fsx
+    93 retirement atomically withdraws stopped subtree roles and bindings while retaining history and numbers
+    121 stopped observation retains identity without an unsolicited output acknowledgement
+    +52 lines (ctrl+t to view transcript)
+
+
+› 例如 WrapperCompositionV302 底下的 register 函數，為什麼 註冊 quotation 要綁 actorsystem? 不對阿，應該是該 function 本身吃 actorsystem 再包 quotation
+
+
+• 對，ActorSystem 應是函數執行時的 input，函數定義則以型別、名稱與版本註冊。
+
+  目前混了兩件事：V302 的 quotation 已經從 input 取得 node，但 register node 把「函數版本登錄」綁到 node；另外有些 factory quotation 又直接捕獲 node／loop／
+  ctx。這些需要拆清楚：函數定義不依賴某個活著的 ActorSystem，actor 與 session 等執行狀態才屬於 node。
+
+  我會加入測試：同一個已註冊的 quotation，分別傳入兩個 ActorSystem，必須各自操作自己的 actor；終止其中一個 system，不影響另一個，也不需要重新註冊函數。
+
+• Ran Read-CodexStdout {
+  │   bash -lc '
+  │     sed -n "1,100p" Fodex.Supervisor/FodexFunRegistry.fsx
+  │ … +4 lines
+  └ namespace Fodex.Supervisor
+
+    open System
+    +198 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout {
+  │   bash -lc '
+  │     sed -n "1,110p" Fodex.Supervisor.Contract.Tests/FodexFunTests.fsx
+  │ … +5 lines
+  └ #if INTERACTIVE
+    #I "bin/Debug/net10.0"
+    #r "Expecto.dll"
+    +217 lines (ctrl+t to view transcript)
+
+
+› Versioned 建構子吃 actorsystem 跟 versioned controlled function 吃 actorsystem 是兩件事情
+
+
+• 對，我剛才把兩件事混在一起了，修正如下：
+
+  • Versioned(registryNode, target)：決定去哪個 registry 分區取版本，可以保留 ActorSystem 參數。
+  • 受版本管理的函數 run(executionNode, ...)：由執行 input 決定操作哪個 ActorSystem。
+  • quotation 不應捕獲註冊時的 node，暗中取代函數收到的 executionNode。
+
+  所以 register node 本身不能直接判定為錯誤。要檢查的是它註冊了什麼 quotation，以及執行依賴是否完整放在函數參數裡。我會保留 registry 分區隔離的測試，另驗證
+  「函數確實使用傳入的 ActorSystem」，不把 registry 改成全域共用。
+
+
+› Versioned 建構子吃 actorsystem 是為了 registriesByNode
+
+
+• 是，Versioned(node, target) 的 node 就是用來選擇 registriesByNode 的分區，這個設計保留。
+
+  測試會分別驗證 registry 的 node 隔離，以及受控函數使用傳入的執行參數；不會為了處理 quotation capture 而移除建構子的 ActorSystem。
+
+
+
+
+
+
+
+
+
+
+
+› autoopen 要註冊的是
+      VersionRegistry<'T>
+          static let registriesByNode =
+              System.Runtime.CompilerServices.ConditionalWeakTable<
+                  FodexNode,
+                  CD<TargetName, CD<Version, VersionedTarget<'T>>>>()
+
+  整個實作專案載入記憶體， autoopen 應該要將現有所有的 fodexfun 全部註冊進入一個 actorsystem independent 的 CD (VersionRegistry.BaseCD)，每當有特定 'T 的
+  VersionRegistry<'T> 靜態類別registriesByNode 屬性要被初始化時，預設要使用 DB 存的 SERIALIZED Quotation，沒有就 fallback VersionRegistry.BaseCD
+
+  這樣才能確保CD 還沒 UPDATE 的情況下非 runtime 註冊的 fodexfun 全 cluster 統一，當然如果有人 modify CD 了自然要進 DB，請注意
+
+  F:\fodex\Fodex.Supervisor.Contract\concepts.fsx line 238 239 如果 BaseCD 這樣搞有風險請告知
+
+
+• 我先看你剛補的 BaseCD 與初始化路徑，確認型別隔離、DB fallback、各 node 的副本，以及更新寫回 DB 這幾個環節的風險。這回合先檢視設計，不改程式。
+
+• Ran Read-CodexStdout {
+  │   bash -lc '
+  │     nl -ba Fodex.Supervisor.Contract/concepts.fsx | sed -n "165,285p"
+  │ … +5 lines
+  └    165        // Process 操作在 Contract 中只規範可組合的 ROP 形狀；
+       166        // start/stop/monitor 與資源生命週期由 implementation（例如 Proc Supervisor adapter）負責。
+       167        type ProcessSopStep<'State> = FeasibleT<'State, 'State, exn>
+    +129 lines (ctrl+t to view transcript)
+
+• Browsing the web
+
+• Ran Read-CodexStdout {
+  │   bash -lc '
+  │     rg -n "TargetFramework|FSharp.Core" Fodex.Supervisor.Contract/Fodex.Supervisor.Contracts.fsproj
+  │ … +5 lines
+  └ 3:    <TargetFramework>net10.0</TargetFramework>
+    34:    <PackageReference Update="FSharp.Core" Version="10.1.402" />
+    Fodex.Supervisor/FodexFunRegistrationV301.fsx:29:    let wrapperQuotation node loop ctx:Expr<WrapperCreationV300 -> FeasibleT<_,IAgent<string,obj>,exn>> =
+    +18 lines (ctrl+t to view transcript)
+
+• Searched the web for site.learn.microsoft.com dotnet fsharp AutoOpen attribute automatically opened module, site.learn.microsoft.com ConditionalWeakTable G…
+• 目前最直接的風險是第 240 行：每個 node 都拿到同一個 baseCD 物件，因此 Register／CleanVersioned 會同時改到基底和其他 node，失去 registriesByNode 的隔離。
+
+  需要為每個 node 複製外層 CD 與內層版本 CD，再逐筆套用 DB 版本。另外，直接寫入 ConcurrentDictionary 不會自動觸發 DB 寫入；這部分必須由既有的註冊／更新／刪除
+  操作負責。
+
+• Browsing the web
+
+• Opened https://learn.microsoft.com/en-us/dotnet/api/system.runtime.compilerservices.conditionalweaktable-2.getoradd?view=net-10.0
+
+• 方向可行，但目前第 240 行直接回傳 baseCD 有實際問題：所有 node 會共用同一個可修改的 CD。 某個 node 的 Register／CleanVersioned 就會改到其他 node，連內建基底
+  也被修改。目前程式碼 (/F:/fodex/Fodex.Supervisor.Contract/concepts.fsx:235)
+
+  你的分層應保留：
+
+  BaseCD<'T>：實作專案提供的內建函數版本，不依賴 ActorSystem
+      ↓ 複製，再套用 DB 的同型別、同 target、同版本資料
+  registriesByNode[node]：這個 node 實際使用的版本表
+      ↓ 選版、pin
+  函數執行：ActorSystem 等相依從 input 傳入
+
+  需要處理以下幾點。
+
+  1. 外層、內層 CD 都要複製。
+
+     fallback 部分可以維持很簡單：
+
+     let nodeCD =
+         CD<TargetName, CD<Version, VersionedTarget<'T>>>()
+
+     for KeyValue(target, versions) in baseCD do
+         nodeCD[target] <-
+             CD<Version, VersionedTarget<'T>>(versions)
+
+     // 再把 DB 中的各個 target/version 寫入 nodeCD，DB 優先。
+     nodeCD
+
+     只複製外層仍會共用內層版本表。函數值本身可以共用，但不能捕獲特定 node 的 actor、process 或其他執行狀態。
+
+  2. BaseCD 應提供 static member。
+
+     目前第 244 行是 instance member，與你要的「沒有 ActorSystem 也能註冊內建函數」不一致。應是：
+
+     static member BaseCD = baseCD
+
+     每個具體 'T 有自己的靜態欄位，因此不同函數型別仍能隔離；DB 查詢也必須保留這個型別區分。泛型靜態欄位說明
+
+  3. DB fallback 必須逐筆判斷，而且「沒有資料」與「讀取失敗」要分開。
+
+     DB 有該 target/version 就使用 DB；缺少才使用 BaseCD。DB 連線失敗或 quotation 無法反序列化，不能默默當成缺資料，否則不同節點可能執行不同實作。
+
+     DB 載入適合放在 RegistryFor 建立 node 分區的流程。不要把 DB IO 放進泛型型別的靜態初始化；靜態初始化若拋錯，CLR 不會再次執行它。靜態初始化行為
+
+  4. 「修改 CD 自然進 DB」目前不會自動發生。
+
+     ConcurrentDictionary 沒有替你攔截每次修改並持久化。既有 Register／UpsertVersioned／CleanVersioned 應負責正式更新，維持同一 key 的更新順序，DB 成功後才發
+     布到 node CD。
+
+     如果仍允許外部直接做 Registry[version] <- ...，就無法保證寫回 DB。另外，刪除內建版本若只刪 DB row，下次初始化會被 BaseCD fallback 補回；刪除必須有可持久
+     化的語意。
+
+  5. 自動註冊需要保證完成順序。
+
+     會照你的要求使用 [<AutoOpen>]，呼叫端不需手動註冊。但 attribute 本身只處理名稱可見性；實際初始化必須保證「全部內建函數進入 BaseCD」先於第一次建立 node
+     CD。AutoOpen 定義
+
+     此外，GetOrAdd 在競爭下可能重複執行 factory，初始化不能假設 callback 只跑一次。GetOrAdd 行為
+
+  6. 這能提供一致的預設來源，但不會自動同步存活節點。
+
+     各程序載入相同實作版本、讀到相同 DB 資料，才能得到一致的初始版本表。寫回 DB 後，其他已建立的 node CD 與已 pin 函數不會自動更換；這也符合之前「啟動時
+     pin，明確 hot load 才切換」的規則。
+
+  測試會先覆蓋：兩層 CD 隔離、DB 逐筆優先、讀取失敗不冒充缺資料、更新失敗不發布、刪除不復活、自動註冊完成順序，以及 pin／hot load 行為。目前沒有修改你的程式。
+
+  Worked for 5m 37s • 5:12 PM
+
+
+› 反正 baseCD 是傳參考不是嗎? 重複執行 factory 結果應該相同?
+
+
+
+
+
+
+
+
+
+
+
+
+
+↪ Re: SQL 寫回目前接在 Register／UpsertVersioned／CleanVersioned，且 SQL 成功後才更新 node CD。原生 ConcurrentDictionary 沒有寫入事件，外部直接
+  Registry[target][version] <- ... 會繞過它。是否規定正式版本更新一律使用這三個 API？若仍要求任意 CD 寫入都同步，必須更換對外集合型別。
+
+  說明詳細一點，不太懂
+
+
+• 差別在於「透過 Fodex 的方法更新」與「直接修改字典」。
+
+  例如這樣更新：
+
+  versioned.Register(version, value)
+
+  Register 是我們自己寫的方法，所以可以安排順序：
+
+  寫入 SQL quotation
+      ↓ 成功
+  更新這個 node 的 CD
+
+  如果 SQL 失敗，方法會回報錯誤，CD 保持原值。UpsertVersioned 和 CleanVersioned 也是同樣原則。
+
+  但 Registry 回傳的是原生 ConcurrentDictionary，因此外部也能這樣寫：
+
+  versioned.Registry[version] <-
+      { Version = version; Value = value }
+
+  這行直接呼叫 .NET 字典的 setter，完全沒有經過我們的 Register。字典本身也不會通知我們「剛剛有人改了資料」，所以 SQL 不會跟著更新。
+
+  我的建議是保留 CD，讀取、列舉都照常；需要保存的版本新增／覆寫／刪除，統一經過上述方法。這也延續你之前指定「indexer setter 改成 Register(version, value)」的
+  方向，不需要另造一套集合。
+
+  另外，BaseCD 的內建宣告是另一件事：它保存程式隨附的預設定義，本來就不應在每次啟動時寫回 SQL，否則會覆蓋你之前更新過的版本。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+• 已在 Fodex.Supervisor.fsproj (/F:/fodex/Fodex.Supervisor/Fodex.Supervisor.fsproj) 整理：
+
+  • 41 個 Compile：fodexFun/<功能群>/<版本檔名>
+  • 18 個 None：Archive/fodexFun/<功能群>/<版本檔名>
+
+  例如 SubagentFodexFunV204／V206／V300／V301 現在集中於 fodexFun/Subagent/。實體檔案與編譯順序保持原樣。Release build 成功，仍有 3 個既有 pattern-match
+  warnings。
+
+  前面要求的 review，確實有以下部分應整理退出：
+
+   現有部分                                                                       問題與應有去處
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   FodexEntry (/F:/fodex/Fodex.Supervisor/FodexEntry.fsx:12)、                    建立入口與資源組裝仍在另一層，應收回 FodexAgent。預設 M019 走 V301，R002 才
+   WrapperCompositionV301/V302                                                    走 FodexEntry，所以不能只刪後者。
+  ─────────────────────────────────────────────────────────────────────────────  ─────────────────────────────────────────────────────────────────────────────
+   WrapperFactoriesV300 (/F:/fodex/Fodex.Supervisor/WrapperAgentV300.fsx:18)、    呼叫端必須理解整套接線。建立 participant、派工、生命週期應成為 ReActLoop
+   coordinator 六個 callback (/F:/fodex/Fodex.Supervisor/                         member；底下 coordinator actor 的併行與順序控制可以保留。
+   SubagentCoordinatorFodexFunV301.fsx:16)
+  ─────────────────────────────────────────────────────────────────────────────  ─────────────────────────────────────────────────────────────────────────────
+   舊 registerFunctions／registerFactories (/F:/fodex/Fodex.Supervisor/           每次建立仍重新註冊，且 factory quotation 捕捉 node／loop／ctx。接上 SQL
+   FodexFunRegistrationV300.fsx:24)                                               registry 後，這條路徑可能覆寫同版本的 DB 定義；應改由共同初始化載入，執行資
+                                                                                  源由 input 傳入。
+  ─────────────────────────────────────────────────────────────────────────────  ─────────────────────────────────────────────────────────────────────────────
+   MCP 的 WrapperToolRequest 與指令字串組裝 (/F:/fodex/Fodex.Supervisor/          工具仍需知道 implementation message，甚至重新拼 /start(...)。應直接組合
+   HubHostingFodexFunV301.fsx:21)                                                 IAgent／ReActLoop member，MCP 檔保留工具宣告與傳輸。
+  ─────────────────────────────────────────────────────────────────────────────  ─────────────────────────────────────────────────────────────────────────────
+   腳本中的 request／showHis (/F:/fodex/Fodex.Supervisor/                         應由 wrapper／loop instance 提供。腳本負責輸入、顯示；Console 編輯與重繪也
+   WrapperIAgentDemo.M019.R002.fsx:179) 與 cleanup 接線                           應留在 UI 層。
+  ─────────────────────────────────────────────────────────────────────────────  ─────────────────────────────────────────────────────────────────────────────
+   HubClientMain 直接呼叫 V101 (/F:/fodex/Fodex.Supervisor/                       仍繞過版本選取。應經 registry 取得 operation；不能因此讓每次 client 呼叫都
+   HubClientMain.fs:15)                                                           建立 ActorSystem。
+
+  V400 也尚未完成這些責任移轉，目前仍吃 WrapperFactoriesV300。單純增加新版檔案或外包 quotation，還沒有達成你要的簡潔入口。
+
+  後續應先讓測試透過 FodexAgent＋IAgent／ReActLoop members 驗證原有行為，再搬移責任，最後把失去用途的組裝層設為 None + Archive。可切換的 FodexFun 版本、實際
+  actor、SQL、graph 與 Proc Supervisor 功能繼續保留。
+
+  本輪只修改專案分組；以上是靜態 review 結論，尚未動行為程式碼。
+
+  Worked for 17m 46s • 7:38 PM

@@ -22,6 +22,8 @@ module LiteralsMod =
     [<Literal>]
     let targetIAgentSend = "IAgentSend"
     [<Literal>]
+    let targetIAgentRequest = "IAgentRequest"
+    [<Literal>]
     let targetIAgentGetSessionId = "IAgentGetSessionId"
     [<Literal>]
     let targetIAgentExportReActDataStreamJsonl = "IAgentExportReActDataStreamJsonl"
@@ -91,6 +93,7 @@ module CommandMod =
     | Start of CommandVersion
     | Stop of CommandVersion
     | Send of CommandVersion * string
+    | Request of CommandVersion
     | GetSessionId of CommandVersion
     | ExportReActDataStreamJsonl of CommandVersion
     | AcquireParticipant of CommandVersion
@@ -363,6 +366,10 @@ module TypesMod =
     type TIAgentStop      = Feasible<int, exn>
     //type of IAgent sends
     type TIAgentSend<'T>  = FeasibleT<'T, int, exn>
+    /// wrapper 指令的非同步文字回覆；生成內容由 ReActDataStream 另行傳送。
+    /// 外層 Task 只用於等待回覆，所有可預期失敗及 operation exception 均回傳 Error。
+    type TIAgentRequest<'TCommand> =
+        'TCommand -> System.Threading.Tasks.Task<Result<string, exn>>
     //type of IAgent session id reads
     type TIAgentGetSessionId<'TSessionId> = Feasible<'TSessionId, exn>
     //type of IAgent persisted stream exports; implementation 必須逐行輸出，不建立巨型 in-memory string。
@@ -760,6 +767,7 @@ module CoreMod =
         let sendVersion =
             cmd.TryGetResult CommonCommand.Send
             |> Option.map fst
+        let requestVersion = cmd.TryGetResult CommonCommand.Request
         let getSessionIdVersion =
             cmd.TryGetResult CommonCommand.GetSessionId
         let exportReActDataStreamJsonlVersion =
@@ -771,6 +779,13 @@ module CoreMod =
             IAgentFodexFun<unit, int>(node, targetIAgentStop)
         let versionedIAgentSend: IAgentFodexFun<'TAgentCommMsg, int> =
             IAgentFodexFun<'TAgentCommMsg, int>(node, targetIAgentSend)
+        // quotation 的 input 是 (node, agent, command)，兩層函數都吃同一份 input。
+        // 外層 Result 表示能否建立等待回覆的工作；Task 裡的 Result 是實際 operation 回覆。
+        // default Request 將兩種失敗合併成 caller 所見的單一 Task<Result<...>>。
+        let versionedIAgentRequest:
+            IAgentFodexFun<'TypedCmdToWrapper, System.Threading.Tasks.Task<Result<string, exn>>> =
+            IAgentFodexFun<'TypedCmdToWrapper, System.Threading.Tasks.Task<Result<string, exn>>>
+                (node, targetIAgentRequest)
         let versionedIAgentGetSessionId: IAgentFodexFun<unit, AgentSessionId> =
             IAgentFodexFun<unit, AgentSessionId>(node, targetIAgentGetSessionId)
         let versionedIAgentExportReActDataStreamJsonl:
@@ -783,6 +798,7 @@ module CoreMod =
         let pinnedIAgentStart = FodexFun.pin startVersion versionedIAgentStart
         let pinnedIAgentStop = FodexFun.pin stopVersion versionedIAgentStop
         let pinnedIAgentSend = FodexFun.pin sendVersion versionedIAgentSend
+        let pinnedIAgentRequest = FodexFun.pin requestVersion versionedIAgentRequest
         let pinnedIAgentGetSessionId =
             FodexFun.pin getSessionIdVersion versionedIAgentGetSessionId
         let pinnedIAgentExportReActDataStreamJsonl =
@@ -822,6 +838,13 @@ module CoreMod =
         abstract member Start: TIAgentStart
         abstract member Stop: TIAgentStop
         abstract member Send: TIAgentSend<'TAgentCommMsg>
+        /// 等待 wrapper 指令的直接回覆，例如查詢 participant 或管理已存在的工作。
+        /// 例：task { let! reply = wrapper.Request command; return reply }。
+        /// Request 不代表等待 native 整輪生成；模型內容仍經 ReActDataStream/sink 輸出。
+        /// input 是與 wrapper 相同的 typed command，這裡不新增 callback/implementation message。
+        /// implementation 負責 actor request/reply 與 timeout；未提供此能力時回傳 Error。
+        /// --request 指定版本；未指定則 pin 建立當下最大版本，既有 instance 不跟著 registry 改版。
+        abstract member Request: TIAgentRequest<'TypedCmdToWrapper>
         abstract member GetSessionId: TIAgentGetSessionId<AgentSessionId>
         // 這是 unhealthy wrapper 的 recovery surface，不表示 IAgent 擁有 DB。
         // Implementation DLL 另須公開同型別 ReActDataStreamJsonlExport entry point，讓 FSI 只以
@@ -857,6 +880,31 @@ module CoreMod =
                     sendVersion
                     pinnedIAgentSend
                     (node, instance, message)
+
+        default this.Request =
+            fun command -> task {
+                let versionLabel = defaultArg requestVersion "max-at-creation"
+                // 不以 .Result/RunSynchronously 等待：UI、MCP 或 actor caller 都可以非同步等回覆。
+                // 同步 prepare/invoke、operation Error、fault/cancel Task 均走同一個 ROP error 分支。
+                let! result = task {
+                    try
+                        match pinnedIAgentRequest with
+                        | Some feasibleFun ->
+                            match FeasibleFun.invoke (node, instance, command) feasibleFun with
+                            | Ok response -> return! response
+                            | Error error -> return Error error
+                        | None ->
+                            return Error (exn (sprintf
+                                "%s function for version %s was not pinned at IAgent creation"
+                                targetIAgentRequest versionLabel))
+                    with error -> return Error error
+                }
+                // 記錄 operation 完成結果，而非把尚未完成的 Task 寫成成功回覆。
+                return
+                    match result with
+                    | Ok _ as ok -> infoT (ctx, targetIAgentRequest, versionLabel, ok)
+                    | Error _ as error -> errorT (ctx, targetIAgentRequest, versionLabel, error)
+            }
 
         default this.GetSessionId =
             fun () ->

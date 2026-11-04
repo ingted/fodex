@@ -9,6 +9,7 @@ open Expecto
 let main _ =
     testList "Contract" [
         FodexFunTests.tests
+        IAgentRequestTests.tests
         VersionRegistryBaselineTests.tests
         VersionRegistryPersistenceTests.tests
         ReActDataStreamTests.tests

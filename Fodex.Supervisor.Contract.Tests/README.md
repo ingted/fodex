@@ -47,14 +47,23 @@ Test Explorer 使用 `Microsoft.NET.Test.Sdk` + `YoloDev.Expecto.TestSdk`，
 | 檔案 | 內容 |
 | --- | --- |
 | `FodexFunTests.fsx` | quotation eval、雙層相同 input、最大版本、覆寫、缺版、跨 node 隔離 |
+| `IAgentRequestTests.fsx` | wrapper 指令非同步回覆、Request 選版/pin、相同 input、非阻塞、同步/非同步 Error 與取消；不啟動 native |
 | `ReActDataStreamTests.fsx` | 原生 LEdge、多重邊、方向、replyTo/cause、六種 phase、Copy 的淺複製限制 |
 | `ReActLoopRouteReActDataStreamTests.fsx` | `ReActLoopRouteReActDataStream` target 的 edge binding、版本 pin、錯誤 |
 | `ReActLoopCollectTests.fsx` | `ReActLoopCollect` target 的 session/read result、版本 pin、缺 reader |
 | `ReActLoopReadDataFlowTests.fsx` | `ReActLoopReadDataFlow` target 的 graph snapshot、版本 pin、錯誤、factory binding |
 
-每個 operation 的測試都將 `FeasibleFun` quotation 註冊到 `ReActLoopFodexFun`，
+每個 operation 的測試都將 `FeasibleFun` quotation 註冊到相應的 `IAgentFodexFun`／`ReActLoopFodexFun`，
 經真正 Contract default member 取用；不是直接呼叫一個不經 registry 的 substitute function。
 測試用 quotation 只代表 fixture，不是 production FodexFun 版本的實作。
+
+`IAgent.Request` 的 11 個案例直接使用 Contract default member。它接受 wrapper 的 typed command，
+回傳 `Task<Result<string,exn>>`；`--request 1.0.0` 選版，不指定則 pin 建立時最大版。
+quotation 仍是 `IAgentFunInput<'Command> -> IAgentFunInput<'Command> -> Result<Task<Result<string,exn>>,exn>`，
+default member 將準備/執行失敗與非同步回覆失敗合併成 caller 所見的一個 Result。
+Request 只等待指令回覆；native 的生成內容仍走 ReActDataStream，不透過這個 Task 收整輪輸出。
+未提供 Request 實作時回 Error，既有 object expression 不必新增 override 才能編譯。
+production wrapper 的 callback 接線仍待 Contract review 後遷移，這些案例不代表 M019 已切換。
 
 ## 驗證範圍
 
