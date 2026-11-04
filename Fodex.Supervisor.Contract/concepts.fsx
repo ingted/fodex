@@ -227,13 +227,21 @@ module Concepts =
                 FodexNode,
                 CD<TargetName, CD<Version, VersionedTarget<'T>>>>()
 
+        static let baseCD = CD<TargetName, CD<Version, VersionedTarget<'T>>>()
+
         static member RegistryFor
             (node: FodexNode)
             : CD<TargetName, CD<Version, VersionedTarget<'T>>> =
-            registriesByNode.GetValue(
+            registriesByNode.GetOrAdd(
                 node,
-                fun _ -> CD<TargetName, CD<Version, VersionedTarget<'T>>>()
+                fun _ -> 
+                    //按照 db 存的 TargetName * Version 取 VersionedTarget 建立 CD，baseCD 有但是 DB 沒有的就 fallback
+                    //目前還沒有 quotation 直接從 DB 取的實作，先用 fallback
+                    baseCD
             )
+
+
+        static member BaseCD = baseCD
 
         member this.Node = node
 
