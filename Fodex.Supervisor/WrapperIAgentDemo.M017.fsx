@@ -114,7 +114,7 @@ let models=
 print(sprintf "[startup] model/list 完成（%d 筆）；查詢用 app-server 已停止。" models.Length)
 print(sprintf "[startup] 建立 main participant（%s）；subagent／COT 由後續命令建立。" (options.GetResult Native_Adapter))
 let wrapper,reActLoop,hub,remoteOwner,cleanup=
-    try M017CompositionV300.start node connectionString session nativeArguments ctx models transport (options.GetResult Hub_Url) sink |> fun work -> work.GetAwaiter().GetResult()
+    try WrapperCompositionV301.start node connectionString session nativeArguments ctx models transport (options.GetResult Hub_Url) sink |> fun work -> work.GetAwaiter().GetResult()
     with ex -> node.Terminate().GetAwaiter().GetResult() |> ignore;raise ex
 
 let send (text:string)=wrapper.Send(box text) |> required |> ignore

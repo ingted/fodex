@@ -159,7 +159,7 @@ let started=lazy (
         NativeOutputFodexFunV300.pin<FodexNode*UniContext*IActorRef*(string->unit),IActorRef> node NativeOutputFodexFunV300.targetPrinter
             (node,ctx,outputHub,fun text -> post true text) |> required |> ignore
     let wrapper,reActLoop,hub,remoteOwner,cleanup=
-        M017CompositionV300.startWithOutput connectOutput node cs session nativeArguments ctx models transport (options.GetResult Hub_Url) sink
+        WrapperCompositionV301.startWithOutput connectOutput node cs session nativeArguments ctx models transport (options.GetResult Hub_Url) sink
         |> fun work -> work.GetAwaiter().GetResult()
     try
         // 真正 owner 可用後才發布地址；尚未初始化時不能拿舊 manifest 當本次的 live owner。
