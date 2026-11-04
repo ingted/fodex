@@ -28,24 +28,36 @@
       <Link>Archive/ReActDataStoreV100.fsx</Link>
     </None>
     <Compile Include="ReActJsonV200.fsx" />
+    <Compile Include="ReActJsonV300.fsx" />
     <Compile Include="ReActDataStoreV200.fsx" />
     <Compile Include="ReActDataStoreV205.fsx" />
+    <Compile Include="ReActDataStoreV300.fsx" />
+    <Compile Include="ReActTopologyFodexFunV300.fsx" />
+    <Compile Include="ReActCheckpointFodexFunV300.fsx" />
     <Compile Include="SupervisorArgs.fsx" />
     <Compile Include="ActorLogging.fsx" />
+    <Compile Include="NativeOutputFodexFunV300.fsx" />
+    <Compile Include="WrapperCommandFodexFunV300.fsx" />
+    <Compile Include="ParticipantControlFodexFunV300.fsx" />
+    <Compile Include="WrapperDraftFodexFunV300.fsx" />
     <None Include="IAgentFodexFunV100.fsx">
       <Link>Archive/IAgentFodexFunV100.fsx</Link>
     </None>
     <Compile Include="IAgentFodexFunV200.fsx" />
-    <Compile Include="ReActLoopFodexFunV200.fsx" />
-    <Compile Include="NativeOrderFodexFunV205.fsx" />
+    <None Include="ReActLoopFodexFunV200.fsx"><Link>Archive/ReActLoopFodexFunV200.fsx</Link></None>
+    <Compile Include="ReActLoopFodexFunV300.fsx" />
+    <None Include="NativeOrderFodexFunV205.fsx"><Link>Archive/NativeOrderFodexFunV205.fsx</Link></None>
     <Compile Include="ReActTraceV203.fsx" />
+    <Compile Include="ReActTraceV300.fsx" />
+    <Compile Include="WrapperContextFodexFunV300.fsx" />
     <Compile Include="SubagentFodexFunV204.fsx" />
     <Compile Include="SubagentFodexFunV206.fsx" />
-    <Compile Include="NativeSubagentFodexFunV207.fsx" />
-    <Compile Include="HubScopeFodexFunV210.fsx" />
+    <None Include="NativeSubagentFodexFunV207.fsx"><Link>Archive/NativeSubagentFodexFunV207.fsx</Link></None>
+    <None Include="HubScopeFodexFunV210.fsx"><Link>Archive/HubScopeFodexFunV210.fsx</Link></None>
     <Compile Include="ExplicitCotFodexFunV208.fsx" />
-    <Compile Include="ReActLoopHandlerV203.fsx" />
-    <Compile Include="ReActLoopHandlerV205.fsx" />
+    <None Include="ReActLoopHandlerV203.fsx"><Link>Archive/ReActLoopHandlerV203.fsx</Link></None>
+    <None Include="ReActLoopHandlerV205.fsx"><Link>Archive/ReActLoopHandlerV205.fsx</Link></None>
+    <Compile Include="ReActLoopHandlerV300.fsx" />
     <None Include="ReActLoopFodexFunV100.fsx">
       <Link>Archive/ReActLoopFodexFunV100.fsx</Link>
     </None>
@@ -64,12 +76,20 @@
     <Compile Include="NativeOwnershipFodexFunV209.fsx" />
     <Compile Include="NativeAppServerV208.fsx" />
     <Compile Include="NativeAgentV208.fsx" />
+    <Compile Include="NativeSettingsFodexFunV300.fsx" />
+    <Compile Include="NativeCompactFodexFunV300.fsx" />
+    <Compile Include="ParticipantListingFodexFunV300.fsx" />
+    <Compile Include="NativeModelCatalogFodexFunV300.fsx" />
+    <Compile Include="NativeAppServerV300.fsx" />
+    <Compile Include="NativeAgentV300.fsx" />
+    <Compile Include="SubagentFodexFunV300.fsx" />
+    <Compile Include="WrapperAgentV300.fsx" />
     <Compile Include="WrapperAgentV200.fsx" />
     <Compile Include="WrapperAgentV201.fsx" />
     <Compile Include="WrapperAgentV203.fsx" />
     <Compile Include="WrapperAgentV204.fsx" />
     <Compile Include="WrapperAgentV206.fsx" />
-    <Compile Include="WrapperAgentV207.fsx" />
+    <None Include="WrapperAgentV207.fsx"><Link>Archive/WrapperAgentV207.fsx</Link></None>
     <Compile Include="WrapperAgentV208.fsx" />
     <None Include="NativeAgentV100.fsx">
       <Link>Archive/NativeAgentV100.fsx</Link>
@@ -78,30 +98,52 @@
       <Link>Archive/WrapperAgentV100.fsx</Link>
     </None>
     <Compile Include="CliFodexFunV100.fsx" />
-    <Compile Include="FodexFunRegistrationV200.fsx" />
-    <Compile Include="FodexFunRegistrationV201.fsx" />
-    <Compile Include="FodexFunRegistrationV202.fsx" />
-    <Compile Include="FodexFunRegistrationV203.fsx" />
-    <Compile Include="FodexFunRegistrationV204.fsx" />
-    <Compile Include="FodexFunRegistrationV206.fsx" />
-    <Compile Include="FodexFunRegistrationV207.fsx" />
-    <Compile Include="FodexFunRegistrationV208.fsx" />
+    <Compile Include="FodexFunRegistrationV300.fsx" />
+    <None Include="FodexFunRegistrationV200.fsx"><Link>Archive/FodexFunRegistrationV200.fsx</Link></None>
+    <None Include="FodexFunRegistrationV201.fsx"><Link>Archive/FodexFunRegistrationV201.fsx</Link></None>
+    <None Include="FodexFunRegistrationV202.fsx"><Link>Archive/FodexFunRegistrationV202.fsx</Link></None>
+    <None Include="FodexFunRegistrationV203.fsx"><Link>Archive/FodexFunRegistrationV203.fsx</Link></None>
+    <None Include="FodexFunRegistrationV204.fsx"><Link>Archive/FodexFunRegistrationV204.fsx</Link></None>
+    <None Include="FodexFunRegistrationV206.fsx"><Link>Archive/FodexFunRegistrationV206.fsx</Link></None>
+    <None Include="FodexFunRegistrationV207.fsx"><Link>Archive/FodexFunRegistrationV207.fsx</Link></None>
+    <None Include="FodexFunRegistrationV208.fsx"><Link>Archive/FodexFunRegistrationV208.fsx</Link></None>
     <Compile Include="RemoteFodexFunV209.fsx" />
+    <Compile Include="RemoteControlFodexFunV300.fsx" />
     <Compile Include="WrapperOutputV200.fsx" />
     <Compile Include="WrapperOutputV201.fsx" />
+    <Compile Include="ConsoleInputFodexFunV300.fsx" />
+    <Compile Include="ConsoleOutputFodexFunV300.fsx" />
     <Compile Include="OrderHubSupportV100.fsx" />
     <Compile Include="OrderHubV103.fsx" />
+    <Compile Include="OrderHubV300.fsx" />
+    <Compile Include="SubagentCoordinatorV300.fsx" />
+    <Compile Include="HubHostingV300.fsx" />
+    <Compile Include="M017CompositionV300.fsx" />
     <Compile Include="NativeOrderHubV104.fsx" />
     <Compile Include="HubToolsV103.fsx" />
     <Compile Include="HubClientV101.fsx" />
     <Compile Include="WrapperTurnTimingV100.fsx" />
-    <Compile Include="HubParticipantsV101.fsx" />
-    <Compile Include="HubParticipantsV102.fsx" />
-    <Compile Include="NativeHubParticipantsV103.fsx" />
-    <Compile Include="WrapperHubHostingV105.fsx" />
-    <Compile Include="NativeHubHostingV106.fsx" />
+    <None Include="HubParticipantsV101.fsx"><Link>Archive/HubParticipantsV101.fsx</Link></None>
+    <None Include="HubParticipantsV102.fsx"><Link>Archive/HubParticipantsV102.fsx</Link></None>
+    <None Include="NativeHubParticipantsV103.fsx"><Link>Archive/NativeHubParticipantsV103.fsx</Link></None>
+    <None Include="WrapperHubHostingV105.fsx"><Link>Archive/WrapperHubHostingV105.fsx</Link></None>
+    <None Include="NativeHubHostingV106.fsx"><Link>Archive/NativeHubHostingV106.fsx</Link></None>
     <Compile Include="HubClientMain.fs" />
     <None Include="NLog.conf" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="NLog.M017.conf" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="M017References.fsx" />
+    <None Include="WrapperIAgentDemo.M017.fsx" />
+    <None Include="Start-M017.ps1" />
+    <None Include="WrapperIAgentDemo.M017.Remote.fsx" />
+    <None Include="README.M017.md" />
+    <None Include="WrapperIAgentDemo.M018.fsx" />
+    <None Include="Start-M018.ps1" />
+    <None Include="README.M018.md" />
+    <!-- M019 console UI stays in scripts; these files are not part of the Supervisor DLL. -->
+    <None Include="WrapperIAgentDemo.M019.Input.fsx" />
+    <None Include="WrapperIAgentDemo.M019.fsx" />
+    <None Include="Start-M019.ps1" />
+    <None Include="README.M019.md" />
     <None Include="FodexFunRegistrationV100.fsx">
       <Link>Archive/FodexFunRegistrationV100.fsx</Link>
     </None>
@@ -198,7 +240,7 @@
     <PackageReference Include="ModelContextProtocol.AspNetCore" Version="2.3.0" />
     <PackageReference Update="FSharp.Core" Version="10.1.402" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
-    <PackageReference Include="FAkka.Proc.Supervisor" Version="[1.572.10-fodex002]" />
+    <PackageReference Include="FAkka.Proc.Supervisor" Version="[1.572.12]" />
     <!-- 直接使用既有 transitive 版本的純資料 JSON serializer，明列依賴以避免間接漂移。 -->
     <PackageReference Include="FAkka.FsPickler.Json" Version="10.2.2" />
   </ItemGroup>

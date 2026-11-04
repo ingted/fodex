@@ -76,7 +76,8 @@ let eventEdge id : ReActDataStream<string> =
 /// 測試 fixture 而非 production writer；只建立原生 FGL graph，不假裝有 durable commit。
 let graphWith ids : WrappedReActDataFlow<string> =
     WrappedReActDataFlow<string>(
-        [ nativeEndpoint, (); wrapperEndpoint, () ],
+        [ nativeEndpoint, ReActNode.UnresolvedParticipant
+          wrapperEndpoint, ReActNode.UnresolvedParticipant ],
         ids |> List.map eventEdge)
 
 let createLoop node arguments =

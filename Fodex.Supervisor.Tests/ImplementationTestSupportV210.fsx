@@ -1,6 +1,6 @@
 #if INTERACTIVE
 #r "nuget: Expecto, 11.1.1"
-#r "nuget: FAkka.Proc.Supervisor, 1.572.10-fodex002"
+#r "nuget: FAkka.Proc.Supervisor, 1.572.12"
 #load "ImplementationTestSupportV200.fsx"
 
 // FSI 不是 dotnet test host；以建置產物的 deps/local assemblies 解 runtime 動態載入。

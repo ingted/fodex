@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <!-- Integration fixtures own SQL databases/ActorSystems and synchronously await callbacks.
+       Sequence fixtures, not actor messages: each concurrency test still runs real workers in parallel. -->
+  <Expecto>
+    <parallel>false</parallel>
+  </Expecto>
+</RunSettings>

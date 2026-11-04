@@ -49,7 +49,7 @@ let tests =
             ]
             // 只測可表示性；此圖不是有效路由範例，HumanInit 的合法端點仍需 handler 驗證。
             let graph = WrappedReActDataFlow<string>(
-                [nativeEndpoint, (); wrapperEndpoint, ()],
+                [nativeEndpoint, ReActNode.UnresolvedParticipant; wrapperEndpoint, ReActNode.UnresolvedParticipant],
                 labels |> List.map (fun label -> nativeEndpoint, wrapperEndpoint, label))
             Expect.equal (graph.GetEdges().Length) labels.Length "six phases"
 
@@ -70,7 +70,7 @@ let tests =
                 AgentCot(6L, 1L, MessageCompleted("commentary-2", "another complete message"))
                 AgentEnd(7L, 1L, Message "FODEX_OK") ]
             let graph = WrappedReActDataFlow<string>(
-                [nativeEndpoint, (); wrapperEndpoint, ()],
+                [nativeEndpoint, ReActNode.UnresolvedParticipant; wrapperEndpoint, ReActNode.UnresolvedParticipant],
                 labels |> List.map (fun label -> nativeEndpoint, wrapperEndpoint, label))
             let completeMessages = labels |> List.choose (function
                 | AgentWork(_,_,MessageCompleted(id,text)) | AgentCot(_,_,MessageCompleted(id,text)) -> Some(id,text)
@@ -82,7 +82,7 @@ let tests =
         testCase "Copy is shallow for mutable command payloads" <| fun () ->
             let payload = [| "before" |]
             let live = WrappedReActDataFlow<string array>(
-                [ReActEndpoint.Human, (); wrapperEndpoint, ()],
+                [ReActEndpoint.Human, ReActNode.Human; wrapperEndpoint, ReActNode.UnresolvedParticipant],
                 [(ReActEndpoint.Human, wrapperEndpoint, HumanInit (1L, HumanPrompt payload))])
             let snapshot = live.Copy()
             payload[0] <- "after"

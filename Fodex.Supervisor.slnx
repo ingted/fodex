@@ -67,4 +67,25 @@
     <File Path="Fodex.Supervisor.Contract/archive/20261031/Fodex.Supervisor.Demos/Fodex.Supervisor.Demos.fsproj" />
     <File Path="Fodex.Supervisor.Contract/archive/20261031/manifest.json" />
   </Folder>
+  <Folder Name="/M017/">
+    <File Path="Fodex.Supervisor/README.M017.md" />
+    <File Path="Fodex.Supervisor/WrapperIAgentDemo.M017.fsx" />
+    <File Path="Fodex.Supervisor/Start-M017.ps1" />
+    <File Path="Fodex.Supervisor/WrapperIAgentDemo.M017.Remote.fsx" />
+    <File Path="Fodex.Supervisor/M017References.fsx" />
+    <File Path="req_analysis.md" />
+  </Folder>
+  <Folder Name="/M018/">
+    <File Path="doc/FsiConsoleImplementationAnalysis.md" />
+    <File Path="Fodex.Supervisor/README.M018.md" />
+    <File Path="Fodex.Supervisor/WrapperIAgentDemo.M018.fsx" />
+    <File Path="Fodex.Supervisor/Start-M018.ps1" />
+  </Folder>
+  <Folder Name="/M019/">
+    <File Path="Fodex.Supervisor/README.M019.md" />
+    <File Path="Fodex.Supervisor/WrapperIAgentDemo.M019.fsx" />
+    <File Path="Fodex.Supervisor/WrapperIAgentDemo.M019.Input.fsx" />
+    <File Path="Fodex.Supervisor/Start-M019.ps1" />
+    <File Path="Fodex.Supervisor.Tests/M019ConsoleSubmissionTests.fsx" />
+  </Folder>
 </Solution>

@@ -472,7 +472,7 @@ module CoreMod =
     type ReActParticipant = ReActParticipantId * ReActParticipantSessionId //actor 位置可能會變，但是 main wrapper
 
     // Vertex key 是 logical identity；Human 由所屬 ReActLoop session 定界。
-    // 即時 IAgent 留在 topology registry，不是 graph 的可保存資料。
+    // 即時 IAgent 留在 implementation 的 live binding；graph 保存的是可序列化的身分與關係。
     /// 例如 ReActEndpoint.Participant (participantId, wrapperSessionId)。
     /// 此 key 不含 actor/process reference，讓歷史資料不依賴目前 runtime instance 是否存活。
     [<RequireQualifiedAccess>]
@@ -488,6 +488,70 @@ module CoreMod =
     type AgentSessionId =
     | WrapperSessionId of ReActParticipantSessionId
     | NativeCodexSessionId of CodexSessionId
+
+    /// 描述被管理的 participant，不描述它使用 app-server 還是 exec transport。
+    /// RawExec 沒有 sub wrapper／IAgent；ActorAddress 指向管理該工作的 owner worker。
+    /// COT 是角色而不是另一種 process，使用下方 ReActRelation.Cot 表示。
+    [<RequireQualifiedAccess>]
+    type ReActParticipantKind =
+    | Wrapper
+    | Native
+    | RawExec
+
+    /// owner 最後確認的狀態，不因 graph 留有節點就代表資源仍存活。
+    /// Stopped 表示工作中斷，仍可使用同一身分／sid；Retired 表示不再接受新派工。
+    /// actor restart/rebind 保留身分；/wrapper_restart 或 compact 換出的舊 main 則退役。
+    [<RequireQualifiedAccess>]
+    type ReActParticipantStatus =
+    | Starting
+    | Idle
+    | Running
+    | Stopped
+    | Retired
+    | Unreachable
+
+    /// 一個 graph vertex 的純資料 label；完整 logical key 仍只放在 ReActEndpoint。
+    /// Number 是 root wrapper 範圍內、跨 local/remote 的持久控制編號，不是 session-local id／列號。
+    /// root owner 在 participant 可派工前核配正數 Number；不得重用，重綁不得重新編號。
+    /// Name 對 sub 使用可交給 hub_order(who, instruct) 的 who，不能從 Codex sid 猜名稱。
+    /// SessionId=None 表示尚未取得真實 sid；exec 必須等待 session 初始化證據，不能捏造 GUID。
+    /// ActorAddress 只是 last-known 完整 actor path；不可把它當健康證據或授權憑據。
+    /// ObservedAtUtc 由 owner 在觀察時記錄，供 remote 離線時呈現資料新舊。
+    /// parent／main／COT 關係刻意不重複放進 record，從同一 graph 的 typed relation edges 取得。
+    /// 例：{ Number = 4L; Name = "sub-1"; Kind = ReActParticipantKind.RawExec;
+    ///       SessionId = None; ActorAddress = None; Status = ReActParticipantStatus.Starting;
+    ///       ObservedAtUtc = System.DateTimeOffset.UtcNow }。
+    type ReActParticipantInfo = {
+        Number: int64
+        Name: string
+        Kind: ReActParticipantKind
+        SessionId: AgentSessionId option
+        ActorAddress: string option
+        Status: ReActParticipantStatus
+        ObservedAtUtc: DateTimeOffset
+    }
+
+    /// 舊資料只知道 endpoint 而沒有註冊 metadata 時，必須保留 unresolved，不能猜 N／parent。
+    /// UnresolvedParticipant 可供讀歷史，但不能據此 /stop 或派工。
+    /// Human label 只配 Human key；Participant 與 UnresolvedParticipant 只配 Participant key。
+    /// label 不含 IAgent、IActorRef、Process、callback；新建尚未發話的節點也必須存在於 snapshot。
+    [<RequireQualifiedAccess>]
+    type ReActNode =
+    | Human
+    | UnresolvedParticipant
+    | Participant of ReActParticipantInfo
+
+    /// 同一張 FGL graph 內的 typed relation，方向固定為 owner wrapper -> participant。
+    /// Owns 是生命週期親子關係；Main／Cot 是 owned participant 的角色，不從訊息方向推論。
+    /// sub 是 owned 且未被標成 Main／Cot 的一般輔助 participant；種類由 node.Kind 決定。
+    /// active Owns 必須同 root、單一 parent、無環；Main／Cot 必須已有相同 owner 的 Owns。
+    /// 同一 wrapper 至多一個 active Main；同一 owner-child 不能同時是 Main 與 Cot。
+    /// main 可以是 wrapper，沿 Main 關係繼續尋找其 native；不得把 main 寫死成 local id=2。
+    [<RequireQualifiedAccess>]
+    type ReActRelation =
+    | Owns
+    | Main
+    | Cot
 
     type JsonlFilePath = string
     type ExportedReActDataCount = int64
@@ -577,12 +641,24 @@ module CoreMod =
     /// 同文字不同事件仍有不同 id；causedBy 指向所屬 session 中的來源事件，而不是 actor instance。
     type ReActEvent<'TypedCmdToWrapper> =
     | HumanInit of streamId: StreamId * data: ReActData<'TypedCmdToWrapper>
-    // Agent 實際輸出的非 tool、非 final 中間內容；不表示模型未輸出的 hidden reasoning。
+    // 明確 COT participant 的可觀測輸出；普通 subagent 的中間／完整輸出仍使用 AgentWork。
+    // /wrapper_cot 與 /wrapper_compact 的 COT 不得使用 main 的 Codex session。
     | AgentCot of streamId: StreamId * causedBy: StreamId * data: ReActData<'TypedCmdToWrapper>
     | AgentWork of streamId: StreamId * causedBy: StreamId * data: ReActData<'TypedCmdToWrapper>
     | StdOut of streamId: StreamId * causedBy: StreamId * text: String
     | StdErr of streamId: StreamId * causedBy: StreamId * progressAndStatus: ProgressAndStatus
     | AgentEnd of streamId: StreamId * causedBy: StreamId * data: ReActData<'TypedCmdToWrapper> //edge source participant 回合的終止事件
+    /// metadata 歷史，使用 participant -> 自己的 self-edge；不表示 participant 對自己發 prompt。
+    /// durable commit 後，handler 同時把該 vertex label 更新為 ReActNode.Participant info。
+    /// 最新 metadata 依 StreamId 決定，不依 ObservedAtUtc 排序；回復不得重新啟動 actor／process。
+    /// 例：(p, p, ParticipantMetadataChanged (10L, info))。
+    | ParticipantMetadataChanged of streamId: StreamId * info: ReActParticipantInfo
+    /// owner -> child 的關係事件；isActive=false 解除關係，但不刪除歷史 edge／節點／編號。
+    /// 同一 (source,target,relation) 以最大 StreamId 的值為準，不能以 ContainsEdge 判斷仍 active。
+    /// main 切換的解除／新增與舊 main 退役必須由 owner 原子 commit，讀者不得看見半完成狀態。
+    /// 新 main 使用新 logical key／Number／Codex sid；只重綁 actor 則保留原身分。
+    /// 例：(wrapper, native, ParticipantRelationChanged (11L, ReActRelation.Owns, true))。
+    | ParticipantRelationChanged of streamId: StreamId * relation: ReActRelation * isActive: bool
 
     // 原生 FGL labelled edge；不另包 envelope 或複製方向欄位。
     /// 例如 (ReActEndpoint.Human, wrapperEndpoint, HumanInit (1L, HumanPrompt "review"))。
@@ -590,15 +666,20 @@ module CoreMod =
     type ReActDataStream<'TypedCmdToWrapper> =
         FSharp.FGL.LEdge<ReActEndpoint, ReActEvent<'TypedCmdToWrapper>>
 
-    // handler 持有持續更新的 committed graph，不是待寫入的 queue，也不是 IAgent registry。
+    // 同一張 committed graph 保存 metadata／ownership／角色與訊息，不另建第二張 topology graph。
+    // handler 持有持續更新的 graph，不是待寫入的 queue，也不是 IAgent registry。
     // 同一對端點允許多個事件。StreamId 在所屬 session 唯一；相同 id 重試必須由實作去重，
     // 同 id 不同資料必須拒絕，不能依文字內容判定是不是同一事件。
     // FGL Copy() 只隔離 graph 容器；可變的 'TypedCmdToWrapper payload 還須由實作複製。
     // 讀者取得的副本不得回寫 handler 的 graph；移除 live participant 不刪除歷史節點。
-    // 本輪不規範 topic 分類、摘要覆蓋範圍或 compact policy。
+    // vertex label 是 metadata 事件的投影；snapshot 必須複製所有 vertices／labels，不能只從 edges 重建。
+    // 註冊後尚未發話的 participant 仍須可列出；舊 unit label 不得憑空補造身分，只能標 unresolved。
+    // topology events 不派送給模型，也不當作 user message／compact 的 prompt-response context。
+    // /wrapper_compact 的分批摘要、固定 prompt 與切換 SOP 由版本化實作提供，不在此寫死政策。
+    // compact/restart 保留原始歷史；root scope 與編號配置權不因 remote owner 或 main 替換而改變。
     type WrappedReActDataFlow<'TypedCmdToWrapper when 'TypedCmdToWrapper : equality> =
         FSharp.FGL.ArrayAdjacencyGraph.ArrayAdjacencyGraph<
-            ReActEndpoint, unit, ReActEvent<'TypedCmdToWrapper>>
+            ReActEndpoint, ReActNode, ReActEvent<'TypedCmdToWrapper>>
 
     type ReActLoopStatus = {
         PendingHumanPromptCount: int
@@ -680,6 +761,8 @@ module CoreMod =
         (*
             1. 所有對 agent 的操作，皆由該 agent tell 自己的 instance (IActorRef) 來進行，所以 agent 的能力封裝都在 actor 中
             2. 無論是以第一人稱視角進行(也就是 agent 自身)或者是以第三人稱視角進行(也就是 agent 自身之外的使用者)，都必須透過 IAgent<'T> 來操作 agent instance (基本上就是 tell message)
+            3. 本機 caller 使用 IAgent；remote caller 傳純資料 Akka request，由 owner 端控制 actor 呼叫其 IAgent。
+               IAgent object expression／quotation／callback 不跨 wire；Console 不是必要控制元件。
         *)
         member this.Instance = instance
         abstract member Start: TIAgentStart
@@ -881,7 +964,8 @@ module CoreMod =
         member this.Node = node
         member this.ReActLoopHandler = reActLoopHandler
 
-        // 將 logical participant 加入 Fodex-wide topology；同一 logical identity 會覆寫目前的 IAgent。
+        // 更新 logical participant 的 live IAgent binding；同一 logical identity 會覆寫目前的 IAgent。
+        // 此 API 不等於 metadata／配號的 durable 註冊；raw exec 可以只有 owner worker 而沒有 IAgent。
         // 首次出現、actor restart／重新定位與 runtime 重新 pin 都使用同一個 operation。
         abstract member UpsertParticipant:
             TReActLoopUpsertParticipant<ReActParticipant, IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>>
@@ -957,6 +1041,8 @@ module CoreMod =
         /// 不是 mailbox enqueue acknowledgement，也不表示外部 user 已收到訊息。
         /// Human output 及 participant dispatch 只能在 commit 後發生；recover 只重建 graph，
         /// 不得重新發送 prompt/tool。重試同 StreamId 要檢查資料相同並去重；衝突回傳 Error。
+        /// metadata／relation 事件只更新 durable graph，不派送給 native／user；驗證 self-edge／owner 方向。
+        /// 單筆 route 不可冒充跨多個 topology 事件的原子切換；main 替換需實作提供原子提交操作。
         /// 用法：loop.RouteReActDataStream (ReActEndpoint.Human, wrapperEndpoint, HumanInit (1L, HumanPrompt prompt))。
         /// Actor/mailbox、持久化、graph mutation 與拓樸驗證都在版本化 implementation，不在此 facade。
         abstract member RouteReActDataStream:
@@ -971,7 +1057,8 @@ module CoreMod =
 
         /// 讀整個 ReActLoop session 的持久化歷史，依 StreamId 遞增回傳原生 edges。
         /// 用法：loop.Collect wrapperSessionId；不是讀未 commit mailbox，也不是 ReadDataFlow 的別名。
-        /// 即使 in-memory graph 已 compact，Collect 仍保留完整歷史；graph enumeration 本身不保證排序。
+        /// 包含 metadata／relation 歷史，不限於模型輸出；graph enumeration 本身不保證排序。
+        /// /wrapper_compact 換新 main 不刪 graph／DB 原文；Collect 仍保留完整歷史。
         /// 大量歷史需要逐行匯出時，使用 IAgent.ExportReActDataStreamJsonl，不在這裡組巨型字串。
         abstract member Collect:
             TReActLoopCollect<ReActParticipantSessionId, ReActDataStream<'TypedCmdToWrapper>>
@@ -987,6 +1074,8 @@ module CoreMod =
         /// 用法：loop.ReadDataFlow wrapperSessionId |> Result.map (fun graph -> graph.GetEdges())。
         /// 需要特定兩端的全部歷史使用 graph.GetEdges(source, target)，不要只呼叫 GetEdge。
         /// 回傳獨立副本，包含可變 payload 的隔離；FGL Copy() 本身只複製容器。
+        /// 副本包含全部 node labels／孤立節點及 relation 歷史；讀 active 關係須依 StreamId fold。
+        /// 本方法與 graph 查詢不得為了填 sid／地址而 Acquire／Start participant。
         /// 純 Contract 不知道如何複製泛型 payload，必須由該版本 implementation 負責。
         /// 不承諾 GetEdges enumeration 的時間順序；需要線性時間序列時依 StreamId 排序。
         abstract member ReadDataFlow:

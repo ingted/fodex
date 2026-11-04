@@ -27,7 +27,9 @@ open System
 open Expecto
 open NLog
 
-do LogManager.Setup().LoadConfigurationFromFile(IO.Path.Combine(__SOURCE_DIRECTORY__,"../Fodex.Supervisor/NLog.conf"),false) |> ignore
+// Test Explorer 可能直接反射呼叫 fixture function，尚未觸發 F# startup-code 的頂層 do。
+// 由 withNode 明確 force，一個 testhost 只配置一次；不依賴測試發現/執行順序。
+let logging = lazy (LogManager.Setup().LoadConfigurationFromFile(IO.Path.Combine(__SOURCE_DIRECTORY__,"../Fodex.Supervisor/NLog.conf"),false) |> ignore)
 
 open Fodex.Supervisor.Contracts.CoreMod
 
@@ -56,6 +58,7 @@ let eventEdge id : ReActDataStream<string> =
 
 /// 一個測試一個 ActorSystem；結束必須 terminate，不將 registry 或 mailbox 留給下一個測試。
 let withNode action =
+    logging.Force()
     let config = Fodex.Supervisor.ActorLogging.config
     let node = Akka.Actor.ActorSystem.Create("fodex-v200-" + Guid.NewGuid().ToString("N"), config)
     let mutable actionError: string option = None

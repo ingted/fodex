@@ -13,5 +13,6 @@ let main _ =
         ReActLoopRouteReActDataStreamTests.tests
         ReActLoopCollectTests.tests
         ReActLoopReadDataFlowTests.tests
+        ReActTopologyTests.tests
     ]
     |> runTestsWithCLIArgs [] [||]
