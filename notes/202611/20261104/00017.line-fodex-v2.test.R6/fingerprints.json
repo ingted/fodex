@@ -1,0 +1,106 @@
+{
+  "at": "2026-11-04T18:55:20.7027697+08:00",
+  "manifestUnchanged": true,
+  "checks": [
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_bot_rn_nuget.multimedia.multisession.fodex.v2.fsx",
+      "before": "13E14EDC7EAD65BEA8648D2F2FD575C3ADF9A8282425F81ED07BEBE7CAFE225B",
+      "after": "13E14EDC7EAD65BEA8648D2F2FD575C3ADF9A8282425F81ED07BEBE7CAFE225B",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_line.fsx",
+      "before": "D99BF8C16B49BDCCB806CD05091FEAC1C0D3AC173F965AC74F181EE9A67DD36B",
+      "after": "D99BF8C16B49BDCCB806CD05091FEAC1C0D3AC173F965AC74F181EE9A67DD36B",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_options.fsx",
+      "before": "4691A759CE4C9BAAEF4B5A8EAF849A5C5D9AC01E74A1CC00A5E85DF08006C229",
+      "after": "4691A759CE4C9BAAEF4B5A8EAF849A5C5D9AC01E74A1CC00A5E85DF08006C229",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_policy.fsx",
+      "before": "F26E3960061B0110AF8FE0EF3E3B4B5C828E209C0AFC3BA79C42CA89F9CFAC5E",
+      "after": "F26E3960061B0110AF8FE0EF3E3B4B5C828E209C0AFC3BA79C42CA89F9CFAC5E",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_references.fsx",
+      "before": "FEAA8D23572FB7365BCEF2860A8D8CDCF8FA83C677EE178966ED98E54A9F3DF7",
+      "after": "FEAA8D23572FB7365BCEF2860A8D8CDCF8FA83C677EE178966ED98E54A9F3DF7",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_runtime.fsx",
+      "before": "5FC5EDFED2998CB97F571A3933EDDADDE60B1BDF688E6102729272A05AB53D48",
+      "after": "5FC5EDFED2998CB97F571A3933EDDADDE60B1BDF688E6102729272A05AB53D48",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_service.fsx",
+      "before": "C6C450075E7DF9CC3F81117BD8EFE33BD6D0380B586804E16A9C31A66529729D",
+      "after": "C6C450075E7DF9CC3F81117BD8EFE33BD6D0380B586804E16A9C31A66529729D",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_shared_bootstrap.fsx",
+      "before": "B613AE831D660921D10AD8F599D10F6F48CFD2D26AD54131A9B66C24004D58C7",
+      "after": "B613AE831D660921D10AD8F599D10F6F48CFD2D26AD54131A9B66C24004D58C7",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_shared_restore.fsx",
+      "before": "9B1792AA9866368870441AF0E8AA4328BB2CE87DC11CC792DB8F803D9981A255",
+      "after": "9B1792AA9866368870441AF0E8AA4328BB2CE87DC11CC792DB8F803D9981A255",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_store.fsx",
+      "before": "50C690C5A4711C76AEC3FA007D5605C6E87021125A05CB222BF4AEE7786618FF",
+      "after": "50C690C5A4711C76AEC3FA007D5605C6E87021125A05CB222BF4AEE7786618FF",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\temp\\m019-line-v2-authority-fixture\\F-8c9b80e-gitbytes\\Fodex.Supervisor\\bin\\M019.Authority.R2\\Debug\\net10.0\\win-x64\\Fodex.Supervisor.dll",
+      "before": "C4B8E2330D039D10CCF3C5823E3014C64DEAE281F6AF177C3AC4D9B672C75DA7",
+      "after": "C4B8E2330D039D10CCF3C5823E3014C64DEAE281F6AF177C3AC4D9B672C75DA7",
+      "equal": true
+    },
+    {
+      "path": "F:\\fodex\\Fodex.Supervisor\\LineReferencesV302.fsx",
+      "before": "FEC669FCE3423E8F9205F0DABC29C00BE781FA8F171344CFD401461F735ED8F8",
+      "after": "FEC669FCE3423E8F9205F0DABC29C00BE781FA8F171344CFD401461F735ED8F8",
+      "equal": true
+    },
+    {
+      "path": "C:\\Users\\Administrator\\AppData\\Roaming\\npm/node_modules/@openai/codex/node_modules/@openai/codex-win32-x64/vendor/x86_64-pc-windows-msvc/bin/codex.exe",
+      "before": "9D563EE4E0441FF9D59D612013E0460DDF8E5709735C2D9F6B98B7EF8CA4EB42",
+      "after": "9D563EE4E0441FF9D59D612013E0460DDF8E5709735C2D9F6B98B7EF8CA4EB42",
+      "equal": true
+    }
+  ],
+  "ownedTestSources": [
+    {
+      "path": "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2R6Delta.ps1",
+      "sha256": "EA681779146920E0F85ED2231E2C3DF56136E1A3FE703CCD70C51860DE4D660D"
+    },
+    {
+      "path": "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2R6ToolProtocol.fsx",
+      "sha256": "8017F403A47668C1CB4790938E5A25C39544C00E330C1900809C977FD6D9BB45"
+    },
+    {
+      "path": "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2R6Sql.fsx",
+      "sha256": "196CC2A0BB05A00325F132F5E7FBDCBF334464D720D38B39A355C4FE41097B9C"
+    }
+  ],
+  "startResumeProductEvidence": {
+    "policy": "G:/PulseTrade.fs/misc/line_provider_fodex_v2_policy.fsx:80,85-86",
+    "basis": "pinned immutable8c9 build + product factory source + actual start/resume protocol; no raw production RPC/config logged",
+    "compiledSource": "G:\\PulseTrade.fs\\temp\\m019-line-v2-authority-fixture\\F-8c9b80e-gitbytes\\Fodex.Supervisor\\NativeAppServerV300.fsx",
+    "compiledSourceSHA": "442C40516F60AC458A104F073AF36C33F19942390FD7C4A4D4C793054DDEF5E3",
+    "compiledLines": "164-181: same threadConfiguration passed to start/resume",
+    "factory": "G:/PulseTrade.fs/misc/line_provider_fodex_v2_runtime.fsx:78-80"
+  }
+}

@@ -1,0 +1,41 @@
+
+
+warning FS0075: The command-line option '--parallelcompilation' is for test purposes only
+
+
+
+M019LineV2R6ToolProtocol.fsx(28,1): warning FS0524: 'use' bindings are not permitted in modules and are treated as 'let' bindings
+
+
+
+M019LineV2R6ToolProtocol.fsx(31,1): warning FS0524: 'use' bindings are not permitted in modules and are treated as 'let' bindings
+
+
+
+M019LineV2R6ToolProtocol.fsx(123,1): warning FS0524: 'use' bindings are not permitted in modules and are treated as 'let' bindings
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_policy.fsx(76,43): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+M019LineV2R6ToolProtocol.fsx(61,135): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+M019LineV2R6ToolProtocol.fsx(72,283): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+M019LineV2R6ToolProtocol.fsx(72,338): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+M019LineV2R6ToolProtocol.fsx(77,12): warning FS3511: This state machine is not statically compilable. A 'let rec' occurred in the resumable code specification. An alternative dynamic implementation will be used, which may be slower. Consider adjusting your code to ensure this state machine is statically compilable, or else suppress this warning.
+
+Warn|Proc $b stderr: codex app-server (WebSockets)
+Warn|Proc $b stderr:   listening on: ws://127.0.0.1:13713
+Warn|Proc $b stderr:   readyz: http://127.0.0.1:13713/readyz
+Warn|Proc $b stderr:   healthz: http://127.0.0.1:13713/healthz
+Warn|Proc $b stderr:   note: binds localhost only (use SSH port-forwarding for remote access)

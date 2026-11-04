@@ -1,0 +1,8 @@
+{
+  "original": "sql.stdout.rawbytes",
+  "originalSHA": "FC372D7B39AAA87454FFC82052D1850D596AACF49874B4E83B58B2A92A59A66A",
+  "derived": "sql.stdout.utf8.log",
+  "declaredSourceEncoding": "CP950; lossless byte roundtrip verified",
+  "roundtrip": true,
+  "reason": "Expecto en dash redirected as Windows codepage; original bytes retained, never replaced or overwritten."
+}

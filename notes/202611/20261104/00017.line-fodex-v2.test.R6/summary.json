@@ -1,0 +1,59 @@
+{
+  "status": "R6 restricted delta accepted; R4 OS-network-denial FAIL remains",
+  "modeScope": "usable shell-disabled capability mode only; no OS network-deny claim",
+  "executed": 5,
+  "passed": 5,
+  "failed": 0,
+  "skipped": 0,
+  "counts": {
+    "formalRealModelProcessMemoryImage": 1,
+    "credentialFreeNativeProtocolStartResume": 1,
+    "controlledFactoryRealSQL": 3
+  },
+  "notExecuted": [
+    "R4 full sixAC",
+    "R5 Adapter17/17 unchanged carry-forward",
+    "64-file QA",
+    "normal host/RN integration",
+    "true LINE/API/public media",
+    "control-helper security audit"
+  ],
+  "fingerprint": "manifest7A1515577A4D338FD5282BBD389BD7CB75A1A08330C2B9A512D68F57D6A16C17 / target13E14EDC7EAD65BEA8648D2F2FD575C3ADF9A8282425F81ED07BEBE7CAFE225B / native9D563EE4E0441FF9D59D612013E0460DDF8E5709735C2D9F6B98B7EF8CA4EB42 / SupervisorC4B8E2330D039D10CCF3C5823E3014C64DEAE281F6AF177C3AC4D9B672C75DA7",
+  "actualProof": {
+    "sql": "callerPooling=true, actual leasePooling=false; same process failedAcquire/liveownerRecover -> Recover success; stale generation/unknown route fence; A process still alive after idleTTL/Dispose, B new process same wrapper acquires. No ClearPool.",
+    "protocol": "actual pinned native .166 dispatcher start/resume8 fixture requests; direct exec_command unsupported + code-mode tools.exec_command TypeError; positiveControl200/nativeHits0/guard unchanged/viewImage actual content; product load rejects changed dummy binary",
+    "native": "two full entry processes43980/71936 exit0; same wrapper4ca09869-8c17-40af-b919-411bba5e0ae5/nativeSID01a1a62e-1a26-7ed2-b504-6e4c6e4b4724/gen1; nonce memory; actual view_image1/result1 + independent BLUE YELLOW RED GREEN semantics",
+    "productCfg": "actual v2 policy config creation/guard and factory receive same dictionary; immutable compiled NativeAppServerV300:164-181 passes same threadConfiguration to start/resume; actual dispatcher exercises both; no headers/auth/raw config recorded"
+  },
+  "remaining": [
+    "R4 HTTP200 FAIL preserved: not OS-deny fix",
+    "inventory contains collaboration/control names; never invoked and not fully audited",
+    "external exactly-once/original LINE order/general image ability unproven",
+    "no host/trueLINE/public media verification"
+  ],
+  "history": {
+    "initial": "three wrapper-case FAIL due own metadata ToArray; actual protocol also rejected ephemeral resume; initial raw preserved",
+    "retry": "native raw case FAIL only wrong dateformat audit path; live turns succeeded and unchanged oracles independently revalidated from exact own SID; final native-audit-correction.json",
+    "rawRoots": [
+      "F:/fodex/temp/sub-5/M019-v2-R6-20261104184359",
+      "F:\\fodex\\temp\\sub-5\\M019-v2-R6-20261104184853"
+    ],
+    "rewroteHistoricalExpected": false
+  },
+  "commands": [
+    "pwsh -NoProfile -File F:/fodex/Fodex.Supervisor.Tests/M019LineV2R6Delta.ps1 -Root F:\\fodex\\temp\\sub-5\\M019-v2-R6-20261104184853"
+  ],
+  "exactChildCommands": "delta-results.json processes[].args",
+  "resources": "resources.json: owned process0/native listener0/DB0; logins never created; no normal-host/LINE/production-health call",
+  "encoding": "original redirected bytes preserved; SQL CP950 rawbytes plus separate UTF8 derived log with lossless roundtrip proof; remaining new text strict gate",
+  "ownerPaths": [
+    "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2R6Delta.ps1",
+    "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2R6ToolProtocol.fsx",
+    "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2R6Sql.fsx",
+    "F:/fodex/notes/202611/20261104/00017.line-fodex-v2.test.R6.md",
+    "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6",
+    "F:\\fodex\\log\\20261104\\20261104184359.M019-v2-R6-delta.log"
+  ],
+  "GModifiedPaths": [],
+  "indexCommitPush": "none; sub6 sole index owner"
+}

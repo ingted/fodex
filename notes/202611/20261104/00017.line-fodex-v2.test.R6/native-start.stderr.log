@@ -1,0 +1,74 @@
+
+
+warning FS0075: The command-line option '--parallelcompilation' is for test purposes only
+
+
+
+line_provider_fodex_v2_policy.fsx(76,43): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_bot_rn_nuget.multimedia.multisession.almighty.fsx(4159,17): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_bot_rn_nuget.multimedia.multisession.almighty.fsx(4787,61): warning FS0066: This upcast is unnecessary - the types are identical
+
+
+
+line_provider_fodex_v2_store.fsx(77,168): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(83,87): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(87,378): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(89,123): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(97,145): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(116,169): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(122,238): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(132,100): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(154,170): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(177,174): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(188,174): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(215,169): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+Warn|Proc $b stderr: codex app-server (WebSockets)
+Warn|Proc $b stderr:   listening on: ws://127.0.0.1:13481
+Warn|Proc $b stderr:   readyz: http://127.0.0.1:13481/readyz
+Warn|Proc $b stderr:   healthz: http://127.0.0.1:13481/healthz
+Warn|Proc $b stderr:   note: binds localhost only (use SSH port-forwarding for remote access)
+Warn|Proc $d stderr: codex app-server (WebSockets)
+Warn|Proc $d stderr:   listening on: ws://127.0.0.1:13523
+Warn|Proc $d stderr:   readyz: http://127.0.0.1:13523/readyz
+Warn|Proc $d stderr:   healthz: http://127.0.0.1:13523/healthz
+Warn|Proc $d stderr:   note: binds localhost only (use SSH port-forwarding for remote access)

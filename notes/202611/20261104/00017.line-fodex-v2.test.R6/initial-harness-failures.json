@@ -1,0 +1,27 @@
+{
+  "at": "2026-11-04T18:48:23.7488034+08:00",
+  "results": [
+    {
+      "case": "formal-native-process-memory-owned-image",
+      "passed": false,
+      "error": "Method invocation failed because [System.String] does not contain a method named 'ToArray'."
+    },
+    {
+      "case": "protocol",
+      "passed": false,
+      "error": "Method invocation failed because [System.String] does not contain a method named 'ToArray'."
+    },
+    {
+      "case": "sql",
+      "passed": false,
+      "error": "Method invocation failed because [System.String] does not contain a method named 'ToArray'."
+    }
+  ],
+  "processes": [],
+  "ownedDatabases": [
+    "M019R6Native_29ddffd7778948dd8998e09a4e05bda2",
+    "M019R6Sql_3a87a167184947bab0effdd929a468dc"
+  ],
+  "remainingDatabases": "0",
+  "createdLogins": 0
+}

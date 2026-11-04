@@ -1,0 +1,200 @@
+{
+  "at": "2026-11-04T18:57:48.0238538+08:00",
+  "files": [
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6\\B-after-dispose.stdout.log",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6\\B-after-ttl.stdout.log",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6\\baseline.json",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6\\delta-results.json",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6\\fingerprints.json",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6\\initial-harness-failures.json",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6\\native-audit-correction.json",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6\\native-resume.stderr.log",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6\\native-resume.stdout.log",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6\\native-start.stderr.log",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6\\native-start.stdout.log",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6\\protocol.stderr.log",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6\\protocol.stdout.log",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6\\resources.json",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6\\sql.stderr.log",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6\\sql.stdout.utf8.log",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6\\stdout-encoding.json",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6\\summary.json",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6\\tool-protocol.json",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2R6Delta.ps1",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2R6ToolProtocol.fsx",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2R6Sql.fsx",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R6.md",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\log\\20261104\\20261104184359.M019-v2-R6-delta.log",
+      "strictUtf8": true,
+      "bom": false,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    }
+  ],
+  "bad": 0,
+  "psParserErrors": 0,
+  "rawArtifactException": "PNG binary plus sql.stdout.rawbytes exact CP950 bytes; documented lossless UTF8 derivative"
+}

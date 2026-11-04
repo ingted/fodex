@@ -1,0 +1,26 @@
+{
+  "case": "actual-native-owned-image-audit-corrected-path",
+  "auditPath": "C:\\Users\\Administrator\\.codex\\sessions\\2026\\11\\04\\rollout-2026-11-04T18-50-01-01a1a62e-1a26-7ed2-b504-6e4c6e4b4724.jsonl",
+  "auditSHA": "340D221098A22B26945A7477277E049460C66064C675AECB24C9A751DF16E182",
+  "nativeSid": "01a1a62e-1a26-7ed2-b504-6e4c6e4b4724",
+  "viewImageCalls": 1,
+  "viewImageOutputs": 1,
+  "semanticEnglishBlueYellowRedGreen": true,
+  "forbiddenControlCalls": 0,
+  "contexts": [
+    {
+      "model": "gpt-6.1-sol",
+      "sandbox": {
+        "type": "read-only"
+      }
+    },
+    {
+      "model": "gpt-6.1-sol",
+      "sandbox": {
+        "type": "read-only"
+      }
+    }
+  ],
+  "sourceDatePathCorrection": "original yyyy\\MM\\dd format escaped letters; corrected yyyy/MM/dd. Existing real turns reused; no native rerun or expectation change.",
+  "passed": true
+}

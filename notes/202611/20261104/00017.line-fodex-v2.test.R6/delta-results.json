@@ -1,0 +1,138 @@
+{
+  "at": "2026-11-04T18:52:27.5924403+08:00",
+  "results": [
+    {
+      "case": "formal-native-process-memory-owned-image",
+      "passed": false,
+      "error": "Cannot find path 'C:\\Users\\Administrator\\.codex\\sessions\\2026M11d4' because it does not exist."
+    },
+    {
+      "case": "protocol",
+      "passed": true,
+      "pid": 73064
+    },
+    {
+      "case": "sql",
+      "passed": true,
+      "pid": 54508
+    }
+  ],
+  "processes": [
+    {
+      "name": "native-start",
+      "pid": 43980,
+      "exit": 0,
+      "started": "2026-11-04T18:48:56.5354274+08:00",
+      "ended": "2026-11-04T18:50:07.5775699+08:00",
+      "source": "G:\\PulseTrade.fs\\misc\\line_bot_rn_nuget.multimedia.multisession.fodex.v2.fsx",
+      "args": [
+        "C:\\Program Files\\dotnet\\sdk\\11.0.100-rc.2.26504.105\\FSharp\\fsi.dll",
+        "--parallelcompilation-",
+        "--debug-",
+        "--define:V2_PINNED_8C9B80E",
+        "--exec",
+        "G:\\PulseTrade.fs\\misc\\line_bot_rn_nuget.multimedia.multisession.fodex.v2.fsx",
+        "--",
+        "--mode",
+        "request",
+        "--sql-server",
+        "localhost",
+        "--database",
+        "M019R6Native_417fc3245df64c6e8c32af27666ede80",
+        "--conversation",
+        "sub5-r6-2829a6123ab5411c9274fc4a47dd2817",
+        "--target",
+        "main",
+        "--route",
+        "415f014e-9772-458c-9a27-7804c57e83ce",
+        "--model",
+        "gpt-6.1-sol",
+        "--effort",
+        "low",
+        "--working-directory",
+        "F:/fodex/temp/sub-5/M019-v2-R6-20261104184853",
+        "--output-root",
+        "F:/fodex/temp/sub-5/M019-v2-R6-20261104184853/native",
+        "--prompt",
+        "Remember this token SUB5_R6_764501d51b984a39b412114eafbf07a6. Reply exactly SUB5_R6_FIRST_OK in English."
+      ]
+    },
+    {
+      "name": "native-resume",
+      "pid": 71936,
+      "exit": 0,
+      "started": "2026-11-04T18:50:07.8115105+08:00",
+      "ended": "2026-11-04T18:51:23.5798604+08:00",
+      "source": "G:\\PulseTrade.fs\\misc\\line_bot_rn_nuget.multimedia.multisession.fodex.v2.fsx",
+      "args": [
+        "C:\\Program Files\\dotnet\\sdk\\11.0.100-rc.2.26504.105\\FSharp\\fsi.dll",
+        "--parallelcompilation-",
+        "--debug-",
+        "--define:V2_PINNED_8C9B80E",
+        "--exec",
+        "G:\\PulseTrade.fs\\misc\\line_bot_rn_nuget.multimedia.multisession.fodex.v2.fsx",
+        "--",
+        "--mode",
+        "request",
+        "--sql-server",
+        "localhost",
+        "--database",
+        "M019R6Native_417fc3245df64c6e8c32af27666ede80",
+        "--conversation",
+        "sub5-r6-2829a6123ab5411c9274fc4a47dd2817",
+        "--target",
+        "main",
+        "--route",
+        "f78dc07a-d205-4ba5-9e1e-033acbcef3e6",
+        "--model",
+        "gpt-6.1-sol",
+        "--effort",
+        "low",
+        "--working-directory",
+        "F:/fodex/temp/sub-5/M019-v2-R6-20261104184853",
+        "--output-root",
+        "F:/fodex/temp/sub-5/M019-v2-R6-20261104184853/native",
+        "--prompt",
+        "Use the available view_image tool on F:/fodex/temp/sub-5/M019-v2-R6-20261104184853/owned-delta.png. Reply in English only with the token you remember, then the four quadrant colors in order top-left, top-right, bottom-left, bottom-right. Inspect the actual image. Do not guess."
+      ]
+    },
+    {
+      "name": "protocol",
+      "pid": 73064,
+      "exit": 0,
+      "started": "2026-11-04T18:51:23.7627639+08:00",
+      "ended": "2026-11-04T18:51:51.9514572+08:00",
+      "source": "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2R6ToolProtocol.fsx",
+      "args": [
+        "C:\\Program Files\\dotnet\\sdk\\11.0.100-rc.2.26504.105\\FSharp\\fsi.dll",
+        "--parallelcompilation-",
+        "--debug-",
+        "--define:V2_PINNED_8C9B80E",
+        "--exec",
+        "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2R6ToolProtocol.fsx"
+      ]
+    },
+    {
+      "name": "sql",
+      "pid": 54508,
+      "exit": 0,
+      "started": "2026-11-04T18:51:51.9553238+08:00",
+      "ended": "2026-11-04T18:52:26.8947272+08:00",
+      "source": "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2R6Sql.fsx",
+      "args": [
+        "C:\\Program Files\\dotnet\\sdk\\11.0.100-rc.2.26504.105\\FSharp\\fsi.dll",
+        "--parallelcompilation-",
+        "--debug-",
+        "--define:V2_PINNED_8C9B80E",
+        "--exec",
+        "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2R6Sql.fsx"
+      ]
+    }
+  ],
+  "ownedDatabases": [
+    "M019R6Native_417fc3245df64c6e8c32af27666ede80",
+    "M019R6Sql_c3218af35741473eb79d5feea33aec89"
+  ],
+  "remainingDatabases": "0",
+  "createdLogins": 0
+}

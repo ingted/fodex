@@ -1,0 +1,20 @@
+# M019 R6 independent delta
+背景/上下文：R6 shell-disabled usable mode；R4 HTTP FAIL preserved.
+目標/驗收：formal native start/resume/image; forced native protocol command denial; physical SQL lifecycle.
+假設：R6 manifest/10sources/native capability pin/pinned DLL unchanged.
+範圍：own F delta tests/card/log/evidence; no product/PTC/LINE/index mutations.
+計畫步驟：frozen fingerprint→three minimum delta suites under watchdog→cleanup readback→one scoped gate.
+風險：not OS network deny; helper tool catalog not fully audited; fake protocol is not real model; no host/public media.
+執行命令/參數：dotnet SDK11 fsi.dll --define:V2_PINNED_8C9B80E; exact sources/args in result.
+結果：RUNNING.
+根因判讀：verify changed capability mode without rewriting R4 oracle.
+下一步：run owned delta.
+關聯文件/工單/PR：latest dev READY R6/manifest7A151557.
+prompt/上下文摘要：only affected minimum, preserve intermediate FAIL, no other worker wait.
+
+## Operations
+2026-11-04T18:43:59.8188429+08:00 baseline product10/pinned captured before owned test changes.
+2026-11-04T18:49:27.1822214+08:00 Own first attempt FAIL preserved root18:43:59: native first response completed but metadata ArgumentList.ToArray failed; protocol thread/resume rejected because fixture ephemeral=true, corrected own test to persistent thread. SQL helper original stdout retained. Corrected metadata cast and reran only delta three suites under fresh root18:48:53. No product or oracle change. Dummy hash rejection now invokes actual product policy.load with own four-byte file.
+2026-11-04T18:56:58.8554573+08:00 Actual delta finished: unique5 meaningful oracle cases passed (native1/protocol1/SQL3). Two provider PID43980/71936 same wrapper/SID/memory+viewimage semantics; actual command forced native fixture start/resume no command tools/sink0; SQL3/3. Date-path audit bug corrected against existing exact ownSID without rerunning model. All intermediate failures retained. Product13 fingerprint entries match; owned process/listener/DB0, login0. Carry R4HTTPFAIL; no host/LINE/general security claim. Freeze only new delta necessary output; one scoped gate next.
+2026-11-04T18:58:21.1599454+08:00 Final delta text encoding files24 strict UTF8/noBOM/NUL0/U+FFFD0/PSparser0; original CP950 SQL rawbytes preserved and roundtrip conversion documented separately. One scoped sensitive run files25 High0 Medium0. Canonical gate below uses real F logdir and frozen new R6 evidence only; live outputs outside both dirs.
+2026-11-04T18:59:06.3601080+08:00 R6 DELTA FINAL:5P0F0S; scope shell-disabled not OS deny. Canonical single run exit0 PASS29 WARN1 FAIL0 existing dirty. Sensitive single run files25 High0 Medium0. Frozen evidence unchanged after gate. No G/index/commit/push; handoff immediately, no participant wait.

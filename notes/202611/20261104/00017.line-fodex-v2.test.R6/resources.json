@@ -1,0 +1,24 @@
+{
+  "at": "2026-11-04T18:54:46.0757463+08:00",
+  "ownedProcesses": [],
+  "observedNativePorts": [
+    13135,
+    13170,
+    13209,
+    13481,
+    13523,
+    13622,
+    13655,
+    13713
+  ],
+  "remainingListeners": [],
+  "databases": [
+    "M019R6Native_417fc3245df64c6e8c32af27666ede80",
+    "M019R6Sql_c3218af35741473eb79d5feea33aec89",
+    "M019R6Native_29ddffd7778948dd8998e09a4e05bda2",
+    "M019R6Sql_3a87a167184947bab0effdd929a468dc"
+  ],
+  "remainingDatabases": "0",
+  "createdLogins": 0,
+  "readback": "Only own resources. No normal host/LINE/production health invoked."
+}
