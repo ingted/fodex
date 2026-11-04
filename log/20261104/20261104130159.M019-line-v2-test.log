@@ -1,0 +1,24 @@
+# M019 LINE v2 test owner
+背景/上下文：v1風險六項，開發sub-4建立v2；本owner只寫v2測試/證據。
+目標/驗收：正式最小真鏈成功後，分層驗cap/TTL、跨provider process恢復、持久dedup/unknown crash、admission ordering與實際權限拒絕。
+假設：以短contract/READY及fingerprint為authority；不是v1測試改標v2。
+範圍：F repo必要v2 Expecto/worker測試、此log、短結果卡及少量證據；不改任何產品source/v1/PTC/正式服務/config，不送真LINE，不操作git index/commit/push。
+計畫步驟：需求/plan指定章節→獨立oracle→工具內有界等contract/READY→正式入口真native一次→對應六層→watchdog/cleanup readback→scoped gates/fingerprint與交接。
+風險：同process appserver重建不是provider restart；synthetic/fixture不是production；external exactly-once與LINE原始順序不推論；拒絕必須觀察實際attempt/error而非模型口頭拒絕。
+執行命令/參數：API/設定待contract，不預先複製舊fixture或compile未READY半成品。
+結果：prepared，executed0/passed0/failed0/skipped0。
+根因判讀：沿需求列出的缺口設oracle，不沿實作複製expected。
+下一步：等待contract/API可用。
+關聯文件/工單/PR：notes/202611/20261104/00017.M018.evaluation.review.txt、00016.token.usage.save.plan.md core/3/4/7、00017.line-fodex-v2.contract.md、00017.line-fodex-v2.dev.md、00017.line-fodex-v2.test.md。
+prompt/上下文摘要：允許啟隔離runtime/自有DB與目標；root不建wrapper，由測試owner啟動；必要watchdog、cleanup與短結果，不等文件者。
+
+## Operations
+2026-11-04T13:01:59.2799456+08:00 已讀完整共同需求及token plan短核心/§3,4,7。contract/dev/v2入口尚未存在，未編譯；舊v1/dirty保持。
+
+2026-11-04T13:21:22.6163432+08:00 準備三份自有測試：Expecto六層、held-after-real-native crash worker、900s owned-process watchdog。正式source fingerprint與SLICE1卡entry/store已漂移，未執行/未改產品。權限audit只計畫匹配本測試native SID當日單一檔案的本次新增tool-call記錄，不讀其它SID/history、不複製全文；沒有可用精確audit時該scope須未證明。
+
+2026-11-04T13:29:38.4810104+08:00 自有測試syntax-only解析，未執行#load/產品；找到workerArgs延續縮排，已僅修測試，第二次own syntax parser無error。產品/native/DB仍未啟動。
+
+2026-11-04T13:42:10.7645646+08:00 有界watch多次未見匹配READY，未啟動產品；依賴由sub4更新closure READY。凍結單一preparation.json：own syntax2/0error、acceptance0/0/0/0、自有process0/DB未建。此為blocked preparation，不冒稱完成AC。無G改檔。
+
+2026-11-04T13:44:44.3764844+08:00 準備交接blocked：F#syntax2/0error、PowerShell syntax0，scoped敏感files6 High0/Medium0；canonical exit0 PASS23 WARN1 FAIL0（existing dirty）。acceptance仍0/0/0/0，自有process0，DB未建立。最新READY仍SLICE1舊hash；需sub4更新匹配closure後續測，不宣稱完成六項AC。未index/commit/push。校正resource metadata排除本次PowerShell自身PID（原先命令列regex誤算自身）。

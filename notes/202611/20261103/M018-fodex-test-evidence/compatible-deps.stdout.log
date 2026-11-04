@@ -1,0 +1,59 @@
+E2E database-created FodexM018TestSub5_2bfee201b5244043af01adc7f4e7496a
+E2E loaded-supervisor F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\win-x64\Fodex.Supervisor.dll version=0.0.1.0
+[37m[[37m10:01:54 [37mINF[37m] [37mEXPECTO? Running tests...[37m [37m<[37mExpecto[37m>[37m
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"95e2656071b3450698ef7c2db19ab5ec","disposition":"reply","messages":[{"type":"text","text":"\u5C0D\u8A71\u6A21\u5F0F\u5DF2\u8A2D\u70BA general\u3002"}],"msgOut":"\u5C0D\u8A71\u6A21\u5F0F\u5DF2\u8A2D\u70BA general\u3002","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"eb2e66b636e84d8bbface5e71d3c98a0","disposition":"reply","messages":[{"type":"text","text":"\u5C0D\u8A71\u6A21\u5F0F\u5DF2\u8A2D\u70BA general\u3002"}],"msgOut":"\u5C0D\u8A71\u6A21\u5F0F\u5DF2\u8A2D\u70BA general\u3002","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25ht: ReActLoopCall`2
+[0m[1000D[?25harg: String
+[0m[1000D[?25harg: Object
+[0m[1000D[?25hE2E native-started 0a71b55f-8f23-49f3-936f-7c7aa3f6cd18
+[0m[1000D[?25hE2E native-request route=2b05a7ad-7dad-42fe-9037-4dd6f83e1827 wrapper=0a71b55f-8f23-49f3-936f-7c7aa3f6cd18
+[0m[1000D[?25hE2E native-response route=2b05a7ad-7dad-42fe-9037-4dd6f83e1827 wrapper=0a71b55f-8f23-49f3-936f-7c7aa3f6cd18 text=SUB5_A_OK
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"2b05a7ad7dad42fe90374dd6f83e1827","disposition":"reply","messages":[{"type":"text","text":"SUB5_A_OK"}],"msgOut":"SUB5_A_OK","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"2b05a7ad7dad42fe90374dd6f83e1827","disposition":"reply","messages":[{"type":"text","text":"SUB5_A_OK"}],"msgOut":"SUB5_A_OK","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25ht: ReActLoopCall`2
+[0m[1000D[?25harg: String
+[0m[1000D[?25harg: Object
+[0m[1000D[?25hE2E native-started 10855ef9-8da5-4346-8116-4898ba04c4ce
+[0m[1000D[?25hE2E native-request route=05415a1e-7ef6-46ee-83ea-88b1bcfe0ab2 wrapper=10855ef9-8da5-4346-8116-4898ba04c4ce
+[0m[1000D[?25hE2E native-response route=05415a1e-7ef6-46ee-83ea-88b1bcfe0ab2 wrapper=10855ef9-8da5-4346-8116-4898ba04c4ce text=SUB5_B_OK
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"05415a1e7ef646ee83ea88b1bcfe0ab2","disposition":"reply","messages":[{"type":"text","text":"SUB5_B_OK"}],"msgOut":"SUB5_B_OK","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E native-request route=5ea5f9a2-7516-4566-ad4a-c857ad4bae65 wrapper=0a71b55f-8f23-49f3-936f-7c7aa3f6cd18
+[0m[1000D[?25hE2E native-response route=5ea5f9a2-7516-4566-ad4a-c857ad4bae65 wrapper=0a71b55f-8f23-49f3-936f-7c7aa3f6cd18 text=SUB5_AMBER_731
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"5ea5f9a275164566ad4ac857ad4bae65","disposition":"reply","messages":[{"type":"text","text":"SUB5_AMBER_731"}],"msgOut":"SUB5_AMBER_731","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E native-request route=285fdc6f-9688-44ef-a356-d0815fae861d wrapper=10855ef9-8da5-4346-8116-4898ba04c4ce
+[0m[1000D[?25hE2E native-response route=285fdc6f-9688-44ef-a356-d0815fae861d wrapper=10855ef9-8da5-4346-8116-4898ba04c4ce text=SUB5_COBALT_942
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"285fdc6f968844efa356d0815fae861d","disposition":"reply","messages":[{"type":"text","text":"SUB5_COBALT_942"}],"msgOut":"SUB5_COBALT_942","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hE2E PASS-session-isolation 10855ef9-8da5-4346-8116-4898ba04c4ce,0a71b55f-8f23-49f3-936f-7c7aa3f6cd18
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E native-request route=d2923347-710c-46b2-b2e9-082e545e5093 wrapper=0a71b55f-8f23-49f3-936f-7c7aa3f6cd18
+[0m[1000D[?25hE2E native-response route=d2923347-710c-46b2-b2e9-082e545e5093 wrapper=0a71b55f-8f23-49f3-936f-7c7aa3f6cd18 text=SUB5_IMAGE_ENVELOPE_OK
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"d2923347710c46b2b2e9082e545e5093","disposition":"reply","messages":[{"type":"text","text":"SUB5_IMAGE_ENVELOPE_OK"}],"msgOut":"SUB5_IMAGE_ENVELOPE_OK","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hline-image-stage=downloaded route=73bfe99d2a5743b88b01fcff67ea5216 atUtc=11/3/2026 2:02:21 AM +00:00
+[0m[1000D[?25hline-image-stage=stored route=73bfe99d2a5743b88b01fcff67ea5216 atUtc=11/3/2026 2:02:21 AM +00:00
+[0m[1000D[?25hline-image-stage=published route=73bfe99d2a5743b88b01fcff67ea5216 atUtc=11/3/2026 2:02:21 AM +00:00
+[0m[1000D[?25hline-image-stage=participant-request route=73bfe99d2a5743b88b01fcff67ea5216 atUtc=11/3/2026 2:02:21 AM +00:00
+[0m[1000D[?25hE2E native-request route=73bfe99d-2a57-43b8-8b01-fcff67ea5216 wrapper=0a71b55f-8f23-49f3-936f-7c7aa3f6cd18
+[0m[1000D[?25hE2E native-response route=73bfe99d-2a57-43b8-8b01-fcff67ea5216 wrapper=0a71b55f-8f23-49f3-936f-7c7aa3f6cd18 text=SUB5_IMAGE_ENVELOPE_OK
+[0m[1000D[?25hline-image-stage=participant-response route=73bfe99d2a5743b88b01fcff67ea5216 atUtc=11/3/2026 2:02:24 AM +00:00
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"73bfe99d2a5743b88b01fcff67ea5216","disposition":"reply","messages":[{"type":"image","originalContentUrl":"https://sub5.example.invalid/line-media/nk_-iTG64eOAMjq2pTjjESKVUFqNfUY4sqnJ4Qoa-4k/original","previewImageUrl":"https://sub5.example.invalid/line-media/nk_-iTG64eOAMjq2pTjjESKVUFqNfUY4sqnJ4Qoa-4k/preview"},{"type":"text","text":"SUB5_IMAGE_ENVELOPE_OK"}],"msgOut":"SUB5_IMAGE_ENVELOPE_OK","originalContentUrl":"https://sub5.example.invalid/line-media/nk_-iTG64eOAMjq2pTjjESKVUFqNfUY4sqnJ4Qoa-4k/original","previewImageUrl":"https://sub5.example.invalid/line-media/nk_-iTG64eOAMjq2pTjjESKVUFqNfUY4sqnJ4Qoa-4k/preview"}
+[0m[1000D[?25hE2E PASS-image-envelope real native turn; image publication and typed image reply; no pixel vision or public serving claim
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E native-request route=61c13600-58c5-45ba-b8d8-6dffd5689378 wrapper=0a71b55f-8f23-49f3-936f-7c7aa3f6cd18
+[0m[1000D[?25hE2E native-response route=61c13600-58c5-45ba-b8d8-6dffd5689378 wrapper=0a71b55f-8f23-49f3-936f-7c7aa3f6cd18 text=請提供下一個測試指令。
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"61c1360058c545bab8d86dffd5689378","disposition":"reply","messages":[{"type":"text","text":"\u8ACB\u63D0\u4F9B\u4E0B\u4E00\u500B\u6E2C\u8A66\u6307\u4EE4\u3002"}],"msgOut":"\u8ACB\u63D0\u4F9B\u4E0B\u4E00\u500B\u6E2C\u8A66\u6307\u4EE4\u3002","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hE2E next-observation nativeRequestsDelta=1 reply=請提供下一個測試指令。
+[0m[1000D[?25h[37m[[37m10:02:29 [37mINF[37m] [37mEXPECTO! [36m3[37m tests run in [32m00:00:35.0658847[37m for [36mM018 LINE simulated-backend live-native[37m – [36m3[37m passed, [36m0[37m ignored, [36m0[37m failed, [36m0[37m errored. [36mSuccess![37m [37m<[37mExpecto[37m>[37m
+[0m[INFO][11/03/2026 02:02:29.598Z][Thread 0016][remoting (akka://fodex-line-m018-10855ef98da5434681164898ba04c4ce)] Remoting shut down
+[INFO][11/03/2026 02:02:29.598Z][Thread 0016][remoting-terminator] Remoting shut down.
+E2E runtime-disposed all native wrappers stopped
+E2E database-dropped FodexM018TestSub5_2bfee201b5244043af01adc7f4e7496a
+E2E runner-exit 0                       

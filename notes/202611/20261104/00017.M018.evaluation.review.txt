@@ -1,0 +1,54 @@
+M018> 請閱讀 G:\PulseTrade.fs\misc\line_bot_rn_nuget.multimedia.multisession.fodex.fsx.md 並且說明 "這只是靜態證據，不等於 produc
+tion-ready。主要風險包括 Fodex active source 尚未形成可重現 Git authority、runtime 無 TTL／數量上限、重啟後不恢復 session mapping、route dedup 不持久、同 conversation 同時進訊息的順序未被保證，以及 danger-full-access + approval never。" 是什
+麼意思
+
+[AgentWork completed]
+這段話的意思是：**程式的主要流程已接通，但還缺少長期運作、故障恢復、重送處理與權限控制的保障，因此不能僅憑程式碼就認定可正式上線。** 原文依據在[風險段落](G:/PulseTrade.fs/misc/line_bot_rn_nuget.multimedia.multisession.fodex.fsx.md:139)。
+
+「靜態證據」限定的是這份 review：它讀了程式碼，沒有在該次 review 執行 build／E2E。先前已通過的測試仍然有效，但只證明那些案例，沒有 涵蓋下面所有情境。
+
+1. **Fodex active source 尚未形成可重現 Git authority**
+
+   文件 review 當時，實際使用的部分 `.fsx` 尚未追蹤，project file 也有未提交修改。因此別人 checkout 相同 commit，可能缺檔案或無法重建相同 DLL。
+
+   DLL 的 SHA、路徑與來源時戳檢查可以辨識當前檔案，卻不能證明「這個 commit 就能完整重建目前正在跑的版本」。這影響部署、回滾與故障追查。
+
+2. **runtime 無 TTL／數量上限**
+
+   每個新的 `(conversationRef, target)` 都可能建立一套 wrapper、actors、app-server process、port 與相關狀態。目前[session cache](G:/PulseTrade.fs/misc/line_bot_rn_nuget.multimedia.multisession.fodex.fsx:151)沒有閒置逾時回收或最大數量限制，主要靠 reset／dispose  清理。
+
+   例如很多群組各用過一次，之後不再使用，這些 runtime 仍可能留下來占資源。這主要是程序、記憶體及連線成本；閒置本身不必然持續消耗模 型 token。
+
+3. **重啟後不恢復 session mapping**
+
+   系統需要知道：
+
+   ```text
+   LINE 對話＋target → logical wrapper → Codex thread
+   ```
+
+   目前這個對應主要放在 Provider 記憶體。Provider 整體重啟後，下一則訊息可能建立新 thread，無法接回原來的對話上下文。
+
+   **對話紀錄或 ReAct graph 存在 SQL，不代表上述對應會自動恢復。** 同一 runtime 裡 app-server 程序重建後能 resume，與 Provider 整體重啟後恢復，是不同能力。
+
+4. **route dedup 不持久**
+
+   `dedup` 是避免同一個 route 重複執行。目前防重主要靠記憶體中的 Task cache；重啟或部分失敗後 retry，這份記錄可能消失。
+
+   例如第一次已產生報表，但回覆前斷線，上游重送相同 route，agent 就可能再做一次。若涉及外部副作用，除了持久化處理狀態，工具端也需要可核對的冪等機制；只把 cache 搬進 SQL，仍不足以保證只執行一次。
+
+5. **同 conversation 同時進訊息，順序未被保證**
+
+   現在的 semaphore 能避免同一 session 同時跑兩個 turn，但沒有把「LINE 收到訊息的順序」一路綁定到「進入 Codex 的順序」。
+
+   例如先送「記住代號 BLUE」，緊接著送「剛才代號是什麼」，第二則可能先取得執行機會。這會造成同一對話內的順序錯誤，即使不同對話的 context 沒有混在一起。
+
+6. **`danger-full-access`＋`approval never`**
+
+   - `danger-full-access`：不以 Codex sandbox 限制檔案與命令操作範圍；工作目錄本身不是安全邊界。
+   - `never`：不走互動式批准詢問流程，**不代表自動升權或取得所有權限**。實際仍受主機帳號、工具設定及其他政策限制。[OpenAI 官方說明](https://learn.chatgpt.com/docs/agent-approvals-security)
+
+   兩者合用時，LINE 代理能在既有較大權限下直接使用已開放的工具。模型誤判或受到訊息／附件誘導時，影響可能超出聊天回答，延伸到改檔、 執行程式或外部操作。不同 conversation 的 context 隔離，無法代替這些操作的授權控制。
+
+先前交付完成的是**指定工作區的實作與限定案例驗證**；這份 review 列出的是正式長期運作仍需補齊或明確接受的風險。
+[AgentEnd] stream=19244 causedBy=16924

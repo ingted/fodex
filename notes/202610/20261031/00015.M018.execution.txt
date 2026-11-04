@@ -1,0 +1,46 @@
+M018>
+....>
+....>
+....> /subagent(3)
+[wrapper] Queued for the next main turn
+[AgentWork completed]
+我先確認此工作區的 `/subagent(3)` 慣例與派工規則。
+[AgentWork completed]
+本輪 shell 查閱會使用 `powershell-output-guard`，限制輸出大小。
+[AgentWork completed]
+我將 `/subagent(3)` 解讀為建立 3 個待命子代理。
+[AgentWork completed]
+已建立 3 個子代理：`sub-1`、`sub-2`、`sub-3`，皆已就緒，等待派工。
+
+[AgentEnd] stream=231 causedBy=10
+M018> 你有辦法列出 sub sagents 並且精確分派工作給他們嗎?
+[wrapper] Queued for the next main turn
+[AgentWork completed]
+我先列出目前的子代理與狀態，確認可指定的對象。
+[AgentWork completed]
+可以。目前有這 3 個子代理：
+
+| 子代理 | 精確識別名稱 | 狀態 |
+|---|---|---|
+| sub-1 | `/root/sub_1` | 已回覆就緒，可再次派工 |
+| sub-2 | `/root/sub_2` | 已回覆就緒，可再次派工 |
+| sub-3 | `/root/sub_3` | 已回覆就緒，可再次派工 |
+
+我可以指定其中一個接收任務，設定工作範圍、檔案修改權限、驗證要求與回報格式，也能追蹤結果、追加指示或中斷工作。
+[AgentEnd] stream=559 causedBy=232
+M018> 你的任務撰寫於檔案 F:\fodex\notes\202610\20261031\00014.M018.evaluation.txt 請閱讀並執行
+[wrapper] Queued for the next main turn
+[AgentWork completed]
+我會先讀取任務檔與適用的工作區規範，再依檔案要求執行。
+[AgentWork completed]
+我的理解是：保留現有 LINE → GW → RN 的入口與 reply／`/next` 行為，新增 `line_bot_rn_nuget.multimedia.multisession.fodex.fsx`，由 Fodex.Supervisor 管理 agent，
+並讓 agent 主動透過 COMM MCP 阻塞收訊，降低「已送出、卻未確認 agent 收到」的風險。
+
+我負責 SA／SD、介面決策與整合審查；`sub-1` 負責開發、`sub-2` 負責測試、`sub-3` 負責文件。接下來先釐清現有啟動、收訊與回覆契約；若有無法從程式確認的產品決策，
+再提出問題。
+[AgentWork completed]
+三個子代理已分別接到開發、測試、文件任務。舊 provider 約 274 KB，我會先沿訊息生命週期檢查關鍵介面。
+
+設計上會明確區分「已送出」「agent 已讀取」「已完成回覆」；同一 participant 只保留一個收訊者。也會依 `comm-foreground-wait` skill 檢查等待與 ACK 語意，並保留你
+要求的 agent 自行呼叫 COMM MCP 收訊方式。
+M018>

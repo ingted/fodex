@@ -1,0 +1,27 @@
+# M019 R4 actual acceptance (sub5)
+背景/上下文：按最新R4 FROZEN和pinned8c9 source/DLL正式驗收，舊prepared狀態不算驗證。
+目標/驗收：現有六Expecto meaningful tests+cancel busy+跨target排他+new-process recover+實際adapter reset/payload/media冷process。
+假設：10個產品hash/manifest95AC不變；V302 loader/define固定；只驗現workspace scope。
+範圍：自有F測試/log/card/evidence；不改產品/v1/shared/PTC/正式服務/config，不對真LINE發訊，不index/commit/push。
+計畫步驟：核R4/loaded binary→適配測試→先正式native→六層與adapter/process→watchdog/cleanup readonly readback→必要gate→短結果。
+風險：模型拒答不是tool denial；operator recovery每次新FSI；fixture/unit/native/adapter/host/external分開；外部exactly-once/LINE原序/公開media不推論。
+執行命令/參數：dotnet fsi --parallelcompilation- --debug- --define:V2_PINNED_8C9B80E --exec <owned tests/formal R4 entry>；具體命令和timeout記Operations。
+結果：待本輪實跑，未沿用開發證據當PASS。
+根因判讀：R4對齊8c9 immutable binary及新typed API；只修測試適配。
+下一步：讀必要typed接口，啟動watchdog。
+關聯文件/工單/PR：00017.line-fodex-v2.contract.md/dev.md/test.md；R4 manifest。
+prompt/上下文摘要：六AC必跑，新增指定adapter fixture，維持舊dirty；必要gate後立即回傳。
+
+## Operations15:21 R4 formal native minimum + different-provider SID/context resume + controlled cap/TTL/cancelwaiter passed; original six-case run3 continues. Added independent Adapter warm/cold fixture using canonical API. Initial test overload annotation failures retained run1/run2.
+2026-11-04T15:20:09.7683623+08:00 Previous 15:21 is approximate progress label, not captured execution timestamp; exact times are raw logs. Adapter initial syntax annotation corrected, failed raw retained.
+2026-11-04T15:25:24.1528251+08:00 Six executed, 4 pass/2 fail. Actual file and patch denied; file readback unchanged. Native Invoke-WebRequest loopback returned200/sink hit1 => network denial FAIL. Recovery blocked by test-controller failed Acquire pooled lock (SQL lock readback). Moved orphan quarantine attempt to whole new provider process, then NEW operator FSI. No ClearPool or product change. Supplemental recovery only cases1/4; Adapter fixture full target verify entry (no boot).
+2026-11-04T15:38:59.2068614+08:00 FINAL business verification: unique6 AC5pass/1fail. Initial6=4pass2fail; recovery-corrected supplement2=2pass (case1 repeated). Adapter warm10+cold7 passed. Source14 baseline entries+2 binary hashes match. Own processes/native ports/DB/login all0; old services samePID/health200. Encoding source5 clean; immutable security stdout43/upstream tool-output2 replacement chars preserved as evidence limitation. No product/G/index changes.
+
+## Plan Correction
+Earlier quarantine check reused the still-live controller provider pool after failed Acquire, retaining session applock. Corrected only test: failclosed quarantine in separate whole provider FSI, exited before NEW operator FSI recovery. Supported contract then passed. Prior failure raw retained. Adapter canonical fixture uses forward-slash arguments for quoted ParseLine defaults and encrypted isolated constructor references, never production credentials. Current native network denial remains FAILED; no expected-value weakening.
+
+
+## Operations
+2026-11-04T15:40:09.6810468+08:00 Canonical initial FAIL: first Operations header lacked terminal newline and became Operations15:21. Preserve history; append valid section. Actual six AC executed, final5pass1fail; Adapter17pass; recovery supplement2pass. Exact commands and raw paths: notes/202611/20261104/00017.line-fodex-v2.test.R4/summary.json. Scoped sensitive first files32/High0/Medium0; rerun after final card/log. Resource and fingerprint observations in owned evidence, no active writers there. No PTC service mutation or true LINE/API call. Final output scope <=1KB plus refs.
+
+2026-11-04T15:40:59.6981304+08:00 Final gates: sensitive files33 High0 Medium0; canonical exit0 PASS27 WARN1 FAIL0 only existing dirty. Initial canonical FAIL retained canonical.log; final canonical-final.log under temp/sub5/M019-line-v2-R4-gates. Final short card appended gate outcomes; frozen evidence unchanged. NOT ACCEPTED security network-deny; host boundary skipped. No index/commit/push.

@@ -1,0 +1,70 @@
+{
+  "Sources": [
+    {
+      "Sha256": "6F4BA3E0228CE06158A530FBC2036D013613E5D1B22D748CA261B2466C25DF26",
+      "Path": "G:\\PulseTrade.fs\\misc\\line_bot_rn_nuget.multimedia.multisession.fodex.fsx",
+      "Encoding": "UTF-8 no BOM"
+    },
+    {
+      "Sha256": "7CD512627D9E0F77F2B603DDFD5E83BDC3268CDC5723FF93F9AF6E5BF51931BB",
+      "Path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_references.fsx",
+      "Encoding": "UTF-8 no BOM"
+    },
+    {
+      "Sha256": "A3090F7ED7D561CF9D50FE9654F2A3ECC8E1CD39D642CDE091ABBC52784E4302",
+      "Path": "F:\\fodex\\Fodex.Supervisor.Tests\\M018LineFodexE2E.fsx",
+      "Encoding": "UTF-8 no BOM"
+    },
+    {
+      "Sha256": "0F702EF5182C30AF0792ED8C3F3E0F91627CDDCFD74B3741AF23046C0BEE8FB1",
+      "Path": "F:\\fodex\\Fodex.Supervisor.Tests\\M018LineFodexHostE2E.fsx",
+      "Encoding": "UTF-8 no BOM"
+    }
+  ],
+  "Files": [
+    {
+      "Encoding": "UTF-8",
+      "Sha256": "89559CDBC09A9E0C0FE02A10F4187EC87F1B16240FD3B49CD1969EB3D03DE47D",
+      "Name": "host-controller.stderr.log",
+      "Bytes": 484
+    },
+    {
+      "Encoding": "UTF-8",
+      "Sha256": "CA7571A69D391224275394AA769411B81236F88073C06D7449A113114A0F11DD",
+      "Name": "host-controller.stdout.log",
+      "Bytes": 6984
+    },
+    {
+      "Encoding": "UTF-8",
+      "Sha256": "0D38F1AAEA36395060E512730C3EB91E76FCABC064A09ED095AA80A7129B8ABD",
+      "Name": "native.stderr.log",
+      "Bytes": 817
+    },
+    {
+      "Encoding": "UTF-8",
+      "Sha256": "8F71B870E0A392791958AD94168BB8B92CE9AAAF9ECA85CEBB369A9B47142A76",
+      "Name": "native.stdout.log",
+      "Bytes": 10212
+    },
+    {
+      "Encoding": "UTF-8",
+      "Sha256": "EB9958E21EDDA10686D5EB582EA931FB580E451B048DEEB8A87BE4AC54E25F22",
+      "Name": "summary.json",
+      "Bytes": 6095
+    },
+    {
+      "Encoding": "UTF-8",
+      "Sha256": "98E98A14A3A0525388C8585147FBC006A35B28C5FF2D62B9C5D327706CE5C876",
+      "Name": "target.stderr.log",
+      "Bytes": 440
+    },
+    {
+      "Encoding": "UTF-8",
+      "Sha256": "0AE6870D47FEECDA9FAECBFA9FC13CFC9D681D43CE303FDE023885DF5E2C8B4F",
+      "Name": "target.stdout.log",
+      "Bytes": 2623
+    }
+  ],
+  "FrozenAt": "2026-11-03T11:48:14.7542476+08:00",
+  "FinalGate": "F:/fodex/log/20261103/20261103113533.M018-round3-final-gates.json"
+}

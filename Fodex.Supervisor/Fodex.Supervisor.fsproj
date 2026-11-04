@@ -17,6 +17,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="FodexFunRegistry.fsx" />
+    <Compile Include="FodexFunBinding.fsx" />
     <Compile Include="..\Fodex.Supervisor.Contract\LoggerAdapter.fsx">
       <Link>LoggerAdapter.fsx</Link>
     </Compile>
@@ -105,7 +106,20 @@
     <Compile Include="SubagentCoordinatorV300.fsx" />
     <Compile Include="HubHostingV300.fsx" />
     <Compile Include="WrapperCompositionV301.fsx" />
+    <Compile Include="OrderHubFodexFunV301.fsx" />
+    <Compile Include="SubagentFodexFunV301.fsx" />
+    <Compile Include="WrapperAgentV301.fsx" />
+    <Compile Include="SubagentCoordinatorFodexFunV301.fsx" />
+    <Compile Include="HubHostingFodexFunV301.fsx" />
+    <Compile Include="FodexFunRegistrationV301.fsx" />
+    <Compile Include="WrapperCompositionV302.fsx" />
+    <Compile Include="FodexEntry.fsx" />
     <None Include="M017CompositionV300.fsx"><Link>Archive/M017CompositionV300.fsx</Link></None>
+    <None Include="SupervisorReferences.fsx"><Link>Demo/SupervisorReferences.fsx</Link></None>
+    <None Include="ConsolePrinter.fsx"><Link>Demo/ConsolePrinter.fsx</Link></None>
+    <None Include="WrapperIAgentDemo.M019.R002.fsx"><Link>Demo/WrapperIAgentDemo.M019.R002.fsx</Link></None>
+    <None Include="Start-M019.R002.ps1"><Link>Demo/Start-M019.R002.ps1</Link></None>
+    <None Include="README.M019.R002.md"><Link>Demo/README.M019.R002.md</Link></None>
     <Compile Include="NativeOrderHubV104.fsx" />
     <Compile Include="HubToolsV103.fsx" />
     <Compile Include="HubClientV101.fsx" />

@@ -1,0 +1,165 @@
+{
+  "ServicesBefore": [
+    {
+      "Name": "PulseTradeCommSpaHumanUi",
+      "State": "Running",
+      "ProcessId": 53384
+    },
+    {
+      "Name": "PulseTradeCommResourceNode",
+      "State": "Running",
+      "ProcessId": 16660
+    },
+    {
+      "Name": "PulseTradeCommGatewayActive",
+      "State": "Running",
+      "ProcessId": 2408
+    }
+  ],
+  "TestSources": [
+    {
+      "Path": "F:\\fodex\\Fodex.Supervisor.Tests\\M018LineFodexE2E.fsx",
+      "Hash": "A3090F7ED7D561CF9D50FE9654F2A3ECC8E1CD39D642CDE091ABBC52784E4302"
+    },
+    {
+      "Path": "F:\\fodex\\Fodex.Supervisor.Tests\\M018LineFodexHostE2E.fsx",
+      "Hash": "0F702EF5182C30AF0792ED8C3F3E0F91627CDDCFD74B3741AF23046C0BEE8FB1"
+    }
+  ],
+  "StartedAt": "2026-11-03T11:35:33.3272756+08:00",
+  "CanonicalLog": "F:\\fodex\\log\\20261103\\20261103113533.M018-sub5-round3.log",
+  "Ready": {
+    "HelperSha256": "7CD512627D9E0F77F2B603DDFD5E83BDC3268CDC5723FF93F9AF6E5BF51931BB",
+    "TargetSha256": "6F4BA3E0228CE06158A530FBC2036D013613E5D1B22D748CA261B2466C25DF26",
+    "ObservedAt": "2026-11-03T11:40:46.8956149+08:00"
+  },
+  "Runs": [
+    {
+      "Command": "dotnet fsi --parallelcompilation- --debug- --exec F:\\fodex\\Fodex.Supervisor.Tests\\M018LineFodexE2E.fsx",
+      "Created": "2026-11-03T11:40:46.9245167+08:00",
+      "Name": "native",
+      "Pid": 61500
+    },
+    {
+      "Command": "dotnet fsi --parallelcompilation- --debug- --exec F:\\fodex\\Fodex.Supervisor.Tests\\M018LineFodexHostE2E.fsx",
+      "Created": "2026-11-03T11:40:46.9391057+08:00",
+      "Name": "host-controller",
+      "Pid": 63596
+    }
+  ],
+  "OwnedProcesses": [
+    {
+      "ProcessId": 63596,
+      "ParentProcessId": 64952,
+      "Name": "dotnet.exe",
+      "CreationDate": "2026-11-03T11:40:46.939105+08:00"
+    },
+    {
+      "ProcessId": 66248,
+      "ParentProcessId": 63596,
+      "Name": "conhost.exe",
+      "CreationDate": "2026-11-03T11:40:46.945365+08:00"
+    },
+    {
+      "ProcessId": 62532,
+      "ParentProcessId": 63596,
+      "Name": "dotnet.exe",
+      "CreationDate": "2026-11-03T11:40:47.445366+08:00"
+    }
+  ],
+  "nativeResult": {
+    "errored": 0,
+    "executed": 2,
+    "passed": 2,
+    "caseElapsed": "00:00:47.7138489",
+    "failed": 0,
+    "skipped": 1
+  },
+  "hostResult": {
+    "errored": 0,
+    "executed": 1,
+    "passed": 1,
+    "caseElapsed": "00:00:53.2292224",
+    "failed": 0,
+    "skipped": 0
+  },
+  "Cleanup": {
+    "Services": [
+      {
+        "Name": "PulseTradeCommSpaHumanUi",
+        "AfterPid": 53384,
+        "State": "Running",
+        "BeforePid": 53384,
+        "Same": true
+      },
+      {
+        "Name": "PulseTradeCommResourceNode",
+        "AfterPid": 16660,
+        "State": "Running",
+        "BeforePid": 16660,
+        "Same": true
+      },
+      {
+        "Name": "PulseTradeCommGatewayActive",
+        "AfterPid": 2408,
+        "State": "Running",
+        "BeforePid": 2408,
+        "Same": true
+      }
+    ],
+    "RemainingDatabases": 0,
+    "NativeDatabase": "FodexM018TestSub5_2565846e4b95410493fb063c43e2a68e",
+    "RemainingOwnedProcesses": 0,
+    "Health": [
+      {
+        "Status": "ok",
+        "Url": "http://127.0.0.1:8799/resource-node/healthz"
+      },
+      {
+        "Status": "ok",
+        "Url": "http://127.0.0.1:8797/gw/healthz"
+      }
+    ],
+    "Login": "M018Sub5_f06258e724fb460cb000956ddb16c9ec",
+    "HostDatabase": "PTCLineTest_f06258e724fb460cb000956ddb16c9ec",
+    "RemainingLogins": 0
+  },
+  "HostDeadlineEvidence": {
+    "FormalDeadlineProved": false,
+    "Source": "Fodex.Supervisor.Tests/M018LineFodexHostE2E.fsx:201 and current host controller stdout/summary events",
+    "Reason": "No request timestamp before Ask; listener-ready includes later SQL admission/query; total case elapsed includes startup",
+    "RequestToReplyElapsedSeconds": null
+  },
+  "ExistingHostEvidence": {
+    "ListenerReadyAt": "2026-11-03T11:41:46.8448955+08:00",
+    "RequestTimestampEvents": 0,
+    "HostStartedAt": "2026-11-03T11:41:10.8684687+08:00",
+    "Command": "dotnet \"fsi\" \"--parallelcompilation-\" \"--debug-\" \"--exec\" \"G:\\PulseTrade.fs\\misc\\line_bot_rn_nuget.multimedia.multisession.fodex.fsx\" \"--\" \"--bootstrap-health-url\" \"http://127.0.0.1:14785/resource-node/healthz\" \"--cluster-host\" \"127.0.0.1\" \"--cluster-port\" \"14786\" \"--line-catalog\" \"F:\\fodex\\temp\\sub-5\\M018-round2-host\\test-line-catalog.json\" \"--storage\" \"jsonl\" \"--output-root\" \"F:\\fodex\\temp\\sub-5\\M018-round2-host\\media\" \"--sql-connection-encrypted-file\" \"F:\\fodex\\temp\\sub-5\\M018-round2-host\\test-sql.enc.txt\" \"--sql-private-key-path\" \"D:\\ingted.com\\myKey.private.txt\" \"--fodex-sql-server\" \"localhost\" \"--fodex-database\" \"PTCLineTest_f06258e724fb460cb000956ddb16c9ec\" \"--fodex-working-directory\" \"F:\\fodex\\temp\\sub-5\\M018-round2-host\" \"--fodex-model\" \"gpt-6.1-sol\" \"--fodex-effort\" \"medium\"",
+    "RequestToReplyElapsedSeconds": null,
+    "NativeCreationWindowRemaining": 0,
+    "ReplyCapturedAt": "2026-11-03T11:42:00.7479326+08:00",
+    "FormalDeadlineProved": false
+  },
+  "FinalSources": [
+    {
+      "Sha256": "6F4BA3E0228CE06158A530FBC2036D013613E5D1B22D748CA261B2466C25DF26",
+      "Path": "G:\\PulseTrade.fs\\misc\\line_bot_rn_nuget.multimedia.multisession.fodex.fsx",
+      "Encoding": "UTF-8 no BOM"
+    },
+    {
+      "Sha256": "7CD512627D9E0F77F2B603DDFD5E83BDC3268CDC5723FF93F9AF6E5BF51931BB",
+      "Path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_references.fsx",
+      "Encoding": "UTF-8 no BOM"
+    },
+    {
+      "Sha256": "A3090F7ED7D561CF9D50FE9654F2A3ECC8E1CD39D642CDE091ABBC52784E4302",
+      "Path": "F:\\fodex\\Fodex.Supervisor.Tests\\M018LineFodexE2E.fsx",
+      "Encoding": "UTF-8 no BOM"
+    },
+    {
+      "Sha256": "0F702EF5182C30AF0792ED8C3F3E0F91627CDDCFD74B3741AF23046C0BEE8FB1",
+      "Path": "F:\\fodex\\Fodex.Supervisor.Tests\\M018LineFodexHostE2E.fsx",
+      "Encoding": "UTF-8 no BOM"
+    }
+  ]
+}

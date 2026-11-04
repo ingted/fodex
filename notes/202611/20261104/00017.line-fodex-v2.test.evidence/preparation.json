@@ -1,0 +1,43 @@
+{
+  "OwnSyntaxErrors": 0,
+  "ObservedUntestedProductSources": [
+    {
+      "Path": "G:\\PulseTrade.fs\\misc\\line_bot_rn_nuget.multimedia.multisession.fodex.v2.fsx",
+      "ObservedUntestedSha256": "D9FE8CF5021F50BF9149CDEDFA8A70E5DEAFF0A1ABAF0F0BB8C22D33CC9D8A59"
+    },
+    {
+      "Path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_store.fsx",
+      "ObservedUntestedSha256": "AB331135F315B7A1E62B469AB42294324ED4C75E20CB80DB000C82A0C766F3E2"
+    },
+    {
+      "Path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_service.fsx",
+      "ObservedUntestedSha256": "97C4D51E843983479F4CF0B2D95ADCE105090B2F73F63E045BD71814813B5106"
+    }
+  ],
+  "Scope": "Preparation and syntax only; all six acceptance AC remain unexecuted",
+  "OwnedTestSources": [
+    {
+      "Path": "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2Acceptance.fsx",
+      "Sha256": "F094CD9DC8B58140EB28A6B6D9604B0358FE01B5528D90137E70D630E81BF627"
+    },
+    {
+      "Path": "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2CrashWorker.fsx",
+      "Sha256": "C0939809CB311C9C827718F1FC7D601631998103EB9A77573170D969AF358EF2"
+    },
+    {
+      "Path": "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2Watchdog.ps1",
+      "Sha256": "990280B8178298A814AFF90FE19B8B88F961016628DCDA6A46E3FADC02DB070F"
+    }
+  ],
+  "OwnSyntaxParsedFiles": 2,
+  "Failed": 0,
+  "Skipped": 0,
+  "At": "2026-11-04T13:42:10.7253638+08:00",
+  "CreatedTestDatabases": 0,
+  "TestedFingerprint": null,
+  "Executed": 0,
+  "Passed": 0,
+  "ProductLoadsExecuted": 0,
+  "Status": "blocked-await-matching-READY",
+  "OwnedProcesses": 0
+}

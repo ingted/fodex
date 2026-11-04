@@ -1,0 +1,24 @@
+
+
+warning FS0075: The command-line option '--parallelcompilation' is for test purposes only
+
+
+
+G:\PulseTrade.fs\misc\line_bot_rn_nuget.multimedia.multisession.almighty.fsx(4159,17): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_bot_rn_nuget.multimedia.multisession.almighty.fsx(4787,61): warning FS0066: This upcast is unnecessary - the types are identical
+
+
+
+G:\PulseTrade.fs\misc\line_bot_rn_nuget.multimedia.multisession.fodex.fsx(51,50): error FS0041: A unique overload for method 'Load' could not be determined based on type information prior to this program point. A type annotation may be needed.
+
+Known type of argument: 'a
+
+Candidates:
+ - Xml.Linq.XDocument.Load(reader: Xml.XmlReader) : Xml.Linq.XDocument
+ - Xml.Linq.XDocument.Load(stream: Stream) : Xml.Linq.XDocument
+ - Xml.Linq.XDocument.Load(textReader: TextReader) : Xml.Linq.XDocument
+ - Xml.Linq.XDocument.Load(uri: string) : Xml.Linq.XDocument
+

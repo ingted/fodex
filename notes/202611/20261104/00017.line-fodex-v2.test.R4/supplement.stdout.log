@@ -1,0 +1,23 @@
+M019 loaded-assembly G:\PulseTrade.fs\temp\m019-line-v2-authority-fixture\F-8c9b80e-gitbytes\Fodex.Supervisor\bin\M019.Authority.R2\Debug\net10.0\win-x64\Fodex.Supervisor.dll; version=0.0.1.0; sha256=C4B8E2330D039D10CCF3C5823E3014C64DEAE281F6AF177C3AC4D9B672C75DA7; baseline=Start-M019/WrapperIAgentDemo.M019; controllerHub=18819
+M019 database-created M019LineV2Test_b802276ee5e948bbad30cbb62dfc25d3
+M019 fixture-root F:\fodex\temp\sub-5\M019-line-v2\b802276ee5e948bbad30cbb62dfc25d3
+[37m[[37m15:25:53 [37mINF[37m] [37mEXPECTO? Running tests...[37m [37m<[37mExpecto[37m>[37m
+[0m[1000D[?25hM019 owned-start minimal pid=69424      
+[0m[1000D[?25hM019 owned-exit minimal pid=69424 exit=0
+[0m[1000D[?25hM019 MINIMAL_PASS providerPid=69424 wrapper/native=[|(a2496f1b-31e3-47f5-a7af-cdbd23798c9c, 2L,
+   "01a1a573-ee8f-7923-b93c-4f8de348cec5")|]
+[0m[1000D[?25hM019 owned-start completed-replay pid=67308
+[0m[1000D[?25hM019 owned-exit completed-replay pid=67308 exit=0
+[0m[1000D[?25hM019 owned-start crash pid=31220        
+[0m[1000D[?25hM019 owned-start cross-provider-other-target pid=66264
+[0m[1000D[?25hM019 owned-exit cross-provider-other-target pid=66264 exit=1
+[0m[1000D[?25hM019 owned-start recover-live-rejected pid=56820
+[0m[1000D[?25hM019 owned-exit recover-live-rejected pid=56820 exit=1
+[0m[1000D[?25hM019 owned-start quarantine-new-process pid=62456
+[0m[1000D[?25hM019 owned-exit quarantine-new-process pid=62456 exit=1
+[0m[1000D[?25hM019 owned-start recover-stopped-new-process pid=50260
+[0m[1000D[?25hM019 owned-exit recover-stopped-new-process pid=50260 exit=0
+[0m[1000D[?25hM019 PROCESS_PASS completed cached replay and held-after-real-native crash; no external exactly-once claim
+[0m[1000D[?25h[37m[[37m15:29:46 [37mINF[37m] [37mEXPECTO! [36m2[37m tests run in [32m00:03:53.2307263[37m for [36mM019 v2 layers[37m – [36m2[37m passed, [36m0[37m ignored, [36m0[37m failed, [36m0[37m errored. [36mSuccess![37m [37m<[37mExpecto[37m>[37m
+[0mM019 database-dropped M019LineV2Test_b802276ee5e948bbad30cbb62dfc25d3
+M019 exit 0                             

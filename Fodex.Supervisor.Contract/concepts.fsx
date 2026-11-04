@@ -1218,3 +1218,18 @@ module CoreMod =
                     |> Ok
                 with ex ->
                     Error ex
+
+//open Fodex.Supervisor.Contracts.CoreMod FodexAgent.createWrapper
+
+        abstract member CreateWrapper:
+              CommandMod.FodexNode * string * UniContext -> Result<IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>,exn> 
+
+        default this.CreateWrapper (node, argString, ctx) =
+                FodexAgent<'TypedCmdToWrapper, 'TAgentCommMsg>.createWrapper (node, argString, ctx)
+
+        abstract member CreateReActLoop:
+          node: CommandMod.FodexNode * argString: string *
+            ctx: LoggerUtil.UniContext -> Result<ReActLoop<'TypedCmdToWrapper, 'TAgentCommMsg>,exn>
+
+        default this.CreateReActLoop (node, argString, ctx) =
+                FodexAgent<'TypedCmdToWrapper, 'TAgentCommMsg>.createReActLoop (node, argString, ctx)

@@ -1,0 +1,27 @@
+# M018 sub-5 THIRD ROUND final acceptance
+背景/上下文：第二輪已收齊，sub-4只修direct lifecycle提示與references EOF空行。
+目標/驗收：THIRD-ROUND READY後，現有原始native E2E與正常HostE2E各執行一次，不使用CompatibleDeps，核對target/helper/test SHA。
+假設：沒有其他功能改動，以READY新SHA與本輪實際執行為準。
+範圍：只啟測試資源、append handoff與少量stdout/stderr/summary；不改測試案例/PTC/既有服務/設定，不向真LINE發訊，不commit。
+計畫步驟：等READY→核對SHA→各跑一次→查既有host時間證據→資源/DB/login readback與health→encoding/敏感/canonical→THIRD ROUND FINAL。
+風險：/next仍skip；無可靠request/reply timestamp就不宣稱正式deadline通過；政策拒刪scratch不重試。
+執行命令/參數：沿用原始M018LineFodexE2E.fsx與M018LineFodexHostE2E.fsx；執行時Operations記錄。
+結果：尚未執行，不沿用前輪PASS。
+根因判讀：本輪只做小改後回歸，正式載入失敗即交接，不另堆診斷版本。
+下一步：等待開發handoff的THIRD-ROUND READY。
+關聯文件/工單/PR：notes/202611/20261103/M018-fodex-dev-handoff.md、M018-fodex-test-handoff.md。
+prompt/上下文摘要：只做指定最後驗收；可用真native/隔離host資源，完成即回傳，不等其他participant。
+
+## Operations
+2026-11-03T11:35:33.3099180+08:00 第三輪開始，前兩輪結果不複製，source測試不修改。
+
+2026-11-03T11:40:04.7363414+08:00 仍等 THIRD-ROUND READY；target/helper mtime=11:34:32，但尚無正式handoff標記，所以未啟動native/HostE2E。既有host fixture有listener-ready和typed-reply事件，但Ask前未記request timestamp，無法從該差值證明正式50s deadline；本輪不擴建fixture。
+
+2026-11-03T11:40:46.9593226+08:00 THIRD-ROUND READY已讀，target=6F4BA3E0228CE06158A530FBC2036D013613E5D1B22D748CA261B2466C25DF26 helper=7CD512627D9E0F77F2B603DDFD5E83BDC3268CDC5723FF93F9AF6E5BF51931BB，source encoding通過。各跑一次原始native與host；exact commands/PIDs寫入round3/summary.json，無CompatibleDeps。
+
+2026-11-03T11:46:58.6136569+08:00 各套件一次完成：native executed2/passed2/skipped1/failed0，47.7138489s；normal host executed1/passed1/failed0，53.2292224s。source四SHA與READY/啟動前一致；DB2與login1只讀確認0，owned PIDs+creation time及本輪native建立區間皆0；既有health/PID不變。host既有JSON事件沒有request timestamp，不能證明正式deadline。收尾PS變數誤用保留字Host、ANSI色碼造成摘要regex未匹配，均只修操作命令，未重跑測試/改source；stdout原樣保留。
+
+2026-11-03T11:48:14.7694016+08:00 THIRD ROUND FINAL已append；7份本輪business結果凍結，manifest含四source SHA。canonical指令：dotnet fsi --debug- --exec G:/PulseTrade.fs/check.fsx -- --repo F:/fodex --log-dir F:/fodex/log/20261103 --notes-dir F:/fodex/notes/202611/20261103/M018-fodex-test-round3 --watch M018-native=F:/fodex/Fodex.Supervisor.Tests/M018LineFodexE2E.fsx --watch M018-host=F:/fodex/Fodex.Supervisor.Tests/M018LineFodexHostE2E.fsx --watch M018-handoff=F:/fodex/notes/202611/20261103/M018-fodex-test-handoff.md；stdout/stderr執行時放F temp，完成後保存。
+
+- 2026-11-03T11:50:02.9301994+08:00 THIRD ROUND FINAL 最後gate：executed3/passed3/failed0/errored0/skipped1；canonical exit0/PASS27/WARN1/FAIL0（僅既有git_dirty），scoped敏感files14/High0/Medium0，encoding與source/evidence SHA gates通過。四SHA與READY一致；process/DB/login/native建立區間 readback全0，既有health/PID不變。最終gate JSON與stdout/stderr在F log同prefix 20261103113533.M018-round3-final*，不改凍結round3 evidence。
+- 行號更正（不改歷史）：HostE2E 的 listener-ready 實際為:192，Ask為:202，typed reply capture為:208；前述:194/:201與summary文字行號為偏一引用，不影響缺request timestamp的判讀。request→reply elapsed仍未證明、正式deadline仍未驗收。本輪G source/log/test改檔無、F測試未改/commit，完成即回傳。

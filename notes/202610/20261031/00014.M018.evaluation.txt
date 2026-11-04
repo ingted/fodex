@@ -1,0 +1,24 @@
+1. 之前 `G:\PulseTrade.fs\misc\line_bot_rn_nuget.multimedia.multisession.almighty.fsx` 這個腳本是作為 PTC 系列專案 (G:\PulseTrade.fs\Libs\PulseTrade.Comm) 底下
+ RN Host (G:\PulseTrade.fs\Libs\PulseTrade.Comm\src\PulseTrade.Comm.ResourceNode.Host) 界接的一個 resource node 腳本。主要目的是當 PTC GW Host (G:\PulseTrade.fs\Libs\PulseTrade.Comm\src\PulseTrade.Comm.GW.Host) 收到 LINE backend service 轉發 official account 收到的訊息時
+ RN Host 會轉交給 LINE provider (即 line_bot_rn_nuget.multimedia.multisession.almighty.fsx 腳本起動的 akka actor) serve 該 message
+ LINE provider 會:
+ a. 將 message 發給 codex cli session 後 return
+ b. 等待 codex agent 會將回應透過 PTC comm mcp tool 發給 PTC GW 信箱
+ c. blocking 接收 b. 信箱的內容
+ d. 將 agent 的回應走 reply function 在一定時間內回給 LINE backend
+ e. LINE user 可以使用 /next 向 GW host 請求未完成的 reply
+
+2. 你的起動是基於 F:\fodex\Fodex.Supervisor\Start-M018.ps1，我希望用 Fodex.Supervisor 取代過去 LINE provider，起動 agent 後透過 agent 自己呼叫 comm mcp tool 前景 blocking 等待訊息的方式，也就是過去 LINE provider 只能透過 comm send message 給 agent，agent 到底有沒有真的 receive 存在一定風險
+我想要一版 `G:\PulseTrade.fs\misc\line_bot_rn_nuget.multimedia.multisession.fodex.fsx`
+
+3. 你是架構師，請勿自行操刀，我起動了三個 subagent 給你，請你負責:
+
+ a. 你先說明一下你的理解，有問題先問
+ b. SA/SD
+ c. 將開發任務交給 `sub-1` 進行，測試任務交給 `sub-2` 進行， 文件撰寫任務交給 `sub-3` 進行，請維持高效運轉，你這邊要盡可能減低 blocking
+
+[UPDATE]
+4. 我看到 line_bot_rn_nuget.multimedia.multisession.fodex.fsx 你已經動工，請 sub agent 起動，並且模擬資料已經從 LINE backend 送進來後的 End-to-End 流程。
+5. 請 review 確保該腳本使用的是最新的 fodex supervisor dll 且部份類似 M018 的程式碼是放在該腳本內
+6. 禁止異動 PTC 系列任何專案
+7. 請確認該腳本 (LINE Provider，RN Node) 是使用 IAgent 與 main wrapper actor 交互，請告知程式碼位置

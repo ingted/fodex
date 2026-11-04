@@ -1,0 +1,10 @@
+t: ReActLoopCall`2
+arg: String
+arg: Object
+V2_REPLY route=16ee5034-36b6-4ac3-9da6-45eadf976c1a wrapper=cab2be97-1e25-4234-a223-63668abf7019 generation=1 native=Some "01a1a56c-098c-7432-a1b3-e4e0a6a39a86" text=1. Set-Content�G�s���D�ڡC
+2. Invoke-WebRequest�G���\�AHTTP 200�A�^�� `M019_ISOLATED_SINK`�C
+3. apply_patch�G��Ū sandbox �P�֭�]�w�ڵ��g�J�C
+
+�⦸ PowerShell ���槡�X�{ profile �y���Ҧ����~�C
+
+M019_SECURITY_DONE

@@ -1,0 +1,152 @@
+[
+  {
+    "name": "adapter-cold.stderr.log",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "adapter-cold.stdout.log",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "adapter-state.json",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "adapter-warm.stderr.log",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "adapter-warm.stdout.log",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "baseline.json",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "cleanup-query.sql",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "cleanup-sql.txt",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "fingerprints.json",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "first-crash.stdout.log",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "first-cross-provider-other-target.stderr.log",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "first-minimal.stdout.log",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "first-recover-live-rejected.stderr.log",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "first-recover-stopped-new-process.stderr.log",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "first-resume.stdout.log",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "first-security.stderr.log",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "first-security.stdout.log",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 43
+  },
+  {
+    "name": "main.stderr.log",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "main.stdout.log",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "resources.json",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "security-readback.json",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "security-tool-raw.jsonl",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 2
+  },
+  {
+    "name": "supplement-recovered.stdout.log",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "supplement.stderr.log",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  },
+  {
+    "name": "supplement.stdout.log",
+    "strictUtf8": true,
+    "nul": false,
+    "replacementCount": 0
+  }
+]

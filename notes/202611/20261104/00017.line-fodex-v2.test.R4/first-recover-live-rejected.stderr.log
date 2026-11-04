@@ -1,0 +1,73 @@
+
+
+warning FS0075: The command-line option '--parallelcompilation' is for test purposes only
+
+
+
+line_provider_fodex_v2_policy.fsx(58,43): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_bot_rn_nuget.multimedia.multisession.almighty.fsx(4159,17): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_bot_rn_nuget.multimedia.multisession.almighty.fsx(4787,61): warning FS0066: This upcast is unnecessary - the types are identical
+
+
+
+line_provider_fodex_v2_store.fsx(74,168): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(80,87): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(84,378): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(86,123): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(94,145): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(113,169): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(119,238): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(129,100): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(151,170): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(174,174): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(185,174): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+line_provider_fodex_v2_store.fsx(212,169): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+System.InvalidOperationException: v2-conversation-owner-busy
+   at FSI_0001.Line_provider_fodex_v2_store.Store.AcquireLane(String conversation)
+   at FSI_0001.Line_provider_fodex_v2_store.Store.Recover(String conversation, String target, Int64 expectedGeneration, Boolean acknowledgeUnknown, Boolean confirmStopped)
+   at FSI_0001.Line_provider_fodex_v2_service.Service.Recover(String conversation, String target, Int64 expectedGeneration, Boolean acknowledgeUnknown, Boolean confirmStopped)
+   at FSI_0003.run()
+   at <StartupCode$FSI_0003>.$FSI_0003.main@()
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.RuntimeMethodInfo.Invoke(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+Stopped due to error

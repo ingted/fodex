@@ -1,0 +1,65 @@
+{
+  "Manifest": "G:\\PulseTrade.fs\\log\\20261104\\20261104130032.M019-line-fodex-v2.dependencies.R4.json",
+  "Product": [
+    {
+      "Path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_store.fsx",
+      "SHA256": "1A86C8664CAA7DD57213441DB8C975073B9BE48402FE1232693C78E22C42C1C0"
+    },
+    {
+      "Path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_line.fsx",
+      "SHA256": "D99BF8C16B49BDCCB806CD05091FEAC1C0D3AC173F965AC74F181EE9A67DD36B"
+    },
+    {
+      "Path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_policy.fsx",
+      "SHA256": "91703D080BD037617642B792EEA0915BC40C8C0E0A9976E151102D8961971B39"
+    },
+    {
+      "Path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_shared_bootstrap.fsx",
+      "SHA256": "B613AE831D660921D10AD8F599D10F6F48CFD2D26AD54131A9B66C24004D58C7"
+    },
+    {
+      "Path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_service.fsx",
+      "SHA256": "C6C450075E7DF9CC3F81117BD8EFE33BD6D0380B586804E16A9C31A66529729D"
+    },
+    {
+      "Path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_references.fsx",
+      "SHA256": "FEAA8D23572FB7365BCEF2860A8D8CDCF8FA83C677EE178966ED98E54A9F3DF7"
+    },
+    {
+      "Path": "G:\\PulseTrade.fs\\misc\\line_bot_rn_nuget.multimedia.multisession.fodex.v2.fsx",
+      "SHA256": "CE8556A83A4847D778D1184A99A1CC86A190D6ECFC3438EB0B3C603EA6D77FB7"
+    },
+    {
+      "Path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_shared_restore.fsx",
+      "SHA256": "9B1792AA9866368870441AF0E8AA4328BB2CE87DC11CC792DB8F803D9981A255"
+    },
+    {
+      "Path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_runtime.fsx",
+      "SHA256": "BF9E494B439A4152A61D71BD8CA5C54256C89747738CDB0BB74C27F552CCDBB3"
+    },
+    {
+      "Path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_options.fsx",
+      "SHA256": "4691A759CE4C9BAAEF4B5A8EAF849A5C5D9AC01E74A1CC00A5E85DF08006C229"
+    }
+  ],
+  "Log": "F:\\fodex\\log\\20261104\\20261104151138.M019-v2-R4-acceptance.log",
+  "Services": [
+    {
+      "Name": "PulseTradeCommSpaHumanUi",
+      "State": "Running",
+      "ProcessId": 53384
+    },
+    {
+      "Name": "PulseTradeCommResourceNode",
+      "State": "Running",
+      "ProcessId": 16660
+    },
+    {
+      "Name": "PulseTradeCommGatewayActive",
+      "State": "Running",
+      "ProcessId": 2408
+    }
+  ],
+  "ManifestSHA": "95AC7332DFFFE8ED10D053CA2CD11C019B40FEAD5925622D94114F625CA423D6",
+  "At": "2026-11-04T15:11:38.3407418+08:00"
+}

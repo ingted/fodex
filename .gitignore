@@ -3,3 +3,6 @@
 **/obj/
 **/TestResults/
 artifacts/
+
+# Local test fixtures and transient output; may contain generated private keys.
+/temp/

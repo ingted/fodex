@@ -91,6 +91,11 @@
     <File Path="Fodex.Supervisor/WrapperIAgentDemo.M019.R001.Output.fsx" />
     <File Path="Fodex.Supervisor/Start-M019.R001.ps1" />
     <File Path="Fodex.Supervisor/README.M019.R001.md" />
+    <File Path="Fodex.Supervisor/SupervisorReferences.fsx" />
+    <File Path="Fodex.Supervisor/ConsolePrinter.fsx" />
+    <File Path="Fodex.Supervisor/WrapperIAgentDemo.M019.R002.fsx" />
+    <File Path="Fodex.Supervisor/Start-M019.R002.ps1" />
+    <File Path="Fodex.Supervisor/README.M019.R002.md" />
     <File Path="Fodex.Supervisor.Tests/M019ConsoleOutputIsolationTests.fsx" />
   </Folder>
 </Solution>

@@ -1,0 +1,95 @@
+{
+  "status": "FINAL / NOT ACCEPTED: native loopback network denial failed",
+  "at": "2026-11-04T15:38:05.2345661+08:00",
+  "frozenManifestSHA256": "95AC7332DFFFE8ED10D053CA2CD11C019B40FEAD5925622D94114F625CA423D6",
+  "requiredDefine": "V2_PINNED_8C9B80E",
+  "uniqueAC": {
+    "executed": 6,
+    "passed": 5,
+    "skipped": 0,
+    "failed": 1
+  },
+  "firstRun": {
+    "executed": 6,
+    "passed": 4,
+    "ignored": 0,
+    "errored": 0,
+    "failed": 2
+  },
+  "correctedRecoverySupplement": {
+    "executed": 2,
+    "passed": 2,
+    "includesRepeatedMinimum": true,
+    "failed": 0
+  },
+  "layerCases": {
+    "process": {
+      "executed": 2,
+      "passed": 2
+    },
+    "pureUnit": 0,
+    "native": {
+      "executed": 2,
+      "passed": 1,
+      "failed": 1
+    },
+    "host": {
+      "skipped": 1,
+      "executed": 0
+    },
+    "adapterFixtureAssertions": {
+      "executed": 17,
+      "passed": 17
+    },
+    "realLineApiExternal": {
+      "executed": 0
+    },
+    "controlledFactoryRealSql": {
+      "executed": 2,
+      "passed": 2
+    }
+  },
+  "nativeModelTurns": 6,
+  "sourceFingerprints": "fingerprints.json (current own-test SHA; product10 +4 readonly dependency baseline matches; Supervisor/Contracts hashes match pinned)",
+  "commands": [
+    "pwsh -NoProfile -File F:/fodex/Fodex.Supervisor.Tests/M019LineV2Watchdog.ps1 -OutputRoot F:/fodex/temp/sub-5/M019-line-v2-R4-run3",
+    "pwsh -NoProfile -File F:/fodex/Fodex.Supervisor.Tests/M019LineV2Watchdog.ps1 -OutputRoot F:/fodex/temp/sub-5/M019-line-v2-R4-recovery2 -RecoveryOnly",
+    "pwsh -File F:/fodex/Fodex.Supervisor.Tests/M019LineV2AdapterWatchdog.ps1"
+  ],
+  "formalFirstCommand": "dotnet fsi --parallelcompilation- --debug- --define:V2_PINNED_8C9B80E --exec G:/PulseTrade.fs/misc/line_bot_rn_nuget.multimedia.multisession.fodex.v2.fsx -- --mode request --sql-server localhost --database M019LineV2Test_55f44d994d4140cc800ef8bd3fa1cc47 --working-directory F:/fodex/temp/sub-5/M019-line-v2/55f44d994d4140cc800ef8bd3fa1cc47/work --output-root F:/fodex/temp/sub-5/M019-line-v2/55f44d994d4140cc800ef8bd3fa1cc47/native --model gpt-6.1-sol --effort low --route 174e7c02-e178-4450-8187-0d62d1afe1f9 --conversation resume-55f44d994d4140cc800ef8bd3fa1cc47 --target main --prompt \"Remember this conversation token M019_875c9341c52f4a73b4cfe97ce785abdf. Reply exactly M019_REAL_MINIMUM_OK. Do not use tools.\"",
+  "recovery": "Each live/stopped operator attempt NEW FSI. Failed orphan-provider process fully exits before recovery. New GUID +generation1; original unknown route stays indeterminate; Calls/Effects not incremented. Same-provider-pool retention limitation preserved.",
+  "security": "Actual exec Set-Content denied / guard unchanged; actual apply_patch denied / file absent. Actual exec Invoke-WebRequest to own loopback sink returned HTTP200; native sink hits1 expected0 => FAIL. security-tool-raw.jsonl includes exact calls/results; native-policy metadata read-only.",
+  "hostBoundary": "No isolated v2 RN/GW host fixture running; normal v2 host branch not executed. Existing RN/GW health/PID readback only, not R4 host acceptance. No production bootstrap/LINE ingress used.",
+  "adapterBoundary": "Synthetic normalizedReader input + actual Adapter + controlled fake runtime; Jsonl media warm/cold different process, identical persisted reply/URL/unexpired bytes. Constructor-only encrypted test references; generated ephemeral RSA and synthetic non-existent SQL login, no production account or credential used.",
+  "unaccepted": [
+    "network deny incl loopback",
+    "normal R4 host/listener/RN integration",
+    "true LINE/API/public media",
+    "external exactly-once",
+    "original LINE ordering",
+    "formal request deadline"
+  ],
+  "encoding": "Own five test sources strict UTF8/noBOM/NUL0/U+FFFD0; evidence strict UTF8/NUL0. Preserve first-security stdout43 and upstream tool output2 U+FFFD, not reencoded or falsely called clean; ASCII denial/HTTP evidence intact. encoding-observations.json",
+  "resources": "resources.json + cleanup-query.sql/cleanup-sql.txt: owned processes0/listening native ports0/databases0/fixture login0; SPA53384/RN16660/GW2408 unchanged Running; both health200/status ok",
+  "rawRoots": [
+    "F:/fodex/temp/sub-5/M019-line-v2-R4-run1",
+    "F:/fodex/temp/sub-5/M019-line-v2-R4-run2",
+    "F:/fodex/temp/sub-5/M019-line-v2-R4-run3",
+    "F:/fodex/temp/sub-5/M019-line-v2-R4-recovery",
+    "F:/fodex/temp/sub-5/M019-line-v2-R4-recovery2",
+    "F:\\fodex\\temp\\sub-5\\M019-line-v2-adapter\\89b447cdbb904290a5a4d699c4a6374b"
+  ],
+  "ownerPaths": [
+    "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2Acceptance.fsx",
+    "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2AdapterFixture.fsx",
+    "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2AdapterWatchdog.ps1",
+    "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2CrashWorker.fsx",
+    "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2Watchdog.ps1",
+    "F:/fodex/log/20261104/20261104151138.M019-v2-R4-acceptance.log",
+    "F:/fodex/notes/202611/20261104/00017.line-fodex-v2.test.md",
+    "F:\\fodex\\notes\\202611\\20261104\\00017.line-fodex-v2.test.R4"
+  ],
+  "GModifiedPaths": [],
+  "indexCommitPush": "none; sub6 sole index owner",
+  "policy": "One combined test start + read-only service health command rejected blocked by policy; unexecuted. Narrow authorized test-only invocation and later read-only readback succeeded. Old refused scratch untouched."
+}

@@ -1,0 +1,36 @@
+{
+  "TestsSha256": "A3090F7ED7D561CF9D50FE9654F2A3ECC8E1CD39D642CDE091ABBC52784E4302",
+  "TargetSha256": "FE0E1EEAFEC190E2447A1AD9EEB56A72922EAD7E1022BB273960D810BC404338",
+  "ServicesBefore": [
+    {
+      "Name": "PulseTradeCommSpaHumanUi",
+      "State": "Running",
+      "ProcessId": 53384
+    },
+    {
+      "Name": "PulseTradeCommResourceNode",
+      "State": "Running",
+      "ProcessId": 16660
+    },
+    {
+      "Name": "PulseTradeCommGatewayActive",
+      "State": "Running",
+      "ProcessId": 2408
+    }
+  ],
+  "HelperSha256": "55E4C7F6BA92717452C3D363038EF0752655D81C027391E5B06AB57718BC80D2",
+  "At": "2026-11-03T11:12:31.5672375+08:00",
+  "Results": {
+    "Skipped": 1,
+    "Errored": 0,
+    "Host": "1/1 passed",
+    "Passed": 3,
+    "Native": "2/2 passed; next skipped",
+    "Failed": 0,
+    "Executed": 3
+  },
+  "NormalHostCommand": "dotnet \"fsi\" \"--parallelcompilation-\" \"--debug-\" \"--exec\" \"G:\\PulseTrade.fs\\misc\\line_bot_rn_nuget.multimedia.multisession.fodex.fsx\" \"--\" \"--bootstrap-health-url\" \"http://127.0.0.1:12129/resource-node/healthz\" \"--cluster-host\" \"127.0.0.1\" \"--cluster-port\" \"12130\" \"--line-catalog\" \"F:\\fodex\\temp\\sub-5\\M018-round2-host\\test-line-catalog.json\" \"--storage\" \"jsonl\" \"--output-root\" \"F:\\fodex\\temp\\sub-5\\M018-round2-host\\media\" \"--sql-connection-encrypted-file\" \"F:\\fodex\\temp\\sub-5\\M018-round2-host\\test-sql.enc.txt\" \"--sql-private-key-path\" \"D:\\ingted.com\\myKey.private.txt\" \"--fodex-sql-server\" \"localhost\" \"--fodex-database\" \"PTCLineTest_2d482101413f4390bb70c1f4f6f304b9\" \"--fodex-working-directory\" \"F:\\fodex\\temp\\sub-5\\M018-round2-host\" \"--fodex-model\" \"gpt-6.1-sol\" \"--fodex-effort\" \"medium\"",
+  "GOwnedTrackedChanges": [],
+  "CanonicalScope": "readonly notes-dir=this frozen round2 folder; appendable handoff=watched separately; final canonical output under F log",
+  "NativeWindowRemaining": 0
+}

@@ -1,0 +1,5 @@
+{
+  "StartedAt": "2026-11-03T09:51:46.7218093+08:00",
+  "Pid": 65316,
+  "Command": "dotnet fsi --parallelcompilation- --debug- --exec F:\\fodex\\Fodex.Supervisor.Tests\\M018LineFodexE2E.fsx"
+}

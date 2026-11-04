@@ -1,0 +1,16 @@
+
+
+warning FS0075: The command-line option '--parallelcompilation' is for test purposes only
+
+
+
+G:\PulseTrade.fs\misc\line_bot_rn_nuget.multimedia.multisession.almighty.fsx(4159,17): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_bot_rn_nuget.multimedia.multisession.almighty.fsx(4787,61): warning FS0066: This upcast is unnecessary - the types are identical
+
+
+
+M018LineFodexE2E.fsx(80,83): error FS0501: The member or object constructor 'ToString' takes 0 argument(s) but is here given 1. The required signature is 'Object.ToString() : string'.
+

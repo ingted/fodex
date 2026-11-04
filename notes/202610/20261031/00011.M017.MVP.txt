@@ -1,0 +1,1508 @@
+› 這樣，你先弄個 M017 純粹 console.write / read 讓讓我感受一下 M008~M016 的完整整合
+  1. 要能支援 /wrapper_cot xxxxx
+  2. 要能支援 /subagent(N)
+  3. 動態切換下一次 exec 或者下一個 turn 的 codex model 與 effort /model xxxxx 以及 /effort /fast
+  4. 要能中斷 participant 執行 /stop main 或者 /stop sub(N) 或者 /stop sub(i..j)
+  5. 承 2. 4.，要能支援 /list_participant 呈現編號 N, name, sid, actor address, Option(parent sid)，記得如果 participant 是 wrapper 那底下的 participant 也要
+  列出，parent sid 就是 wrapper
+  6. /stop sub 功能對於編號 N 很依賴，請重新 code review 確保這個 execution graph 能保證 local + remote participant 的編號 N 唯一且能正確在 FGL graph 中維護
+  (我猜 5. 你可以透過 graph find/filter/seek 達成，當然，前提是良好的 graph 節點與邊的資料結構設計)
+
+  => 請先分析需求，給出你對上述需求的理解以及一份 req_analysis.md
+
+
+• 我會先對照現有 Contract、M008～M016 與 graph／participant 管理方式，確認哪些能力已具備、哪些需要補上，再寫成 req_analysis.md。這輪只做分析與文件，不修改實
+  作；會特別查 /stop 編號在本機、遠端與巢狀 wrapper 下是否能唯一定位。
+
+• Ran Read-CodexStdout { rg -n -m 14 'Fodex|graph|participant|M016|logger|subagent' C:/Users/Administrator/.codex/memories/MEMORY.md | Select-Object -First
+  │ 24; git status --short --untracked-files=normal; rg --files -g AGENTS.md -g GEMINI.md -g '*req_analysis*' -g '*SDK*' -g '*README*' -g '*M017*' -g
+  │ '*csproj' -g '*fsproj' -g '*.slnx' . | Select-Object -First 65 }
+  └ 1:# Task Group: Fodex documentation/review, ProcSupervisor local-stdio fork, exact-output, and two-round ECHO
+    3:scope: Fodex document and source review, isolated FAkka.Proc.Supervisor local-stdio port/publication, literal output requests, and constrained two-who
+    ECHO tests.
+    +37 lines (ctrl+t to view transcript)
+
+• Called comm.comm_participant_register({"participantId":"fodex"})
+  └ {"status": "ok", "kind": "ptc-gw-comm-control-result", "operation": "comm.participant.register", "requestId":
+    "gw-durable-4aa2470658454a59aef1677a8298007a", "participant": {"participantId": "fodex", "displayName": "fodex", "kind": "agent", "status": "online",
+    "registeredAtUtc": "2026-10-28T22:07:58.0912803+00:00", "lastSeenAtUtc": "2026-10-31T12:27:31.0044926+00:00", "labels": ["web", "chat"]}, "tool":
+    +1 line (ctrl+t to view transcript)
+
+• Called comm.comm_participants_list({})
+  └ {"status": "ok", "kind": "ptc-gw-comm-control-result", "operation": "comm.participants.list", "requestId": "gw-durable-8f36b7b8ebdd4e319c17023fad1cc1a6",
+    "count": 50, "participants": [{"participantId": "LineBotty", "displayName": "LineBotty", "kind": "agent", "status": "offline", "registeredAtUtc":
+    "2026-10-20T13:08:39.2271208+00:00", "lastSeenAtUtc": "2026-10-20T14:09:06.2755055+00:00", "labels": ["web", "chat"]}, {"participantId": "Mr.Q",
+    +1 line (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { git log -1 --format='%h %s'; rg --files --hidden -g AGENTS.md -g GEMINI.md -g '!.git' .; rg --files doc | Select-Object -First 45;
+  │ bash -lc 'sed -n "1,240p" /c/Users/Administrator/.codex/skills/.system/openai-docs/SKILL.md'; bash -lc 'sed -n "1,180p"
+  │ Fodex.Supervisor/Fodex.Supervisor.fsproj'; bash -lc 'sed -n "1,160p" Fodex.Supervisor/README.V200.md' }
+  └ Exception: C:\Users\Administrator\.codex\lib\Read-CodexStdout.ps1:142
+    Line |
+     142 |          throw "Captured output exceeds the read limit: exit=$exitCode …
+    +4 lines (ctrl+t to view transcript)
+
+• /model、/effort、/fast 涉及 Codex 的實際協定，我會使用 openai-docs 指引，先查本機版本與現有 adapter，必要時再核對官方文件。特別是 /fast，不能先假定它等同降
+  低 reasoning effort。
+
+• Ran Read-CodexStdout { bash -lc 'cat /c/Users/Administrator/.codex/skills/.system/openai-docs/SKILL.md' }
+  └ ---
+    name: "openai-docs"
+    description: "Use for Codex models/pricing, scheduled tasks, skills, settings, setup, troubleshooting, customization, automations, and self-knowledge—
+    +37 lines (ctrl+t to view transcript)
+
+• Called
+  └ comm.comm_message_send({"fromId":"fodex","toId":"user.github.ingted","scope":"direct","body":"【開始 M017 需求分析；只新增
+        req_analysis.md】本輪不開發腳本、不動 Contract、不改舊 M 檔。目標是把 Console.ReadLine/WriteLine 當薄介面，操作既有 wrapper/IAgent/ReActLoop，整合
+        /wrapper_cot、/subagent(N)、下一輪 model/effort/fast、指定 participant 中斷、遞迴清單。\n審查重點：/subagent(N) 的 N 是建立數量，而 /stop sub(N) 的 N
+        必須是清單中持久穩定的定位號，不能拿當次排序/陣列位置代替；會對照 SessionId、FGL key、遠端 owner、wrapper 巢狀關係，檢查合併後唯一性與 restart/resume
+        是否成立。\n文件將分成已具備/實際缺口/建議語意/待你裁決/驗收案例，並附目前程式碼路徑與小段 snippet。會明確區分 interrupt 當前 turn 與永久 Stop/移除
+        participant，避免把這兩件事混用。"})
+    {"kind": "ptc-gw-comm-message-result", "status": "ok", "messageId": "msg-fsi-3ad2ac2710004ad2a7b279506f5a0fc3", "deliveryHint":
+    "direct:user.github.ingted", "body": "【開始 M017 需求分析；只新增 req_analysis.md】本輪不開發腳本、不動 Contract、不改舊 M 檔。目標是把 Console.ReadLine/
+    WriteLine 當薄介面，操作既有 wrapper/IAgent/ReActLoop，整合 /wrapper_cot、/subagent(N)、下一輪 model/effort/fast、指定 participant 中斷、遞迴清單。\n審查
+    +1 line (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { git log -1 --format='%h %s'; rg --files --hidden -g AGENTS.md -g GEMINI.md -g '!.git' .; rg --files doc | Select-Object -First 45;
+  │ bash -lc 'sed -n "1,135p" Fodex.Supervisor/README.V200.md' }
+  └ 0895a12 20261031
+    doc\Fodex Agent 框架技術指南.docx
+    doc\Fodex Agent 框架技術指南.md
+    +113 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc 'sed -n "1,145p" Fodex.Supervisor/Fodex.Supervisor.fsproj'; rg -n '^type |^and |abstract
+  │ member|ParticipantAddress|SessionId|WrappedReActDataFlow|ReActEndpoint|createReActLoop' Fodex.Supervisor.Contract/concepts.fsx | Select-Object -First
+  │ 105; rg -n '^#|participant|graph|拓撲|編號|唯一|ReActLoop' 'doc/Fodex Agent 框架技術指南.md' | Select-Object -First 55; Get-Item 'doc/Fodex Agent
+  │ … +1 line
+  └ <Project Sdk="Microsoft.NET.Sdk">
+      <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+    +242 lines (ctrl+t to view transcript)
+
+• Viewed image 00001_20261025.png
+
+• Ran Read-CodexStdout { bash -lc 'nl -ba Fodex.Supervisor.Contract/concepts.fsx | sed -n "460,610p"'; rg -n
+  │ 'register|wrapper_cot|subagent|createWrapper|ReActLoop|Remote|versionText' Fodex.Supervisor/WrapperIAgentDemo.M012.fsx
+  │ Fodex.Supervisor/WrapperIAgentDemo.M013.fsx Fodex.Supervisor/WrapperIAgentDemo.M014.fsx Fodex.Supervisor/WrapperIAgentDemo.M015.fsx
+  │ … +3 lines
+  └    460            多個 Wrapper 參與同一個 ReActLoop，各自角度都有唯一的 AgentEnd
+       461        *)
+       462        // Agent 是 actor capability；OS Process 是 Native actor 背後可替換、可重綁的實作資源，
+    +213 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg -n 'let |type |Upsert|RemoveParticipant|ListParticipants|ReadDataFlow|GetVertices|AddVertex|Interrupt|Stop|Dictionary|session'
+  │ Fodex.Supervisor/ReActLoopHandlerV205.fsx | Select-Object -First 98; rg -n 'type
+  │ |Interrupt|Stop|model|effort|fast|serviceTier|service_tier|thread/|turn/|let config|let settings' Fodex.Supervisor/NativeAgentV208.fsx
+  │ … +3 lines
+  └ 19:    /// 同一 session 由一個 live handler 寫入；DB 的重試保護不等於多 writer 的 actor 協調。
+    20:    let createHandler (ctx: UniContext) (node: FodexNode) connectionString sessionId (sink: ReActDataStream<string> -> unit) =
+    21:        ReActTraceV203.readBatch ctx "handler.db.recover" sessionId (fun () -> ReActDataStoreV200.collect<string> connectionString sessionId)
+    +102 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc 'nl -ba Fodex.Supervisor/ReActLoopHandlerV205.fsx | sed -n "20,74p;224,284p"'; bash -lc 'nl -ba
+  │ Fodex.Supervisor/WrapperAgentV208.fsx | sed -n "1,165p"'; rg -n 'Stop|Interrupt|ProcessPrompt|Subagent|Initialize|count|index|[0-9]+L'
+  │ Fodex.Supervisor/WrapperAgentV206.fsx Fodex.Supervisor/WrapperAgentV207.fsx | Select-Object -First 45 }
+  └ Exception: C:\Users\Administrator\.codex\lib\Read-CodexStdout.ps1:142
+    Line |
+     142 |          throw "Captured output exceeds the read limit: exit=$exitCode …
+    +4 lines (ctrl+t to view transcript)
+
+• 目前確認：現有 FGL graph 保存的是已發生的資料流，節點 key 是「participantId＋session」，節點內容則是 unit。因此，單靠 graph filter 還取不到名稱、parent 或目
+  前 actor address；也不能直接把 participantId 當成跨 wrapper 唯一的 /stop 編號。這部分會列為 M017 的明確缺口。
+
+• Ran Read-CodexStdout { bash -lc 'nl -ba Fodex.Supervisor/ReActLoopHandlerV205.fsx | sed -n "20,74p;224,284p"' }
+  └     20        let createHandler (ctx: UniContext) (node: FodexNode) connectionString sessionId (sink: ReActDataStream<string> -> unit) =
+        21            ReActTraceV203.readBatch ctx "handler.db.recover" sessionId (fun () -> ReActDataStoreV200.collect<string> connectionString sessionId)
+        22            |> Result.bind (fun history ->
+    +113 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc 'nl -ba Fodex.Supervisor/WrapperAgentV208.fsx | sed -n "1,100p"' }
+  └      1    namespace Fodex.Supervisor
+         2
+         3    open System
+    +98 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc 'nl -ba Fodex.Supervisor/WrapperAgentV208.fsx | sed -n "100,205p"' }
+  └    100                    let startCot cause target instruction =
+       101                        // Collect 保持查 DB 的語意。來源是已持久化資料，不是從模型文字猜測 history。
+       102                        loop.Collect(snd wrapper)
+    +104 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc 'nl -ba Fodex.Supervisor/NativeAgentV208.fsx | sed -n "14,112p;174,219p"' }
+  └     14        let capabilities = [| CanStartTurn; CanInterruptTurn; CanResumeSession |]
+        15
+        16        /// 所有設定透過 CLI argv；prompt 不出現在 argv / log / shell command。
+    +143 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc 'nl -ba Fodex.Supervisor/NativeAppServerV208.fsx | sed -n "60,102p;140,180p;195,251p"'; bash -lc 'nl -ba
+  │ Fodex.Supervisor/IAgentFodexFunV200.fsx | sed -n "1,88p"' }
+  └     60        /// Native actor 只擁有此 participant 的 process/connection/turn。
+        61        /// Proc Supervisor 仍使用原有 FeasibleT SOP；資料流只能經 ReActLoop member。
+        62        /// cs 明確傳入，Start 存下可用於 codex resume 的 thread.id（此版本不 fork thread）。
+    +227 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg --files C:/Users/Administrator/AppData/Roaming/npm/node_modules/@openai/codex -g '*.json' -g '*.js' -g '*.md' | Select-Object
+  │ -First 12; codex --version; codex exec resume --help | Select-Object -First 52; codex app-server --help | Select-Object -First 42 }
+  └ C:/Users/Administrator/AppData/Roaming/npm/node_modules/@openai/codex\README.md
+    C:/Users/Administrator/AppData/Roaming/npm/node_modules/@openai/codex\package.json
+    C:/Users/Administrator/AppData/Roaming/npm/node_modules/@openai/codex\node_modules\@openai\codex-win32-x64\package.json
+    +105 lines (ctrl+t to view transcript)
+
+• Browsing the web
+
+• Searched the web for Codex fast service_tier app-server
+
+• Ran Read-CodexStdout { bash -lc 'nl -ba Fodex.Supervisor/SubagentFodexFunV206.fsx | sed -n "1,120p"'; rg -n
+  │ 'id|who|session|participants|[0-9]+L|Initialize|Count|Resume|Native' Fodex.Supervisor/HubParticipantsV102.fsx
+  │ Fodex.Supervisor/NativeHubParticipantsV103.fsx Fodex.Supervisor/NativeOrderHubV104.fsx | Select-Object -First 70 }
+  └      1    namespace Fodex.Supervisor
+         2
+         3    open System
+    +176 lines (ctrl+t to view transcript)
+
+• Browsing the web
+
+• Opened https://learn.chatgpt.com/docs/agent-configuration/speed
+
+• Ran Read-CodexStdout { bash -lc 'nl -ba Fodex.Supervisor/HubParticipantsV102.fsx | sed -n "1,145p"' }
+  └      1    namespace Fodex.Supervisor
+         2
+         3    open LoggerUtil
+    +129 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc 'nl -ba Fodex.Supervisor/NativeHubParticipantsV103.fsx | sed -n "1,132p"' }
+  └      1    namespace Fodex.Supervisor
+         2
+         3    open LoggerUtil
+    +130 lines (ctrl+t to view transcript)
+
+• Browsing the web
+
+• Searched for 'serviceTier'
+
+• Ran Read-CodexStdout { codex app-server generate-json-schema --help | Select-Object -First 38; bash -lc 'nl -ba Fodex.Supervisor/RemoteFodexFunV209.fsx |
+  │ sed -n "1,150p"' }
+  └ [experimental] Generate JSON Schema for the app server protocol
+
+    Usage: codex app-server generate-json-schema [OPTIONS] --out <DIR>
+    +148 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg -n 'nativeId|[0-9]+L|Array.mapi|Subagent|initialize|Initialize|scope|count|Count|active|Remove|Stop'
+  │ Fodex.Supervisor/WrapperAgentV207.fsx Fodex.Supervisor/NativeSubagentFodexFunV207.fsx Fodex.Supervisor/WrapperHubHostingV105.fsx
+  │ Fodex.Supervisor/NativeHubHostingV106.fsx | Select-Object -First 92 }
+  └ Fodex.Supervisor/NativeSubagentFodexFunV207.fsx:12:/// who 是 hub 的派工 id。scope 是 main wrapper 已持久化的 HumanInit StreamId。
+    Fodex.Supervisor/NativeSubagentFodexFunV207.fsx:14:type NativeSubagentStartV207 = Uri * ReActParticipant * int * StreamId
+    Fodex.Supervisor/NativeSubagentFodexFunV207.fsx:15:type NativeSubagentWorkV207 = Uri * string * string array * string
+    +90 lines (ctrl+t to view transcript)
+
+• M017 的 /model、/effort、/fast，你希望預設影響哪個範圍？我會先在分析中採「從下一輪生效，不改正在執行中的 turn」。
+
+  • 整棵目前 wrapper 的 participant 樹，包含之後新建的 sub／COT
+  • 只影響 main participant，其餘維持自己的設定
+
+  /stop 我先理解成「中斷指定 participant 當前工作、保留編號與 sid，之後可繼續派工」，不是永久刪除。若選到 sub wrapper，是否連它目前執行中的後代一起中斷？
+
+  • 中斷選定 wrapper 的整個子樹，保留身分與歷史
+  • 只中斷該 wrapper 的 main，其他後代繼續
+
+  單獨輸入 /subagent(N) 時，我建議先備妥 N 個 sub、列出 who／編號並通知 main；也允許同一行附工作指令。再次輸入 N 時，要維持總數還是追加？
+
+  • 把可派工的 sub 總數調整為 N，盡量重用既有 sid
+  • 每次追加 N 個新的 sub
+
+• Ran Read-CodexStdout { $schemaPath='F:/fodex/artifacts/M017-analysis/codex-0.163.0-schema'; if (Test-Path -LiteralPath $schemaPath) { throw 'Schema capture
+  │ directory already exists; will not overwrite.' }; New-Item -ItemType Directory -Path $schemaPath | Out-Null; codex app-server generate-json-schema
+  │ --experimental --out $schemaPath; rg --files $schemaPath -g '*TurnStart*' -g '*TurnSteer*' -g '*ThreadSettings*' -g '*ServiceTier*' -g '*Model*' -g
+  │ … +1 line
+  └ F:/fodex/artifacts/M017-analysis/codex-0.163.0-schema\v2\ModelVerificationNotification.json
+    F:/fodex/artifacts/M017-analysis/codex-0.163.0-schema\v2\ModelSafetyBufferingUpdatedNotification.json
+    F:/fodex/artifacts/M017-analysis/codex-0.163.0-schema\v2\ModelReroutedNotification.json
+    +16 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc 'nl -ba Fodex.Supervisor/ReActLoopHandlerV205.fsx | sed -n "165,222p"'; bash -lc 'nl -ba
+  │ Fodex.Supervisor/WrapperAgentV206.fsx | sed -n "90,155p"'; bash -lc 'nl -ba Fodex.Supervisor/NativeSubagentFodexFunV207.fsx | sed -n "78,111p"' }
+  └    165                        let recordNative (NativeOrderCompleted(orderId,owner,nativeId,cause,instruction,codexSid,nativeMessageId,output)) =
+       166                            try
+       167                                if orderId = Guid.Empty || nativeId <= 0L || snd owner <> sessionId then
+    +156 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { $schemaRoot='F:/fodex/artifacts/M017-analysis/codex-0.163.0-schema/v2'; foreach($name in
+  │ @('TurnStartParams.json','TurnSteerParams.json','ThreadSettingsUpdateParams.json','ModelListResponse.json')) { $schema=Get-Content -LiteralPath
+  │ (Join-Path $schemaRoot $name) -Raw -Encoding utf8 | ConvertFrom-Json;
+  │ … +6 lines
+  └
+    Schema                          RelevantProperties
+    ------                          ------------------
+    +55 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc 'nl -ba Fodex.Supervisor/NativeOrderHubV104.fsx | sed -n "25,103p;190,224p"'; bash -lc 'nl -ba
+  │ Fodex.Supervisor/WrapperHubHostingV105.fsx | sed -n "82,126p"' }
+  └     25    /// TaskCompletionSource 是本機 HTTP/MCP 的回覆出口，不跨 ActorSystem 序列化。
+        26    type HubCallV104 =
+        27        | EnqueueOrder of orderId: string * who: string * instruction: string * reply: TaskCompletionSource<string>
+    +157 lines (ctrl+t to view transcript)
+
+• 另一個整合缺口也確認了：V206／V207 的 subagent wrapper 與 V208 的 COT wrapper 目前刻意分開，彼此會拒絕對方的命令；不是把現有腳本接在一起就能同時使用。
+
+  另外，raw exec sub 的 graph 編號目前在完成後才用 3 + index 建立，COT 也會配置數字 ID。合併前需要統一配號與生命週期，否則執行中的 sub 可能尚不可列出，或與
+  COT 發生身分衝突。
+
+• Ran Read-CodexStdout { bash -lc 'nl -ba Fodex.Supervisor/NativeOwnershipFodexFunV209.fsx | sed -n "1,115p"'; bash -lc 'nl -ba
+  │ Fodex.Supervisor/WrapperAgentV207.fsx | sed -n "82,153p"' }
+  └      1    namespace Fodex.Supervisor
+         2
+         3    open System
+    +129 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc 'nl -ba Fodex.Supervisor.Contract/concepts.fsx | sed -n "872,934p;977,1018p"'; rg --files Fodex.Supervisor.Contract.Tests
+  │ Fodex.Supervisor.Tests -g '*.fsx' | rg 'Graph|Remote|NativeSub|ExplicitCot|Scope|ReActLoop'; bash -lc 'nl -ba
+  │ Fodex.Supervisor/NativeHubParticipantsV103.fsx | sed -n "130,160p"' }
+  └    872                            exn (
+       873                                sprintf
+       874                                    "%s function for version %s was not pinned at ReActLoop startup"
+    +119 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg -n 'testCase|ptestCase' Fodex.Supervisor.Tests/RemoteFodexFunV209Tests.fsx
+  │ Fodex.Supervisor.Tests/NativeSubagentFodexFunV207Tests.fsx Fodex.Supervisor.Tests/ExplicitCotFodexFunV208Tests.fsx
+  │ Fodex.Supervisor.Tests/ReActLoopFodexFunV200Tests.fsx | Select-Object -First 38; bash -lc 'nl -ba Fodex.Supervisor/FodexFunRegistrationV208.fsx | sed -n
+  │ … +3 lines
+  └ Fodex.Supervisor.Tests/ReActLoopFodexFunV200Tests.fsx:71:    testCase "all eleven quotations evaluate; topology and controls use bound IAgent" <| fun ()
+    ->
+    Fodex.Supervisor.Tests/ReActLoopFodexFunV200Tests.fsx:98:    testCase "prompt, dispatch, final output commit then build multigraph and retain history" <|
+    +96 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc 'nl -ba Fodex.Supervisor/WrapperIAgentDemo.M016.fsx | sed -n "61,104p"'; bash -lc 'nl -ba
+  │ Fodex.Supervisor/NativeAgentV208.fsx | sed -n "108,133p"'; bash -lc 'nl -ba Fodex.Supervisor/WrapperAgentV206.fsx | sed -n "78,109p"'; Get-Item
+  │ req_analysis.md -ErrorAction SilentlyContinue | Select-Object FullName,Length }
+  └     61    let node = RemoteFodexFunV209.createNode "fodex-m016-client" (settings.GetResult Bind_Ip) (settings.GetResult Port)
+        62    let logger = NLog.LogManager.GetLogger("Fodex.IO").WithProperty("traceFile", Path.Combine(directory,"client.io.jsonl"))
+        63    let ctx = UniLogger.toCtx(FodexLoggerAdapter.toUL(UniversalLogger<_>(logger)), "Fodex")
+    +100 lines (ctrl+t to view transcript)
+
+• Called
+  └ comm.comm_message_send({"fromId":"fodex","toId":"user.github.ingted","scope":"direct","body":"【req_analysis.md 寫入前：已確認的技術缺口】會在 F:/fodex/
+        req_analysis.md 寫入以下結論，不改程式。\n1) 現有 graph：ArrayAdjacencyGraph<ReActEndpoint, unit, ReActEvent<_>>；只有 committed edges 才加節點，
+        Upsert 只更新 live binding，ReadDataFlow 又從 edges 重建。故「建立後尚未發話」「已停」「parent/name」不能靠現有 graph 自動推出。\n2) 每個 sub wrapper
+        都使用 (1L,自己的session)/(2L,自己的session)。完整 key 不衝突，但裸數字不是跨樹唯一編號。raw sub 完成後才用 3L+index 配號；COT 用歷史max+1，兩者直接合
+        併會競用相同 endpoint。需要建立前配號，並持久保存 root 範圍的 N↔完整endpoint 映射；不可用表格排序替代。\n3) V208 明確拒絕 /subagent；V206/V207 拒絕 /
+        wrapper_cot。新整合版必須共用排程/配號，不能僅組合 #load。\n4) model/effort 在 native factory 被固定捕捉，現有 raw hub 只有整體 cancellation，沒有單
+        who stop。M016 遠端 wire 只開 loop 讀操作，帶 callback 的 InterruptTurn 不能直接送遠端。\n策略：維持 Console 薄層；控制命令由 wrapper→ReActLoop→owner
+        執行。Contract 保持凍結時，可在同一 handler 維護 typed FGL execution-topology（不複製歷史）；若要求現有那一張 unit-label graph 同時承載所有 metadata/
+        ownership，則必須另討論 Contract/持久化演進，文件會明列兩者取捨，不自行動 Contract。\n本機 codex-cli 0.163.0 的生成 schema 已核對 turn/start 的
+        model、effort、serviceTier；/fast 是獨立速度tier，不是低effort，也不以改全域config實作。"})
+    {"kind": "ptc-gw-comm-message-result", "status": "ok", "messageId": "msg-fsi-bd328cd2f0aa45f7844141a4d9b9f456", "deliveryHint":
+    "direct:user.github.ingted", "body": "【req_analysis.md 寫入前：已確認的技術缺口】會在 F:/fodex/req_analysis.md 寫入以下結論，不改程式。\n1) 現有 graph：
+    ArrayAdjacencyGraph<ReActEndpoint, unit, ReActEvent<_>>；只有 committed edges 才加節點，Upsert 只更新 live binding，ReadDataFlow 又從 edges 重建。故「建立
+    +1 line (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg -n '"model"|"effort"|"serviceTier"|"serviceTierForTurn"|Override the'
+  │ artifacts/M017-analysis/codex-0.163.0-schema/v2/TurnStartParams.json | Select-Object -Last 18; rg -n '"expectedTurnId"|"threadId"'
+  │ artifacts/M017-analysis/codex-0.163.0-schema/v2/TurnSteerParams.json; rg -n 'let arguments|let model|let effort|turn/interrupt'
+  │ … +1 line
+  └ 456:        "model": {
+    471:        "model"
+    773:      "description": "Override the approval policy for this turn and subsequent turns."
+    +22 lines (ctrl+t to view transcript)
+
+• Added req_analysis.md (+395 -0)
+      1 +# M017：Console 整合需求分析
+      2 +
+      3 +日期：2026-10-31。審查基準：`0895a12` 與本輪工作目錄中的 active implementation。
+      4 +
+      5 +本輪只分析與撰寫本文件，不實作 M017、不修改 Contract、不修改 M008～M016 或使用者 notes。
+      6 +文中的「建議」尚不是已完成的功能；待確認事項不以預設值冒充使用者已同意。
+      7 +
+      8 +## 1. 我的理解與結論
+      9 +
+     10 +M017 要把先前分開驗證的能力放進同一個持續運作的 console session，讓人直接操作真正的 wrapper；
+     11 +不是再跑一組固定 ECHO 後結束，也不是導入 Terminal.Gui 或新增 Demos 專案。
+     12 +
+     13 +| 需求 | M017 應有的行為 |
+     14 +| --- | --- |
+     15 +| 一般文字 | 透過 root wrapper 的 `IAgent.Send` 送入現有 ReActLoop，持續顯示回應 |
+     16 +| `/wrapper_cot xxxxx` | wrapper 建立獨立 COT participant；完成 yyyy 後才將結論與人的指令交給 main；不能借用 main 的 Codex session |
+     17 +| `/subagent(N)` | wrapper 備妥 N 個 sub，將真實 who 與帶領說明交給 main；模型只有派工／收件能力，不能自己建立 wrapper |
+     18 +| `/model`、`/effort`、`/fast` | 確定性控制命令；改下一次 native exec／新 turn 的設定，不當作 prompt 送給模型 |
+     19 +| `/stop main`、`/stop sub(N)`、`/stop sub(i..j)` | 依穩定的 participant 身分中斷指定工作，不依當下表格排序或文字猜目標 |
+     20 +| `/list_participant` | 遞迴列出 wrapper 與其底下 native／其他 wrapper，包含編號、名稱、sid、actor address、parent sid |
+     21 +| local + remote | 相同清單與定位語意；實際控制由資源 owner 執行，不能在 client 重建另一個「同名」participant |
+     22 +
+     23 +結論：可以做，但不是只增加 `Console.ReadLine()` 就完成。
+     24 +現有程式已有各項能力的局部基礎，還缺「共用配號／ownership、整合排程、可變 turn 設定、選定目標的取消、遠端控制 wire」這幾個連接點。
+     25 +其中第 5、6 項是開始實作前最重要的設計決策。
+     26 +
+     27 +## 2. 現有程式碼的實際狀態
+     28 +
+     29 +### 2.1 COT 與 subagent 目前是互斥版本
+     30 +
+     31 +[WrapperAgentV208.fsx](Fodex.Supervisor/WrapperAgentV208.fsx) L128–139 明確拒絕 `/subagent`；
+     32 +[WrapperAgentV206.fsx](Fodex.Supervisor/WrapperAgentV206.fsx) L88–107、
+     33 +[WrapperAgentV207.fsx](Fodex.Supervisor/WrapperAgentV207.fsx) L99–121 明確拒絕 `/wrapper_cot`。
+     34 +
+     35 +```fsharp
+     36 +// V208：既有行為摘要
+     37 +| None when prompt.StartsWith("/subagent", StringComparison.Ordinal) ->
+     38 +    Error(NotSupportedException "... V208 is explicit COT only")
+     39 +```
+     40 +
+     41 +因此，M017 必須有新的整合版 wrapper／registration，重用既有 FodexFun；
+     42 +不能同時註冊後期待 registry 自動合併兩個 wrapper actor 的行為，也不能把兩份腳本直接串起來。
+     43 +普通 subagent 保持 `AgentWork`；只有明確建立的 COT 角色使用 `AgentCot`。
+     44 +
+     45 +### 2.2 FGL 的完整 key 與清單編號是不同事情
+     46 +
+     47 +[concepts.fsx](Fodex.Supervisor.Contract/concepts.fsx) L468–481、L590–601 的現有型別：
+     48 +
+     49 +```fsharp
+     50 +type ReActParticipantId = int64
+     51 +type ReActParticipantSessionId = Guid * IPAddress option
+     52 +type ReActParticipant = ReActParticipantId * ReActParticipantSessionId
+     53 +
+     54 +type ReActEndpoint =
+     55 +    | Human
+     56 +    | Participant of ReActParticipant
+     57 +
+     58 +type WrappedReActDataFlow<'T when 'T : equality> =
+     59 +    FSharp.FGL.ArrayAdjacencyGraph.ArrayAdjacencyGraph<
+     60 +        ReActEndpoint, unit, ReActEvent<'T>>
+     61 +```
+     62 +
+     63 +[HubParticipantsV102.fsx](Fodex.Supervisor/HubParticipantsV102.fsx) L31–32：
+     64 +
+     65 +```fsharp
+     66 +let session = Guid.NewGuid(), None
+     67 +let owner, native = (1L, session), (2L, session)
+     68 +```
+     69 +
+     70 +每個 sub wrapper 都有自己的 session，重用 1、2 作 local id。
+     71 +`(2, sessionA)` 與 `(2, sessionB)` 是不同 FGL key，這本身不是錯誤；
+     72 +但只顯示／傳送裸數字 `2`，就不足以安全定位整棵樹中的 participant。
+     73 +
+     74 +### 2.3 現有 dataflow graph 不是完整的 execution topology
+     75 +
+     76 +[ReActLoopHandlerV205.fsx](Fodex.Supervisor/ReActLoopHandlerV205.fsx)：
+     77 +
+     78 +- L29–35：只有記錄 edge 時才 `AddVertex(..., ())`。
+     79 +- L43、L246–257：live IAgent 保存在獨立 dictionary；`Upsert` 更新 binding，`List` 只按指定 session 篩選。
+     80 +- L224–233：snapshot 從 edges 重建；即使只是補入沒有 edge 的節點，現有 snapshot 也不會帶出它。
+     81 +- L250–253：移除 live binding 不刪歷史，符合既有 Contract。
+     82 +
+     83 +這表示：
+     84 +
+     85 +1. 新建但尚未發話的 participant 不一定在 graph 裡。
+     86 +2. 歷史 graph 中出現，不表示目前仍存活或可控制。
+     87 +3. node label 是 `unit`，沒有 name、parent、顯示編號、狀態。
+     88 +4. `A -> B` 的訊息 edge 只代表一次傳遞，不能推論 A 是 B 的 parent。
+     89 +5. `causedBy` 是事件因果，不能拿來當 ownership。
+     90 +6. 每個 sub wrapper 有自己的 handler／graph；root `ReadDataFlow` 不會自動展開其所有後代。
+     91 +
+     92 +因此「graph find/filter/seek 可以做清單」方向沒有問題，前提確實是先把 execution topology 建完整。
+     93 +不能在 console 臨時掃文字、取 adjacency 或猜 sid 補出 ownership。
+     94 +
+     95 +### 2.4 raw exec sub 的身分目前建立得太晚，不能直接與 COT 混用
+     96 +
+     97 +[NativeSubagentFodexFunV207.fsx](Fodex.Supervisor/NativeSubagentFodexFunV207.fsx) L80–108：
+     98 +
+     99 +```fsharp
+    100 +// 收回完成證據時，依 names 的位置配 local id
+    101 +let logicalIds = names |> Array.mapi (fun i who -> who, 3L + int64 i) |> Map.ofArray
+    102 +```
+    103 +
+    104 +[WrapperAgentV207.fsx](Fodex.Supervisor/WrapperAgentV207.fsx) L124–143 在 main 結束時收取這些證據。
+    105 +相對地，[WrapperAgentV208.fsx](Fodex.Supervisor/WrapperAgentV208.fsx) L100–110 以歷史與 children 的最大值加一配置 COT id。
+    106 +
+    107 +兩條路徑目前分開使用；這不是宣稱舊 M013 已經重現 COT 碰撞。
+    108 +但是直接合併時，raw sub 尚未收回的 `3L` 可能被 COT 先使用。
+    109 +[ReActLoopHandlerV205.fsx](Fodex.Supervisor/ReActLoopHandlerV205.fsx) L176–177 甚至會明確拒絕 raw evidence 與 live IAgent 撞 key。
+    110 +若先前 COT 已移除 live binding，單看這個檢查也不足以排除歷史身分被錯用。
+    111 +
+    112 +必要修正是「建立／派工前就配置並保存身分」，而不是事後再改一個更大的魔術常數。
+    113 +raw exec 路線仍不要求新增 sub wrapper／IAgent，但它的控制 owner、who、logical endpoint 必須先註冊。
+    114 +
+    115 +### 2.5 下一輪 model／effort 尚未提供可變入口
+    116 +
+    117 +[NativeAppServerV208.fsx](Fodex.Supervisor/NativeAppServerV208.fsx) L70–71 捕捉固定 model／effort，L162 每次沿用。
+    118 +[NativeAgentV208.fsx](Fodex.Supervisor/NativeAgentV208.fsx) L115 仍從建立時的 options 取值。
+    119 +[NativeHubParticipantsV103.fsx](Fodex.Supervisor/NativeHubParticipantsV103.fsx) L33–34、L118 也捕捉固定設定。
+    120 +
+    121 +因此，修改 demo 裡的字串變數，不會自動改變已建立 actor／performer 的下一輪設定。
+    122 +需要在擁有 native 執行權的 actor 中保存可更新設定，開始新 turn 時才取快照。
+    123 +這不等於更新 function registry，也不應為了換模型重建 participant 或更換 sid。
+    124 +
+    125 +### 2.6 interrupt、Stop、取消 receive 是不同操作
+    126 +
+    127 +[IAgentFodexFunV200.fsx](Fodex.Supervisor/IAgentFodexFunV200.fsx) L15–26 已區分 `StopAgent` 與 `InterruptTurn`。
+    128 +
+    129 +- app-server：[NativeAppServerV208.fsx](Fodex.Supervisor/NativeAppServerV208.fsx) L231–235 呼叫 `turn/interrupt`，仍需等待 terminal notification。
+    130 +- exec：[NativeAgentV208.fsx](Fodex.Supervisor/NativeAgentV208.fsx) L198–207 透過 Proc Supervisor 停本輪資源，保存 sid，回報中斷後仍可開始下一輪。
+    131 +- wrapper：[WrapperAgentV208.fsx](Fodex.Supervisor/WrapperAgentV208.fsx) L66–76 的 `Stop` 會停所有 children 並清 pending，不是單一 participant interr
+         upt。
+    132 +- raw hub：[NativeOrderHubV104.fsx](Fodex.Supervisor/NativeOrderHubV104.fsx) L26–39、L48–68 只有 hub lifetime cancellation，沒有指定 who 的 cancel op
+         eration。
+    133 +- `hub_receive` 的 cancellation 是取消等待結果，不等同停止已派出的 native 工作。
+    134 +
+    135 +不能用 `wrapper.Stop()`、HTTP host `/stop` 或取消 `hub_receive`，假裝完成 `/stop sub(N)`。
+    136 +另外 app-server 將非 completed terminal 統一送到 failure 路徑（L198–203）；新整合版需清楚呈現使用者中斷，不誤報為模型正常完成。
+    137 +
+    138 +### 2.7 M016 已有遠端 façade，但不是完整遠端 execution tree 管理
+    139 +
+    140 +[RemoteFodexFunV209.fsx](Fodex.Supervisor/RemoteFodexFunV209.fsx) L57–75 只開放 loop 的 collect／graph／status／list／capabilities 查詢。
+    141 +`ResolveParticipant`、Upsert 等沒有直接跨這條 wire。
+    142 +`InterruptTurn` 帶本機 callback，不能直接拿去當新的遠端 wire payload。
+    143 +
+    144 +[WrapperIAgentDemo.M016.fsx](Fodex.Supervisor/WrapperIAgentDemo.M016.fsx) L76–94 是連到一個指定 owner，
+    145 +不是在多個 owner 之間合併整棵 subagent topology 的證明。
+    146 +現有遠端測試驗證既有操作，不代表新的遞迴 list／stop／settings 已經可用。
+    147 +
+    148 +## 3. 編號、身分與 FGL 的必要規則
+    149 +
+    150 +### 3.1 三種數字／名稱不能混用
+    151 +
+    152 +- `/subagent(N)` 的 N：希望備妥的 sub 數量。
+    153 +- `/stop sub(N)` 的 N：`/list_participant` 顯示的穩定控制編號。
+    154 +- `hub_order(who, instruct)` 的 who：owner 範圍內的派工名稱，例如 `sub-1`；不是 Codex sid，也不一定等於顯示編號。
+    155 +
+    156 +建議清楚顯示 name／who 與 N 的對照，保持既有 who 語意，不把模型輸出的名字當成 lifecycle authority。
+    157 +
+    158 +### 3.2 唯一性的範圍與配置權
+    159 +
+    160 +建議保證「同一 root wrapper 所屬 execution tree」內，跨 local／remote 的 N 唯一。
+    161 +不是宣稱不同使用者、不同 root wrapper 的裸整數也全球唯一；完整操作識別包含 root scope。
+    162 +
+    163 +```text
+    164 +(root wrapper session, N)
+    165 +    -> 完整 ReActParticipant key
+    166 +    -> 當前 owner／binding
+    167 +```
+    168 +
+    169 +必要不變量：
+    170 +
+    171 +1. 由 root ReActLoopHandler 統一核配 N；遠端 owner 向它註冊，不自行從 1 開始另配全樹編號。
+    172 +2. N 與完整 endpoint、parent、who 的對應須在暴露為可派工前 durable commit；不能只存在 console array。
+    173 +3. 同一身分 restart／rebind 保留 N；actor address 可更新。新 logical participant 取得新 N。
+    174 +4. 已配置的 N 不因刪除、失敗、排序、filter、重連或重啟被重用；停止後也不重編其他行。
+    175 +5. SQL 對 `(root,N)` 與 `(root,完整endpoint)` 建唯一性保護；單一 owner actor 負責順序，DB 保護不能代替 owner 協調。
+    176 +6. root 不可用時，不能由另一節點臨時配號或 fallback 到本機同號 actor。
+    177 +7. 舊的 session-local 1／2 可以保留；新 COT／raw sub 必須透過同一身分配置流程預留 endpoint，消除 `3+index` 與 `max+1` 各自配號的競爭。
+    178 +8. IP hint、actor path、process PID 都不是替換 logical identity 的理由。不能因 remote rebind 就用新 IP 重組 key，把原 participant 變成另一個人。
+    179 +
+    180 +這是一個 root writer 的模型，不在 M017 引入分散式 consensus、跨 root 全域計數器或新 database framework。
+    181 +
+    182 +### 3.3 `/list_participant` 的欄位
+    183 +
+    184 +| 欄位 | 權威來源與顯示規則 |
+    185 +| --- | --- |
+    186 +| N | root 統一配置的持久控制編號；不是 `Seq.mapi` 產生的行號 |
+    187 +| name | 建立時明確註冊的名稱；sub 一併呈現可用的 who |
+    188 +| sid | wrapper 顯示 `WrapperSessionId`；native 顯示實際 Codex session id；新 exec 尚未發出 thread.started 時顯示未建立，不能捏造 GUID |
+    189 +| actor address | owner 回報的當前完整 actor path；raw exec 顯示管理該 who 的 worker actor，不冒充有一個不存在的 Native IAgent |
+    190 +| parent sid | immediate parent wrapper 的 sid；root 為 None。內部關聯仍用完整 parent endpoint，不能只用顯示字串 join |
+    191 +| kind／status（建議補充） | wrapper／native／raw exec／COT；以及 starting／idle／running／stopped／unreachable 等，避免只看到地址就以為存活 |
+    192 +
+    193 +列表須包含尚未產生輸出的節點，以及已停止但仍屬這棵樹的身分。
+    194 +finished／removed COT 可另標示歷史狀態，不抹除其 N 與歷史關聯。
+    195 +未知或遠端離線時，顯示 last-known 資料與 freshness；不能自動 Acquire／Start 來「查資料」。
+    196 +`AcquireParticipant` 有建立副作用，不適合作為純清單的遞迴探索方法。
+    197 +
+    198 +以下只是編號示意，不是新的硬編碼：
+    199 +
+    200 +```text
+    201 +N=1 root wrapper       sid=W0       parent=None
+    202 +├─ N=2 main native     sid=C0       parent=Some W0
+    203 +├─ N=3 sub-1 wrapper   sid=W1       parent=Some W0
+    204 +│  └─ N=4 main native  sid=C1       parent=Some W1
+    205 +├─ N=5 sub-2 wrapper   sid=W2       parent=Some W0
+    206 +│  └─ N=6 main native  sid=C2       parent=Some W2
+    207 +└─ N=7 explicit COT    sid=C3       parent=Some W0
+    208 +```
+    209 +
+    210 +此例的 `/stop sub(5)` 是停止編號 5 的 sub-2 wrapper 工作，不是「第 5 個 top-level sub」。
+    211 +`/stop sub(3..6)` 先展開範圍、再對 parent／child 重疊去重，不能讓同一 native 收到兩次取消。
+    212 +
+    213 +### 3.4 FGL 落實方式：需要明確選擇，不能偷偷在 UI 補 registry
+    214 +
+    215 +目前 Contract 明確把 committed dataflow graph 與 live IAgent 分開，node label 是 `unit`。
+    216 +若完全不動 Contract，又要求 ownership／編號本身以 FGL 維護，建議：
+    217 +
+    218 +**方案 A：同一 ReActLoopHandler 擁有 implementation-only execution topology FGL。**
+    219 +
+    220 +- key 沿用完整 logical participant；label 放上節所需的純 metadata；parent→child 是明確 ownership edge。
+    221 +- 現有 `WrappedReActDataFlow` 保持原生訊息 edges，不複製一份 ReActData history。
+    222 +- 既有 live binding 繼續保存真正 IAgent；raw exec 綁 owner worker。可保存 metadata 不包含 CLR object／callback／Process。
+    223 +- `/list` 查 topology；顯示流／匯出查 dataflow。兩者由相同 owner 管理、相同 logical key 關聯。
+    224 +- metadata 使用既有 SQL Server 持久化；恢復只恢復資料，不因 replay 自動重新派工。
+    225 +
+    226 +這裡有兩種不同關係：ownership 與 message flow；不是再拆一個 memory engine，也不是另一份輸出 queue。
+    227 +代價是多一個明確的 topology 投影與其 persistence。這個結構變動需要先討論，不默認已批准。
+    228 +
+    229 +**方案 B：如果你要的是「同一張現有 graph 同時承載 ownership 與 dataflow」。**
+    230 +
+    231 +就必須討論修改 node label、ownership edge 的表示方式，以及 codec／DB／snapshot／舊資料讀取相容性。
+    232 +只把 `unit` 換成 metadata 並不會自動解決 ownership edges、孤立節點保存與跨 graph 合併問題。
+    233 +這會跨進 Contract 變更，本輪不做，也不以 fake Message／JSON 字串塞入普通訊息來繞過型別。
+    234 +
+    235 +在「Contract 保持凍結」的前提下，我傾向 A；若不接受額外 topology FGL，必須先選定 B 的最小範圍再開發。
+    236 +
+    237 +## 4. 命令語意與排程
+    238 +
+    239 +### 4.1 Console 是薄介面，不持有執行狀態
+    240 +
+    241 +```text
+    242 +Console.ReadLine
+    243 +  -> wrapper.IAgent.Send
+    244 +  -> wrapper 辨識控制命令／一般 prompt
+    245 +  -> ReActLoop 的版本化 operation
+    246 +  -> handler／實際 owner
+    247 +  -> IAgent.Send 或 raw worker 的受控操作
+    248 +```
+    249 +
+    250 +UI 不直接 Tell actor、不直接操作 process、不在 script 外圍再造 execution dictionary。
+    251 +`Send` 成功只代表已送入 mailbox，不能顯示為 turn 已完成或 participant 已停止。
+    252 +
+    253 +- 等待輸入與接收輸出分開；送完 prompt 不阻塞輸入到 AgentEnd，否則 `/stop` 永遠來不及輸入。
+    254 +- `/stop`、`/list_participant`、設定命令不排在長時間生成工作的後面。
+    255 +- 同一 participant 的工作維持 FIFO；不同 participant 可並行；main 仍須先派完同輪全部 order 再 receive。
+    256 +- 單一 console writer 輸出完整行／區塊；不讓多個 actor 直接交錯 `Console.Write`。
+    257 +- 一般輸出採 MessageCompleted 為主，避免 delta 又被完整訊息重複印一次；需要即時片段時必須按 messageId 處理。
+    258 +- AgentEnd 才代表整輪結束；列印 participant N／name／turn 與耗時，不能把首筆輸出當完成。
+    259 +- 純 ReadLine 期間背景輸出可能打斷視覺上的輸入行；M017 不承諾 TUI 等級的游標／輸入框重繪。
+    260 +- startup args 維持 FAkka.Argu、完整 `defaultArgumentsText`、PL.parseLine；slash 語法也集中版本化解析，不各處手刻 Split parser。
+    261 +- 不認得的 slash 命令清楚報錯，不默默當作自然語言送給 Codex。
+    262 +
+    263 +### 4.2 `/subagent(N)`
+    264 +
+    265 +建議同時接受單獨命令與附工作指令兩種用法；這比目前 V206 必須附 instruction 多一個需求。
+    266 +
+    267 +```text
+    268 +/subagent(3)
+    269 +/subagent(3) 請分工檢查 contract、實作與測試
+    270 +```
+    271 +
+    272 +先由 wrapper 建立／註冊成功，才將 who 與帶領說明送 main；失敗不得宣稱 N 個 sub 已 ready。
+    273 +M012 路線使用 sub wrappers + MCP order/receive；M013 路線使用 raw exec/resume + stdio，沒有 sub wrapper／MCP。
+    274 +兩條路線需共享控制編號、狀態查詢與取消語意，但不能把 raw exec 偽裝成 sub wrapper。
+    275 +
+    276 +再次輸入 N 的「總數調整／追加」尚待確認。暫建議沿用重用既有 who／sid 的方向，以 N 表示可派工總數。
+    277 +縮減時保留歷史編號；忙碌的 sub 不可被默默殺掉，應拒絕這次縮減或先由人明確 `/stop`。
+    278 +N 不寫死為 2；資源上限若需要限制，必須可配置且回報原因。
+    279 +
+    280 +### 4.3 `/wrapper_cot xxxxx`
+    281 +
+    282 +順序是：確定性準備歷史 → 建立獨立 COT → 按人的 xxxxx 生成 yyyy → 保存結果 → 將 yyyy 與 xxxxx 交給 main。
+    283 +不是系統隱式替人發明研究計畫，也不是把一般 subagent 中間輸出改標 AgentCot。
+    284 +
+    285 +先沿用 V208 的可理解政策：main 忙碌時，COT 可獨立執行，但完成內容排到 main 下一輪；不偷換成 exec active steer。
+    286 +若要改 app-server 專用的立即 steer，是另一個需要明說的排程政策，不由 UI 暗中決定。
+    287 +COT 失敗／被中斷時，不將錯誤訊息當 yyyy；停止後的遲到結果不能重新喚醒已取消的 main 工作。
+    288 +
+    289 +### 4.4 `/model`、`/effort`、`/fast`
+    290 +
+    291 +建議操作：`/model <model>`、`/effort <effort>`；不帶值時顯示目前與待生效設定。
+    292 +`/fast` 作 toggle，另可提供 `on/off/status`，避免使用者不知道現在切到哪邊。
+    293 +
+    294 +本機實際版本是 `codex-cli 0.163.0`。本輪僅使用 help 與 schema 生成，沒有建立 Codex 推理 turn。
+    295 +生成證據保存在 `artifacts/M017-analysis/codex-0.163.0-schema/`：
+    296 +
+    297 +- `v2/TurnStartParams.json`：model、effort、serviceTier 可以覆寫本輪與後續 turns。
+    298 +- `v2/TurnSteerParams.json`：沒有上述三個設定欄位，不能把改模型假裝成 steer。
+    299 +- `v2/ModelListResponse.json`：提供 supportedReasoningEfforts 與 serviceTiers；本版 reasoning effort schema 是非空字串，不是固定 enum。
+    300 +
+    301 +官方文件也要求依 `model/list` 查可用模型／effort，不要把範例支援值硬編碼；
+    302 +Fast mode 是另外的速度／用量選項，與降低 effort 不同，而且有帳號／模型可用性與較高用量成本。
+    303 +來源：[App Server](https://learn.chatgpt.com/docs/app-server#models)、[Speed](https://learn.chatgpt.com/docs/agent-configuration/speed)。
+    304 +
+    305 +建議規則：
+    306 +
+    307 +1. 控制命令成功後，從下一次真正開始執行的新 turn／exec 起套用，並持續到下次修改；不是只生效一次後自動復原。
+    308 +2. 執行中的 turn 保持原設定；已排隊尚未開始的工作在開始時取得最新已確認快照。
+    309 +3. app-server 於新 turn/start 帶 model／effort／serviceTier；exec/resume 於下一個 Proc Supervisor launch 帶對應 argv／config override。
+    310 +4. 不修改使用者全域 config.toml，不改正在跑的 process，不把 `/model ...` 當 stdin prompt，不更換 sid。
+    311 +5. `/fast` 與 effort 獨立保存。後端 fast/default 的實際值與 feature gate 依該 CLI／model capability 處理，不能自行把 fast 對映成 low。
+    312 +6. 更換 model 後如果 effort／tier 不相容，明確拒絕或請人選值；不能靜默換其他模型或重開 session。
+    313 +7. 記錄 requested／acknowledged／該 turn 實際送出的設定。遠端未確認時標 pending／failed，不能只改 console 顯示就宣稱全部生效。
+    314 +
+    315 +作用範圍（整棵樹／僅 main）尚待確認。本文件暫採整棵目前 root 的受管 participant 樹，包含未來新建的 sub／COT；不影響其他 root。
+    316 +這是可變執行設定，不是重新 pin FodexFun；原先 function version pin／指定版本錯誤不 fallback 的規則不變。
+    317 +
+    318 +### 4.5 `/stop`：建議為取消工作，保留身分與 session
+    319 +
+    320 +`/stop main` 定位 root 的 main participant；若它本身是 wrapper，須透過 ownership 找到實際執行後代。
+    321 +`/stop sub(N)` 定位列表中的輔助 participant；不把 N 當 sub ordinal。
+    322 +建議輔助範圍包含 COT，讓人也能透過其 N 中斷它；root／main 不接受用 sub selector 混指。
+    323 +
+    324 +必要語意：
+    325 +
+    326 +1. 全部目標先驗證 scope、存在性與範圍合法性；i、j 含首尾，拒絕反向／溢位／非法編號。
+    327 +2. 合法但 idle 的目標回報 no-active-work；不存在的編號不是成功。
+    328 +3. 選定 wrapper 時，暫建議中斷其當前整個 ownership 子樹；重疊目標去重。
+    329 +4. 取消當前工作，並處理命令受理前已排隊的相關工作；不能停完立刻自動取下一件，讓人感覺完全沒停。
+    330 +5. 取消涵蓋該工作尚未完成的 COT→main continuation；下一次人的新派工可再次使用同一身分／sid。
+    331 +6. 每個 order 必須得到 completed／failed／cancelled 其中一個 terminal outcome，使 hub_receive 不永久等待。
+    332 +7. 取消以 owner 的 turn／order 身分綁定，不用舊 actor address 盲送；遲到 callback 不得結束下一輪。
+    333 +8. 回報每個目標 requested／confirmed／failed／unreachable；distributed stop 不宣稱原子 all-or-nothing。
+    334 +9. 中斷不是 rollback；已完成的檔案修改、tool side effects 與 DB 歷史不會自動還原。
+    335 +
+    336 +實際取消仍由 adapter／Proc Supervisor 執行，client 不直接 Kill PID。
+    337 +對 raw hub 需增加 per-who／per-order 取消與 queued-order terminal handling；不能取消共用 lifetime 導致所有 sub 一起停止。
+    338 +對 remote 控制使用可序列化的命令、correlation 與純資料結果，不跨 wire 傳 callback、TaskCompletionSource 或 IAgent object expression。
+    339 +
+    340 +## 5. 實作切分建議（下一輪才做）
+    341 +
+    342 +不新增 Demos 專案、不另建 Application／具體 Runtime 管理層。保留舊版本，新增 implementation 版本。
+    343 +
+    344 +1. 先完成 execution topology／配號／metadata persistence：沒有這個，list／stop 的安全性無從驗收。
+    345 +2. 加控制解析與結果：集中處理斜線命令，透過 ReActLoop extension／FodexFun 操作 owner。
+    346 +3. native 與 hub 增加下一輪設定／定向取消，再補遠端純資料 wire。
+    347 +4. 新 wrapper 整合 subagent 與 explicit COT 共用的 ownership、pending、terminal 流程；不要複製三份互斥狀態機。
+    348 +5. 最後增加 `WrapperIAgentDemo.M017.fsx`，只做參數、composition、ReadLine、WriteLine 與輸出接線。
+    349 +
+    350 +每一大類一個版本化 `.fsx`，每個新增 FodexFun 有對應 Expecto `.fsx`：先 eval quotation，再執行函數驗證。
+    351 +保留 `#if INTERACTIVE`／`#r`、既有 Test Explorer 專案與 F# 編譯順序；不增加一堆為轉接而轉接的 record。
+    352 +process 操作沿用既有 Proc Supervisor／FeasibleT SOP；參數解析沿用 FAkka.Argu。
+    353 +
+    354 +M017 啟動設定選 main adapter 與 sub 工作路線；`/model` 不順便切換 exec／app-server transport。
+    355 +本機同一 ActorSystem 的 server／client 可在同檔示範，但需明註例外。
+    356 +需要獨立 hub／remote owner 時，host 與 console client 拆腳本；client 不自動 build／spawn／停止外部 host。
+    357 +remote client 結束只關閉自己；不能沿用本機 cleanup 邏輯而停止遠端 owner。
+    358 +
+    359 +## 6. 驗收清單
+    360 +
+    361 +| 分類 | 必須驗證 |
+    362 +| --- | --- |
+    363 +| 互動 | main 生成中仍可輸入 list／settings／stop；不需等整輪完成；控制指令未出現在 native prompt |
+    364 +| Subagent | N=1、3、超過 2；重複設定 N、縮減、部分建立失敗；真實 who 通知 main；不提供 model lifecycle tool |
+    365 +| COT | main 已有工作時觸發；獨立 sid；yyyy 在 main 新輸入前；只 COT 使用 AgentCot；取消後不再注入結論 |
+    366 +| 配號 | 多個 local／remote owner 同時新增、相同 local id 不同 session、COT 與 raw sub 交錯建立，都不撞 key／N |
+    367 +| 清單 | 建立後零訊息、nested wrapper、raw exec 首次 sid 未知、停止、移除、remote 離線均正確呈現；純查詢不建立資源 |
+    368 +| 恢復 | owner restart／actor rebind／console reconnect 保留 N 與 sid 對應；歷史重播不重新派工；不重用刪除編號 |
+    369 +| Graph | ownership 與 message direction 不混淆；snapshot 含必需節點；parent cycle／跨 root 誤綁被拒；DB 失敗不暴露 phantom ready participant |
+    370 +| 設定 | busy 時改設定，只影響後續開始的 turn；相同 sid resume；非法 model/effort/tier、遠端未 ack 不假報成功；fast 不改 effort |
+    371 +| 取消 | 單一 native、sub wrapper 子樹、範圍、重疊、idle、未知 N、queued orders、race／晚到 callback；其他無關 sub 繼續 |
+    372 +| raw hub | per-who cancel 不停止整個 hub；每個 order 有 terminal result；hub_receive 可以收 cancelled，不永遠卡住 |
+    373 +| Remote | 真正不同 ActorSystem 的控制 request/result；不序列化 callback；不 fallback local；client exit 不停止 owner |
+    374 +| Regression | M010～M016 既有測試與真實流程保留；輸出與 graph completed 對得上；同 who FIFO、不同 who 並行；模型／effort／YOLO 明確 |
+    375 +| Trace | ctx logger 記錄 N、完整 endpoint、owner、turn/order、設定、command accepted/finished、Send→AgentEnd／取消確認耗時；不做無界 graph dump |
+    376 +
+    377 +本輪是 source review 與 protocol schema 核對，沒有宣稱 M017 已 build、已測或已完成 E2E。
+    378 +先前 M010～M016 通過，不等於上述新增組合已通過。
+    379 +
+    380 +## 7. 尚待確認的四個決策
+    381 +
+    382 +1. `/model`／`/effort`／`/fast` 的預設範圍：整棵受管樹，還是只有 main？暫建議前者。
+    383 +2. `/stop` 選到 wrapper 時是否取消整個當前子樹？暫建議是；保留身分／sid，不是永久刪除。
+    384 +3. 重複 `/subagent(N)` 是調整可派工總數，還是追加 N 個？暫建議調整總數並重用既有 sid。
+    385 +4. execution topology 採「Contract 不動、同一 handler 內新增 typed FGL ownership graph」，還是另開最小 Contract 討論以整合到同一張 graph？本輪不替你
+         跨過這個決策。
+    386 +
+    387 +另外，設定暫按「下一輪起持續生效」，範圍 selector 使用列表的 N；若你要一次性設定或 sub ordinal，必須在動工前改清楚。
+    388 +
+    389 +## 8. 本輪查驗範圍
+    390 +
+    391 +- 已查看既有架構圖 `doc/research/00001_20261025.png`，以及技術指南的相關段落；舊指南不是目前 FGL／實作能力的證明。
+    392 +- 主要依據為現行 Contract、active project compile items、V205 handler、V206/V207/V208 wrapper、native adapters、hub hosting、V209 remote codec、相關
+         測試與 M012～M016 接線。
+    393 +- 沒有重新全文閱讀 archives／notes，也沒有以舊版示範 code 推論新功能已可用。
+    394 +- OpenAI Docs 的查證用於區分 fast 與 effort、核對 app-server 能力；未修改模型、套件或本機 Codex 設定。
+    395 +- 只有本文件是本輪新增的可提交內容；本機生成的 protocol schema 留在 ignored artifacts，既有 dirty/untracked 檔案保持不動。
+
+• req_analysis.md 已寫好，列出了逐項語意、現有程式碼依據、編號不變量與驗收案例。
+
+  文件也明列了一個需要你選擇的結構問題：Contract 不動時，可在同一 handler 內增加 typed FGL ownership graph；若要全部放進現有那張 graph，就得討論 unit node
+  label、ownership edge 與持久化相容性。我沒有自行改 Contract。
+
+• Ran Read-CodexStdout { $docPath='F:/fodex/req_analysis.md'; $docBytes=[IO.File]::ReadAllBytes($docPath); $strictUtf8=[Text.UTF8Encoding]::new($false,$true);
+  │ $docText=$strictUtf8.GetString($docBytes); $bad=$docText.Contains([char]0) -or $docText.Contains([char]0xFFFD); $bom=$docBytes.Length -ge 3 -and
+  │ $docBytes[0] -eq 239 -and $docBytes[1] -eq 187 -and $docBytes[2] -eq 191; if($bad -or $bom){throw 'Document encoding validation failed.'}; $broken=@();
+  │ … +4 lines
+  └
+    Bytes Utf8NoBom BrokenLocalLinks
+    ----- --------- ----------------
+    +15 lines (ctrl+t to view transcript)
+
+• Called
+  └ comm.comm_message_send({"fromId":"fodex","toId":"user.github.ingted","scope":"direct","body":"【完成 M017 需求分析文件，未開發實作】F:/fodex/
+        req_analysis.md 已建立。內容涵蓋六項需求的理解、七項 source-evidenced 缺口、N/完整endpoint/who/sid 的區別、local+remote ownership 與重啟不變量、
+        Console 非阻塞控制路徑、下一輪設定與精確取消語意，以及驗收清單。\n最重要的 what/why/how：現有 FGL 保存訊息流，unit label 與 edge 不能提供完整
+        ownership；裸 local id 在 nested wrapper 重複是合理的，但拿它當 /stop 全樹編號不合理。建議 root owner 持久配 N，關聯完整 endpoint，建立前預留 COT/raw
+        身分；list 純讀、stop 由 owner 依最新 binding 執行，而不是 Console 維護旁路 dictionary。\nContract 凍結時的建議是同一 handler 內 typed execution-
+        topology FGL，與現有 dataflow 按 logical key 關聯、不複製歷史；若要只有現有一張 graph，需你先同意最小 Contract/codec 演進。這是尚待討論的選項，不是本
+        輪改動。\n接下來的關聯：只有先確定 topology/配號，才能安全實作 list/stop；接著才是 settings/cancel wire、整合 wrapper，最後才接 M017 Console。scope、
+        stop subtree、N 是總數還是追加的問題已另送給你。\n檢查完成：UTF-8 no BOM、無 NUL/U+FFFD、所有本地連結有效；git 只有新增 req_analysis.md，原本兩個
+        untracked 檔未動。生成的 codex 0.163.0 schema 只在 ignored artifacts；沒有啟動推理 turn、build/test 或修改任何原始碼。停在分析階段，等你確認。"})
+    {"kind": "ptc-gw-comm-message-result", "status": "ok", "messageId": "msg-fsi-7d8ee0961b6c4fd488309bc93ff5b72f", "deliveryHint":
+    "direct:user.github.ingted", "body": "【完成 M017 需求分析文件，未開發實作】F:/fodex/req_analysis.md 已建立。內容涵蓋六項需求的理解、七項 source-evidenced
+    缺口、N/完整endpoint/who/sid 的區別、local+remote ownership 與重啟不變量、Console 非阻塞控制路徑、下一輪設定與精確取消語意，以及驗收清單。\n最重要的 what/
+    +1 line (ctrl+t to view transcript)
+
+• 已完成 req_analysis.md (req_analysis.md)。本輪只新增分析文件，沒有修改實作或 Contract。
+
+  我的理解：
+
+  1. /wrapper_cot：獨立 session 生成結論，再交給 main；不能混用一般 subagent 的 AgentWork。
+  2. /subagent(N)：wrapper 建立 sub，再把實際 who 與帶領說明交給 main。
+  3. /model、/effort、/fast：控制下一輪設定，不改正在執行的 turn。Fast 是獨立速度選項，不是降低 effort。官方說明
+  4. /stop：建議中斷指定工作、保留身分與 sid；需處理排隊工作及遲到結果，避免停完又自動繼續。
+  5. /list_participant：遞迴列出完整 ownership 樹，包含尚未發話、停止或遠端離線的 participant。
+  6. 編號 N：必須穩定、持久且在整棵 root wrapper 樹內唯一，不能用表格行號。
+
+  審查確認的主要缺口：
+
+  • V206／V207 與 V208 目前分別拒絕 COT／subagent，尚未整合。
+  • 不同 wrapper 重用 local ID 1／2；完整 graph key 不衝突，但裸數字不能直接用於 /stop。
+  • raw sub 的 3 + index 與 COT 配號方式不能直接共用。
+  • 現有 graph 的節點內容是 unit，沒有完整 ownership metadata；graph filter 本身無法補出缺少的資料。
+  • 定向取消、動態設定與遠端控制協定仍需補齊。
+
+  最需要先決定的是 graph：Contract 不動，於同一 handler 內增加 typed FGL ownership graph；或討論最小 Contract 變更，整合進現有 graph。 文件已列出取捨，沒有替
+  你動手選定。
+
+  設定範圍、停止子樹、N 表示總數或追加量，則保留為待你確認的語意。
+
+  Worked for 15m 57s • 8:43 PM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex                                                                                              Goal paused (/goal resume)
+
+
+
+
+
+
+
+
+
+
+
+
+› 我認同 req_analysis.md
+
+  1. 其實還需要 /wrapper_compact -> 使用 cot participant traverse 過 FGL graph ，且 prompt 固定為 類似 "請針對輸入的 context history" 分批將 graph 非 `stdio
+  或者尚未 complete` 的 prompt 與 response 每 200KB 分批摘要
+     後，起動一個新的 main participant 後 handover
+
+  2. 承 1. 缺 /wrapper_restart (不進行 handover 但是) 起動一個新的 main participant 取代原有 main participant
+
+  3. 你說 `FGL 落實方式` 有 A 跟 B，我同意 B 但是每次改動你要將原有 concepts.fsx 複製後改名 concepts.YYYYMMDDHHDD.fsx，我會用 winmerge 工具 review change 後
+  才會確認是否可用
+
+  4. Console 是薄介面 -> 請確保現有設計 wrapper 能純透過 akka actor 控制(e.g. 遠端操作)，所以要預留彈性
+
+  5. 本機敲 wrapper 靠 IAgent 但是 remote 敲 wrapper 必須走 akka 控制 IAgent
+
+
+  請根據上述內容調整 req_analysis.md 後開工
+
+  有問題記得要問
+
+
+• 我會先把 compact／restart、單一 FGL graph 的方案 B，以及遠端 Akka → owner 端 IAgent 的控制邊界補進 req_analysis.md，再分檔開工。
+
+  有兩點需要先確認：200KB 的計算方式，以及 main 正在工作時 compact／restart 的處理方式。我會先做不依賴這兩個決定的準備；修改 concepts.fsx 前會先保留時間戳快
+  照，完成後留給你用 WinMerge 核對。
+
+• /wrapper_compact 的每批 200KB，我建議以 UTF-8 序列化後的 context 大小計算，使用 200×1024 bytes；只收完整 Human prompt／Message／MessageCompleted，排除
+  StdOut、StdErr、MessageDelta，並保留原訊息邊界。單一完整訊息超過上限時，才切成帶順序的文字片段。這樣符合你的意思嗎？
+
+  • 同意上述計算與切分方式
+  • 200KB 使用 200,000 bytes，其餘相同
+
+  main 正在執行時收到 /wrapper_compact 或 /wrapper_restart，要先中斷當前 main 工作，還是等它結束？無論哪種，我會先建立並確認新 main 可用才切換；失敗時保留原
+  main 與歷史，不自動停止其他 sub。
+
+  • 先中斷 main，再進行 compact／restart
+  • 等 main 當前回合結束後再進行
+
+  concepts.fsx 修改後，我會提供快照與 WinMerge 比對路徑。你希望先停在 Contract 變更等你確認，再做依賴它的實作嗎？
+
+  • 是，Contract 變更後先停等我確認
+  • 可以繼續實作，但最後等我確認才算可用
+
+• Ran Read-CodexStdout { rg -n -m 10 'Fodex|Contract|snapshot|scope:' C:/Users/Administrator/.codex/memories/MEMORY.md | Select-Object -First 14; git status
+  │ --short --untracked-files=normal; git log -3 --format='%h %s'; rg --files --hidden -g AGENTS.md -g GEMINI.md -g '!.git' .; rg -n '^##|^###|方案 A|方案
+  │ B|尚待|暫建議|只有本文件|本輪' req_analysis.md | Select-Object -First 65; Get-Item req_analysis.md,Fodex.Supervisor.Contract/concepts.fsx |
+  │ … +1 line
+  └ 1:# Task Group: Fodex documentation/review, ProcSupervisor local-stdio fork, exact-output, and two-round ECHO
+    3:scope: Fodex document and source review, isolated FAkka.Proc.Supervisor local-stdio port/publication, literal output requests, and constrained two-who
+    ECHO tests.
+    +63 lines (ctrl+t to view transcript)
+
+Compacting context (1m 23s • esc to interrupt)
+  └ Making room to continue.
+
+• Messages to be submitted after next tool call (press esc to interrupt and send immediately)
+  ↳ > `/wrapper_compact` 的每批 200KB，我建議以 UTF-8 序列化後的 context 大小計算，使用 200×1024 bytes；只收完整 Human prompt／Message／MessageCompleted，排除
+    StdOut、StdErr、MessageDelta，並保留原訊息邊界。單一完整訊息超過上限時，才切成帶順序的文字片段。這樣符合你的意思嗎？
+
+    …
+  ↳ > main 正在執行時收到 `/wrapper_compact` 或 `/wrapper_restart`，要先中斷當前 main 工作，還是等它結束？無論哪種，我會先建立並確認新 main 可用才切換；失敗時
+    保留原 main 與歷史，不自動停止其他 sub。
+
+    …
+  ↳ > `concepts.fsx` 修改後，我會提供快照與 WinMerge 比對路徑。你希望先停在 Contract 變更等你確認，再做依賴它的實作嗎？
+
+    是，Contract 變更後先停等我確認
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+• 已完成本輪 Contract 第一段，暫停等你確認。
+
+  • req_analysis.md (req_analysis.md) 已補齊 compact／restart、200KB 分批與遠端控制規範。
+  • Contract 新增節點 metadata、ownership／Main／Cot 關係事件，保留原生 FGL LEdge。
+  • Debug／Release 測試各 34/34；新測試獨立 FSI 6/6 通過。
+
+  WinMerge 比對：
+
+  • 修改前：concepts.202611010035.fsx (Fodex.Supervisor.Contract/concepts.202611010035.fsx)
+  • 修改後：concepts.fsx (Fodex.Supervisor.Contract/concepts.fsx)
+
+  快照已 commit／push：ef05a30。修改後版本留待審閱；實作、demo、notes 未動，尚未完成下游相容性與 M017 整合。
+
+  Worked for 21m 19s • 12:44 AM
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 你再加個東西我再 review:
+  1. /wrapper_immediate prompt: 就是立刻將 prompt 排進下一次 exec 或 app-server 的呼叫 -> 也就是預設模式，不下 /wrapper_immediate 也一樣
+  2. /wrapper_append prompt: 將 prompt append 進一個 CD<int, string> (其中 int 是序號) int 嚴格遞增
+  3. /wrapper_update(i) prompt: 修改 CD[i]
+  4. /wrapper_delete(i): 移除 CD[i]
+  5. /wrapper_sendAll: 將 CD 按 int 排列 concat string 後送給 main participant
+
+
+• 我會把這五個命令補進需求文件，重點區分「下一次呼叫的輸入」與「尚未送出的可編輯草稿」，並檢查是否需要改 Contract。若需要改 concepts.fsx，會先留新快照；完成後
+  仍停等你 review。
+
+• Ran Read-CodexStdout { git status --short; rg -n 'M017|Fodex.*Contract|concepts.fsx' C:/Users/Administrator/.codex/memories/MEMORY.md | Select-Object -First
+  │ 12; rg -n '^##|^###|immediate|append|SteerTurn|下一輪|排隊|pending|Send' req_analysis.md; rg -n 'type AgentPrompt|type
+  │ ReActTurnInputMode|PostHumanPrompt|SteerTurn|當.*prompt|User 可' Fodex.Supervisor.Contract/concepts.fsx }
+  └  M Fodex.Supervisor.Contract.Tests/ContractTestSupport.fsx
+     M Fodex.Supervisor.Contract.Tests/Fodex.Supervisor.Contract.Tests.fsproj
+     M Fodex.Supervisor.Contract.Tests/Program.fs
+    +76 lines (ctrl+t to view transcript)
+
+• /wrapper_sendAll 送出後，CD 裡的內容要保留，還是成功排入 main 待執行佇列後移除本次送出的項目？送件失敗都保留。
+
+  • 保留，只有 /wrapper_delete(i) 才刪除
+  • 成功入列後移除本次送出的項目
+
+  /wrapper_sendAll 按序號排序後，各段 prompt 之間要加換行，還是完全原樣直接串接？
+
+  • 各段之間加一個換行（\n）
+  • 不加分隔字元，直接串接
+
+
+› 6. /wrapper_preview: 將 CD 按 int 排列 concat string print 出來但不送
+
+
+
+› 你剛要問我什麼?
+
+
+• 原本想確認兩點：
+
+  1. /wrapper_sendAll 成功排入 main 後，CD 要保留，還是移除本次送出的項目？
+  2. 串接時，各段之間加一個 \n，還是完全不加分隔字元？
+
+  /wrapper_preview 收到：會與 sendAll 共用完全相同的排序、串接規則，只顯示、不送出，也不修改 CD。
+
+• Called comm.comm_participant_register({"participantId":"fodex"})
+  └ {"status": "ok", "kind": "ptc-gw-comm-control-result", "operation": "comm.participant.register", "requestId":
+    "gw-durable-b2adbb35dcca49d885f2e8daaaf67cad", "participant": {"participantId": "fodex", "displayName": "fodex", "kind": "agent", "status": "online",
+    "registeredAtUtc": "2026-10-28T22:07:58.0912803+00:00", "lastSeenAtUtc": "2026-10-31T18:12:23.2284399+00:00", "labels": ["web", "chat"]}, "tool":
+    +1 line (ctrl+t to view transcript)
+
+• Called
+  └ comm.comm_message_send({"fromId":"fodex","toId":"user.github.ingted","scope":"direct","body":"開始補 M017 的 prompt 草稿控制規格：/wrapper_immediate 與不
+        加 prefix 的一般 prompt 都立即受理、排入下一次 exec/app-server 新呼叫，不 steer 正在執行的 turn；append/update/delete 管理 owner actor 內的
+        CD<int,string>，新增序號嚴格遞增且刪除不回收；sendAll 與新加的 preview 共用按 int 排序的字串組合，preview 只回傳供 caller 顯示、不派送、不修改 CD。這
+        是 wrapper 操作政策，現有 IAgent.Send／ReActLoop 輸入介面可承載，這輪先補 req_analysis.md，不為草稿 CD 再擴增 Contract 型別或改未核准的 concepts。
+        sendAll 是否移除草稿、字串分隔字元兩項已向您確認；在答覆前明列待定，不擅自清空。"})
+    {"kind": "ptc-gw-comm-message-result", "status": "ok", "messageId": "msg-fsi-a739f642d1444e06901a628a932c7c1e", "deliveryHint":
+    "direct:user.github.ingted", "body": "開始補 M017 的 prompt 草稿控制規格：/wrapper_immediate 與不加 prefix 的一般 prompt 都立即受理、排入下一次 exec/
+    app-server 新呼叫，不 steer 正在執行的 turn；append/update/delete 管理 owner actor 內的 CD<int,string>，新增序號嚴格遞增且刪除不回收；sendAll 與新加的
+    +1 line (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc 'sed -n "1,32p" req_analysis.md; sed -n "235,270p" req_analysis.md; sed -n "361,470p" req_analysis.md'; $taskBytes =
+  │ [IO.File]::ReadAllBytes((Join-Path (Get-Location) 'req_analysis.md')); Write-Output ('ENCODING_PREFIX=' + [BitConverter]::ToString($taskBytes,0,3)) }
+  └ # M017：Console 整合需求分析
+
+    初稿：2026-10-31；需求確認更新：2026-11-01。程式碼審查基準：`0895a12`。
+    +165 lines (ctrl+t to view transcript)
+
+• 這組功能不需要再改 concepts.fsx：CD 是 wrapper 持有的草稿狀態，送出仍走既有 IAgent／ReActLoop 介面。
+
+  我也會明寫兩個邊界：immediate 不代表中斷或 steer 現有 turn；草稿序號與 participant 編號是兩回事，刪除草稿後也不重用序號。
+
+
+› 1. /wrapper_sendAll 成功排入 main 後，CD 移除本次送出的項目
+  2. 串接時，各段之間加一個 \n -> 依照 codex 兌換行的標準? 我們是 windows 不用 \r\n 嗎?
+
+
+
+
+
+
+
+
+
+
+
+
+› sendAll 成功排入 main 後才移除本次送出的項目；失敗不重送，但是要把失敗的移到另一個 CD<int, string * exn>
+  1. 使用 /fail_review(i) 或 /fail_review(i, j) 檢視 j 如 < 或 = 0 則 i 之後的全 show
+  2. 提供 /fail_clear 與 /wrapper_clearAll ，前者清除所有 failure 資料，後者清除所有未發出的 CD 內容
+
+• 收到，以這版為準：
+
+  • sendAll 成功入列：移除本次草稿。
+  • 入列失敗：不重送，將本次草稿移至 CD<int, string * exn>，保留原序號。
+  • 補上 /fail_review、/fail_clear、/wrapper_clearAll；清除資料不重設遞增序號。
+
+  我會把六個輸入命令與這三個失敗／清除命令一起補進需求文件，仍不改實作或尚待你確認的 Contract。
+
+
+
+
+
+
+› 調整後開工 M017
+  /model xxxxx、/effort xxxxx、/fast -> main participant
+  /model(N) xxxxx、/effort(N) xxxxx、/fast(N) -> 使用編號調整 participant (先 cancel 換完參數再繼續)
+
+
+
+• M017 已完成，並更新 req_analysis.md (req_analysis.md)。
+
+  • M017 Console 腳本 (Fodex.Supervisor/WrapperIAgentDemo.M017.fsx)：修改 defaultArgumentsText 後執行。
+  • 操作說明 (Fodex.Supervisor/README.M017.md)：包含 subagent、COT、compact/restart、草稿、取消與遠端控制。
+
+  設定語意已落實：
+
+  • 無 (N)：只修改 main 下一輪的參數。
+  • 有 (N)：執行中先確認取消，再套用參數，沿同 sid 繼續。
+  • 重疊控制會回報 busy，避免重複續作。
+
+  Debug／Release 建置成功，測試各 150/150；Wrapper 獨立 FSI 10/10。app-server、exec、MCP 派工與 COT／compact／restart 已實跑通過。
+
+  跨節點目前驗證到同機兩個 ActorSystem；舊 schema 2 DB 不會自動遷移。
+
+  Worked for 3h 34m 27s • 1:39 AM
+
+  ↳ Recap: M017 已完成，需求文件、Console 腳本與操作說明已更新，涵蓋草稿／失敗管理、取消、參數切換、subagent 與 compact／restart。指定 participant 改參數會
+           先取消，再沿同 sid 續作。Debug／Release 測試各 150/150，真實 Codex 主要流程驗證通過。跨節點僅驗證同機兩個 ActorSystem；舊 schema 2 DB 不會自動遷
+           移。
+
+
+› 我在本機只有看到 FodexM017Automation 沒有看到 FodexM017 資料庫
+
+
+• 我先確認 M017 腳本的資料庫初始化流程，以及目前本機的 DB 狀態，釐清為什麼只有測試用的 FodexM017Automation。
+
+• Ran Read-CodexStdout { rg -n -m 6 'M017|FodexM017' C:/Users/Administrator/.codex/memories/MEMORY.md; rg --files -g AGENTS.md -g GEMINI.md -g '*README*' -g
+  │ '*runbook*' -g '!**/archive/**' -g '!**/bin/**' -g '!**/obj/**' -g '!artifacts/**' | Select-Object -First 30; git -c safe.directory=F:/fodex status
+  │ --short; rg -n 'FodexM017|initialize|database|Database|SqlConnection|CREATE DATABASE|connectionString' Fodex.Supervisor/WrapperIAgentDemo.M017.fsx
+  │ … +2 lines
+  └ 1:# Task Group: Fodex Supervisor review, M017, and two-round client workflow
+    3:scope: Exact-output protocol, read-only current-source review, M017 design, and hub/client session-resume tests at F:\fodex.
+    6:## Task 1: M017 Contract graph and wrapper command requirements
+    +81 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc "sed -n '60,97p' Fodex.Supervisor/WrapperIAgentDemo.M017.fsx; head -n 45 Fodex.Supervisor/README.md"; Get-Command sqlcmd
+  │ -ErrorAction SilentlyContinue | Select-Object Name,Source; foreach ($path in @('F:/AGENTS.md','F:/GEMINI.md','F:/fodex/AGENTS.md','F:/fodex/GEMINI.md'))
+  │ { if (Test-Path -LiteralPath $path) { Get-Item -LiteralPath $path | Select-Object FullName,Length } }; Write-Output ('FODEX_SQL_CONNECTION_STRING_SET='
+  │ … +1 line
+  └ let session=options.GetResult(Session,defaultValue=Guid.NewGuid()),Some(IPAddress.Parse(options.GetResult Bind_Ip))
+    let nativeArguments =
+        SupervisorArgs.format [
+    +87 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { sqlcmd -S localhost -E -C -l 5 -t 5 -d master -Q "SET NOCOUNT ON; SELECT name, state_desc FROM sys.databases WHERE name IN
+  │ ('FodexM017','FodexM017Automation');" -W -s '|'; $code=$LASTEXITCODE; Write-Output "SQL_EXIT=$code"; $global:LASTEXITCODE=0 }
+  └ name|state_desc
+    ----|----------
+    FodexM017Automation|ONLINE
+    +2 lines (ctrl+t to view transcript)
+
+• 你看到的沒錯，剛查 SQL Server 確實只有 FodexM017Automation。
+
+  上一輪實跑使用了 --database FodexM017Automation，所以沒有建立預設的 FodexM017；這點我交付時沒說清楚。
+
+  M017 腳本第 71 行 (Fodex.Supervisor/WrapperIAgentDemo.M017.fsx:71) 已有自動建庫流程。保留預設 --database FodexM017
+  執行後，就會建立資料庫及資料表，無須手動建立。若設定了 FODEX_SQL_CONNECTION_STRING，則優先使用該連線。
+
+  Worked for 59s • 3:18 AM
+
+
+
+
+
+
+
+
+
+
+› wrappers：wrapper 先建立 N 個 sub wrapper，各自以 exec＋resume 執行；root main 經 MCP hub_order／hub_receive 操作既有 who。
+  raw：sub 是 Proc Supervisor 管理的 exec actor，沒有 sub wrapper／IAgent。main 使用原生 shell 執行同一實作 DLL 的 HTTP client，沒有每次 dotnet fsi 或新
+  ActorSystem。
+
+  寫得很亂耶，能不能解釋一下
+
+
+
+› 兩種模式均先派完同輪工作再收件；不同 who 並行，同一 who 按順序 resume 同 sid。主模型取得的介面沒有建立 participant 的操作 這個也看不懂
+
+
+• 我把「sub 怎麼組成」與「main 怎麼派工」混在一起寫了。用你輸入 /subagent(2) 的情境說明：
+
+  首先，main wrapper 的程式碼建立兩個工作者，再把它們的名字與用途告訴 main participant，例如：
+
+  • sub-1：協助 review Contract。
+  • sub-2：協助 review 實作。
+
+  這裡的 main participant，就是負責帶領這兩個工作者的 Codex。
+
+  兩種模式的差別是：
+
+                            wrappers 模式                                       raw 模式
+  ━━━━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   建立什麼工作者           每個工作者是一個 sub wrapper，底下有自己的 Codex    每個工作者是一個 actor，直接管理 Codex process
+  ───────────────────────  ──────────────────────────────────────────────────  ───────────────────────────────────────────────────────
+   main 如何派工            呼叫 MCP 的 hub_order、hub_receive                  使用 shell 執行 HTTP client，送出相同的派工／收件請求
+  ───────────────────────  ──────────────────────────────────────────────────  ───────────────────────────────────────────────────────
+   sub 的 Codex 如何執行    exec，後續 resume 自己的 session                    exec，後續 resume 自己的 session
+
+  兩種模式都有 order hub；差別在於工作者有沒有包一層 wrapper，以及 main 用什麼方式聯絡 hub。
+
+  「先派完同輪工作再收件」，意思是 main 按這個順序做：
+
+  1. 交代 sub-1：review Contract
+  2. 交代 sub-2：review 實作
+  3. 開始收取工作結果
+
+  派工時，hub 立即回覆「已受理」及 orderId，因此 main 可以接著派第二份工作。兩個工作者便能同時執行。
+
+  hub_receive() 的意思是：
+
+  • 已有結果：一次取走目前所有已完成的結果。
+  • 尚無結果：等待結果。
+  • 若只收到 sub-1，sub-2 還沒完成，之後再收一次。
+
+  who 就是工作者名字，也就是 hub_order(who, instruction) 的第一個參數。所謂「同一 who 按順序 resume 同 sid」，例如：
+
+  sub-1：第一份工作 → 第二份工作，持續使用 session A
+  sub-2：第一份工作 → 第二份工作，持續使用 session B
+
+  最後，「主模型沒有建立 participant 的操作」就是：**你用 /subagent(2) 要求 wrapper 建立工作者；main Codex 取得名單後，負責派工與收結果。**提供給它的 hub 介面
+  只有派工與收件。
+
+  另外，「先派完再收」目前是給 main 模型的操作指示；同一工作者依序執行則由 hub／actor 的佇列保證。
+
+  Worked for 1m 38s • 3:22 AM  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 看完你寫的 md 檔，我還是不知道 M017 怎麼執行
+
+
+• 我會把 M017 的執行說明改成可以照著做的步驟：開哪個檔案、先建置什麼、修改哪些參數，以及啟動後在哪裡輸入指令。我也會確認 Visual Studio FSI 與 Console 的實際操
+  作方式，避免文件寫法讓你卡住。
+
+• Ran Read-CodexStdout { rg -n -m 5 'M017|FSI|Console' C:/Users/Administrator/.codex/memories/MEMORY.md; git -c safe.directory=F:/fodex status --short; bash
+  │ -lc "sed -n '1,190p' Fodex.Supervisor/WrapperIAgentDemo.M017.fsx; sed -n '1,100p' Fodex.Supervisor/README.M017.md" }
+  └ 41:# Task Group: Fodex Supervisor review, M017, and two-round client workflow
+    43:scope: Exact-output protocol, read-only current-source review, M017 design, and hub/client session-resume tests at F:\fodex.
+    46:## Task 1: M017 Contract graph and wrapper command requirements
+    +248 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg --files Fodex.Supervisor -g '*.ps1' -g '!**/bin/**' -g '!**/obj/**' -g '!**/archive/**'; bash -lc "sed -n '1,85p'
+  │ Fodex.Supervisor/M017References.fsx; sed -n '115,139p' Fodex.Supervisor/Fodex.Supervisor.fsproj; sed -n '65,81p' Fodex.Supervisor.slnx; sed -n '46,52p'
+  │ C:/Users/Administrator/.codex/memories/MEMORY.md"; Get-Item -LiteralPath
+  │ … +3 lines
+  └ Exception: C:\Users\Administrator\.codex\lib\Read-CodexStdout.ps1:150
+    Line |
+     150 |          throw "Captured command failed with exit code $exitCode. $($d …
+    +3 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg --files Fodex.Supervisor -g '*.ps1' -g '!**/bin/**' -g '!**/obj/**' -g '!**/archive/**'; bash -lc "sed -n '1,72p'
+  │ Fodex.Supervisor/M017References.fsx; sed -n '115,136p' Fodex.Supervisor/Fodex.Supervisor.fsproj; sed -n '65,81p' Fodex.Supervisor.slnx; sed -n '46,52p'
+  │ C:/Users/Administrator/.codex/memories/MEMORY.md"; rg -n 'GeneratePackageOnBuild|PublishNuGetPackage|TargetFramework|RuntimeIdentifier|AfterBuild'
+  │ … +1 line
+  └ // M017 使用本實作專案的正常 Debug output；不另建 Demo project、不複製 NuGet TFM DLL。
+    #I @"bin\Debug\net10.0\win-x64"
+    #r "Akka.dll"
+    +82 lines (ctrl+t to view transcript)
+
+• 問題在於我沒把輸入位置說清楚：--interactive true 會進入 Console 輸入迴圈；若要在 Visual Studio FSI 繼續執行 send "..."，應設為 false。我會把文件改成這兩條明
+  確步驟，並補一個很薄的 PowerShell 啟動檔，讓 Console 模式也有可直接執行的入口。
+
+• Called
+  └ comm.comm_message_send({"fromId":"fodex","toId":"user.github.ingted","scope":"direct","body":"準備修 README.M017.md 並新增 Start-M017.ps1：目前文件只說全
+        選執行，卻沒交代 --interactive true 進入 Console.ReadLine 迴圈、VS FSI 應用 --interactive false 後透過 send/request 操作，導致不知道在哪裡輸入。README
+        將先給 VS FSI 的逐步流程（Debug build→改一行→Alt+Enter→等 M017 ready→send \"...\"→stop()），另給真正 Console 的 PowerShell 入口。新增 ps1 只執行
+        `dotnet fsi --debug- --exec WrapperIAgentDemo.M017.fsx`，沿用 fsx 的完整 defaultArgumentsText，不另建 ActorSystem、不自行管理參數或啟停 host；只檢查
+        Debug DLL 已存在。fsproj 以 None 納入、slnx 的 M017 folder 顯示。也會把 wrappers/raw 的混雜敘述拆成工作者結構與 main 派工方式兩項。"})
+    {"kind": "ptc-gw-comm-message-result", "status": "ok", "messageId": "msg-fsi-5d35990fe6e0447eb14efa34a3c7b33f", "deliveryHint":
+    "direct:user.github.ingted", "body": "準備修 README.M017.md 並新增 Start-M017.ps1：目前文件只說全選執行，卻沒交代 --interactive true 進入 Console.ReadLine
+    迴圈、VS FSI 應用 --interactive false 後透過 send/request 操作，導致不知道在哪裡輸入。README 將先給 VS FSI 的逐步流程（Debug build→改一行→Alt+Enter→等
+    +1 line (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { python -c 'from pathlib import Path; paths=["Fodex.Supervisor/README.M017.md","Fodex.Supervisor/
+  │ Fodex.Supervisor.fsproj","Fodex.Supervisor.slnx"]; [(print(p, "bom="+str(Path(p).read_bytes().startswith(bytes.fromhex("efbbbf"))),
+  │ "crlf="+str(Path(p).read_bytes().count(bytes([13,10]))),"lf="+str(Path(p).read_bytes().count(bytes([10]))))) for p in paths]' }
+  └ Fodex.Supervisor/README.M017.md bom=False crlf=0 lf=45
+    Fodex.Supervisor/Fodex.Supervisor.fsproj bom=True crlf=231 lf=231
+    Fodex.Supervisor.slnx bom=False crlf=73 lf=77
+    +1 line (ctrl+t to view transcript)
+
+• Edited 4 files (+82 -7)
+  └ Fodex.Supervisor\Fodex.Supervisor.fsproj (+1 -0)
+    128      <None Include="WrapperIAgentDemo.M017.fsx" />
+    129 +    <None Include="Start-M017.ps1" />
+    130      <None Include="WrapperIAgentDemo.M017.Remote.fsx" />
+
+  └ Fodex.Supervisor\README.M017.md (+57 -7)
+     2
+     3 -先建置 `Fodex.Supervisor.fsproj` 的 Debug 組態。在 Visual Studio FSI 開啟 `WrapperIAgentDemo.M017.fsx`，修改完整的 `defaultArgumentsText` 後全選執行。
+        沒有另建 Demo 專案。所有腳本已列入 solution 的 M017 folder。
+     3 +**先用 Visual Studio FSI 跑第一輪。** 入口只有 [WrapperIAgentDemo.M017.fsx](WrapperIAgentDemo.M017.fsx)。第一次不需要開 Remote 腳本，也不用另外啟動 hu
+        b。
+     4 +
+     5 +1. 在 Visual Studio 開啟 `F:\fodex\Fodex.Supervisor.slnx`，選 **Debug**，建置 **Fodex.Supervisor** 專案。腳本使用它的 `bin\Debug\net10.0\win-x64` DLL
+        。
+     6 +2. 開啟 `F:\fodex\Fodex.Supervisor\WrapperIAgentDemo.M017.fsx`。找到檔案前面的 `defaultArgumentsText`，第一次保留其他參數，只把 **`--interactive true`
+         改成 `--interactive false`**。這樣初始化完成後，FSI 才會回到可輸入 F# 指令的狀態。
+     7 +3. 使用一個新的 F# Interactive session，在腳本按 **Ctrl+A → Alt+Enter**。等待輸出 **`M017 ready.`**。這時 wrapper、main Codex、DB、hub 都已初始化；不
+        必再執行任何 M010～M016 腳本。
+     8 +4. 接著在 **F# Interactive 視窗**逐行執行下面的 F# 程式碼（`;;` 是 FSI 的送出結尾）：
+     9 +
+    10 +   ```fsharp
+    11 +   send "/list_participant";;
+    12 +   send "請只回覆 M017_OK";;
+    13 +   ```
+    14 +
+    15 +   第一行會列出 wrapper 與 main participant；第二行的生成結果會印在同一個 FSI 視窗。等看到 `[AgentWork completed]` 的 `M017_OK` 與 `[AgentEnd]`，第一
+        輪就跑完了。
+    16 +
+    17 +5. 要試兩個 sub，繼續在同一個 FSI 執行：
+    18 +
+    19 +   ```fsharp
+    20 +   send "/subagent(2) 請交給 sub-1 只回覆 orz，交給 sub-2 只回覆 OGC，收齊後列出兩個結果。";;
+    21 +   ```
+    22 +
+    23 +   wrapper 會建立兩個 sub，再把名單與這段指示交給 main。結果仍印在同一個視窗。`/subagent(2)` 的 `2` 是工作者總數；要用 `/cancel(N)` 等操作，請從 `/lis
+        t_participant` 查到實際的 participant 編號。
+    24 +
+    25 +6. 使用完，在 FSI 執行 **`stop();;`**，清理本次建立的 hub、process 與 ActorSystem。重新全選執行前，先停止上一個並重設 FSI session。
+    26 +
+    27 +FSI 內所有 wrapper 命令都用 `send "命令";;`，例如 `send "/effort low";;`。需要看原始 graph edge 時執行 `showHis();;`。需要取得命令的 `Result` 回覆時可
+        用 `request "/list_participant" |> fun pending -> pending.GetAwaiter().GetResult();;`；一般操作用 `send` 即可。
+    28 +
+    29 +**要用真正的 Console 逐行打字，照下面做。** 先完成上面的 Debug build，將同一份腳本的 `defaultArgumentsText` 設為 **`--interactive true`**，保存檔案。
+        開啟 PowerShell，執行：
+    30 +
+    31 +```powershell
+    32 +& 'F:\fodex\Fodex.Supervisor\Start-M017.ps1'
+    33 +```
+    34 +
+    35 +等同一個 PowerShell 視窗出現 `M017 ready.` 與 `M017>` 後，直接輸入文字，每行按 Enter：
+    36 +
+    37 +```text
+    38 +/list_participant
+    39 +請只回覆 M017_OK
+    40 +```
+    41 +
+    42 +此處輸入的是 prompt／wrapper 命令，不加 `send`、引號或 `;;`。生成期間仍能輸入下一個 prompt 或控制命令。結束時在空白輸入行按 **Ctrl+Z，再按 Enter**，讓
+         Console 收到 EOF 並清理。本機同一組預設 port 只啟動一份 M017；先把 FSI 裡那份 `stop()` 再開 Console。
+    43 +
+    44 +`Start-M017.ps1` 只啟動這份 fsx，參數仍從 fsx 的 `defaultArgumentsText` 讀取；沒有另外的 Demo project 或第二份參數設定。
+    45 +
+    46 +**第一次啟動會做什麼？** 預設連到 SQL Server `localhost`，使用 Windows authentication；若 `FodexM017` 不存在，腳本會建立它，再初始化資料表。`FodexM017
+        Automation` 是先前自動驗證使用的 DB，不影響你用預設值啟動。若已設定 `FODEX_SQL_CONNECTION_STRING`，它會優先選用該連線指定的已有 DB。每次預設建立新的 w
+        rapper session；只有指定 `--session GUID` 才重綁舊的 wrapper 歷史。V300 使用 schema 3，沒有 schema 2 的自動遷移。
+    47 +
+    48 +若沒有看到 `M017 ready.`，先處理視窗中出現的第一個 exception。DLL 找不到就重新做 Debug build；SQL 連線／權限錯誤就檢查 `--sql-server`；port 已使用則先
+        停止自己之前啟動的 M017，或在 `defaultArgumentsText` 改 `--hub-url` 和 `--port`。Codex CLI 須在此帳號已有可用登入。
+    49 +
+    50 +**第一輪成功後，再選模式。** 兩個選項是分開的：
+    51
+     5 -預設使用 SQL Server localhost／FodexM017，Windows authentication。可用 `FODEX_SQL_CONNECTION_STRING` 指定已有資料庫；腳本不印出該值。每次預設產生新的
+        wrapper sid；`--session GUID` 才重綁已有 wrapper 歷史。V300 的 DB payload 是 schema 3，遇到舊 schema 2 會拒絕，沒有宣稱自動遷移。
+    52 +- `--native-adapter app-server` 或 `exec`：選 main 的 Codex 連線方式。第一次保留預設 `app-server`。
+    53 +- `--subagent-mode wrappers` 或 `raw`：選 `/subagent(N)` 建立的工作者結構與 main 的派工介面。第一次保留預設 `wrappers`。
+    54
+     7 -`--native-adapter app-server|exec` 選 root main 的 adapter；`--subagent-mode wrappers|raw` 選派工方式：
+    55 +| subagent mode | wrapper 建立什麼工作者 | main 如何交代工作／收結果 |
+    56 +|---|---|---|
+    57 +| `wrappers` | N 個 sub wrapper，每個底下有自己的 Codex session，使用 exec＋resume | 呼叫 MCP `hub_order`／`hub_receive` |
+    58 +| `raw` | N 個 actor，各自透過 Proc Supervisor 管理 Codex exec／resume，省去 sub wrapper 這一層 | 透過原生 shell 執行現有實作 DLL 的 HTTP client，將 o
+        rder／receive 請求送到同一個 hub |
+    59
+     9 -- `wrappers`：wrapper 先建立 N 個 sub wrapper，各自以 exec＋resume 執行；root main 經 MCP `hub_order`／`hub_receive` 操作既有 who。
+    10 -- `raw`：sub 是 Proc Supervisor 管理的 exec actor，沒有 sub wrapper／IAgent。main 使用原生 shell 執行同一實作 DLL 的 HTTP client，沒有每次 `dotnet fsi
+        ` 或新 ActorSystem。
+    60 +例如 `/subagent(2)` 建好 `sub-1`、`sub-2` 後，main 的操作指示是「先交代 sub-1，再交代 sub-2，然後收結果」。派工只回已受理的 orderId，不等工作完成，因
+        此兩個 worker 能同時執行。收件會取走當時所有已完成結果；還沒有任何結果時就等待，未完成的 worker 之後再收。同一 worker 的後續工作由 actor 依序處理，持
+        續 resume 它自己的 sid。
+    61
+    12 -兩種模式均先派完同輪工作再收件；不同 who 並行，同一 who 按順序 resume 同 sid。主模型取得的介面沒有建立 participant 的操作。所有 Codex process 使用 `da        nger-full-access`／approval never；exec 帶 `--yolo`。
+    62 +`who` 就是派工使用的 `sub-1` 等名字；participant `N` 是 `/list_participant` 顯示、用於取消／設定的編號。main 拿到的 hub 工具只有派工與收件；建立工作者
+        由 wrapper 處理 `/subagent(N)` 完成。「先派完再收」是給 main 的操作指示，同一 worker 的順序由 actor queue 保證。所有 Codex process 使用 `danger-full-a
+        ccess`／approval never；exec 帶 `--yolo`。
+    63
+       ⋮
+    88
+    39 -Console EOF 會清理本腳本建立的 wrapper/hub/process/node。若將 `--interactive false` 用於 automation，可使用回傳的 `wrapper`、`reActLoop`、`request`、`
+        showHis`，最後必須呼叫 `stop()`。`showHis()` 印 DB commit 後保留在 graph 的原始 edge。
+    89 +Console EOF 會清理本腳本建立的 wrapper/hub/process/node。`--interactive false` 適用 VS FSI 逐行操作及 automation，可使用回傳的 `wrapper`、`reActLoop`
+        、`send`、`request`、`showHis`，最後必須呼叫 `stop()`。`showHis()` 印 DB commit 後保留在 graph 的原始 edge。
+    90
+
+  └ Fodex.Supervisor\Start-M017.ps1 (+23 -0)
+     1 +# Run the existing M017 script in this console. Build the implementation in Debug first.
+     2 +# Edit defaultArgumentsText in WrapperIAgentDemo.M017.fsx; use --interactive true here.
+     3 +# This launcher owns no actor, process supervisor, argument parser, or execution state.
+     4 +[CmdletBinding()]
+     5 +param()
+     6 +
+     7 +$ErrorActionPreference = 'Stop'
+     8 +$demoScript = Join-Path $PSScriptRoot 'WrapperIAgentDemo.M017.fsx'
+     9 +$implementationDll = Join-Path $PSScriptRoot 'bin/Debug/net10.0/win-x64/Fodex.Supervisor.dll'
+    10 +if (-not (Test-Path -LiteralPath $implementationDll -PathType Leaf)) {
+    11 +    throw 'Build Fodex.Supervisor.fsproj in Debug before running Start-M017.ps1.'
+    12 +}
+    13 +
+    14 +Push-Location -LiteralPath $PSScriptRoot
+    15 +try {
+    16 +    & dotnet fsi --debug- --exec $demoScript
+    17 +    if ($LASTEXITCODE -ne 0) {
+    18 +        throw "M017 exited with code $LASTEXITCODE. See the error above."
+    19 +    }
+    20 +}
+    21 +finally {
+    22 +    Pop-Location
+    23 +}
+
+  └ Fodex.Supervisor.slnx (+1 -0)
+    72      <File Path="Fodex.Supervisor/WrapperIAgentDemo.M017.fsx" />
+    73 +    <File Path="Fodex.Supervisor/Start-M017.ps1" />
+    74      <File Path="Fodex.Supervisor/WrapperIAgentDemo.M017.Remote.fsx" />
+
+• 文件已補上完整的 FSI 操作範例，也新增了 Start-M017.ps1，可從 PowerShell 啟動 Console 模式。我正在驗證這個入口能到達 M017 ready.、列出 participant，並在結束
+  時清理；這次不需要重跑所有模型測試。
+
+• Ran Read-CodexStdout { $parseErrors=$null; $tokens=$null;
+  │ [System.Management.Automation.Language.Parser]::ParseFile('F:/fodex/Fodex.Supervisor/Start-M017.ps1',[ref]$tokens,[ref]$parseErrors) | Out-Null;
+  │ Write-Output ('PS_PARSE_ERRORS='+$parseErrors.Count); $parseErrors | Select-Object Message; Get-NetTCPConnection -State Listen -ErrorAction
+  │ … +4 lines
+  └ PS_PARSE_ERRORS=0
+    SQL_OVERRIDE_SET=False
+
+    +7 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { python -c @'
+  │ from pathlib import Path
+  │ import subprocess, json
+  │ … +17 lines
+  └ {"exit": 0, "ready": true, "prompt": true, "listed_wrapper": true, "listed_main": true, "log": "F:\\fodex\\artifacts\\M017-analysis\
+    \launcher-console.log"}
+    LAUNCHER_SMOKE_EXIT=0
+    +1 line (ctrl+t to view transcript)
+
+• 新入口已實跑成功：出現 M017 ready.、能列出 wrapper 和 main，收到 EOF 後正常結束。這次用的是預設參數，因此也已走過 FodexM017 的建庫流程。接下來我直接給你最短
+  的操作步驟。
+
+• Ran Read-CodexStdout { python -c @'
+  │ from pathlib import Path
+  │ import xml.etree.ElementTree as ET
+  │ … +16 lines
+  └ Fodex.Supervisor/README.M017.md BOM=False CRLF=0 LF=95
+    Fodex.Supervisor/Start-M017.ps1 BOM=False CRLF=0 LF=23
+    Fodex.Supervisor/Fodex.Supervisor.fsproj BOM=True CRLF=232 LF=232
+    +9 lines (ctrl+t to view transcript)
+
+• Called
+  └ comm.comm_message_send({"fromId":"fodex","toId":"user.github.ingted","scope":"direct","body":"M017 啟動說明與入口已完成。README.M017.md 現在從 VS FSI 的具
+        體步驟開始：Debug build→defaultArgumentsText 的 --interactive false→Ctrl+A/Alt+Enter→等 M017 ready→send \"/list_participant\"／send \"請只回覆
+        M017_OK\"→stop()；Console 則保留 --interactive true，用新 Start-M017.ps1 啟動，在 M017> 直接輸入 prompt。啟動檔已加入 fsproj None 與 slnx M017
+        folder。已實跑 Start-M017.ps1 的原始預設值，取得 ready、列出 wrapper/main，EOF 清理 exit=0；本次也建立了預設 FodexM017 DB。Debug build 通過，PS parser
+        0 errors，文字/專案 XML/diff check 通過。沒有修改 M017 fsx 的執行邏輯或 Contract，也沒有新增 Demo project；證據在 artifacts/M017-analysis/launcher-
+        console.log。"})
+    {"kind": "ptc-gw-comm-message-result", "status": "ok", "messageId": "msg-fsi-27ef23d9e7524d1991232eecd1e0aa51", "deliveryHint":
+    "direct:user.github.ingted", "body": "M017 啟動說明與入口已完成。README.M017.md 現在從 VS FSI 的具體步驟開始：Debug build→defaultArgumentsText 的
+    --interactive false→Ctrl+A/Alt+Enter→等 M017 ready→send \"/list_participant\"／send \"請只回覆 M017_OK\"→stop()；Console 則保留 --interactive true，用新
+    +1 line (ctrl+t to view transcript)
+
+• 我已補好啟動檔並實跑成功。現在直接用 Console，照這三步：
+
+  1. 開啟 PowerShell，執行：
+
+     & 'F:\fodex\Fodex.Supervisor\Start-M017.ps1'
+
+  2. 等看到 M017 ready. 和 M017>，直接輸入：
+
+     /list_participant
+     請只回覆 M017_OK
+
+     每行按 Enter。結果會顯示在同一個視窗。
+
+  3. 要試 subagent，再輸入：
+
+     /subagent(2) 請讓 sub-1 回覆 orz、sub-2 回覆 OGC，收齊後列出結果。
+
+  結束時，在空白輸入行按 Ctrl+Z，再按 Enter。
+
+  目前 Debug 已建置好，腳本的 --interactive true 也可直接使用；FodexM017 資料庫已建立並確認為 ONLINE。
+
+  README 已改成逐步操作說明，也包含 Visual Studio FSI 用法。 (Fodex.Supervisor/README.M017.md)
+
+  Worked for 6m 3s • 6:20 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex                                                                                              Goal paused (/goal resume)  
+
+
+
+
+
+
+
+
+
+
+› memory 預設 enable，但也加入 /memory /memory(N)
+
+› memory 是不是只有在 session 首次起動時可以啟用? 中間不能 switch?
+
+• 不是只有 session 第一次建立才能啟用；保留同一個 sid 也能切換，但目前不能當成即時開關。
+
+  我用本機 Codex 0.166.0 做隔離測試，沒有送出模型生成：
+
+   操作                                                    實測結果
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━
+   已載入 thread 呼叫 thread/memoryMode/set disabled       仍可讀到 memory
+  ──────────────────────────────────────────────────────  ──────────────────
+   同一 process 再 resume，指定 use_memories=false         仍可讀到 memory
+  ──────────────────────────────────────────────────────  ──────────────────
+   重啟 app-server，以 use_memories=false resume 原 sid    memory 回傳 null
+  ──────────────────────────────────────────────────────  ──────────────────
+   再以 true 重啟並 resume 原 sid                          恢復讀取 memory
+
+  所以 M017 的切換應依模式處理：
+
+  • exec：下一次 exec resume 帶入新設定。
+  • app-server：重新載入 session；目前已驗證的方法是重啟該 Codex process，再 resume 原 sid。
+
+  另外，「讀取既有 memory」與「讓對話參與後續 memory 生成」是不同設定，不能只看 memoryMode 名稱就認定兩者都切換。官方說明
+
+  預設 enable 不變。 我前面直接把它比照 /fast 不夠精確；關閉也不代表能抹除已經進入對話歷史的內容。目前尚未把 /memory 切換接進實作。
+
+  Worked for 13m 34s • 12:09 PM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex  
+
+
+
+
+
+
+
+
+
+› memory 預設 enable，但也加入 /memory /memory(N)
+
+• 已完成，M017 腳本 (Fodex.Supervisor/WrapperIAgentDemo.M017.fsx:43) 預設 --memory true。
+
+  • /memory：切換 main 下一輪的設定。
+  • /memory on／off／status：啟用、關閉或查詢。
+  • /memory(N)：指定 participant；執行中會先取消，再更新並沿原 sid 繼續。同樣支援 on／off／status。
+  • /list_participant 已加入 memory 欄位。
+
+  app-server 重載會保留 sid，首次生成前也能切換。
+
+  Debug／Release build 成功；Expecto、VSTest 各 163／163。真實 app-server 切換 smoke 通過，未送模型生成。
+
+  Worked for 32m 27s • 12:43 PM  
+
+
+
+
+
+
+› 1. Commands: /subagent(N) [instruction], /wrapper_cot instruction, /wrapper_compact, /wrapper_restart, /list_participant, /model name, /effort value, /
+  fast, /memory [on|off|status], /model(N) name, /effort(N) value, /fast(N), /memory(N) [on|off|status], /cancel(N), /stop main, /stop sub(N), /stop
+  sub(i..j)
+  Drafts: /wrapper_append text, /wrapper_update(i) text, /wrapper_delete(i), /wrapper_preview, /wrapper_sendAll, /wrapper_clearAll, /fail_review(i[,j]), /
+  fail_clear. Plain text = /wrapper_immediate. EOF exits.
+
+  這個 commands 請改 FAkka.Argu parse 後使用
+  2. 為什麼一開始會有兩個 app-server 起動?
+  listening on: ws://127.0.0.1:3925
+  listening on: ws://127.0.0.1:3953
+
+  沒有呼叫 subagent或 cot 的話不是應該是單一 main participant 嗎?
+  
+• 可以，已改成只轉命令頭，原文另外保留：
+
+  /wrapper_update(7) f(x)
+  → Argu：--wrapper_update 7
+  → 原文：f(x)
+
+  有無編號的 /model(N) 等命令仍需區分參數數量；逗號與範圍另行轉換。括號、換行、--memory 等原文都已測試保留。
+
+  Commands／Drafts 說明已從 Argu template 產生，可用 /help 重看。
+
+  兩個 app-server 分別是「暫時查詢 model/list」與「main participant」。第一個查完即停止；實查只有 3953 仍在監聽。啟動訊息已標明用途。
+
+  Release build、Expecto／VSTest 167／167 通過。Debug DLL 目前被 FSI PID 1032 鎖住；請先 stop()、重設 FSI，再建置 Debug 使用新版。
+
+  Worked for 31m 19s • 6:04 PM  

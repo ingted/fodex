@@ -1,0 +1,151 @@
+{
+  "at": "2026-11-04T15:35:22.8934807+08:00",
+  "manifestUnchanged": true,
+  "comparison": [
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_store.fsx",
+      "expected": "1A86C8664CAA7DD57213441DB8C975073B9BE48402FE1232693C78E22C42C1C0",
+      "actual": "1A86C8664CAA7DD57213441DB8C975073B9BE48402FE1232693C78E22C42C1C0",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_line.fsx",
+      "expected": "D99BF8C16B49BDCCB806CD05091FEAC1C0D3AC173F965AC74F181EE9A67DD36B",
+      "actual": "D99BF8C16B49BDCCB806CD05091FEAC1C0D3AC173F965AC74F181EE9A67DD36B",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_policy.fsx",
+      "expected": "91703D080BD037617642B792EEA0915BC40C8C0E0A9976E151102D8961971B39",
+      "actual": "91703D080BD037617642B792EEA0915BC40C8C0E0A9976E151102D8961971B39",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_shared_bootstrap.fsx",
+      "expected": "B613AE831D660921D10AD8F599D10F6F48CFD2D26AD54131A9B66C24004D58C7",
+      "actual": "B613AE831D660921D10AD8F599D10F6F48CFD2D26AD54131A9B66C24004D58C7",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_service.fsx",
+      "expected": "C6C450075E7DF9CC3F81117BD8EFE33BD6D0380B586804E16A9C31A66529729D",
+      "actual": "C6C450075E7DF9CC3F81117BD8EFE33BD6D0380B586804E16A9C31A66529729D",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_references.fsx",
+      "expected": "FEAA8D23572FB7365BCEF2860A8D8CDCF8FA83C677EE178966ED98E54A9F3DF7",
+      "actual": "FEAA8D23572FB7365BCEF2860A8D8CDCF8FA83C677EE178966ED98E54A9F3DF7",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_bot_rn_nuget.multimedia.multisession.fodex.v2.fsx",
+      "expected": "CE8556A83A4847D778D1184A99A1CC86A190D6ECFC3438EB0B3C603EA6D77FB7",
+      "actual": "CE8556A83A4847D778D1184A99A1CC86A190D6ECFC3438EB0B3C603EA6D77FB7",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_shared_restore.fsx",
+      "expected": "9B1792AA9866368870441AF0E8AA4328BB2CE87DC11CC792DB8F803D9981A255",
+      "actual": "9B1792AA9866368870441AF0E8AA4328BB2CE87DC11CC792DB8F803D9981A255",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_runtime.fsx",
+      "expected": "BF9E494B439A4152A61D71BD8CA5C54256C89747738CDB0BB74C27F552CCDBB3",
+      "actual": "BF9E494B439A4152A61D71BD8CA5C54256C89747738CDB0BB74C27F552CCDBB3",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_v2_options.fsx",
+      "expected": "4691A759CE4C9BAAEF4B5A8EAF849A5C5D9AC01E74A1CC00A5E85DF08006C229",
+      "actual": "4691A759CE4C9BAAEF4B5A8EAF849A5C5D9AC01E74A1CC00A5E85DF08006C229",
+      "equal": true
+    },
+    {
+      "path": "F:\\fodex\\Fodex.Supervisor\\LineReferencesV302.fsx",
+      "expected": "FEC669FCE3423E8F9205F0DABC29C00BE781FA8F171344CFD401461F735ED8F8",
+      "actual": "FEC669FCE3423E8F9205F0DABC29C00BE781FA8F171344CFD401461F735ED8F8",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_bot_rn_nuget.multimedia.multisession.almighty.fsx",
+      "expected": "9E7DBFD9A5E4697D4B88AD83083441E14F0383228A73888E45F3DBD6AD2B1BC9",
+      "actual": "9E7DBFD9A5E4697D4B88AD83083441E14F0383228A73888E45F3DBD6AD2B1BC9",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\misc\\line_provider_almighty_core.fsx",
+      "expected": "A25608430DF371075A609A9BB85B9BFA08AA25320726EB89AB2C5AE0C9FB78BE",
+      "actual": "A25608430DF371075A609A9BB85B9BFA08AA25320726EB89AB2C5AE0C9FB78BE",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\temp\\m019-line-v2-authority-fixture\\F-8c9b80e-gitbytes\\Fodex.Supervisor\\bin\\M019.Authority.R2\\Debug\\net10.0\\win-x64\\Fodex.Supervisor.dll",
+      "expected": "C4B8E2330D039D10CCF3C5823E3014C64DEAE281F6AF177C3AC4D9B672C75DA7",
+      "actual": "C4B8E2330D039D10CCF3C5823E3014C64DEAE281F6AF177C3AC4D9B672C75DA7",
+      "equal": true
+    }
+  ],
+  "testSources": [
+    {
+      "path": "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2Acceptance.fsx",
+      "sha256": "0F7ECD47C9A44D751CD8682B8BB73CF9FBA205F3DFE322913A35C3F846098CB8",
+      "bom": false,
+      "strictUtf8": true,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2AdapterFixture.fsx",
+      "sha256": "5FA48C50753A3F3CF50C57EB355F76DAE46DD4818606A9F16148550E20B7E89A",
+      "bom": false,
+      "strictUtf8": true,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2AdapterWatchdog.ps1",
+      "sha256": "B9A9FA8FB804EA5E3D66DBF04C90BA7BAFCF3E9F61F3FA8F966DAC4BEBD3C613",
+      "bom": false,
+      "strictUtf8": true,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2CrashWorker.fsx",
+      "sha256": "C0939809CB311C9C827718F1FC7D601631998103EB9A77573170D969AF358EF2",
+      "bom": false,
+      "strictUtf8": true,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    },
+    {
+      "path": "F:\\fodex\\Fodex.Supervisor.Tests\\M019LineV2Watchdog.ps1",
+      "sha256": "8054628F230D65E430ADEC95EFF9393115D8A4AB4422A642AFCD39A8373B673D",
+      "bom": false,
+      "strictUtf8": true,
+      "nul": false,
+      "replacement": false,
+      "trailingWhitespace": false
+    }
+  ],
+  "binary": [
+    {
+      "path": "G:\\PulseTrade.fs\\temp\\m019-line-v2-authority-fixture\\F-8c9b80e-gitbytes\\Fodex.Supervisor\\bin\\M019.Authority.R2\\Debug\\net10.0\\win-x64\\Fodex.Supervisor.dll",
+      "actual": "C4B8E2330D039D10CCF3C5823E3014C64DEAE281F6AF177C3AC4D9B672C75DA7",
+      "expected": "C4B8E2330D039D10CCF3C5823E3014C64DEAE281F6AF177C3AC4D9B672C75DA7",
+      "equal": true
+    },
+    {
+      "path": "G:\\PulseTrade.fs\\temp\\m019-line-v2-authority-fixture\\F-8c9b80e-gitbytes\\Fodex.Supervisor\\bin\\M019.Authority.R2\\Debug\\net10.0\\win-x64\\Fodex.Supervisor.Contracts.dll",
+      "actual": "7CF7E69AC7315BB21C63B042CC284CD7AC3DA78A3D426446EAD3E04E3BFD7900",
+      "expected": "7CF7E69AC7315BB21C63B042CC284CD7AC3DA78A3D426446EAD3E04E3BFD7900",
+      "equal": true
+    }
+  ]
+}

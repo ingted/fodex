@@ -1,0 +1,41 @@
+M019 loaded-assembly G:\PulseTrade.fs\temp\m019-line-v2-authority-fixture\F-8c9b80e-gitbytes\Fodex.Supervisor\bin\M019.Authority.R2\Debug\net10.0\win-x64\Fodex.Supervisor.dll; version=0.0.1.0; sha256=C4B8E2330D039D10CCF3C5823E3014C64DEAE281F6AF177C3AC4D9B672C75DA7; baseline=Start-M019/WrapperIAgentDemo.M019; controllerHub=18819
+M019 database-created M019LineV2Test_55f44d994d4140cc800ef8bd3fa1cc47
+M019 fixture-root F:\fodex\temp\sub-5\M019-line-v2\55f44d994d4140cc800ef8bd3fa1cc47
+[37m[[37m15:17:32 [37mINF[37m] [37mEXPECTO? Running tests...[37m [37m<[37mExpecto[37m>[37m
+[0m[1000D[?25hM019 owned-start minimal pid=69556      
+[0m[1000D[?25hM019 owned-exit minimal pid=69556 exit=0
+[0m[1000D[?25hM019 MINIMAL_PASS providerPid=69556 wrapper/native=[|(cab2be97-1e25-4234-a223-63668abf7019, 2L,
+   "01a1a56c-098c-7432-a1b3-e4e0a6a39a86")|]
+[0m[1000D[?25hM019 COMPONENT_PASS pool reservations/busy/TTL/backpressure; controlled factory, real SQL
+[0m[1000D[?25hM019 owned-start resume pid=68776       
+[0m[1000D[?25hM019 owned-exit resume pid=68776 exit=0 
+[0m[1000D[?25hM019 PROCESS_PASS first=69556 second=68776 same durable native SID
+[0m[1000D[?25hM019 owned-start completed-replay pid=61976
+[0m[1000D[?25hM019 owned-exit completed-replay pid=61976 exit=0
+[0m[1000D[?25hM019 owned-start crash pid=66028        
+[0m[1000D[?25hM019 owned-start cross-provider-other-target pid=39288
+[0m[1000D[?25hM019 owned-exit cross-provider-other-target pid=39288 exit=1
+[0m[1000D[?25hM019 owned-start recover-live-rejected pid=63492
+[0m[1000D[?25hM019 owned-exit recover-live-rejected pid=63492 exit=1
+[0m[1000D[?25hM019 owned-start recover-stopped-new-process pid=18272
+[0m[1000D[?25hM019 owned-exit recover-stopped-new-process pid=18272 exit=1
+[0m[1000D[?25h[37m[[37m15:20:50 [31mERR[37m] [36mM019 v2 layers.4 durable completed replay and real-native-before-commit crash fail closed[37m failed in [32m00:02:00.1420000[37m. [36m
+separate NEW operator process recovers confirmed-stopped quarantined owner.
+[32mexpected[36m: [32m0[36m
+[31m  actual[36m: [31m1[36m
+   at FSI_0003.tests@277-69.Invoke(Tuple`3 _arg30)
+   at Microsoft.FSharp.Control.AsyncPrimitives.CallThenInvokeNoHijackCheck[a,b](AsyncActivation`1 ctxt, b result1, FSharpFunc`2 userCode) in D:\a\_work\1\s\src\fsharp\src\FSharp.Core\async.fs:line 528
+   at Microsoft.FSharp.Control.Trampoline.Execute(FSharpFunc`2 firstAction) in D:\a\_work\1\s\src\fsharp\src\FSharp.Core\async.fs:line 113[37m [37m<[37mExpecto[37m>[37m
+[0m[1000D[?25h[1000D[?25hM019 COMPONENT_PASS controlled factory/real SQL FIFO and cross-conversation parallelism; not original LINE order
+[0m[1000D[?25hM019 owned-start security pid=67132     
+[0m[1000D[?25hM019 owned-exit security pid=67132 exit=0
+[0m[1000D[?25h[37m[[37m15:21:44 [31mERR[37m] [36mM019 v2 layers.6 actual sandbox file/network/apply_patch attempts and denial audit[37m failed in [32m00:00:54.1360000[37m. [36m
+native could not reach the positively checked isolated network sink.
+[32mexpected[36m: [32m0[36m
+[31m  actual[36m: [31m1[36m
+   at FSI_0003.tests@360-106.Invoke(Tuple`3 _arg43)
+   at Microsoft.FSharp.Control.AsyncPrimitives.CallThenInvokeNoHijackCheck[a,b](AsyncActivation`1 ctxt, b result1, FSharpFunc`2 userCode) in D:\a\_work\1\s\src\fsharp\src\FSharp.Core\async.fs:line 528
+   at Microsoft.FSharp.Control.Trampoline.Execute(FSharpFunc`2 firstAction) in D:\a\_work\1\s\src\fsharp\src\FSharp.Core\async.fs:line 113[37m [37m<[37mExpecto[37m>[37m
+[0m[1000D[?25h[1000D[?25h[37m[[37m15:21:44 [37mINF[37m] [37mEXPECTO! [36m6[37m tests run in [32m00:04:12.1077317[37m for [36mM019 v2 layers[37m – [36m4[37m passed, [36m0[37m ignored, [36m2[37m failed, [36m0[37m errored. [36m[37m [37m<[37mExpecto[37m>[37m
+[0mM019 database-dropped M019LineV2Test_55f44d994d4140cc800ef8bd3fa1cc47
+M019 exit 1                             

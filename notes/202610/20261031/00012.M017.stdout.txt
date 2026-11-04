@@ -1,0 +1,107 @@
+PS F:\fodex\Fodex.Supervisor> .\Start-M017.ps1
+t: ReActLoopCall`2
+arg: String
+arg: Object
+Warn|Proc $b stderr: codex app-server (WebSockets)
+Warn|Proc $b stderr:   listening on: ws://127.0.0.1:3925
+Warn|Proc $b stderr:   readyz: http://127.0.0.1:3925/readyz
+Warn|Proc $b stderr:   healthz: http://127.0.0.1:3925/healthz
+Warn|Proc $b stderr:   note: binds localhost only (use SSH port-forwarding for remote access)
+Warn|Proc $d stderr: codex app-server (WebSockets)
+Warn|Proc $d stderr:   listening on: ws://127.0.0.1:3953
+Warn|Proc $d stderr:   readyz: http://127.0.0.1:3953/readyz
+Warn|Proc $d stderr:   healthz: http://127.0.0.1:3953/healthz
+Warn|Proc $d stderr:   note: binds localhost only (use SSH port-forwarding for remote access)
+M017 ready. Wrapper sid=(77c330d9-a8d9-4abe-9242-b22e5faf7961, Some 127.0.0.1)
+REMOTE_OWNER=akka.tcp://fodex-m017-3db0b9642ad34ce8a1aaf1f6dc243c4a@127.0.0.1:21817/user/wrapper-control-v300-556ff78581ae4986818c828a7a9924ff#1017671647
+EVIDENCE=F:/fodex/artifacts/M017\20261102-093027-b90ff0f167da4991acc9efebad432db4
+Adapter=app-server; subagents=wrappers; model=gpt-6.1-sol; effort=high
+Commands: /subagent(N) [instruction], /wrapper_cot instruction, /wrapper_compact, /wrapper_restart, /list_participant, /model name, /effort value, /fast, /memory [on|off|status], /model(N) name, /effort(N) value, /fast(N), /memory(N) [on|off|status], /cancel(N), /stop main, /stop sub(N), /stop sub(i..j)
+Drafts: /wrapper_append text, /wrapper_update(i) text, /wrapper_delete(i), /wrapper_preview, /wrapper_sendAll, /wrapper_clearAll, /fail_review(i[,j]), /fail_clear. Plain text = /wrapper_immediate. EOF exits.
+M017>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      https://tktube.com/ 或 https://tktube.com/zh/categories/7c26fad3901898582e98669f503d20de/ 為什麼無法訪問
+M017>
+[wrapper] Queued for the next main turn
+
+[AgentWork completed]
+我先檢查這兩個網址的連線與回應，確認是否能判斷是網站故障或地區、網路限制。
+
+
+
+[AgentWork completed]
+外部抓取工具對兩個網址都回報 502，但這還不能證明網站本身故障。我會再用這台電腦檢查 DNS 與 HTTPS；執行命令時會套用 `powershell-output-guard` 技能。
+
+
+
+[AgentWork completed]
+目前查到的原因是 **`tktube.com` 沒有可用的 DNS IP 紀錄**，因此瀏覽器無法連到網站。
+
+我剛實測：
+
+- Google DNS、Cloudflare DNS 都查不到 IPv4（A）紀錄；Google DNS 也查不到 IPv6（AAAA）紀錄。
+- 本機連線回報 `curl: (6)`，表示無法解析網域名稱。
+
+兩個網址使用同一個網域，所以首頁與分類頁都會受到影響。你可以查看 [Google DNS 查詢結果](https://dns.google/resolve?name=tktube.com&type=A)。
+
+這比較指向網站端的網域／DNS 設定問題；**目前無法確認是暫時故障、停站或其他原因**。清快取或更換 DNS 預期無法解決，需等待網站方恢復設定。
+
+
+[AgentEnd] stream=591 causedBy=8
+{"Status":0,"TC":false,"RD":true,"RA":true,"AD":false,"CD":false,"Question":[{"name":"tktube.com.","type":1}],"Authority":[{"name":"tktube.com.","type":6,"TTL":1532,"data":"andy.ns.cloudflare.com. dns.cloudflare.com. 2416511003 10000 2400 604800 1800"}]}
+M017>
+[wrapper] Queued for the next main turn
+
+[AgentWork completed]
+這份結果確認：**DNS 查詢成功，但沒有取得 `tktube.com` 的 IPv4 位址。**
+
+- `Status: 0`：查詢沒有錯誤，不代表網站正常。
+- `Question.type: 1`：查的是 A 紀錄，也就是 IPv4 位址。
+- **沒有 `Answer`**：沒有回傳可供連線的 IP，這種結果稱為 `NOERROR / NODATA`。
+- `Authority` 的 SOA：提供該網域的 DNS 管理資訊，並不是網站伺服器位址。
+- `TTL: 1532`：這筆否定結果的快取期限約 25 分 32 秒，**不是網站恢復倒數**。
+
+所以這與剛才的判斷一致：目前缺少可用的 A 紀錄；結合先前也查不到 AAAA 紀錄，便無法透過一般方式連線。但這份結果本身無法判定是設定失誤、主動撤除，或停站。
+
+
+[AgentEnd] stream=1050 causedBy=592
+
+
+
+
+
+
+
+
+
+
+
+以上是執行紀錄，我標出一些問題：
+
+1. line21~36: 我沒有按 shift+enter 但是切去別的視窗經過很長一段時間回來之後他多了很多空行
+2. 輸入完 line 37 後出現 line 38，(如果有 TUI，這個輸入的 prompt 應該都會在最後一行，沒關係這個不用改，後面基本上會先以 actor 包裝 fodex 為主，console 只是實驗需求)
+3. line 39 應該是 line 37 queue 進去之後的 ack
+4. 接著是好幾輪的 [AgentWork completed] 以及輸出，但是有好多空行，請分析成因
+5. 最中對應 line 37 的 回合結束看起來應該是 line 64 [AgentEnd] stream=591 causedBy=8
+6. 我再度輸入 line 65，enter，他結束在 line 81 但是此時沒有出現 M017>
+7. stream=1050 causedBy=592 是什麼意思?
+
+
+然後 M018 能不能:
+
+1. 修掉非 AGENT 輸出的空行 (e.g. line 53 55 都是合理的，保留，但是 line 22~36 43~45 48~50 其實蠻異常) 
+2. [AgentEnd] 的時候，停止原先的 console read，重新 show prompt M018> 然後再次 read?

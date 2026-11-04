@@ -1,0 +1,6 @@
+System.Exception: check.fsx failed: 2 blocking finding(s); see findings and state file above.
+   at Microsoft.FSharp.Core.PrintfModule.PrintFormatToStringThenFail@1447.Invoke(String message)
+   at <StartupCode$FSI_0001>.$FSI_0001_Check$fsx.main@()
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+Stopped due to error

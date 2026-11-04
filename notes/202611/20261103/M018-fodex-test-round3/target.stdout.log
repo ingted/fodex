@@ -1,0 +1,35 @@
+Received LINE text event.
+Received LINE text event.
+line_provider_almighty.fixture_tests=passed
+echo_line_bot_rn.nuget_dependency_check=passed
+echo_line_bot_rn.non_host_bin_assembly_count=0
+echo_line_bot_rn.membership stage=joined uniqueAddress=UniqueAddress: (akka.tcp://PulseTradeCommResourceNode@127.0.0.1:14786, 773997755) status=Up roles=rn-provider
+line-image-provider-state=ready
+Received LINE route.
+line-multimedia-response.rejected=line-route-not-found
+line-multimedia-response.exception=#0 type=System.InvalidOperationException message=line-route-not-found | stack=   at FSI_0003.Line_bot_rn_nuget.multimedia.multisession.almighty.clo@3722-24.MoveNext()\r\n   at FSI_0003.Line_bot_rn_nuget.multimedia.multisession.almighty.replyAsync@3738-1.MoveNext()
+Received LINE route.
+line-multimedia-response.rejected=line-route-not-found
+line-multimedia-response.exception=#0 type=System.InvalidOperationException message=line-route-not-found | stack=   at FSI_0003.Line_bot_rn_nuget.multimedia.multisession.almighty.clo@3722-24.MoveNext()\r\n   at FSI_0003.Line_bot_rn_nuget.multimedia.multisession.almighty.replyAsync@3738-1.MoveNext()
+line-multimedia-response.rejected=invalid-cell
+line-multimedia-response.exception=#0 type=System.ArgumentException message=Expected routeHandle GUID. (Parameter 'request') | stack=   at FSI_0003.Line_bot_rn_nuget.multimedia.multisession.almighty.routeFromRequest(String raw)\r\n   at FSI_0003.Line_bot_rn_nuget.multimedia.multisession.almighty.routeFromDomainCell(fCell2`1 cell)\r\n   at FSI_0003.Line_bot_rn_nuget.multimedia.multisession.almighty.replyAsync@3738-1.MoveNext()
+echo_line_bot_rn.status=ready
+echo_line_bot_rn.actor_address=akka.tcp://PulseTradeCommResourceNode@127.0.0.1:14786/user/echo-line-bot
+echo_line_bot_rn.dynamic_route=https://sub5.example.invalid/line-media/{capability}/{variant}
+echo_line_bot_rn.fcell2_serializer=57302
+echo_line_bot_rn.dynamic_serializer=17342026
+echo_line_bot_rn.storage=Jsonl
+echo_line_bot_rn.mcp_participant=agent.linebotty.line-response-generator
+echo_line_bot_rn.response_participant=LineBotty
+echo_line_bot_rn.agent_transport=fodex-v301-direct
+echo_line_bot_rn.allowed_line_user=U8075ab9e46cfe73a095ee1340d5fbd61
+echo_line_bot_rn.newagent_provisioner_participant=agent.linebotty.newagent-provisioner
+echo_line_bot_rn.output_root=F:\fodex\temp\sub-5\M018-round2-host\media
+echo_line_bot_rn.nlog_logger=Akka.Logger.NLog
+echo_line_bot_rn.nlog_db_accessible=false
+Press Ctrl+C to stop this provider-only RN node.
+Received LINE route.
+Received LINE text event.
+t: ReActLoopCall`2
+arg: String
+arg: Object

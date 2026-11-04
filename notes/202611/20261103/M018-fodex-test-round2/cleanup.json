@@ -1,0 +1,29 @@
+{
+  "SqlReadback": "exact test DB=0 and login=0",
+  "At": "2026-11-03T11:17:57.9268079+08:00",
+  "RemainingOwnedProcesses": 0,
+  "Health": "RN8799 and GW8797 status=ok",
+  "Services": [
+    {
+      "State": "Running",
+      "Same": true,
+      "BeforePid": 53384,
+      "Name": "PulseTradeCommSpaHumanUi",
+      "AfterPid": 53384
+    },
+    {
+      "State": "Running",
+      "Same": true,
+      "BeforePid": 16660,
+      "Name": "PulseTradeCommResourceNode",
+      "AfterPid": 16660
+    },
+    {
+      "State": "Running",
+      "Same": true,
+      "BeforePid": 2408,
+      "Name": "PulseTradeCommGatewayActive",
+      "AfterPid": 2408
+    }
+  ]
+}

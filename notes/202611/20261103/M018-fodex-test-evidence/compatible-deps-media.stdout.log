@@ -1,0 +1,82 @@
+E2E database-created FodexM018TestSub5_aca2f8d9379a4c4ca5e9ae56db149bf3
+E2E test-source-sha256 C747885313189BE0053770B5442E8C1B1871A6C215245174FD45AF4CED8FA3B8
+E2E loaded-supervisor F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\win-x64\Fodex.Supervisor.dll version=0.0.1.0
+[37m[[37m10:04:25 [37mINF[37m] [37mEXPECTO? Running tests...[37m [37m<[37mExpecto[37m>[37m
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"3326a61390834fc796033ba8e7fa21f0","disposition":"reply","messages":[{"type":"text","text":"\u5C0D\u8A71\u6A21\u5F0F\u5DF2\u8A2D\u70BA general\u3002"}],"msgOut":"\u5C0D\u8A71\u6A21\u5F0F\u5DF2\u8A2D\u70BA general\u3002","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"318df33011184a768689f8410ae1f1ce","disposition":"reply","messages":[{"type":"text","text":"\u5C0D\u8A71\u6A21\u5F0F\u5DF2\u8A2D\u70BA general\u3002"}],"msgOut":"\u5C0D\u8A71\u6A21\u5F0F\u5DF2\u8A2D\u70BA general\u3002","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25ht: ReActLoopCall`2
+[0m[1000D[?25harg: String
+[0m[1000D[?25harg: Object
+[0m[1000D[?25hE2E native-started fca3fd19-7c52-4279-9d65-3ec3f41251bb
+[0m[1000D[?25hE2E loaded-dependency FAkka.FCell2 version=10.2.2.0 path=F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\win-x64\FAkka.FCell2.dll
+[0m[1000D[?25hE2E loaded-dependency Fodex.Supervisor.Contracts version=0.0.1.0 path=F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\win-x64\Fodex.Supervisor.Contracts.dll
+[0m[1000D[?25hE2E loaded-dependency Fodex.Supervisor version=0.0.1.0 path=F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\win-x64\Fodex.Supervisor.dll
+[0m[1000D[?25hE2E loaded-dependency Argu version=10.2.1.0 path=F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\win-x64\Argu.dll
+[0m[1000D[?25hE2E loaded-dependency ModelContextProtocol.Core version=2.3.0.0 path=F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\win-x64\ModelContextProtocol.Core.dll
+[0m[1000D[?25hE2E loaded-dependency Microsoft.Data.SqlClient version=7.0.0.0 path=C:\Users\Administrator\.nuget\packages\microsoft.data.sqlclient\7.0.2\runtimes\win\lib\net9.0\Microsoft.Data.SqlClient.dll
+[0m[1000D[?25hE2E loaded-dependency Akka.Proc.Supervisor version=1.572.10.0 path=F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\win-x64\Akka.Proc.Supervisor.dll
+[0m[1000D[?25hE2E native-request route=0185d8de-9019-40b6-83ab-8c3235cf0c32 wrapper=fca3fd19-7c52-4279-9d65-3ec3f41251bb
+[0m[1000D[?25hE2E native-response route=0185d8de-9019-40b6-83ab-8c3235cf0c32 wrapper=fca3fd19-7c52-4279-9d65-3ec3f41251bb text=SUB5_A_OK
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"0185d8de901940b683ab8c3235cf0c32","disposition":"reply","messages":[{"type":"text","text":"SUB5_A_OK"}],"msgOut":"SUB5_A_OK","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"0185d8de901940b683ab8c3235cf0c32","disposition":"reply","messages":[{"type":"text","text":"SUB5_A_OK"}],"msgOut":"SUB5_A_OK","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25ht: ReActLoopCall`2
+[0m[1000D[?25harg: String
+[0m[1000D[?25harg: Object
+[0m[1000D[?25hE2E native-started e754ee96-ca25-4930-bc2e-59a020232e28
+[0m[1000D[?25hE2E loaded-dependency FAkka.FCell2 version=10.2.2.0 path=F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\win-x64\FAkka.FCell2.dll
+[0m[1000D[?25hE2E loaded-dependency Fodex.Supervisor.Contracts version=0.0.1.0 path=F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\win-x64\Fodex.Supervisor.Contracts.dll
+[0m[1000D[?25hE2E loaded-dependency Fodex.Supervisor version=0.0.1.0 path=F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\win-x64\Fodex.Supervisor.dll
+[0m[1000D[?25hE2E loaded-dependency Argu version=10.2.1.0 path=F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\win-x64\Argu.dll
+[0m[1000D[?25hE2E loaded-dependency ModelContextProtocol.Core version=2.3.0.0 path=F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\win-x64\ModelContextProtocol.Core.dll
+[0m[1000D[?25hE2E loaded-dependency Microsoft.Data.SqlClient version=7.0.0.0 path=C:\Users\Administrator\.nuget\packages\microsoft.data.sqlclient\7.0.2\runtimes\win\lib\net9.0\Microsoft.Data.SqlClient.dll
+[0m[1000D[?25hE2E loaded-dependency Akka.Proc.Supervisor version=1.572.10.0 path=F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\win-x64\Akka.Proc.Supervisor.dll
+[0m[1000D[?25hE2E native-request route=1edad98e-f59b-4d56-b902-3e2f616e0322 wrapper=e754ee96-ca25-4930-bc2e-59a020232e28
+[0m[1000D[?25hE2E native-response route=1edad98e-f59b-4d56-b902-3e2f616e0322 wrapper=e754ee96-ca25-4930-bc2e-59a020232e28 text=SUB5_B_OK
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"1edad98ef59b4d56b9023e2f616e0322","disposition":"reply","messages":[{"type":"text","text":"SUB5_B_OK"}],"msgOut":"SUB5_B_OK","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E native-request route=a57c1f52-9064-45a1-ab97-c245b7a21884 wrapper=fca3fd19-7c52-4279-9d65-3ec3f41251bb
+[0m[1000D[?25hE2E native-response route=a57c1f52-9064-45a1-ab97-c245b7a21884 wrapper=fca3fd19-7c52-4279-9d65-3ec3f41251bb text=SUB5_AMBER_731
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"a57c1f52906445a1ab97c245b7a21884","disposition":"reply","messages":[{"type":"text","text":"SUB5_AMBER_731"}],"msgOut":"SUB5_AMBER_731","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E native-request route=476fedcd-39f1-4f43-850b-3347cf6e20e3 wrapper=e754ee96-ca25-4930-bc2e-59a020232e28
+[0m[1000D[?25hE2E native-response route=476fedcd-39f1-4f43-850b-3347cf6e20e3 wrapper=e754ee96-ca25-4930-bc2e-59a020232e28 text=SUB5_COBALT_942
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"476fedcd39f14f43850b3347cf6e20e3","disposition":"reply","messages":[{"type":"text","text":"SUB5_COBALT_942"}],"msgOut":"SUB5_COBALT_942","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E native-request route=fdcdea3f-bf9b-433f-99c9-6d52cca7f9e0 wrapper=fca3fd19-7c52-4279-9d65-3ec3f41251bb
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E native-request route=34527ad4-1b1f-461e-bc7b-7de368b96b2a wrapper=e754ee96-ca25-4930-bc2e-59a020232e28
+[0m[1000D[?25hE2E native-response route=34527ad4-1b1f-461e-bc7b-7de368b96b2a wrapper=e754ee96-ca25-4930-bc2e-59a020232e28 text=SUB5_PARALLEL_B
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"34527ad41b1f461ebc7b7de368b96b2a","disposition":"reply","messages":[{"type":"text","text":"SUB5_PARALLEL_B"}],"msgOut":"SUB5_PARALLEL_B","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hE2E native-response route=fdcdea3f-bf9b-433f-99c9-6d52cca7f9e0 wrapper=fca3fd19-7c52-4279-9d65-3ec3f41251bb text=SUB5_PARALLEL_A
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"fdcdea3fbf9b433f99c96d52cca7f9e0","disposition":"reply","messages":[{"type":"text","text":"SUB5_PARALLEL_A"}],"msgOut":"SUB5_PARALLEL_A","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hE2E PASS-session-isolation e754ee96-ca25-4930-bc2e-59a020232e28,fca3fd19-7c52-4279-9d65-3ec3f41251bb
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E native-request route=f0be642f-452b-413f-8252-4db017cc4980 wrapper=fca3fd19-7c52-4279-9d65-3ec3f41251bb
+[0m[1000D[?25hE2E native-response route=f0be642f-452b-413f-8252-4db017cc4980 wrapper=fca3fd19-7c52-4279-9d65-3ec3f41251bb text=收到。
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"f0be642f452b413f82524db017cc4980","disposition":"reply","messages":[{"type":"text","text":"\u6536\u5230\u3002"}],"msgOut":"\u6536\u5230\u3002","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hline-image-stage=downloaded route=c981c039429c43179a20b9574b6bee5a atUtc=11/3/2026 2:04:57 AM +00:00
+[0m[1000D[?25hline-image-stage=stored route=c981c039429c43179a20b9574b6bee5a atUtc=11/3/2026 2:04:57 AM +00:00
+[0m[1000D[?25hline-image-stage=published route=c981c039429c43179a20b9574b6bee5a atUtc=11/3/2026 2:04:57 AM +00:00
+[0m[1000D[?25hline-image-stage=participant-request route=c981c039429c43179a20b9574b6bee5a atUtc=11/3/2026 2:04:57 AM +00:00
+[0m[1000D[?25hE2E native-request route=c981c039-429c-4317-9a20-b9574b6bee5a wrapper=fca3fd19-7c52-4279-9d65-3ec3f41251bb
+[0m[1000D[?25hE2E native-response route=c981c039-429c-4317-9a20-b9574b6bee5a wrapper=fca3fd19-7c52-4279-9d65-3ec3f41251bb text=SUB5_IMAGE_ENVELOPE_OK
+[0m[1000D[?25hline-image-stage=participant-response route=c981c039429c43179a20b9574b6bee5a atUtc=11/3/2026 2:05:04 AM +00:00
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"c981c039429c43179a20b9574b6bee5a","disposition":"reply","messages":[{"type":"image","originalContentUrl":"https://sub5.example.invalid/line-media/WZ98BzUVsW26SgM-xaoYs-HDt6yEk5Nu7ruCbe40dLA/original","previewImageUrl":"https://sub5.example.invalid/line-media/WZ98BzUVsW26SgM-xaoYs-HDt6yEk5Nu7ruCbe40dLA/preview"},{"type":"text","text":"SUB5_IMAGE_ENVELOPE_OK"}],"msgOut":"SUB5_IMAGE_ENVELOPE_OK","originalContentUrl":"https://sub5.example.invalid/line-media/WZ98BzUVsW26SgM-xaoYs-HDt6yEk5Nu7ruCbe40dLA/original","previewImageUrl":"https://sub5.example.invalid/line-media/WZ98BzUVsW26SgM-xaoYs-HDt6yEk5Nu7ruCbe40dLA/preview"}
+[0m[1000D[?25hE2E PASS-image-envelope real native turn; image publication and typed image reply; no pixel vision or public serving claim
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E native-request route=58e7f46c-67ef-49de-867e-eb73069d526b wrapper=fca3fd19-7c52-4279-9d65-3ec3f41251bb
+[0m[1000D[?25hE2E native-response route=58e7f46c-67ef-49de-867e-eb73069d526b wrapper=fca3fd19-7c52-4279-9d65-3ec3f41251bb text=接下來要進行哪項測試？
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"58e7f46c67ef49de867eeb73069d526b","disposition":"reply","messages":[{"type":"text","text":"\u63A5\u4E0B\u4F86\u8981\u9032\u884C\u54EA\u9805\u6E2C\u8A66\uFF1F"}],"msgOut":"\u63A5\u4E0B\u4F86\u8981\u9032\u884C\u54EA\u9805\u6E2C\u8A66\uFF1F","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hE2E next-observation nativeRequestsDelta=1 reply=接下來要進行哪項測試？
+[0m[1000D[?25h[37m[[37m10:05:09 [37mINF[37m] [37mEXPECTO! [36m3[37m tests run in [32m00:00:43.8019288[37m for [36mM018 LINE simulated-backend live-native[37m – [36m3[37m passed, [36m0[37m ignored, [36m0[37m failed, [36m0[37m errored. [36mSuccess![37m [37m<[37mExpecto[37m>[37m
+[0m[INFO][11/03/2026 02:05:09.700Z][Thread 0030][remoting (akka://fodex-line-m018-e754ee96ca254930bc2e59a020232e28)] Remoting shut down
+[INFO][11/03/2026 02:05:09.700Z][Thread 0030][remoting-terminator] Remoting shut down.
+E2E runtime-disposed all native wrappers stopped
+E2E database-dropped FodexM018TestSub5_aca2f8d9379a4c4ca5e9ae56db149bf3
+E2E runner-exit 0                       

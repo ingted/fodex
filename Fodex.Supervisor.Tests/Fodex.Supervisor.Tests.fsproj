@@ -120,6 +120,14 @@
     <None Include="M017ControlSmoke.fsx" />
     <None Include="M017MemorySmoke.fsx" />
     <None Include="M018ConsoleInputSmoke.fsx" />
+    <Compile Include="ImplementationTestSupportV301.fsx" />
+    <Compile Include="FodexFunBindingTests.fsx" />
+    <Compile Include="OrderHubFodexFunV301Tests.fsx" />
+    <Compile Include="SubagentFodexFunV301Tests.fsx" />
+    <Compile Include="FodexFunRegistrationV301Tests.fsx" />
+    <Compile Include="SubagentCoordinatorFodexFunV301Tests.fsx" />
+    <Compile Include="HubHostingFodexFunV301Tests.fsx" />
+    <Compile Include="WrapperCompositionV302Tests.fsx" />
     <Compile Include="ProgramV300.fs" />
   </ItemGroup>
   <ItemGroup>

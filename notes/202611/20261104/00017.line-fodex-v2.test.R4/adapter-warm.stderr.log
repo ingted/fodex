@@ -1,0 +1,81 @@
+
+
+warning FS0075: The command-line option '--parallelcompilation' is for test purposes only
+
+
+
+M019LineV2AdapterFixture.fsx(47,1): warning FS0524: 'use' bindings are not permitted in modules and are treated as 'let' bindings
+
+
+
+M019LineV2AdapterFixture.fsx(100,1): warning FS0524: 'use' bindings are not permitted in modules and are treated as 'let' bindings
+
+
+
+M019LineV2AdapterFixture.fsx(102,1): warning FS0524: 'use' bindings are not permitted in modules and are treated as 'let' bindings
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_policy.fsx(58,43): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_bot_rn_nuget.multimedia.multisession.almighty.fsx(4159,17): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_bot_rn_nuget.multimedia.multisession.almighty.fsx(4787,61): warning FS0066: This upcast is unnecessary - the types are identical
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(74,168): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(80,87): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(84,378): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(86,123): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(94,145): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(113,169): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(119,238): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(129,100): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(151,170): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(174,174): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(185,174): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(212,169): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+Warn|Proc $b stderr: codex app-server (WebSockets)
+Warn|Proc $b stderr:   listening on: ws://127.0.0.1:8832
+Warn|Proc $b stderr:   readyz: http://127.0.0.1:8832/readyz
+Warn|Proc $b stderr:   healthz: http://127.0.0.1:8832/healthz
+Warn|Proc $b stderr:   note: binds localhost only (use SSH port-forwarding for remote access)

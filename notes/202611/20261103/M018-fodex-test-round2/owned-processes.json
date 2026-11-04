@@ -1,0 +1,62 @@
+[
+  {
+    "ProcessId": 65328,
+    "ParentProcessId": 63628,
+    "CreationDate": "2026-11-03T11:14:37.849975+08:00",
+    "Name": "dotnet.exe"
+  },
+  {
+    "ProcessId": 49648,
+    "ParentProcessId": 65328,
+    "CreationDate": "2026-11-03T11:14:37.860903+08:00",
+    "Name": "conhost.exe"
+  },
+  {
+    "ProcessId": 63276,
+    "ParentProcessId": 65328,
+    "CreationDate": "2026-11-03T11:14:38.644071+08:00",
+    "Name": "dotnet.exe"
+  },
+  {
+    "ProcessId": 62776,
+    "ParentProcessId": 63276,
+    "CreationDate": "2026-11-03T11:15:04.337474+08:00",
+    "Name": "dotnet.exe"
+  },
+  {
+    "ProcessId": 60988,
+    "ParentProcessId": 62776,
+    "CreationDate": "2026-11-03T11:15:04.342114+08:00",
+    "Name": "conhost.exe"
+  },
+  {
+    "ProcessId": 61072,
+    "ParentProcessId": 62776,
+    "CreationDate": "2026-11-03T11:15:04.679135+08:00",
+    "Name": "dotnet.exe"
+  },
+  {
+    "ProcessId": 19064,
+    "ParentProcessId": 61072,
+    "CreationDate": "2026-11-03T11:15:38.615639+08:00",
+    "Name": "codex.exe"
+  },
+  {
+    "ProcessId": 65940,
+    "ParentProcessId": 19064,
+    "CreationDate": "2026-11-03T11:15:38.618582+08:00",
+    "Name": "conhost.exe"
+  },
+  {
+    "ProcessId": 38028,
+    "ParentProcessId": 19064,
+    "CreationDate": "2026-11-03T11:15:39.466111+08:00",
+    "Name": "node_repl.exe"
+  },
+  {
+    "ProcessId": 31656,
+    "ParentProcessId": 38028,
+    "CreationDate": "2026-11-03T11:15:39.478101+08:00",
+    "Name": "conhost.exe"
+  }
+]

@@ -1,0 +1,61 @@
+E2E database-created FodexM018TestSub5_7d37169b7aa24431882e5d65a4541d3f
+E2E loaded-supervisor F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\win-x64\Fodex.Supervisor.dll version=0.0.1.0
+[37m[[37m09:59:47 [37mINF[37m] [37mEXPECTO? Running tests...[37m [37m<[37mExpecto[37m>[37m
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"1868f4dc62cf445f95548d5926fa69cf","disposition":"reply","messages":[{"type":"text","text":"\u5C0D\u8A71\u6A21\u5F0F\u5DF2\u8A2D\u70BA general\u3002"}],"msgOut":"\u5C0D\u8A71\u6A21\u5F0F\u5DF2\u8A2D\u70BA general\u3002","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"b85b7597cc8d43678be658480255c2c4","disposition":"reply","messages":[{"type":"text","text":"\u5C0D\u8A71\u6A21\u5F0F\u5DF2\u8A2D\u70BA general\u3002"}],"msgOut":"\u5C0D\u8A71\u6A21\u5F0F\u5DF2\u8A2D\u70BA general\u3002","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25ht: ReActLoopCall`2
+[0m[1000D[?25harg: String
+[0m[1000D[?25harg: Object
+[0m[1000D[?25hE2E native-start-error System.IO.FileLoadException: Could not load file or assembly 'ModelContextProtocol.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'. The requested assembly version conflicts with what is already bound in the app domain or specified in the manifest. (0x80131053)
+File name: 'ModelContextProtocol.Core, Version=2.3.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'
+Requested by: Fodex.Supervisor, Version=0.0.1.0, Culture=neutral, PublicKeyToken=null
+ --> System.Private.CoreLib, Version=11.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e
+ ---> System.IO.FileLoadException: Could not load file or assembly 'F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\win-x64\ModelContextProtocol.Core.dll'. The requested assembly version conflicts with what is already bound in the app domain or specified in the manifest. (0x80131053)
+File name: 'F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\win-x64\ModelContextProtocol.Core.dll'
+   at System.Runtime.Loader.AssemblyLoadContext.LoadFromAssemblyPath(String assemblyPath)
+   at FSI_0001.LineReferencesV301.clo@41.Invoke(AssemblyLoadContext loader, AssemblyName name)
+   at System.Runtime.Loader.AssemblyLoadContext.GetFirstResolvedAssemblyFromResolvingEvent(AssemblyName assemblyName)
+   at System.Runtime.Loader.AssemblyLoadContext.ResolveUsingEvent(AssemblyName assemblyName)
+   at System.Runtime.Loader.AssemblyLoadContext.ResolveUsingEvent(IntPtr gchAssemblyLoadContext, AssemblyName* pAssemblyName, Assembly* ppResult, Exception* pException)
+
+   at FSI_0001.Line_bot_rn_nuget.multimedia.multisession.fodex.startM018@74.MoveNext()
+   at FSI_0001.M018LineFodexE2E.start@47-1.MoveNext()
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"f93105a7f476474ebecf9e0f165ff3bc","disposition":"reply","messages":[{"type":"text","text":"\u672C\u6B21 agent \u8655\u7406\u5931\u6557\uFF0C\u672A\u57F7\u884C\u4EFB\u4F55\u4EA4\u6613\u52D5\u4F5C\u3002\u8ACB\u7A0D\u5F8C\u91CD\u8A66\u3002\u8FFD\u8E64\u78BC=f93105a7f476474ebecf9e0f165ff3bc"}],"msgOut":"\u672C\u6B21 agent \u8655\u7406\u5931\u6557\uFF0C\u672A\u57F7\u884C\u4EFB\u4F55\u4EA4\u6613\u52D5\u4F5C\u3002\u8ACB\u7A0D\u5F8C\u91CD\u8A66\u3002\u8FFD\u8E64\u78BC=f93105a7f476474ebecf9e0f165ff3bc","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"f93105a7f476474ebecf9e0f165ff3bc","disposition":"reply","messages":[{"type":"text","text":"\u672C\u6B21 agent \u8655\u7406\u5931\u6557\uFF0C\u672A\u57F7\u884C\u4EFB\u4F55\u4EA4\u6613\u52D5\u4F5C\u3002\u8ACB\u7A0D\u5F8C\u91CD\u8A66\u3002\u8FFD\u8E64\u78BC=f93105a7f476474ebecf9e0f165ff3bc"}],"msgOut":"\u672C\u6B21 agent \u8655\u7406\u5931\u6557\uFF0C\u672A\u57F7\u884C\u4EFB\u4F55\u4EA4\u6613\u52D5\u4F5C\u3002\u8ACB\u7A0D\u5F8C\u91CD\u8A66\u3002\u8FFD\u8E64\u78BC=f93105a7f476474ebecf9e0f165ff3bc","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25h[37m[[37m09:59:49 [31mERR[37m] [36mM018 LINE simulated-backend live-native.text, route deduplication and multi-session memory isolation[37m failed in [32m00:00:02.4790000[37m. [36m
+native answer marker must cross production typed adapter. Expected subject string '本次 agent 處理失敗，未執行任何交易動作。請稍後重試。追蹤碼=f93105a7f476474ebecf9e0f165ff3bc' to contain substring 'SUB5_A_OK'.
+   at FSI_0001.M018LineFodexE2E.tests@112-3.Invoke(String[] replies)
+   at Microsoft.FSharp.Control.AsyncPrimitives.CallThenInvokeNoHijackCheck[a,b](AsyncActivation`1 ctxt, b result1, FSharpFunc`2 userCode) in D:\a\_work\1\s\src\fsharp\src\FSharp.Core\async.fs:line 528
+   at Microsoft.FSharp.Control.Trampoline.Execute(FSharpFunc`2 firstAction) in D:\a\_work\1\s\src\fsharp\src\FSharp.Core\async.fs:line 113[37m [37m<[37mExpecto[37m>[37m
+[0m[1000D[?25h[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"5c221a37b6e24fc6a153304d9078b124","disposition":"reply","messages":[{"type":"text","text":"\u672C\u6B21 agent \u8655\u7406\u5931\u6557\uFF0C\u672A\u57F7\u884C\u4EFB\u4F55\u4EA4\u6613\u52D5\u4F5C\u3002\u8ACB\u7A0D\u5F8C\u91CD\u8A66\u3002\u8FFD\u8E64\u78BC=5c221a37b6e24fc6a153304d9078b124"}],"msgOut":"\u672C\u6B21 agent \u8655\u7406\u5931\u6557\uFF0C\u672A\u57F7\u884C\u4EFB\u4F55\u4EA4\u6613\u52D5\u4F5C\u3002\u8ACB\u7A0D\u5F8C\u91CD\u8A66\u3002\u8FFD\u8E64\u78BC=5c221a37b6e24fc6a153304d9078b124","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hline-image-stage=downloaded route=2c216f36543249ecbe58741ddecc36aa atUtc=11/3/2026 1:59:49 AM +00:00
+[0m[1000D[?25hline-image-stage=stored route=2c216f36543249ecbe58741ddecc36aa atUtc=11/3/2026 1:59:49 AM +00:00
+[0m[1000D[?25hline-image-stage=published route=2c216f36543249ecbe58741ddecc36aa atUtc=11/3/2026 1:59:49 AM +00:00
+[0m[1000D[?25hline-image-stage=participant-request route=2c216f36543249ecbe58741ddecc36aa atUtc=11/3/2026 1:59:49 AM +00:00
+[0m[1000D[?25hline-image-stage=participant-response route=2c216f36543249ecbe58741ddecc36aa atUtc=11/3/2026 1:59:49 AM +00:00
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"2c216f36543249ecbe58741ddecc36aa","disposition":"reply","messages":[{"type":"image","originalContentUrl":"https://sub5.example.invalid/line-media/ka3gkPuOE6xjhPpn_1KlG-q3ZAP8eQPmaYSZptgcy9k/original","previewImageUrl":"https://sub5.example.invalid/line-media/ka3gkPuOE6xjhPpn_1KlG-q3ZAP8eQPmaYSZptgcy9k/preview"},{"type":"text","text":"\u672C\u6B21 agent \u8655\u7406\u5931\u6557\uFF0C\u672A\u57F7\u884C\u4EFB\u4F55\u4EA4\u6613\u52D5\u4F5C\u3002\u8ACB\u7A0D\u5F8C\u91CD\u8A66\u3002\u8FFD\u8E64\u78BC=2c216f36543249ecbe58741ddecc36aa"}],"msgOut":"\u672C\u6B21 agent \u8655\u7406\u5931\u6557\uFF0C\u672A\u57F7\u884C\u4EFB\u4F55\u4EA4\u6613\u52D5\u4F5C\u3002\u8ACB\u7A0D\u5F8C\u91CD\u8A66\u3002\u8FFD\u8E64\u78BC=2c216f36543249ecbe58741ddecc36aa","originalContentUrl":"https://sub5.example.invalid/line-media/ka3gkPuOE6xjhPpn_1KlG-q3ZAP8eQPmaYSZptgcy9k/original","previewImageUrl":"https://sub5.example.invalid/line-media/ka3gkPuOE6xjhPpn_1KlG-q3ZAP8eQPmaYSZptgcy9k/preview"}
+[0m[1000D[?25h[37m[[37m09:59:49 [31mERR[37m] [36mM018 LINE simulated-backend live-native.normalized image crosses real native turn and typed image reply[37m failed in [32m00:00:00.0380000[37m. [36m
+native answer marker must cross production typed adapter. Expected subject string '本次 agent 處理失敗，未執行任何交易動作。請稍後重試。追蹤碼=2c216f36543249ecbe58741ddecc36aa' to contain substring 'SUB5_IMAGE_ENVELOPE_OK'.
+   at FSI_0001.M018LineFodexE2E.tests@133-15.Invoke(String response)
+   at Microsoft.FSharp.Control.AsyncPrimitives.CallThenInvokeNoHijackCheck[a,b](AsyncActivation`1 ctxt, b result1, FSharpFunc`2 userCode) in D:\a\_work\1\s\src\fsharp\src\FSharp.Core\async.fs:line 528
+   at Microsoft.FSharp.Control.Trampoline.Execute(FSharpFunc`2 firstAction) in D:\a\_work\1\s\src\fsharp\src\FSharp.Core\async.fs:line 113[37m [37m<[37mExpecto[37m>[37m
+[0m[1000D[?25h[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"4f9a716638d144a28fab99516161aa87","disposition":"reply","messages":[{"type":"text","text":"\u672C\u6B21 agent \u8655\u7406\u5931\u6557\uFF0C\u672A\u57F7\u884C\u4EFB\u4F55\u4EA4\u6613\u52D5\u4F5C\u3002\u8ACB\u7A0D\u5F8C\u91CD\u8A66\u3002\u8FFD\u8E64\u78BC=4f9a716638d144a28fab99516161aa87"}],"msgOut":"\u672C\u6B21 agent \u8655\u7406\u5931\u6557\uFF0C\u672A\u57F7\u884C\u4EFB\u4F55\u4EA4\u6613\u52D5\u4F5C\u3002\u8ACB\u7A0D\u5F8C\u91CD\u8A66\u3002\u8FFD\u8E64\u78BC=4f9a716638d144a28fab99516161aa87","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hE2E next-observation nativeRequestsDelta=0 reply=本次 agent 處理失敗，未執行任何交易動作。請稍後重試。追蹤碼=4f9a716638d144a28fab99516161aa87
+[0m[1000D[?25h[37m[[37m09:59:49 [31mERR[37m] [36mM018 LINE simulated-backend live-native.provider forwards next as payload; GW continuation NOT covered[37m failed in [32m00:00:00.0260000[37m. [36m
+provider forwards /next as an ordinary native turn.
+[32mexpected[36m: [32m1[36m
+[31m  actual[36m: [31m0[36m
+   at FSI_0001.M018LineFodexE2E.tests@146-21.Invoke(String response)
+   at Microsoft.FSharp.Control.AsyncPrimitives.CallThenInvokeNoHijackCheck[a,b](AsyncActivation`1 ctxt, b result1, FSharpFunc`2 userCode) in D:\a\_work\1\s\src\fsharp\src\FSharp.Core\async.fs:line 528
+   at Microsoft.FSharp.Control.Trampoline.Execute(FSharpFunc`2 firstAction) in D:\a\_work\1\s\src\fsharp\src\FSharp.Core\async.fs:line 113[37m [37m<[37mExpecto[37m>[37m
+[0m[1000D[?25h[1000D[?25h[37m[[37m09:59:49 [37mINF[37m] [37mEXPECTO! [36m3[37m tests run in [32m00:00:02.5829761[37m for [36mM018 LINE simulated-backend live-native[37m – [36m0[37m passed, [36m0[37m ignored, [36m3[37m failed, [36m0[37m errored. [36m[37m [37m<[37mExpecto[37m>[37m
+[0mE2E runtime-disposed all native wrappers stopped
+E2E database-dropped FodexM018TestSub5_7d37169b7aa24431882e5d65a4541d3f
+E2E runner-exit 1                       

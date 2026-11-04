@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "PulseTradeCommSpaHumanUi",
+    "State": "Running",
+    "ProcessId": 53384
+  },
+  {
+    "Name": "PulseTradeCommResourceNode",
+    "State": "Running",
+    "ProcessId": 16660
+  },
+  {
+    "Name": "PulseTradeCommGatewayActive",
+    "State": "Running",
+    "ProcessId": 2408
+  }
+]

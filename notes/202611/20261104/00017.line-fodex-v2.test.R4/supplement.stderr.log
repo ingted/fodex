@@ -1,0 +1,120 @@
+
+
+warning FS0075: The command-line option '--parallelcompilation' is for test purposes only
+
+
+
+M019LineV2Acceptance.fsx(93,9): warning FS0046: The identifier 'process' is reserved for future use by F#
+
+
+
+M019LineV2Acceptance.fsx(94,12): warning FS0046: The identifier 'process' is reserved for future use by F#
+
+
+
+M019LineV2Acceptance.fsx(95,15): warning FS0046: The identifier 'process' is reserved for future use by F#
+
+
+
+M019LineV2Acceptance.fsx(96,16): warning FS0046: The identifier 'process' is reserved for future use by F#
+
+
+
+M019LineV2Acceptance.fsx(97,16): warning FS0046: The identifier 'process' is reserved for future use by F#
+
+
+
+M019LineV2Acceptance.fsx(98,52): warning FS0046: The identifier 'process' is reserved for future use by F#
+
+
+
+M019LineV2Acceptance.fsx(99,5): warning FS0046: The identifier 'process' is reserved for future use by F#
+
+
+
+M019LineV2Acceptance.fsx(101,9): warning FS0046: The identifier 'process' is reserved for future use by F#
+
+
+
+M019LineV2Acceptance.fsx(104,13): warning FS0046: The identifier 'process' is reserved for future use by F#
+
+
+
+M019LineV2Acceptance.fsx(109,63): warning FS0046: The identifier 'process' is reserved for future use by F#
+
+
+
+M019LineV2Acceptance.fsx(109,74): warning FS0046: The identifier 'process' is reserved for future use by F#
+
+
+
+M019LineV2Acceptance.fsx(110,16): warning FS0046: The identifier 'process' is reserved for future use by F#
+
+
+
+M019LineV2Acceptance.fsx(110,27): warning FS0046: The identifier 'process' is reserved for future use by F#
+
+
+
+M019LineV2Acceptance.fsx(111,18): warning FS0046: The identifier 'process' is reserved for future use by F#
+
+
+
+M019LineV2Acceptance.fsx(416,9): warning FS0046: The identifier 'process' is reserved for future use by F#
+
+
+
+M019LineV2Acceptance.fsx(416,38): warning FS0046: The identifier 'process' is reserved for future use by F#
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_policy.fsx(58,43): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(74,168): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(80,87): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(84,378): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(86,123): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(94,145): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(113,169): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(119,238): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(129,100): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(151,170): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(174,174): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(185,174): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_provider_fodex_v2_store.fsx(212,169): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+

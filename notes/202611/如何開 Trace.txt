@@ -1,0 +1,55 @@
+› M019 現在正在跑，你說我要怎麼開 TRACE 包含所有 participant 的 STDOUT / ERROUT ?
+
+
+• 我先確認目前 /trace 的範圍與輸出位置，給你能直接在正在執行的 M019 使用的指令。
+
+• Ran Read-CodexStdout { rg -n 'trace|Trace|stdout|StdOut|stderr|StdErr|show\(' Fodex.Supervisor/README.M018.md Fodex.Supervisor/NativeOutputFodexFunV300.fsx
+  │ Fodex.Supervisor/WrapperCommandFodexFunV300.fsx | Select-Object -First 65; rg -n 'Trace|trace' Fodex.Supervisor/WrapperAgentV300.fsx
+  │ Fodex.Supervisor/WrapperIAgentDemo.M019.fsx Fodex.Supervisor/NLog.M017.conf | Select-Object -First 40 }
+  └ Fodex.Supervisor/NativeOutputFodexFunV300.fsx:18:/// 可跨 node 的純資料。TraceAtCapture 保留 relay 收到資料時的設定：
+    Fodex.Supervisor/NativeOutputFodexFunV300.fsx:19:/// /trace on 不回填先前資料；off 之前已收下的最後一批仍可以完成寫 log。
+    Fodex.Supervisor/NativeOutputFodexFunV300.fsx:22:    | NativeOutputBatch of participant: ReActParticipant * runId: Guid * sequence: int64 * source:
+    +59 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { & 'C:/Program Files/Git/bin/bash.exe' -lc 'sed -n "80,135p" Fodex.Supervisor/NativeOutputFodexFunV300.fsx'; rg -n
+  │ 'ProcessStdout|ProcessStderr|AppServerNotification|OnEvent|Stdout|Stderr|StdOut|StdErr|RawOutput|connectOutput|OutputHub'
+  │ Fodex.Supervisor/NativeAgentV300.fsx Fodex.Supervisor/NativeAppServerV300.fsx Fodex.Supervisor/SubagentCoordinatorV300.fsx
+  │ … +2 lines
+  └         try
+                let encode=pin<NativeOutputBatchV300,string> node targetTrace
+                Ok(spawn node ("native-output-"+Guid.NewGuid().ToString("N")) <| fun (mailbox:Actor<obj>) ->
+    +99 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg -n 'launch|startWith|start |connect|session|OnEvent|ProcSupervisor' Fodex.Supervisor/NativeAppServerV300.fsx | Select-Object
+  │ -First 24; rg -n 'launch|OnEvent|Stdout|Stderr|ProcStart|ProcSupervisor|startWith' Fodex.Supervisor/NativeAppServerV202.fsx
+  │ Fodex.Supervisor/ProcSupervisorV100.fsx | Select-Object -First 30; & 'C:/Program Files/Git/bin/bash.exe' -lc 'sed -n "64,78p"
+  │ … +1 line
+  └ 64:    /// Native actor 只擁有此 participant 的 process/connection/turn。
+    102:                    let mutable supervised: ProcSupervisorV100.StartState option = None
+    103:                    let mutable connection: CodexAppServerConnection option = None
+    +44 lines (ctrl+t to view transcript)
+
+• 在 M019 輸入：
+
+  /trace on
+  ;;
+  /trace status
+  ;;
+
+  /trace 會涵蓋這個 root wrapper 下所有接入的 native participant，包含未開 /show 的，以及之後新增的 participant。只記錄開啟後的資料，不回填歷史。
+
+  status 會回報實際檔案路徑，通常是：
+
+  F:\fodex\artifacts\M019\<本次執行目錄>\io.jsonl.native.jsonl
+
+  剛核對程式碼，現行記錄範圍有一個缺口：
+
+  • exec：包含原始 stdout、stderr。
+  • app-server：包含原始 protocol notifications；app-server 程序本身的 stdout／stderr 尚未接進這份 trace。
+
+  若也要在畫面顯示所有 participant 的已接入原始輸出，再輸入：
+
+  /show(ALL) on
+  ;;
+
+  Worked for 1m 38s • 10:31 AM

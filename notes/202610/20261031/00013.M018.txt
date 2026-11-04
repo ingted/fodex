@@ -1,0 +1,856 @@
+› 請讀取 F:\fodex\notes\202610\20261031\00012.M017.stdout.txt。我的 feedback 在最後面
+
+• 已完整讀取，並完成 M018 腳本 (Fodex.Supervisor/WrapperIAgentDemo.M018.fsx)。M017 保留。
+
+  你的判讀正確：
+
+  • Queued for the next main turn 是排入佇列的 ack。
+  • MessageCompleted 是單則訊息完成；AgentEnd 才是整個回合結束。
+  • 591 causedBy=8 對應第一筆輸入；1050 causedBy=592 表示事件 1050 結束了由輸入事件 592 引起的回合。編號不是 token 數。
+
+  M018 已修正：
+
+  • 移除 formatter 額外疊加的換行，保留 agent 原文的段落空行。
+  • AgentEnd 後重顯 M018>，沿用同一個 reader，避免重開 reader 搶走輸入。
+  • 加入 ctx／NLog console 讀寫紀錄。啟動後那 15 行空白尚未重現，不能宣稱根因已解決。
+
+  執行：
+
+  F:\fodex\Fodex.Supervisor\Start-M018.ps1
+
+  Debug／Release build 成功；Expecto 174/174，新案例 Test Explorer／獨立 FSI 各 7/7。真正 app-server 兩輪 ECHO 約 21 秒完成，兩次都重顯提示。
+
+  詳見 README.M018.md (Fodex.Supervisor/README.M018.md)。
+
+  Worked for 36m 46s • 9:55 PM
+
+
+
+
+• 已改好：
+
+  • 每個 participant 一個 key/value 區塊，key 靠右、value 靠左，保留完整資訊。
+  • 指令成功或失敗，結果印完都會重顯 M018>，不需再按 Enter，仍維持單一 reader。
+
+  完整測試 176/176 通過，也實測了 /list_participant、錯誤指令及 /help。
+
+  目前 Debug DLL 被執行中的程序占用。 請先結束舊 M018，在 VS 建置 Debug，再執行 Start-M018.ps1 (Fodex.Supervisor/Start-M018.ps1)，才會載入新版。
+
+  Worked for 12m 30s • 11:19 PM
+
+
+
+
+
+
+
+
+› 沒變吧? 你有 build 成功?
+  M018> /list_participant
+  M018>
+  [wrapper] N | name | sid | next-turn settings | actor | parent | status
+  1 | main-wrapper | WSID (14fd0a9e-85f7-4862-a72b-c3c02178abf4, 127.0.0.1) | model=gpt-6.1-sol | effort=high | ifFast=false | memory=true | active=false |
+  actor=akka.tcp://fodex-m018-66bb1ace34a3400b93bfad8d33559fb3@127.0.0.1:21818/user/wrapper-v300-ea7e24e1be7c46de82d414bcb917f8ae#1005070332 | parent=- |
+  status=Idle
+  2 | main | CSID (01a19cd9-34c7-7a92-8404-069668a1eb6c) | model=gpt-6.1-sol | effort=high | ifFast=false | memory=true | active=false | actor=akka.tcp://
+  fodex-m018-66bb1ace34a3400b93bfad8d33559fb3@127.0.0.1:21818/user/native-app-v300-7794b3ae4e6f47f7bf4b3e2bc7aa8ee5#134368678 | parent=WSID (14fd0a9e-85f7-
+  4862-a72b-c3c02178abf4, 127.0.0.1) | status=Idle
+
+• 現在 Debug build 已成功，0 warning、0 error。 上一輪 Debug 鎖檔，確實沒有完成你實際使用路徑的更新。
+
+  這次直接執行同一個 Start-M018.ps1 驗證了：
+
+  • /list_participant 已顯示對齊的 key/value 區塊。
+  • 指令結果後自動重顯 M018>。
+  • Debug 測試 12/12 通過。
+
+  現在重新執行 Start-M018.ps1 (Fodex.Supervisor/Start-M018.ps1) 即可，不必再自行 build。
+
+  Worked for 5m 11s • 11:27 PM
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  目前不支援 shift+enter 換行，請問有解嗎?
+
+
+• 有解。我會先確認 M018 目前的輸入方式與可用的鍵盤處理 API，找出能支援 Shift+Enter、又不需要改成 TUI 的最小方案。
+
+• Ran Read-CodexStdout { bash -lc 'cd /f/fodex && rg -n -m 3 "M017|Fodex" /c/Users/Administrator/.codex/memories/MEMORY.md | head -8; sed -n "35,110p"
+  │ Fodex.Supervisor/ConsoleOutputFodexFunV300.fsx; sed -n "145,170p" Fodex.Supervisor/WrapperIAgentDemo.M018.fsx; cat Fodex.Supervisor/Start-M018.ps1;
+  │ dotnet --info | head -18' }
+  └ 1:# Task Group: Fodex Supervisor review, M017, and two-round client workflow
+    3:scope: Exact-output protocol, read-only current-source review, M017 design/history handoff, and hub/client session-resume tests at F:\fodex.
+    6:## Task 1: M017 Contract graph and wrapper command requirements
+    +119 lines (ctrl+t to view transcript)
+
+• Browsing the web
+
+• Opened https://learn.microsoft.com/en-us/dotnet/api/system.console.readline?view=net-10.0
+
+• Ran Read-CodexStdout { bash -lc 'cd /f/fodex && rg -n -A 6 -B 3 "Append|SendAll|Preview|concat" Fodex.Supervisor/WrapperDraftFodexFunV300.fsx | head -65' }
+  └ 22-    /// preview/sendAll 共用一份建構邏輯；原 prompt 內 CRLF/LF 均不被改寫。
+    23-    let snapshot (drafts: CD<int,string>) =
+    24-        let rows = drafts.ToArray() |> Array.map (fun item -> item.Key,item.Value) |> Array.sortBy fst
+    +44 lines (ctrl+t to view transcript)
+
+• 有。問題在目前使用 Console.ReadLine()：它只回傳一行文字，無法提供 Shift 狀態。要支援這個操作，需改用 Console.ReadKey(true) 讀取按鍵與修飾鍵。Microsoft 文件
+
+  可以設計成：
+
+  • Shift+Enter：在輸入內容加入換行，繼續編輯。
+  • Enter：將整段文字一次送給 wrapper。
+  • 維持單一 reader，只改 Console 輸入層，不需要 TUI 或 Contract 變更。
+
+  目前不改程式，也能先用已有的草稿功能避免提前送出：
+
+  /wrapper_append 假設現在有個任務，是要你用
+  /wrapper_append F# 完成以下工作……
+  /wrapper_preview
+  /wrapper_sendAll
+
+  這會將各段用換行串接，再一次送給 main participant。
+
+  Worked for 2m 53s • 11:58 PM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex
+
+
+
+
+
+
+
+
+
+
+› 不能使用 key event 嗎? 一旦收到 shift + enter，自動重新起動下一個 ReadLine() 並且將 \n 加入前一行 ReadLine() 的末端?
+
+
+• 我先確認 Console.ReadLine() 阻塞期間能否另外接收按鍵事件，以及兩者會不會互相搶輸入。
+
+• Ran Read-CodexStdout { bash -lc 'cd /f/fodex && rg -n -m 3 "M017|Fodex" /c/Users/Administrator/.codex/memories/MEMORY.md | head -8; sed -n "50,82p"
+  │ Fodex.Supervisor/ConsoleOutputFodexFunV300.fsx' }
+  └ 1:# Task Group: Fodex Supervisor review, M017, and two-round client workflow
+    3:scope: Exact-output protocol, read-only current-source review, M017 design/history handoff, and hub/client session-resume tests at F:\fodex.
+    6:## Task 1: M017 Contract graph and wrapper command requirements
+    +34 lines (ctrl+t to view transcript)
+
+• Browsing the web
+
+• Opened https://learn.microsoft.com/en-us/dotnet/api/system.console?view=net-10.0
+
+• Browsing the web
+
+• Opened https://learn.microsoft.com/en-us/windows/console/console-readconsole-control
+
+• Browsing the web
+
+• Opened https://raw.githubusercontent.com/microsoft/terminal/main/src/host/readDataCooked.cpp
+
+• 你說的「每行累積，最後一次送出」方式成立，不必取消正在讀取的那一行。關鍵是這一行返回時，能否同時拿到 Enter 的 Shift 狀態。
+
+  我查到 Windows 的 ReadConsoleW 有相關欄位；這可能讓我們保留系統原本的逐行編輯，不必自己寫整套逐鍵編輯器。我再確認一下這個細節。
+
+• Browsing the web
+
+• Searched for '_controlKeyState =' in https://raw.githubusercontent.com/microsoft/terminal/main/src/host/readDataCooked.cpp
+
+• 你的「逐行累積，最後一次送出」流程可以成立。 我前面說得像必須重寫逐鍵編輯器，太武斷了。
+
+  差別在於：System.Console 沒有一般的 KeyDown event 可以掛在 ReadLine() 旁邊；它只提供 CancelKeyPress。Console 文件
+
+  Windows 有更接近你想法的做法：封裝 ReadConsoleW，設定 Enter 為喚醒字元，讓每次讀取同時取得「這行文字」與 dwControlKeyState，其中包含 Shift 狀態。這樣仍可使
+  用系統提供的逐行編輯。API 文件
+
+  上層就是你說的流程：
+
+  讀取一行及結束按鍵狀態
+    Shift+Enter → 累積這行 + "\n"，再讀下一行
+    Enter       → 合併累積內容，一次送給 wrapper
+
+  整個過程始終只有一個 reader。不是另外開一個按鍵 reader 跟 ReadLine() 搶輸入，也不需要中途取消讀取。這是 Windows 專用方案，適合目前這個 Console。
+
+  Worked for 3m 28s • 12:04 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex  
+
+
+
+
+
+
+
+
+
+› m018_readconsole_probe.py 這應該是測試用對嗎?
+
+› 你要不要 clone f# 專案，參考裡面的 fsi 專案?
+
+› fsi 的實作應該會有不少巧思，你 review 的過程中寫一份fsi實作技術分析的 .md 檔供後續使用，最好把程式碼片段都直接複製起來，未來方便套用
+
+› 如果使用 fsi 的手法，有可能 M018 會需要變成一個 Windows 專案，請盡量維持可以跨平台
+
+› 請維持輕量...M018只是個過度
+
+• 會維持輕量：只補單一輸入迴圈、Shift+Enter／Ctrl+J 換行與 prompt 重畫，使用跨平台 System.Console。
+
+  FSI 技術分析 (/F:/fodex/doc/FsiConsoleImplementationAnalysis.md) 已完成，含原始碼片段與來源。Release 建置、184 項測試及實際多行輸入驗證通過。
+
+  預設 Debug DLL 尚未更新：舊 M018（PID 60096）仍鎖住它。請先結束該 M018，我再完成 Debug 建置。
+
+  Worked for 48m 8s • 12:56 AM  
+
+
+
+
+
+
+› 已結束。所以現在你知道怎麼進行了嗎? 你要建立專案還是能維持腳本呢?
+
+
+• 可以維持腳本：M018 仍是 .fsx，輸入功能編入既有的 Fodex.Supervisor，不需要另建專案。FSI 的單一 Console.ReadKey 迴圈可以直接沿用，正式程式也不需要 Win32 API。
+
+  你已結束舊 M018，我現在完成預設 Debug 建置，確認原啟動方式能載入新版。
+
+
+
+
+
+• 已改好，Debug 建置也成功了，17 項測試與真實 console 鍵盤驗證通過。
+
+  維持 .fsx，沒有新增專案。直接啟動原本的 Start-M018.ps1 (Fodex.Supervisor/Start-M018.ps1)：
+
+  • Shift+Enter／Ctrl+J：換行。
+  • Enter：送出整段文字。
+
+  Worked for 2m 46s • 1:01 AM    
+
+
+
+
+
+
+
+
+
+
+
+
+› 關掉 M018 怎麼接續前一個 sid?
+
+• 在 WrapperIAgentDemo.M018.fsx (Fodex.Supervisor/WrapperIAgentDemo.M018.fsx) 的 defaultArgumentsText 加上：
+
+  --session c96e34e1-545c-4a71-a961-52eb6bcc0b05
+
+  這是目前 latest.owner.json (artifacts/M018/latest.owner.json) 記錄的 wrapper SID。保留原本的 --database FodexM018、--bind-ip 127.0.0.1，再執行原 Start-
+  M018.ps1。
+
+  它會從 DB 找回 main 的 Codex SID，再 resume。啟動後可用 /list_participant 核對 main 的 CSID；未完成工作不會自動重送，需要再輸入「繼續」。
+
+  不要用 /wrapper_restart 來恢復對話，那個命令會刻意建立新 main session。
+
+
+› 剛才嘗試送 EOF，讓它走正常清理，但沒有順利退出 -> 就已經跟你說 ctrl+c 無用了，你怎麼還要我提醒?
+
+• 舊 M018 與子程序已全部停止，修正也已交付：
+
+  • /exit：清理 participant、hub、ActorSystem，離開前印出 resume 命令。
+  • Console 的 Ctrl+C 已修正。
+  • 生成中輸入新 prompt：取消舊 turn，再沿用同一 SID 處理。
+
+  Debug／Release 建置成功，189 項測試通過；實際退出與恢復同一 SID 也驗證成功。
+
+  接回剛才的對話，在 M018 腳本 (Fodex.Supervisor/WrapperIAgentDemo.M018.fsx) 的 defaultArgumentsText 加入原 wrapper SID，再啟動：
+
+  --session c96e34e1-545c-4a71-a961-52eb6bcc0b05
+
+  Worked for 57m 22s • 2:17 AM
+
+
+
+
+
+
+
+
+
+• 已完成，Debug DLL 已更新。
+
+  • /show、/show(N)：開啟顯示；加 off 關閉。預設 main 開啟、其他 participant 關閉。
+  • /trace：開啟所有 native 原始 I/O 的 NLog 記錄；預設關閉。
+  • /trace off：關閉記錄。
+  • /trace status：查看狀態與 log 路徑。
+
+  原始 I/O 走獨立 actor 通道，不寫入生成的 DB／FGL；show 與 trace 各自獨立。
+
+  197 個測試通過，app-server／exec 均已實跑驗證。操作及查詢範例見 README (Fodex.Supervisor/README.M018.md:39)。
+
+  Worked for 47m 38s • 4:28 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex
+
+
+
+
+
+
+
+
+
+› /subagent(N) 在 wrapper 重啟之後該怎麼恢復?
+
+› 建議在 fodex.supervisor artifact 的位置，直接建立一個 .json ，使用 main wrapper {sid : [subagent sid array]} 這樣的東西紀錄? 如果你覺得有風險再說
+
+• 可以。JSON 很適合當作重啟恢復清單，放在 Fodex.Supervisor.dll 所在目錄即可。
+
+  但建議 array 除了 SID，再保留既有的 participant 編號 N：
+
+  {
+    "main-wrapper-wsid": [
+      { "n": 3, "sid": "sub-wrapper-wsid-1" },
+      { "n": 5, "sid": "sub-wrapper-wsid-2" }
+    ]
+  }
+
+  原因是 sub wrapper 存的是 WSID，raw subagent 存的是 Codex SID，而 raw 在第一次執行前可能還沒有 SID。持久化的 N 可以找到原 graph 節點，再取得 who、種類、父子
+  關係，以及 wrapper 底下 native 的 Codex SID。不能把 array 順序當成 N。
+
+  實作上我建議：
+
+  • 每個 main WSID 一份檔案，例如 subagents.<WSID>.json，避免不同 wrapper 同時改同一檔。
+  • 同一 owner actor 負責更新；寫暫存檔後原子替換，避免中斷留下半份 JSON。DB／graph 保留身分與關係，JSON 記錄要恢復的名單。
+  • 重開同 WSID 後，仍遵守延後啟動：第一筆有效指令才恢復 actors、原 SID 與 hub 的 who 對應，完成後再派工。
+  • 恢復 participant 不代表重送之前未完成的 order，避免重複執行。
+
+  這個方向可行，不需要修改 Contract。目前程式尚未加入這份 JSON 與自動恢復流程。
+
+  Worked for 4m 49s • 4:44 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 目前 wrapper 重起會使用 persistence.query 重建 graph 嗎?
+
+• 會重建 graph，但目前沒有使用 Akka.Persistence.Query。
+
+  現行流程是：
+
+  1. 依 wrapper session 的 SID＋Address，直接查 SQL Server 的 FodexReActEvent，按 StreamId 排序。查詢位置 (/F:/fodex/Fodex.Supervisor/
+     ReActDataStoreV200.fsx:78)
+
+  2. 將每列 JSON 還原為 typed ReActDataStream<string>。反序列化位置 (/F:/fodex/Fodex.Supervisor/ReActDataStoreV300.fsx:64)
+  3. 將歷史事件交給 topology projection，從空的 FGL graph 重建節點、關係與事件邊。重建入口 (/F:/fodex/Fodex.Supervisor/ReActLoopHandlerV300.fsx:32)
+
+  所以目前是自行實作 SQL 事件保存與回放，handler 也是一般 actor；沒有走 Akka 的 journal recovery／query。
+
+  另外，重建 graph 只恢復資料，不會重送歷史 prompt，也不會自動恢復全部 subagent 的 actor 與 hub binding。
+
+  這也修正我上一則建議：**原有 subagent 身分與父子關係已在 DB／graph，單純為了恢復它們，不一定需要再存 SID JSON。**目前主要缺的是從恢復後的 graph，自動重新建
+  立 subagent 與 hub binding 的流程。
+
+  Worked for 54s • 4:48 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex  
+
+
+
+
+
+
+
+
+› 所以我們完全沒有使用 akka persistence 去記載 ReActDataStream?
+
+
+• 我再確認目前有編譯的寫入路徑與套件引用，避免把保留的舊版實作算進現況。
+
+• Ran Read-CodexStdout { bash -lc 'sed -n "1,63p" Fodex.Supervisor/ReActDataStoreV300.fsx'; rg -n 'persist\(|let commit|commitBatch|persist '
+  │ Fodex.Supervisor/ReActLoopHandlerV300.fsx; $currentProject = [xml](Get-Content -LiteralPath Fodex.Supervisor/Fodex.Supervisor.fsproj -Raw -Encoding
+  │ utf8); $currentSources = @($currentProject.Project.ItemGroup.Compile | ForEach-Object { if ($_.Include) { Join-Path Fodex.Supervisor $_.Include } }); rg
+  │ … +3 lines
+  └ Exception: C:\Users\Administrator\.codex\lib\Read-CodexStdout.ps1:150
+    Line |
+     150 |          throw "Captured command failed with exit code $exitCode. $($d …
+    +48 lines (ctrl+t to view transcript)
+
+• 對，目前執行的 V300 沒有使用 Akka.Persistence 記錄 ReActDataStream。
+
+  現在的 persist 是自行命名的函數，實際透過 SqlClient 開 transaction，直接 INSERT dbo.FodexReActEvent。程式位置 (/F:/fodex/Fodex.Supervisor/
+  ReActDataStoreV300.fsx:20)
+
+  整條路徑是：
+
+  ReActDataStream → 自寫 SQL 儲存
+  wrapper 重啟 → 自寫 SQL 查詢 → 反序列化 → 重建 FGL graph
+
+  沒有走 Akka journal、PersistentActor、Recover 或 Persistence.Query。先前討論的 Akka.Persistence 方案，沒有落實到目前這條實作；這個落差我之前應該明確交代。
+
+  Worked for 32s • 4:50 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 1. 沒有落實到目前這條實作 -> 之後都不用了是嗎? 說明一下當初的技術理由
+  2. 所以我們採用的方式不是 eventsourcing ，可以指定還原最新的多少筆 graph 內容，而不用擔心必須要全部 apply 狀態才會正確對吧?
+
+
+• 我會分開確認兩件事：當時是否有留下不採用 Akka.Persistence 的理由，以及目前 graph 的狀態是否依賴完整歷史。尤其「只取最新幾筆」不能只看訊息邊，還要看
+  participant 與關係如何還原。
+
+• Ran Read-CodexStdout { rg -n 'persistence|event.?sourc|journal|FGL|graph' C:/Users/Administrator/.codex/memories/MEMORY.md | Select-Object -First 18; rg -n
+  │ -i 'persistence|event.?sourc|journal|snapshot|recover|重建|回放' req_analysis.md Fodex.Supervisor/README.M017.md Fodex.Supervisor/README.M018.md
+  │ Fodex.Supervisor/README.V200.md Fodex.Supervisor/README.M010-M016.md Fodex.Supervisor.Contract/README.md | Select-Object -First 60; bash -lc 'sed -n
+  │ … +1 line
+  └ 6:## Task 1: M017 Contract graph and wrapper command requirements
+    14:- M017, ReActDataStream, FGL.LEdge, ReActNode, ParticipantRelationChanged, wrapper_sendAll, fail_review, cancel, req_analysis.md
+    110:- M017 topology is one FGL graph with typed metadata/relation events. Draft indices are monotonic/non-reused; `sendAll` uses an index-sorted LF
+    +145 lines (ctrl+t to view transcript)
+
+• Browsing the web
+
+• Ran Read-CodexStdout { bash -lc 'sed -n "42,88p" Fodex.Supervisor/README.V200.md; sed -n "46,58p" Fodex.Supervisor.Contract/README.md; sed -n "1,39p"
+  │ Fodex.Supervisor/ReActTopologyFodexFunV300.fsx; sed -n "1,23p" /c/Users/Administrator/.codex/memories/MEMORY.md'; git -c safe.directory=F:/fodex log -5
+  │ --format='%h %s' -- Fodex.Supervisor/ReActDataStoreV200.fsx Fodex.Supervisor/README.V200.md }
+  └ ## 資料與持久化
+
+    JSON envelope 為 `format=Fodex.ReActEdge`、`schemaVersion=2`、`edge=<FsPickler JSON>`。
+    +121 lines (ctrl+t to view transcript)
+
+• Searched the web for site:getakka.net articles persistence event sourcing snapshot recovery Akka.NET
+
+• 已確認：目前 participant metadata、Owns／Main 關係都是靠歷史事件還原，因此仍有 event-sourcing 的狀態依賴，不能直接只載入最後 N 筆。早期文件只明確記載 V200
+  沿用 SQL、該版未加入 Akka.Persistence，沒有記載「以後不採用」的決策。
+
+• Ran Read-CodexStdout { git -c safe.directory=F:/fodex show -s --format='%h%n%B' 9e8e604; rg -n -A 12 -B 2 'let snapshot' Fodex.Supervisor/ReActJsonV300.fsx;
+  │ bash -lc 'sed -n "162,187p" Fodex.Supervisor/ReActLoopHandlerV300.fsx; sed -n "1,56p"
+  │ /c/Users/Administrator/.codex/memories/rollout_summaries/2026-10-24T19-39-00-8Ipa-fodex_m017_contract_and_draft_command_requirements.md' }
+  └ 9e8e604
+    feat(supervisor): persist FGL streams and support supervised exec alongside app-server
+
+    +96 lines (ctrl+t to view transcript)
+
+• 沒有決定以後都不用 Akka.Persistence。第二點也需要更正：目前仍有 event sourcing 的狀態依賴，不能直接只載入最後 N 筆就保證 graph 正確。
+
+  1. 當初為什麼這樣實作
+
+  目前能查證的沿革是：
+
+  • V200 沿用既有 SQL Server event table，保存序列化的 FGL edge，提供直接查詢及離線 JSONL 匯出；文件明確寫「此版沒有新增 Akka.Persistence」。原始說明 (/F:/
+    fodex/Fodex.Supervisor/README.V200.md:44)
+
+  • V300 沿用這條儲存路徑，再把 participant metadata、關係變更與 main 切換加入同一批 SQL transaction。
+
+  從程式推斷，當時的取捨是沿用既有 SQL／serializer／匯出功能，減少切換 journal 的整合工作。但我沒有找到「經過比較，決定永久不用 Akka.Persistence」的決策紀錄，
+  不能事後替它補造理由。
+
+  而且目前自行承擔了事件保存、順序、重複提交檢查與 recovery；不能因此宣稱比使用框架更容易維護。
+
+  2. 沒用 Akka.Persistence，不代表沒用 event sourcing
+
+  Event sourcing 是以保存的事件還原狀態，並不取決於使用哪個框架。目前 topology 正是如此：
+
+  • ParticipantMetadataChanged 還原節點資料。
+  • ParticipantRelationChanged 按順序決定 Owns／Main／Cot 關係是否生效。
+  • handler 從空 graph 套用歷史，得到目前狀態。投影實作 (/F:/fodex/Fodex.Supervisor/ReActTopologyFodexFunV300.fsx:116)
+
+  例如 participant 建立與 Main 關係在第 10～20 筆，最後 1,000 筆只有對話；只取最後 1,000 筆，就無法知道誰是 main、誰屬於哪個 wrapper。causedBy 也可能指向範圍
+  外的歷史。
+
+  因此要區分：
+
+   用途                                  能否只讀最新 N 筆
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   顯示近期訊息、提供部分 context        可以設計成局部讀取，但要處理訊息完整性與範圍外引用
+  ────────────────────────────────────  ────────────────────────────────────────────────────
+   恢復可派工的 wrapper／完整控制狀態    目前不行，現行實作讀完整歷史再 apply
+
+  要避免每次全部回放，需要保存同一提交水位的完整 topology／必要計數狀態，再套用水位之後的事件；訊息歷史則可另外限定載入範圍。目前名為 snapshot 的函數只是記憶
+  體深複製，還不是持久化的 recovery checkpoint。目前 snapshot (/F:/fodex/Fodex.Supervisor/ReActJsonV300.fsx:57)
+
+  這個優化也不要求放棄 event sourcing；Akka.Persistence 本身就支援從 snapshot 加上後續事件恢復。官方 snapshot 說明
+
+  Worked for 2m 40s • 4:57 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 1. 所以目前狀況是沒用現成的 Akka.Persistence ，有 event sourcing ，但缺 snapshot taking? 基本上如果我們希望重啟之後只 apply 最後一小時內的 graph 增量 (對話
+  紀錄這種東西就是不斷 append 的增量) 你能做嗎?
+
+  2. 我覺得 /wrapper_compact 如果你目前有做的話，可以用來 prune graph 然後 serialize/pickle graph 做為 graph?
+
+
+
+
+
+↪ Re: 我建議 /wrapper_compact 在摘要與新 main handover 成功後，只剪掉記憶體 graph 中已摘要的完整對話及其對應碎片；保留 participant／關係、未完成工作與摘要期
+  間的新資料，SQL 原始歷史完整保留。這個 pruning 範圍符合你的意思嗎？
+
+  符合，SQL 歷史保留，剪掉已摘要部份 -> 手動，下次重啟時如果沒有手動 COMPACT 那就 filter 最後一小時內容 (假設現在是 5AM，最後的 ReActEvent 是 2AM 那就是保留
+  1AM 之後的)，如果有手動 COMPACT 那就全部還原。這樣做得到嗎?
+
+
+• 做得到。我理解為：沒有手動 compact 的 session，重啟時以「最後一筆已保存事件的時間」往前一小時保留對話內容；有手動 compact 的 session，則完整還原 compact 後
+  的 graph 加上後續增量。participant、SID、Owns／Main 關係與配號水位都要保留。
+
+  這會取代我剛才單純「定期 checkpoint＋增量」的恢復規則。我先確認舊資料是否有事件時間；若沒有，不能把舊訊息一律補成現在時間來假裝能正確篩選。
+
+
+› 反正這樣不影響 NATIVE 的 context window，另外可能要補一下 /native_compact 與 /native/compact(N)
+
+
+• 對，裁剪 Fodex graph 不會改動 native Codex session 的 context window。
+
+  /native_compact 我會定義為要求 Codex 壓縮 main native 的上下文；/native/compact(N) 則針對指定 participant，若 N 是 wrapper 就沿 Main 關係找到它的 native。這
+  與 /wrapper_compact 的摘要、換新 main、handover 是不同操作。我會先確認 app-server 與 exec 各自支援的原生 compact 介面，不會用一般 prompt 假裝執行 compact。
+
+• Ran Read-CodexStdout { bash -lc 'head -105 /c/Users/Administrator/.codex/skills/.system/openai-docs/SKILL.md'; rg -n
+  │ 'Control|Cancel|StopMain|Settings|NativeCommand|NativeControl|thread/|compact' Fodex.Supervisor/NativeAgentV300.fsx
+  │ Fodex.Supervisor/NativeAppServerV300.fsx Fodex.Supervisor/WrapperCommandFodexFunV300.fsx | Select-Object -First 95; rg -n 'ALTER
+  │ … +2 lines
+  └ ---
+    name: "openai-docs"
+    description: "Use for Codex models/pricing, scheduled tasks, skills, settings, setup, troubleshooting, customization, automations, and self-knowledge—
+    +91 lines (ctrl+t to view transcript)
+
+
+› ps. 你 review 一下所有有 N 的 command 如果適用那請加入 ALL 支援
+
+• 收到。我會把 N 分成「participant 選擇」和「數量／其他序號」來檢查：/cancel、/model、/effort、/fast、/memory、/show、native compact，以及 /stop sub(...)，適
+  用的都補 ALL。
+
+  /subagent(N) 的 N 是建立數量，不加 ALL。批次操作也會按實際 native 去重，避免 wrapper 與其 main 各執行一次，並逐項回報成功或失敗。
+
+? 目前 SQL 事件沒有保存寫入時間，無法精確判斷既有紀錄的「最後一筆往前一小時」。我建議新增事件開始記錄 UTC 時間；舊的無時間資料先保留並提示，手動 /
+  wrapper_compact 後就依 compact checkpoint 完整恢復。這樣處理既有資料可以嗎？
+
+  • 可以，舊資料保留並提示
+  • 先別改，討論舊資料時間來源
+
+• 原生 compact 的部分我會使用 OpenAI Docs skill 核對官方介面，並以本機安裝版本的 schema 確認能否呼叫；這樣才能區分真正壓縮 Codex context 與 Fodex 自己的 graph
+  compact。
+
+↪ Re: 目前 SQL 事件沒有保存寫入時間，無法精確判斷既有紀錄的「最後一筆往前一小時」。我建議新增事件開始記錄 UTC 時間；舊的無時間資料先保留並提示，手動 /
+  wrapper_compact 後就依 compact checkpoint 完整恢復。這樣處理既有資料可以嗎？
+
+  舊資料全清吧
+
+
+
+
+
+
+? 本機 Codex 0.166.0 的 exec 沒有獨立 compact 指令。exec participant 的 /native_compact 我建議先中斷執行中的 exec，再由 Proc Supervisor 暫時啟動 app-server、
+  resume 同一 Codex SID、呼叫原生 compact，完成後關閉；之後仍用 exec＋resume。是否採用這個方式？
+
+  • 採用，exec 也支援原生 compact
+  • exec 暫不支援，只做 app-server
+
+
+↪ Re: 本機 Codex 0.166.0 的 exec 沒有獨立 compact 指令。exec participant 的 /native_compact 我建議先中斷執行中的 exec，再由 Proc Supervisor 暫時啟動 app-
+  server、resume 同一 Codex SID、呼叫原生 compact，完成後關閉；之後仍用 exec＋resume。是否採用這個方式？
+
+  採用，exec 也支援原生 compact
+
+
+Working (28m 25s • esc to interrupt) · 1 background terminal running · /ps to view · /stop to close
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+• 已完成。exec 的原生 compact 流程是：中斷 exec → 暫開 app-server → resume 同一 CSID → compact → 關閉暫時程序；後續仍走 exec＋resume。
+
+  可用：
+
+  • /native_compact
+  • /native/compact(N)
+  • /native_compact(ALL)
+
+  也完成 graph checkpoint、最後一小時恢復策略、手動 compact 後完整恢復，以及適用指令的 ALL 支援。四庫舊資料已依授權清除。
+
+  驗證通過：Debug／Release build、Expecto 213/213、獨立 FSI 9/9、Test Explorer 31/31。真實兩種模式都維持 CSID、可繼續生成，退出後無測試程序殘留。
+
+  操作與證據見 README.M018.md (Fodex.Supervisor/README.M018.md:80)。
+
+  Worked for 1h 15m 15s • 6:19 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex  
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 1. 沒有卡住，這次有成功起動
+  2. 如果我希望 subagent 都是 native 呢? 怎麼起
+
+
+• 收到，既然這次已成功啟動，就不再追查啟動卡住。我先確認目前啟動參數與 /subagent(N) 的接法，給你直接建立 native subagent 的方式；先前失敗程序的清理仍只針對能
+  確認的殘留。
+
+• Ran Read-CodexStdout { rg -n 'Subagent_Mode|subagent-mode|Raw|raw|wrappers' Fodex.Supervisor/WrapperIAgentDemo.M018.fsx
+  │ Fodex.Supervisor/M017CompositionV300.fsx Fodex.Supervisor/README.M017.md Fodex.Supervisor/SubagentCoordinatorV300.fsx | Select-Object -First 28; bash
+  │ -lc "cat Fodex.Supervisor/Start-M018.ps1; sed -n '95,125p' C:/Users/Administrator/.codex/memories/MEMORY.md"; Get-CimInstance Win32_Process -Filter
+  │ … +4 lines
+  └ Fodex.Supervisor/README.M017.md:55:- `--subagent-mode wrappers` 或 `raw`：選 `/subagent(N)` 建立的工作者結構與 main 的派工介面。第一次保留預設
+    `wrappers`。
+    Fodex.Supervisor/README.M017.md:59:| `wrappers` | N 個 sub wrapper，每個底下有自己的 Codex session，使用 exec＋resume | 呼叫 MCP `hub_order`／
+    +83 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc "sed -n '58,115p' Fodex.Supervisor/SubagentCoordinatorV300.fsx; sed -n '126,145p'
+  │ Fodex.Supervisor/WrapperIAgentDemo.M018.fsx"; $procs=@(Get-CimInstance Win32_Process); $native=@($procs | Where-Object { $_.Name -eq 'codex.exe' -and
+  │ $_.CommandLine -match 'app-server|exec' }); foreach($p in $native){$parent=$procs | Where-Object ProcessId -eq $p.ParentProcessId;
+  │ … +2 lines
+  └ ParserError:
+    Line |
+       2 |  �K dLine.Substring(0,[Math]::Min(260,$p.CommandLine.Length))}} | Convert �K
+    +2 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc "sed -n '58,115p' Fodex.Supervisor/SubagentCoordinatorV300.fsx; sed -n '126,145p'
+  │ Fodex.Supervisor/WrapperIAgentDemo.M018.fsx"; $procs=@(Get-CimInstance Win32_Process); $native=@($procs | Where-Object { $_.Name -eq 'codex.exe' -and
+  │ $_.CommandLine -match 'app-server|exec' }); $rows=@(foreach($p in $native){$parent=$procs | Where-Object ProcessId -eq $p.ParentProcessId;
+  │ … +3 lines
+  └                 | WrappedSubagent agent ->
+                        // wrapper order 也有真實因果 edge；不虛構 streamId、不借用 HumanInit。
+                        let edge=ReActEndpoint.Participant root,ReActEndpoint.Participant participant,AgentWork(0L,0L,Message instruction)
+    +77 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc "sed -n '24,45p' Fodex.Supervisor/SubagentCoordinatorV300.fsx"; rg -n
+  │ 'targetRaw|createRaw|RawExec|codexArguments|execArguments' Fodex.Supervisor/FodexFunRegistrationV300.fsx Fodex.Supervisor/NativeAgentV300.fsx |
+  │ Select-Object -First 12; $all=@(Get-CimInstance Win32_Process); $orphans=@($all | Where-Object { $_.Name -in
+  │ … +4 lines
+  └     | SubagentContinuation of (unit -> unit)
+
+    /// 生命週期由這個 wrapper-owned actor 管理；HTTP/MCP 無法建立/移除 participant。
+    +27 lines (ctrl+t to view transcript)
+
+• 使用 --subagent-mode raw，再下 /subagent(N)。
+
+  先在目前 M018 輸入 /exit，然後啟動：
+
+  .\Start-M018.ps1 --subagent-mode raw
+
+  進入後：
+
+  /subagent(3)
+
+  這會建立 3 個由 Proc Supervisor 管理的 native exec＋resume actor，各有自己的 Codex SID，沒有 sub wrapper 那一層。根 main 仍可使用 app-server。
+
+  若加上原本的 --session c96e34e1-545c-4a71-a961-52eb6bcc0b05，可沿用 main；但既有 sub wrapper 節點仍留在 graph，不會自動轉型。上述不帶 --session 的方式會建立
+  新的 wrapper。
+
+  程序盤點目前只找到你這組正常運作的 M018，沒有可確認的舊 M018／Codex 殘留可清理。
+
+  Worked for 2m 11s • 7:19 AM
+
+
+
+
+
+
+
+
+
+
+› 1. 有 N 的請加入 i..j 支援 以及 i,j,k....
+  2. 既然有 /stop 那就應該要有 /start(N) /start(i..j) /start(i,j,k...) 以及 remove (從 participant 清單中移除)
+  3. 加入支援 /subagent(N, raw) /subagent(N, wrapper)好了，--subagent-mode raw 僅設定預設， for /subagent(N)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+• 完成，Debug DLL 已更新，授權的舊 M018 程序樹已停止。
+
+  /subagent(3, wrapper)
+  /subagent(2, raw)
+
+  會保留 3 個 wrapper，再新增 2 個 raw，共 5 個 subagent。
+
+  • participant 指令支援 N、i..j、i,j,k、ALL。
+  • /stop：停止資源，清單保留 Stopped。
+  • /start(...)：沿用原 N／SID 恢復。
+  • /remove(...)：移出清單與派工名單，保留歷史，編號不重用。
+
+  驗證：Expecto 221/221、獨立 FSI 65/65、VSTest 79/79；真實混合模式兩輪 ECHO 也確認恢復後 SID 相同。
+
+  可重新執行原本的 Start-M018.ps1。完整範例見 README.M018.md (/F:/fodex/Fodex.Supervisor/README.M018.md)。
+
+  Worked for 1h 12m 32s • 8:34 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex
+
+
+
+
+
+
+
+
+› 現在確定卡住了，請 troubleshooting
+
+
+• 我先只做唯讀排查，確認卡住的是啟動、指令處理還是 participant 等待；先不改碼、不停止或重啟程序。
+
+• Ran Read-CodexStdout { rg -n 'troubleshooting|read-only|Supervisor source|Compile|M018' C:/Users/Administrator/.codex/memories/MEMORY.md | Select-Object
+  │ -First 12; rg --files -g AGENTS.md -g GEMINI.md -g '*runbook*' -g README.md | Select-Object -First 12; git -c safe.directory=F:/fodex status --short |
+  │ Select-Object -First 12; Get-CimInstance Win32_Process -Filter "name='dotnet.exe' OR name='codex.exe'" | Where-Object { $_.CommandLine -like '*M018*'
+  │ … +4 lines
+  └ 28:scope: Basder identity-safe read-only handover, LINE routing/history, echo heartbeat diagnosis, actor terminology, and newagent document routing at G:
+    \PulseTrade.fs.
+    41:## Task 2: Echo provider heartbeat troubleshooting
+    +38 lines (ctrl+t to view transcript)
+
+? 目前 M018 畫面最後停在哪裡？若有最後一行指令或輸出，也請一併貼上。
+
+  • 執行 Start-M018.ps1 後，還沒出現 M018>
+  • 已出現 M018>，送出指令後沒有回覆
+  • 有回覆或生成，但一直沒有 AgentEnd
+
+
+› PS F:\fodex\Fodex.Supervisor> .\Start-M018.ps1 --session c96e34e1-545c-4a71-a961-52eb6bcc0b05
+
+  不動
+
+
+• 已確認是啟動階段：目前兩個 M018 程序存在，但尚未開啟 Akka／hub port，也沒有新的 Codex 程序。我會先查 FSI 載入與執行緒等待的位置。
+
+• Ran Read-CodexStdout { Get-Process -Id 54912,54348 | Select-Object
+  │ Id,StartTime,CPU,Responding,@{n='Threads';e={$_.Threads.Count}},@{n='MB';e={[int]($_.WorkingSet64/1MB)}} | Format-Table -AutoSize; Get-CimInstance
+  │ Win32_Process -Filter 'ProcessId=54912 OR ProcessId=54348' | Select-Object ProcessId,ExecutablePath,CommandLine | Format-List; Get-Command
+  │ … +5 lines
+  └
+       Id StartTime             CPU Responding Threads  MB
+       -- ---------             --- ---------- -------  --
+    +144 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { dotnet-dump collect --help | Select-Object -First 32; (Get-Process -Id 54348).Threads | ForEach-Object
+  │ { $waitReason=if($_.ThreadState -eq 'Wait'){$_.WaitReason}else{'-'};
+  │ [pscustomobject]@{Thread=$_.Id;State=$_.ThreadState;Wait=$waitReason;CPU=$_.TotalProcessorTime.TotalSeconds} } | Sort-Object CPU -Descending |
+  │ … +2 lines
+  └ Description:
+      Capture dumps from a process
+
+    +34 lines (ctrl+t to view transcript)
+
+
+› FSI 載入是什麼東西? 你不會用了 fsi.dll 或 fsi.exe?!
+
+
+• 有。現在的 Start-M018.ps1 (/F:/fodex/Fodex.Supervisor/Start-M018.ps1:17) 使用 dotnet fsi --debug- --exec WrapperIAgentDemo.M018.fsx 執行腳本；dotnet fsi 底
+  層會啟動 SDK 內的 FSharp/fsi.dll。
+
+  這是 M018 console 腳本本身的執行器。wrapper 的實作來自 Fodex.Supervisor.dll，participant 的工作仍由 Proc Supervisor 啟動 Codex。
+
+  我說的「FSI 載入」包含腳本的 #load、#r 與初始化。目前只能確認還沒進到 M018 ready，實際卡點尚待堆疊確認。

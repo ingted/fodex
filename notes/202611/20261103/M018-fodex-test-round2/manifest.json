@@ -1,0 +1,124 @@
+{
+  "FrozenAt": "2026-11-03T11:26:23.0852815+08:00",
+  "Evidence": [
+    {
+      "Sha256": "04061B3BA4FDC7A9104DF0969C770D75D9570901804C4802372418176891D6AE",
+      "Name": "canonical.first-error.stderr.log",
+      "Encoding": "UTF-8",
+      "Bytes": 1354
+    },
+    {
+      "Sha256": "9813B958278EAB796C5EF2EE63A0123596A81A2F6F56188FCDA878D953E069BB",
+      "Name": "canonical.stderr.log",
+      "Encoding": "UTF-8",
+      "Bytes": 463
+    },
+    {
+      "Sha256": "E4E0BF20310E49448536A53BA8534564C284FA3BE827B5B85E7F6716987A6035",
+      "Name": "canonical.stdout.raw",
+      "Encoding": "cp950",
+      "Bytes": 3728
+    },
+    {
+      "Sha256": "F6EACAD9614B6327F4F9C2C51C454D71DD42DB6EF66369BD140C0D386B3EBFA7",
+      "Name": "cleanup.json",
+      "Encoding": "UTF-8",
+      "Bytes": 674
+    },
+    {
+      "Sha256": "9A8C3342385127E748AC8B3DE0827A8E0D965B183E60850B57C5388C2BBEFFEB",
+      "Name": "host-controller.compile.stderr.log",
+      "Encoding": "UTF-8",
+      "Bytes": 1567
+    },
+    {
+      "Sha256": "89559CDBC09A9E0C0FE02A10F4187EC87F1B16240FD3B49CD1969EB3D03DE47D",
+      "Name": "host-controller.stderr.log",
+      "Encoding": "UTF-8",
+      "Bytes": 484
+    },
+    {
+      "Sha256": "66C9AEDF324E80E2E6C8C1FFEC636EDCB76BEA8A6C1A77162AEB67FA4138A117",
+      "Name": "host-controller.stdout.log",
+      "Encoding": "UTF-8",
+      "Bytes": 6987
+    },
+    {
+      "Sha256": "0D38F1AAEA36395060E512730C3EB91E76FCABC064A09ED095AA80A7129B8ABD",
+      "Name": "native.stderr.log",
+      "Encoding": "UTF-8",
+      "Bytes": 817
+    },
+    {
+      "Sha256": "A524CB70EBA4F4AE70B0A1148261986F2401886013F2DEE3EC5F1677155D8D65",
+      "Name": "native.stdout.log",
+      "Encoding": "UTF-8",
+      "Bytes": 10434
+    },
+    {
+      "Sha256": "6A6B7F638247A50349CCCA0EB5FD4E81FB3F83E5CD17AD9D0FEC68785EC965E8",
+      "Name": "owned-listeners.json",
+      "Encoding": "UTF-8",
+      "Bytes": 591
+    },
+    {
+      "Sha256": "1FA201A8B29AFAFC94BAAC9A61D3EB4EAE1DD9DA121B3277F92DC522225B1A7F",
+      "Name": "owned-processes.json",
+      "Encoding": "UTF-8",
+      "Bytes": 1509
+    },
+    {
+      "Sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855",
+      "Name": "sensitive.stderr.log",
+      "Encoding": "UTF-8",
+      "Bytes": 0
+    },
+    {
+      "Sha256": "18C1B92EF31D60B890F905523431F68AB7C1F6A9037EDF0E030E53980A818828",
+      "Name": "sensitive.stdout.log",
+      "Encoding": "UTF-8",
+      "Bytes": 153
+    },
+    {
+      "Sha256": "EFE397B4D181EAE2D51C584D6DFA7C6215948CB04E1B7A631B564E741180664D",
+      "Name": "summary.json",
+      "Encoding": "UTF-8",
+      "Bytes": 1976
+    },
+    {
+      "Sha256": "98E98A14A3A0525388C8585147FBC006A35B28C5FF2D62B9C5D327706CE5C876",
+      "Name": "target.stderr.log",
+      "Encoding": "UTF-8",
+      "Bytes": 440
+    },
+    {
+      "Sha256": "2AD963CBA51F0C01A1F4B428B4DD93F6C7915106787084A3FA0944E01AC01AD7",
+      "Name": "target.stdout.log",
+      "Encoding": "UTF-8",
+      "Bytes": 2950
+    }
+  ],
+  "Notes": "No native io trace copied; final gate outputs remain outside frozen notes dir",
+  "Sources": [
+    {
+      "Path": "F:\\fodex\\Fodex.Supervisor.Tests\\M018LineFodexE2E.fsx",
+      "Sha256": "A3090F7ED7D561CF9D50FE9654F2A3ECC8E1CD39D642CDE091ABBC52784E4302"
+    },
+    {
+      "Path": "F:\\fodex\\Fodex.Supervisor.Tests\\M018LineFodexHostE2E.fsx",
+      "Sha256": "0F702EF5182C30AF0792ED8C3F3E0F91627CDDCFD74B3741AF23046C0BEE8FB1"
+    },
+    {
+      "Path": "G:\\PulseTrade.fs\\misc\\line_bot_rn_nuget.multimedia.multisession.fodex.fsx",
+      "Sha256": "FE0E1EEAFEC190E2447A1AD9EEB56A72922EAD7E1022BB273960D810BC404338"
+    },
+    {
+      "Path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_references.fsx",
+      "Sha256": "55E4C7F6BA92717452C3D363038EF0752655D81C027391E5B06AB57718BC80D2"
+    },
+    {
+      "Path": "F:\\fodex\\Fodex.Supervisor\\bin\\Debug\\net10.0\\win-x64\\Fodex.Supervisor.dll",
+      "Sha256": "7F1593E54645B346E88C6AB735C64238A3C86125F1DB8DBD14EB0737BB907054"
+    }
+  ]
+}

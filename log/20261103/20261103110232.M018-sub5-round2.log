@@ -1,0 +1,46 @@
+# M018 sub-5 SECOND ROUND acceptance
+背景：第一輪結果已收齊；正式載入衝突由 sub-4 修，第二輪由測試者驗收。
+目標：等待 SECOND-ROUND READY 後原始測試真 native；正常 run/host 隔離資源與後段 synthetic E2E。
+計畫步驟：查現有測試/規範/dev handoff；準備隔離 host catalog/account/port/storage；READY 後原始測試；必要 host/SDK 測試；health/資源清理/manifest/canonical verifier。
+執行命令/參數：後續 Operations 逐筆追加；只用 sequential Read-CodexStdout。
+結果：尚待執行，不沿用第一輪 PASS。
+根因判讀：第一輪 Argu/MCP 同 AppDomain assembly 衝突，正式修復由 sub-4 負責。
+下一步：檢查 shared host 的隔離設定與 public SDK。
+關聯文件/工單/PR：notes/202611/20261103/M018-fodex-dev-handoff.md；M018-fodex-test-handoff.md；00014.M018.evaluation.txt。
+prompt/上下文摘要：不新增 preload workaround，不擴改 PTC，不送真 LINE，不重試政策已拒 scratch delete，不 commit/push；只保留本輪必要 stdout/stderr/summary/manifest。
+
+## Operations
+2026-11-03T11:02:32.6178911+08:00 開始。上一輪依使用者限制只記 notes，導致 canonical latest_log_missing/latest_log_operations；從現在新建真實時間 canonical log，保留第一輪 FAIL，不補造歷史時間。
+
+2026-11-03T11:09:45.9695493+08:00 準備完成正常 host Expecto fixture：Fodex.Supervisor.Tests/M018LineFodexHostE2E.fsx。使用獨立 RN/GW public SDK cluster、隨機 ports、PTCLineTest_<guid> DB、獨立 SQL login 並 assert 無 PulseTradeLogging access、synthetic encrypted LINE credential；實際 target child 不使用 LibraryMode/verify-only。原始測試只改新 F scratch root 並 ptest 舊普通 /next 案例，不變更 native path、不新增 preload。等待 dev SECOND-ROUND READY 後再執行。
+
+2026-11-03T11:12:31.6268504+08:00 已讀 SECOND-ROUND READY，原始測試直接執行，runner=34372。exact command: dotnet fsi --parallelcompilation- --debug- --exec F:\fodex\Fodex.Supervisor.Tests\M018LineFodexE2E.fsx。stdout/stderr: notes/202611/20261103/M018-fodex-test-round2/native.stdout.log、native.stderr.log。禁止 CompatibleDeps。
+
+2026-11-03T11:12:31.6407528+08:00 normal host fixture 啟動，controller runner=7800。exact command: dotnet fsi --parallelcompilation- --debug- --exec F:\fodex\Fodex.Supervisor.Tests\M018LineFodexHostE2E.fsx。stdout/stderr: notes/202611/20261103/M018-fodex-test-round2/host-controller.stdout.log、host-controller.stderr.log。
+
+2026-11-03T11:13:19.9969264+08:00 host fixture compile FS0041：waitFor 的 TimeSpan.FromSeconds 在 .NET11 多 overload；只補 float annotation，尚未建 DB/process。原失敗 stderr 保留 host-controller.compile.stderr.log；重跑 controller 32364。
+
+2026-11-03T11:14:37.8657071+08:00 原始 native E2E finished：executed2/passed2/failed0/errored0/skipped1，runner-exit0；無 CompatibleDeps，正式 target 依賴衝突解除。host fixture 第二次 compile do! Task.WhenAll<Task<unit>> returns unit[] 型別問題，只改 let! _，重跑controller 65328。尚無 host fixture DB/process，編譯失敗不列 executed。
+
+2026-11-03T11:17:57.9379602+08:00 normal host test executed1/passed1/failed0/skipped0，typed SUB5_NORMAL_HOST_NATIVE_OK；host child62776/FSI61072/native19064，private RN12125/GW12126/bootstrap12129/provider12130，SDK registry與RN remoting通過。host subtree Kill(true) 後驗當前 PID+creation time owned0，DB與testlogin exact查詢皆0；SDK cluster退出時有預期 unreachable/cluster-exiting timeout warnings，實際進程/DB已結束。原先 service compare 程式 shorthand無空格誤取before=null，已用明確Name比較修正；before/after PIDs53384/16660/2408相同、health ok。
+
+2026-11-03T11:18:35.0529781+08:00 收尾 canonical verifier：dotnet fsi --debug- --exec G:\PulseTrade.fs\check.fsx -- --repo F:/fodex --log-dir F:/fodex/log/20261103 --notes-dir F:/fodex/notes/202611/20261103 --watch M018-native=F:/fodex/Fodex.Supervisor.Tests/M018LineFodexE2E.fsx --watch M018-host=F:/fodex/Fodex.Supervisor.Tests/M018LineFodexHostE2E.fsx --watch M018-handoff=F:/fodex/notes/202611/20261103/M018-fodex-test-handoff.md。權威prework/Operations都在本log，no commit。
+
+2026-11-03T11:19:53.4888066+08:00 canonical 第一次在 snapshotDirectory 遇 self-output sharing IOException（stdout/stderr 放在自己 watch 的 notes 子目錄，非 log 格式 FAIL）。保留 canonical.first-error.stderr.log；修正執行輸出位置到本輪 F temp，完成後僅複製這兩份結果，logdir/notesdir 本身保持正確。
+
+2026-11-03T11:22:17.8303013+08:00 收尾欄位補充（當下補正，不偽造 prework）：
+假設：以本輪 target/helper hash 為驗收版本，synthetic入口/出口依 handoff 明確界定。
+範圍：兩個 F repo 測試、F canonical log、append test handoff/必要結果；G source/log不由測試者修改；原始 native2pass、正常host1pass、/next1skip。
+風險：真 LINE delivery/公開HTTPS media/GW continuation未驗收；正常host stop須終止owned process tree，退出warning已記且readback0。
+結果：executed3/passed3/failed0/errored0/skipped1；DB2/login1全清、既有health/PIDs不變、無commit；第二輪細節/commands/manifest見 test handoff SECOND ROUND FINAL。
+
+## Plan Correction
+時間：當下收尾修正，依本輪授權，不改寫先前 prework。
+假設：以 SECOND-ROUND READY 的 target/helper hash 與三個已實測案例為 source of truth。
+範圍：F repo 兩個測試、此 canonical log、append handoff、已凍結 round2 business evidence；其他 owner 的 SA/SD/dev handoff 不納入本輪 readonly notes gate。
+風險：GW /next、真 LINE delivery、公開媒體 HTTPS 及 vision 均在明定未驗收邊界；原始 scratch 不刪。
+計畫步驟：保留前次 readonly notes FAIL，凍結本輪結果、產 manifest，讓 canonical --notes-dir 覆蓋這些結果；可追加的 handoff 以 --watch 檢查，verifier 本次 stdout/stderr 放在 log dir 的 .raw 檔，避免 snapshot 自己的活寫 output。
+結果：業務 executed3/passed3/failed0/skipped1。前次 PASS26/WARN2/FAIL0 後 append 使整個日期 notes readonly gate出現5 FAIL（含其他owner SA/SD與授權append handoff/覆寫當輪current summary）；失敗檔案保留。此為 scope 修正，未改 verifier、未刪 state、未撤歷史 FAIL。
+2026-11-03T11:27:36.4662857+08:00 Correction：checker 同時 snapshot logdir 與 notesdir，所以執行中 stdout/stderr 必須放兩者以外的 F temp；上一個改成 log旁.raw仍分享衝突，失敗 stderr 保留。final notesdir 的16份business結果與manifest已凍結不再修改，handoff以watch檢查。最後僅把已關閉的gate輸出保存log旁。
+
+- 2026-11-03T11:28:44.4742180+08:00 SECOND ROUND FINAL 最後 gate：canonical exit0 / PASS27 WARN1 FAIL0，唯一 WARN=保留既有 git_dirty；notesdir=已凍結本輪 round2 evidence，appendable handoff另以watch檢查。final stdout/stderr 與 final-gates.json 位於 F:\fodex\log\20261103\20261103110232.M018-round2-final*。敏感掃描 files20/High0/Medium0，strict encoding gates passed；16份凍結evidence hash未變，test runner readback0，既有三服務同PID/Running、RN/GW health ok。業務驗收 executed3/passed3/failed0/errored0/skipped1（GW /next），此即本輪最終結果；其他真LINE/公開媒體/vision未驗收邊界維持上述。

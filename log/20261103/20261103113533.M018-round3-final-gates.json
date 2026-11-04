@@ -1,0 +1,56 @@
+{
+  "GOwnedSourceLogTestChanges": [],
+  "RemainingProcesses": 0,
+  "NativeWindowRemaining": 0,
+  "Encoding": "strict UTF-8 no BOM / no NUL / no U+FFFD for sources, canonical log, handoff; result file encodings in manifest",
+  "RemainingDatabases": 0,
+  "TimingSourceCorrection": "HostE2E.fsx:192 listener-ready; :202 Ask; :208 reply capture; no request timestamp",
+  "Results": {
+    "Errored": 0,
+    "Passed": 3,
+    "Failed": 0,
+    "Skipped": 1,
+    "Executed": 3
+  },
+  "RequestToReplyElapsedSeconds": null,
+  "RemainingLogins": 0,
+  "Manifest": "F:\\fodex\\notes\\202611\\20261103\\M018-fodex-test-round3\\manifest.json",
+  "Canonical": {
+    "Fail": 0,
+    "Warning": "existing git_dirty",
+    "Exit": 0,
+    "Pass": 27,
+    "Warn": 1
+  },
+  "At": "2026-11-03T11:50:02.9044496+08:00",
+  "FrozenEvidenceHashMismatches": 0,
+  "SourceHashes": [
+    {
+      "Sha256": "6F4BA3E0228CE06158A530FBC2036D013613E5D1B22D748CA261B2466C25DF26",
+      "Path": "G:\\PulseTrade.fs\\misc\\line_bot_rn_nuget.multimedia.multisession.fodex.fsx",
+      "Encoding": "UTF-8 no BOM"
+    },
+    {
+      "Sha256": "7CD512627D9E0F77F2B603DDFD5E83BDC3268CDC5723FF93F9AF6E5BF51931BB",
+      "Path": "G:\\PulseTrade.fs\\misc\\line_provider_fodex_references.fsx",
+      "Encoding": "UTF-8 no BOM"
+    },
+    {
+      "Sha256": "A3090F7ED7D561CF9D50FE9654F2A3ECC8E1CD39D642CDE091ABBC52784E4302",
+      "Path": "F:\\fodex\\Fodex.Supervisor.Tests\\M018LineFodexE2E.fsx",
+      "Encoding": "UTF-8 no BOM"
+    },
+    {
+      "Sha256": "0F702EF5182C30AF0792ED8C3F3E0F91627CDDCFD74B3741AF23046C0BEE8FB1",
+      "Path": "F:\\fodex\\Fodex.Supervisor.Tests\\M018LineFodexHostE2E.fsx",
+      "Encoding": "UTF-8 no BOM"
+    }
+  ],
+  "FormalDeadlineProved": false,
+  "Sensitive": {
+    "High": 0,
+    "Exit": 0,
+    "Files": 14,
+    "Medium": 0
+  }
+}

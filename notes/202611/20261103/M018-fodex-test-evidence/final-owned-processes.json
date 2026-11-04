@@ -1,0 +1,79 @@
+[
+  {
+    "ProcessId": 42520,
+    "ParentProcessId": 61128,
+    "Name": "dotnet.exe",
+    "CreationDate": "2026-11-03T10:04:04.770056+08:00",
+    "ExecutablePath": "C:\\Program Files\\dotnet\\dotnet.exe"
+  },
+  {
+    "ProcessId": 53972,
+    "ParentProcessId": 42520,
+    "Name": "conhost.exe",
+    "CreationDate": "2026-11-03T10:04:04.773378+08:00",
+    "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe"
+  },
+  {
+    "ProcessId": 60708,
+    "ParentProcessId": 42520,
+    "Name": "dotnet.exe",
+    "CreationDate": "2026-11-03T10:04:05.26558+08:00",
+    "ExecutablePath": "C:\\Program Files\\dotnet\\dotnet.exe"
+  },
+  {
+    "ProcessId": 25740,
+    "ParentProcessId": 60708,
+    "Name": "codex.exe",
+    "CreationDate": "2026-11-03T10:04:28.148434+08:00",
+    "ExecutablePath": "C:\\Users\\Administrator\\AppData\\Roaming\\npm\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe"
+  },
+  {
+    "ProcessId": 7164,
+    "ParentProcessId": 25740,
+    "Name": "conhost.exe",
+    "CreationDate": "2026-11-03T10:04:28.151073+08:00",
+    "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe"
+  },
+  {
+    "ProcessId": 18452,
+    "ParentProcessId": 25740,
+    "Name": "node_repl.exe",
+    "CreationDate": "2026-11-03T10:04:29.013194+08:00",
+    "ExecutablePath": "E:\\OpenAI.Codex_26.803.5235.0_x64__2p2nqsd0c76g0\\app\\resources\\cua_node\\bin\\node_repl.exe"
+  },
+  {
+    "ProcessId": 27992,
+    "ParentProcessId": 18452,
+    "Name": "conhost.exe",
+    "CreationDate": "2026-11-03T10:04:29.022372+08:00",
+    "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe"
+  },
+  {
+    "ProcessId": 50508,
+    "ParentProcessId": 60708,
+    "Name": "codex.exe",
+    "CreationDate": "2026-11-03T10:04:35.838142+08:00",
+    "ExecutablePath": "C:\\Users\\Administrator\\AppData\\Roaming\\npm\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe"
+  },
+  {
+    "ProcessId": 62820,
+    "ParentProcessId": 50508,
+    "Name": "conhost.exe",
+    "CreationDate": "2026-11-03T10:04:35.840624+08:00",
+    "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe"
+  },
+  {
+    "ProcessId": 60916,
+    "ParentProcessId": 50508,
+    "Name": "node_repl.exe",
+    "CreationDate": "2026-11-03T10:04:36.645855+08:00",
+    "ExecutablePath": "E:\\OpenAI.Codex_26.803.5235.0_x64__2p2nqsd0c76g0\\app\\resources\\cua_node\\bin\\node_repl.exe"
+  },
+  {
+    "ProcessId": 9600,
+    "ParentProcessId": 60916,
+    "Name": "conhost.exe",
+    "CreationDate": "2026-11-03T10:04:36.655851+08:00",
+    "ExecutablePath": "C:\\WINDOWS\\system32\\conhost.exe"
+  }
+]

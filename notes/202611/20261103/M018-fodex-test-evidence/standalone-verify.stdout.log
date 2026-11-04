@@ -1,0 +1,6 @@
+Received LINE text event.
+Received LINE text event.
+line_provider_almighty.fixture_tests=passed
+echo_line_bot_rn.nuget_dependency_check=passed
+echo_line_bot_rn.non_host_bin_assembly_count=0
+echo_line_bot_rn.verify=passed

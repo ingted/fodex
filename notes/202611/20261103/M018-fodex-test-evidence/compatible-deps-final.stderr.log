@@ -1,0 +1,29 @@
+
+
+warning FS0075: The command-line option '--parallelcompilation' is for test purposes only
+
+
+
+M018LineFodexE2E.fsx(128,14): warning FS0046: The identifier 'parallel' is reserved for future use by F#
+
+
+
+M018LineFodexE2E.fsx(131,36): warning FS0046: The identifier 'parallel' is reserved for future use by F#
+
+
+
+M018LineFodexE2E.fsx(132,36): warning FS0046: The identifier 'parallel' is reserved for future use by F#
+
+
+
+G:\PulseTrade.fs\misc\line_bot_rn_nuget.multimedia.multisession.almighty.fsx(4159,17): info FS3886: This list expression contains a single tuple element. Did you mean to use ';' instead of ',' to separate list elements?
+
+
+
+G:\PulseTrade.fs\misc\line_bot_rn_nuget.multimedia.multisession.almighty.fsx(4787,61): warning FS0066: This upcast is unnecessary - the types are identical
+
+
+
+M018LineFodexE2E.fsx(156,38): error FS0039: The type 'DynamicBodyChannel' does not define a field, constructor, or member named 'ReadAsync'. Maybe you want one of the following:
+   ReadChunkAsync
+

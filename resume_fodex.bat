@@ -1,1 +1,1 @@
-codex resume -m gpt-5.6-sol --enable memories --yolo 01a162ab-184f-73a0-b42a-ba12821448df
+codex resume -m gpt-6-astra --enable memories --yolo 01a16f6c-722c-7da3-816c-caae933504f8

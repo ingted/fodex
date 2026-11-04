@@ -32,4 +32,11 @@ let main argv =
         RemoteControlFodexFunV300Tests.tests
         NativeOutputFodexFunV300Tests.tests
         SubagentCoordinatorV300Tests.tests
+        FodexFunBindingTests.tests
+        OrderHubFodexFunV301Tests.tests
+        SubagentFodexFunV301Tests.tests
+        FodexFunRegistrationV301Tests.tests
+        SubagentCoordinatorFodexFunV301Tests.tests
+        HubHostingFodexFunV301Tests.tests
+        WrapperCompositionV302Tests.tests
     ] |> runTestsWithCLIArgs [] argv

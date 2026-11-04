@@ -1,0 +1,15 @@
+t: ReActLoopCall`2
+arg: String
+arg: Object
+V2_EFFECTIVE_POLICY config/read+requirements+MCP-status; overrides=37; no secret values recorded
+V2_COMPILE_READY G:\PulseTrade.fs\temp\m019-line-v2-authority-fixture\F-8c9b80e-gitbytes\Fodex.Supervisor\bin\M019.Authority.R2\Debug\net10.0\win-x64\Fodex.Supervisor.dll; version=0.0.1.0; sha256=C4B8E2330D039D10CCF3C5823E3014C64DEAE281F6AF177C3AC4D9B672C75DA7; baseline=Start-M019/WrapperIAgentDemo.M019; controllerHub=18819
+V2_POLICY sandbox=read-only; no hub tools; cap=2; idle=00:05:00; pending=16
+ADAPTER_PROCESS pid=65000 mode=cold G:\PulseTrade.fs\temp\m019-line-v2-authority-fixture\F-8c9b80e-gitbytes\Fodex.Supervisor\bin\M019.Authority.R2\Debug\net10.0\win-x64\Fodex.Supervisor.dll; version=0.0.1.0; sha256=C4B8E2330D039D10CCF3C5823E3014C64DEAE281F6AF177C3AC4D9B672C75DA7; baseline=Start-M019/WrapperIAgentDemo.M019; controllerHub=18819
+ADAPTER_PASS distinct-provider-process
+ADAPTER_PASS cold-same-route-identical-typedreply-no-native
+ADAPTER_PASS cold-same-capability-URLs
+ADAPTER_PASS capability-unexpired-original
+ADAPTER_PASS cold-original-bytes
+ADAPTER_PASS capability-unexpired-preview
+ADAPTER_PASS cold-preview-bytes
+ADAPTER_SUMMARY executed=7 passed=7 failed=0

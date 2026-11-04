@@ -1,0 +1,273 @@
+[
+  {
+    "Path": "Fodex.Supervisor.Demos",
+    "Sha256": "directory; source checkpoint 1178ef4",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\DemoOrderHubV100.fsx",
+    "Sha256": "0FD337718685BA2358739556BA01458B476D40EE265F6FA493D94377A821B358",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\DemoReferencesM010.fsx",
+    "Sha256": "CD9A71C29A50B80EFF6FA37C31ED28DA88629FB6C59ABEEDF6CC1CB73C14FDF8",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\DemoReferencesM012.fsx",
+    "Sha256": "2154C5E01CBBB354079F1C81EEEF455FFB0C62F74E4678A7407B1325F599C9E9",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\DemoReferencesM013.fsx",
+    "Sha256": "9F9859C8058E206BB3E5E53CBD208ADEF0BF27B11308C9744F2CC68A106CE1E2",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\DemoReferencesM014.fsx",
+    "Sha256": "3CBB94E97EBF17687E40A032DC59F9BE920BE9EAF1287177730B9797A90303DB",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\DemoReferencesM016.fsx",
+    "Sha256": "D7B6206A42527FDD71A224A24A68CEA3EF188CD36BEF0816C01D5264AB68689B",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\DemoReferencesR001.fsx",
+    "Sha256": "39E4BE8CDBC25288F9558881CB10EC223A530F0934F9D435BF6198313021B11B",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\README.M010-M011.md",
+    "Sha256": "7D14A6673780A3376F214E2AE4D8C1251B8DBD626346B24EF4E7B951B9FCD25F",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\README.M012.md",
+    "Sha256": "4E6BFE368E105A39AF40BCCCE8683C410D3C827FAE509C6321D1F18914FF0088",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\README.M013-M016.Validation.md",
+    "Sha256": "BF4FE0FC5DECB36F62AA1E3CB9074FDE2626C4EBF0EF517188B9ECB0A8068C09",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\README.M013.md",
+    "Sha256": "0E5F60E18376B13B55B9CFB20E98E8EBF103135CD55EAC95FF2595FA2D65FA13",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\README.M014-M015.md",
+    "Sha256": "8C572CD720245AB594FC5A6E21497E9BD4E8925288FA5BB6059894C392F2BE71",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\README.M016.md",
+    "Sha256": "EF09E7F6AD3F6912CE848E35D44A8A14572B6AD095050964950761E948351CAC",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\ValidateMilestones.R001.fsx",
+    "Sha256": "1DA94A79AA813A4C6E905E4631228DBAC61BF8BEE2E54BB897C1C9AE3AC220CE",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M010.fsx",
+    "Sha256": "366A0ACC917FA8D051A6AC345D2BBDA6D595F35B115CFBDB72A263D6A9E31E1C",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M010.Hub.fsx",
+    "Sha256": "034F96CF78239F36475AE3039BC7DFC1E32AE8DAD3B9A83D2D74456A313042FC",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M010.R001.fsx",
+    "Sha256": "C4CA6630F20420294A2384D9A038A21D226F6C8AF9B4A037B24F052DBBBC1877",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M010.R001.Hub.fsx",
+    "Sha256": "F6808BB52954281565E5D6FC6B20743DC1F0BD1BCA54A3DB9EC61A5A4F851D05",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M011.fsx",
+    "Sha256": "5A3E9700D31CEDBD9AEE8D834EE23959076170C8B115FA46CE743DA3BF6CCFBB",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M011.Hub.fsx",
+    "Sha256": "F84034772DFB53B774A6CAFF72C7F7A74F14F316D37225272EFC7C349ED42339",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M011.HubClient.fsx",
+    "Sha256": "12B51F2DE13E3A1CC0147B3B70437DE7216E08BB95482192FACC04ADB196D163",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M011.R001.fsx",
+    "Sha256": "1F6CA594CBE01500B0C11FBA3EFD23B10DFB2BC3BB9DD3F65D1B9F99CACB7F0B",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M011.R001.Hub.fsx",
+    "Sha256": "05A64A2F73528685EB2DDA6366DA2D4BF55B27028BE5FE659AC0DB05D70456F1",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M012.fsx",
+    "Sha256": "F96C345CC248DB418760C2DA9C5C05016C0C3DE922E8EE90CE5E8E8D310D1BDA",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M012.Hub.fsx",
+    "Sha256": "C7FA26F9DEA5351010034776C656793CF72706B964544E9A25B90B2C6B365D27",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M012.R001.fsx",
+    "Sha256": "67687C9532724D2845375DA647571AEED259BAD8A0367606FCDDFA0F7E82DCCA",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M012.R001.Hub.fsx",
+    "Sha256": "56D21CA93F3FD7C84B535D479F1ACB6F64810DD418B271BC5B88722FF65504D4",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M013.fsx",
+    "Sha256": "06D99B23FD4E2A211D0A00766D07F5233B240B5E87009D24F0C8A7CB84DF53FF",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M013.Hub.fsx",
+    "Sha256": "98948C56581B5D73576E878E0A1C6B4DB648D5424F02BD30D3D81FF855766A14",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M013.R001.fsx",
+    "Sha256": "F99A3EC5D4E0C1F8B637A657F1BFB682B8CE72AF8958DEE5A814F8A57F1F488C",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M013.R001.Hub.fsx",
+    "Sha256": "3812F90FA37048090F81491229446972FCFE99FF788E5E3277315F5CC1CCBF93",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M014.fsx",
+    "Sha256": "F91B57698F58C28AE483E458693EE02CCCC7ECF2DE6E8F07E08BB64231F64A11",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M014.R001.fsx",
+    "Sha256": "D9BCB49387C26B5B1182131C455898A01C649905C1555E36BA1B5E9FEC01A95A",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M015.fsx",
+    "Sha256": "E91893C2E5FE2AD6092D6E1651447FEE323644E94C22B116449F52F9B8AA3D76",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M015.R001.fsx",
+    "Sha256": "D4FAEA1F141DC1BCB179D9F61CC3368B35A8152DB0DE050C4A16E50FD799415E",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M016.fsx",
+    "Sha256": "B53145F7E3083215789385965881AC5CA437F0422137DFD5642C1E3911641F17",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M016.Host.fsx",
+    "Sha256": "23A045D8370B0D20C64AB6D3F5CB0A91D21365D8755CF2B8FF846C8273512C2C",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M016.R001.fsx",
+    "Sha256": "2381CAAE1E302E9276D6FB3B745D10C5664EA3A3CB4D379CB2EA0F3D211876E2",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\WrapperIAgentDemo.M016.R001.Host.fsx",
+    "Sha256": "6AB9C93EC6F35FFC523620F8607CB4C35535E951CEDB1B85A3E62775D0D3C20B",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor.Tests\\DemoOrderHubV100Tests.fsx",
+    "Sha256": "22DF288A57A628C6AC92CBFECEA853EB81A4FE6BDC9F1A63F27CB538D54F6876",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor.Tests\\DemoOrderHubV101Tests.fsx",
+    "Sha256": "0CA2E5F057456DE542C908D4E5C9AD23012ADAAAAEEA52F9A8F3173653E805C4",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor.Tests\\DemoOrderHubV102Tests.fsx",
+    "Sha256": "36F4061F189552C596BDEC06C00E95974DC65E0F35E9AB085BAC6F60FD99924A",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor.Tests\\DemoOrderHubV104Tests.fsx",
+    "Sha256": "B059760F9C9C98390B5F533138F1537F59EA7CEDB13D4512887A4E596F47069D",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor.Tests\\DemoHostingV103Tests.fsx",
+    "Sha256": "A3DE0057AB0F1939F546BE92651029E0EBD15FF2EF9C66559929BC1024F53A9B",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor.Tests\\DemoHostingV104Tests.fsx",
+    "Sha256": "6638BE3C2504805CA794DD64B74315081267D499D09171EDB97D92827BE73BE4",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor.Tests\\DemoHostingOwnerV210Tests.fsx",
+    "Sha256": "6A1259A5F4CA1ED57CEFE28952E431AD6F9E06DD849D076617D88295E2FCE91A",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor.Tests\\DemoHubClientV101Tests.fsx",
+    "Sha256": "0D2E0F1556B0FE82AC00866BC3B13232E68148E316ED3F421AE10FF2626EC8A0",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor.Tests\\DemoParticipantsV102Tests.fsx",
+    "Sha256": "1BEAF43295BE36862B02A47942391BA9B1369EBD1FB2F3E556FDC40615FD7460",
+    "Operation": "move"
+  },
+  {
+    "Path": "Fodex.Supervisor\\SupervisorArgs.fsx",
+    "Sha256": "19A18306F535663B98DCA49F21642C7F652DAF3A9F0C22D37F1DC8D62F359F4D",
+    "Operation": "copy-before-replacement"
+  },
+  {
+    "Path": "Fodex.Supervisor\\ReActTraceV203.fsx",
+    "Sha256": "191A7D83831B2F9FDB0E976FF80203E6D8750049719DC83ECDC8AB718E95BD4B",
+    "Operation": "copy-before-replacement"
+  },
+  {
+    "Path": "Fodex.Supervisor.Tests\\WrapperTurnTimingV100Tests.fsx",
+    "Sha256": "B3914C51F15EF09E450BD587DB58AD1EF6DA23E26BED5691C61CC93E69C2F60B",
+    "Operation": "copy-before-replacement"
+  },
+  {
+    "Path": "Fodex.Supervisor.Tests\\ImplementationTestSupportV201.fsx",
+    "Sha256": "6E3148B661D203ADEB5F279338A9759E79BC070DDB9C0C47FEB08C5BA3F62D95",
+    "Operation": "copy-before-replacement"
+  },
+  {
+    "Path": "LoggerUtil.fsx",
+    "SourcePath": "Fodex.Supervisor.Contract/LoggerUtil.fsx",
+    "Sha256": "A062F95499E57E6C813955BC26B99B6DFCB03AE62AF667D4AEDAABB15E033BDF",
+    "Operation": "copy-before-replacement"
+  }
+]

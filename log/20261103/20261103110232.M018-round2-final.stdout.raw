@@ -1,0 +1,32 @@
+SessionId   : 01a19f17-2365-7692-a665-79ee288a5554
+State file  : /workspace/home/codex\scoped-fafc62923848083a1bcfbbcddabe8b4be83351302ae9a1a1ae170ce91ef5757f.state.json
+Summary     : PASS=27 WARN=1 FAIL=0
+
+[PASS] log_dir_exists - log 目錄存在：F:\fodex\log\20261103
+[PASS] op_log_dir_default - .op_log 檢查目錄使用 --log-dir
+[PASS] latest_log_found - 最新 log：F:\fodex\log\20261103\20261103110232.M018-sub5-round2.log @ 2026-11-03T03:27:36.471Z
+[PASS] latest_log_operations - 單一log含非空Operations；不要求另建op_log
+[PASS] latest_log_name - 最新 log 檔名符合規範
+[PASS] latest_log_has_plan - 最新 log 內含 planned steps/計畫步驟
+[PASS] latest_log_required_fields - 最新 log 已覆蓋最低欄位
+[PASS] M018-handoff_exists - M018-handoff 存在：F:\fodex\notes\202611\20261103\M018-fodex-test-handoff.md
+[PASS] M018-handoff_text_encoding - M018-handoff 文字 encoding 可 strict decode：utf8
+[PASS] M018-host_exists - M018-host 存在：F:\fodex\Fodex.Supervisor.Tests\M018LineFodexHostE2E.fsx
+[PASS] M018-host_text_encoding - M018-host 文字 encoding 可 strict decode：utf8
+[PASS] M018-native_exists - M018-native 存在：F:\fodex\Fodex.Supervisor.Tests\M018LineFodexE2E.fsx
+[PASS] M018-native_text_encoding - M018-native 文字 encoding 可 strict decode：utf8
+[PASS] km_exists - km 存在：G:\PulseTrade.fs\MCP.KM.md
+[PASS] km_text_encoding - km 文字 encoding 可 strict decode：utf8
+[PASS] devlog_exists - devlog 存在：G:\PulseTrade.fs\doc\DevLog.md
+[PASS] devlog_text_encoding - devlog 文字 encoding 可 strict decode：utf8
+[PASS] baseline_created - 第一次檢查，已建立 baseline state
+[PASS] git_repo - Git repo：F:\fodex
+[PASS] git_branch - 目前 branch：master
+[PASS] git_head - 目前 HEAD：ef05a30cb4453a44707fd9443023a668ee5a0e79 2026-11-01T00:35:45+08:00 docs: confirm M017 requirements and snapshot contract before graph metadata
+[WARN] git_dirty - repo 有未提交變更
+[PASS] git_branch_name - 目前 branch 命名可接受
+[PASS] wbs_global_audit - 掃描 0 份 WBS.md，未完成 0 筆；最低：
+[PASS] wbs_progress_status_consistent - 未發現 progress < 100 但狀態為 Done/結案 的 WBS row
+[PASS] doc_traceability_audit - 掃描 markdown=372 stock=2 RFC=0；RFC ids=0 thin=0 missing=0；WBS ids=0 missing=0；Test ids=0 missing=0
+[PASS] doc_traceability_coverage - RFC/WBS/Test 追溯未發現 missing/thin ID
+[PASS] version_bump_baseline - 第一次檢查，repo 自身 version bump 檢查建立 baseline

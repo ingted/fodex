@@ -1,0 +1,58 @@
+[
+  {
+    "Sha256": "7F1593E54645B346E88C6AB735C64238A3C86125F1DB8DBD14EB0737BB907054",
+    "AssemblyVersion": "0.0.1.0",
+    "FileVersion": "0.0.1.0",
+    "Name": "Fodex.Supervisor.dll",
+    "Path": "F:\\fodex\\Fodex.Supervisor\\bin\\Debug\\net10.0\\win-x64\\Fodex.Supervisor.dll",
+    "LastWriteUtc": "2026-11-03T01:14:32.2653568Z"
+  },
+  {
+    "Sha256": "344DC4BDAB955C63E1E22B353F77D7AF6510CAEE1A59969FFFCEA1061B011486",
+    "AssemblyVersion": "0.0.1.0",
+    "FileVersion": "0.0.1.0",
+    "Name": "Fodex.Supervisor.Contracts.dll",
+    "Path": "F:\\fodex\\Fodex.Supervisor\\bin\\Debug\\net10.0\\win-x64\\Fodex.Supervisor.Contracts.dll",
+    "LastWriteUtc": "2026-10-31T16:39:51.9971439Z"
+  },
+  {
+    "Sha256": "1C580F939B4C85D0AC050830BBC04065686ACCD004663C7CCE9CB788814640B4",
+    "AssemblyVersion": "10.2.1.0",
+    "FileVersion": "10.2.1.0",
+    "Name": "Argu.dll",
+    "Path": "F:\\fodex\\Fodex.Supervisor\\bin\\Debug\\net10.0\\win-x64\\Argu.dll",
+    "LastWriteUtc": "2026-10-21T00:04:12.0000000Z"
+  },
+  {
+    "Sha256": "72DA62B15E07EC03BF17019F5E95DC73479DD862A0C21441F900B5226E5C51A0",
+    "AssemblyVersion": "1.572.10.0",
+    "FileVersion": "1.572.10.0",
+    "Name": "Akka.Proc.Supervisor.dll",
+    "Path": "F:\\fodex\\Fodex.Supervisor\\bin\\Debug\\net10.0\\win-x64\\Akka.Proc.Supervisor.dll",
+    "LastWriteUtc": "2026-10-30T07:16:56.0000000Z"
+  },
+  {
+    "Sha256": "80757DD4FDE30EAED2D99849915C5642D2428487059C711373690A3336CAA9B4",
+    "AssemblyVersion": "2.3.0.0",
+    "FileVersion": "2.3.0.0",
+    "Name": "ModelContextProtocol.Core.dll",
+    "Path": "F:\\fodex\\Fodex.Supervisor\\bin\\Debug\\net10.0\\win-x64\\ModelContextProtocol.Core.dll",
+    "LastWriteUtc": "2026-10-20T23:46:18.0000000Z"
+  },
+  {
+    "Sha256": "84EDAB36106CD97533CC635D6B46BC265BEA13B0FA069085D41E76AA0275EAEA",
+    "AssemblyVersion": "10.2.6.0",
+    "FileVersion": "10.2.6.0",
+    "Name": "FAkka.Shared.dll",
+    "Path": "F:\\fodex\\Fodex.Supervisor\\bin\\Debug\\net10.0\\win-x64\\FAkka.Shared.dll",
+    "LastWriteUtc": "2026-10-22T15:45:10.0000000Z"
+  },
+  {
+    "Sha256": "7F8D26C6BEF76C95679E8EE2AC20A84DAE85DC9E3219FA2E44FC6EB871EF325F",
+    "AssemblyVersion": "10.2.2.0",
+    "FileVersion": "10.2.2.0",
+    "Name": "FAkka.FCell2.dll",
+    "Path": "F:\\fodex\\Fodex.Supervisor\\bin\\Debug\\net10.0\\win-x64\\FAkka.FCell2.dll",
+    "LastWriteUtc": "2026-10-21T00:26:18.0000000Z"
+  }
+]

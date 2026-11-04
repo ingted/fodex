@@ -1,0 +1,191 @@
+2026-11-03 10:04:35.1154|Info|Fodex.Line.M018|Supervisor path=F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\win-x64\Fodex.Supervisor.dll; assembly=0.0.1.0; utc=2026-11-03T01:14:32.2653568Z; sha256=7F1593E54645B346E88C6AB735C64238A3C86125F1DB8DBD14EB0737BB907054
+2026-11-03 10:04:35.7573|Info|Fodex.Line.M018|FODEX_GRAPH_RECOVERY checkpoint=0 replayed=1 committed=1 retainedEdges=1 manualCompact=false
+2026-11-03 10:04:35.7600|Info|Fodex.Line.M018|[ReActLoopHandler][max-at-creation] "runtime resolved"
+2026-11-03 10:04:35.7729|Info|Fodex.Line.M018|[ReActLoopReadDataFlow][max-at-startup] Ok
+  FSharp.FGL.ArrayAdjacencyGraph.ArrayAdjacencyGraph`3[Fodex.Supervisor.Contracts.CoreMod+ReActEndpoint,Fodex.Supervisor.Contracts.CoreMod+ReActNode,Fodex.Supervisor.Contracts.CoreMod+ReActEvent`1[System.String]]
+2026-11-03 10:04:35.7992|Info|Fodex.Line.M018|[WrapperAgent][max-at-creation] "runtime resolved"
+2026-11-03 10:04:35.8059|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:35.8059|Info|Fodex.Line.M018|[ReActLoopUpsertParticipant][max-at-startup] Ok ()
+2026-11-03 10:04:35.8094|Info|Fodex.Line.M018|[ReActLoopReadDataFlow][max-at-startup] Ok
+  FSharp.FGL.ArrayAdjacencyGraph.ArrayAdjacencyGraph`3[Fodex.Supervisor.Contracts.CoreMod+ReActEndpoint,Fodex.Supervisor.Contracts.CoreMod+ReActNode,Fodex.Supervisor.Contracts.CoreMod+ReActEvent`1[System.String]]
+2026-11-03 10:04:35.8343|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:35.8348|Info|Fodex.Line.M018|[ReActLoopUpsertParticipant][max-at-startup] Ok ()
+2026-11-03 10:04:36.3432|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:36.4674|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:36.6928|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:36.6931|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:36.6931|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:36.6931|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:36.6951|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:36.6951|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:36.6951|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:36.6951|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:36.6967|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:36.6971|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:36.6971|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:36.6971|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:36.7408|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:37.2185|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:37.2512|Info|Fodex.Line.M018|[IAgentStart][max-at-creation] Ok 1
+2026-11-03 10:04:37.2553|Info|Fodex.Line.M018|[ReActLoopResolveParticipant][max-at-startup] Ok Fodex.Supervisor.IAgentFodexFunV200+create@79[System.String,System.Object]
+2026-11-03 10:04:37.2553|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:37.2603|Info|Fodex.Line.M018|[ReActLoopReadDataFlow][max-at-startup] Ok
+  FSharp.FGL.ArrayAdjacencyGraph.ArrayAdjacencyGraph`3[Fodex.Supervisor.Contracts.CoreMod+ReActEndpoint,Fodex.Supervisor.Contracts.CoreMod+ReActNode,Fodex.Supervisor.Contracts.CoreMod+ReActEvent`1[System.String]]
+2026-11-03 10:04:37.2890|Info|Fodex.Line.M018|[IAgentStart][max-at-creation] Ok 1
+2026-11-03 10:04:37.3105|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:37.3160|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:37.3160|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:37.3174|Info|Fodex.Line.M018|[ReActLoopReadDataFlow][max-at-startup] Ok
+  FSharp.FGL.ArrayAdjacencyGraph.ArrayAdjacencyGraph`3[Fodex.Supervisor.Contracts.CoreMod+ReActEndpoint,Fodex.Supervisor.Contracts.CoreMod+ReActNode,Fodex.Supervisor.Contracts.CoreMod+ReActEvent`1[System.String]]
+2026-11-03 10:04:37.3180|Info|Fodex.Line.M018|[ReActLoopResolveParticipant][max-at-startup] Ok Fodex.Supervisor.IAgentFodexFunV200+create@79[System.String,System.Object]
+2026-11-03 10:04:37.3180|Info|Fodex.Line.M018|[IAgentStart][max-at-creation] Ok 0
+2026-11-03 10:04:37.3322|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:37.3376|Info|akka.tcp://fodex-line-m018-e754ee96ca254930bc2e59a020232e28@127.0.0.1:6496/user/native-app-v300-ee3847264434439a9ddac723ae8d6ba0|FODEX_NATIVE_SETTINGS {"effort":"medium","fast":false,"memory":true,"model":"gpt-6.1-sol","participant":2,"stage":"turn.start"}
+2026-11-03 10:04:37.3406|Info|Fodex.Line.M018|[ReActLoopResolveParticipant][max-at-startup] Ok Fodex.Supervisor.IAgentFodexFunV200+create@79[System.String,System.Object]
+2026-11-03 10:04:37.3471|Info|Fodex.Line.M018|[ReActLoopReadDataFlow][max-at-startup] Ok
+  FSharp.FGL.ArrayAdjacencyGraph.ArrayAdjacencyGraph`3[Fodex.Supervisor.Contracts.CoreMod+ReActEndpoint,Fodex.Supervisor.Contracts.CoreMod+ReActNode,Fodex.Supervisor.Contracts.CoreMod+ReActEvent`1[System.String]]
+2026-11-03 10:04:37.4190|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:37.4190|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:38.6499|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:38.6694|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:38.6694|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:38.6694|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:38.6694|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:38.8045|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:38.8045|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:42.6243|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:42.6280|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:42.8226|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:42.8226|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:42.8231|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:42.8231|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:42.8231|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:42.8324|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:42.8324|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:42.8403|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:42.8407|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:42.8465|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:42.8465|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:42.8516|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:42.8516|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:42.8782|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:42.8831|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:42.8835|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:42.9157|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:42.9157|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:42.9255|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:42.9255|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:42.9491|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:42.9491|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:42.9494|Info|Fodex.Line.M018|[ReActLoopResolveParticipant][max-at-startup] Ok Fodex.Supervisor.IAgentFodexFunV200+create@79[System.String,System.Object]
+2026-11-03 10:04:42.9524|Info|Fodex.Line.M018|[ReActLoopReadDataFlow][max-at-startup] Ok
+  FSharp.FGL.ArrayAdjacencyGraph.ArrayAdjacencyGraph`3[Fodex.Supervisor.Contracts.CoreMod+ReActEndpoint,Fodex.Supervisor.Contracts.CoreMod+ReActNode,Fodex.Supervisor.Contracts.CoreMod+ReActEvent`1[System.String]]
+2026-11-03 10:04:42.9640|Info|Fodex.Line.M018|[ReActLoopReadDataFlow][max-at-startup] Ok
+  FSharp.FGL.ArrayAdjacencyGraph.ArrayAdjacencyGraph`3[Fodex.Supervisor.Contracts.CoreMod+ReActEndpoint,Fodex.Supervisor.Contracts.CoreMod+ReActNode,Fodex.Supervisor.Contracts.CoreMod+ReActEvent`1[System.String]]
+2026-11-03 10:04:42.9668|Info|akka.tcp://fodex-line-m018-e754ee96ca254930bc2e59a020232e28@127.0.0.1:6496/user/wrapper-v300-e59b1be92d4d4ee7842832855d28ce02|FODEX_TURN completed N=2 cause=8 elapsedMs=5630.541
+2026-11-03 10:04:42.9766|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:46.1664|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:46.1664|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:46.1680|Info|Fodex.Line.M018|[ReActLoopReadDataFlow][max-at-startup] Ok
+  FSharp.FGL.ArrayAdjacencyGraph.ArrayAdjacencyGraph`3[Fodex.Supervisor.Contracts.CoreMod+ReActEndpoint,Fodex.Supervisor.Contracts.CoreMod+ReActNode,Fodex.Supervisor.Contracts.CoreMod+ReActEvent`1[System.String]]
+2026-11-03 10:04:46.1680|Info|Fodex.Line.M018|[ReActLoopResolveParticipant][max-at-startup] Ok Fodex.Supervisor.IAgentFodexFunV200+create@79[System.String,System.Object]
+2026-11-03 10:04:46.1685|Info|Fodex.Line.M018|[IAgentStart][max-at-creation] Ok 0
+2026-11-03 10:04:46.1704|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:46.1704|Info|akka.tcp://fodex-line-m018-e754ee96ca254930bc2e59a020232e28@127.0.0.1:6496/user/native-app-v300-ee3847264434439a9ddac723ae8d6ba0|FODEX_NATIVE_SETTINGS {"effort":"medium","fast":false,"memory":true,"model":"gpt-6.1-sol","participant":2,"stage":"turn.start"}
+2026-11-03 10:04:46.1704|Info|Fodex.Line.M018|[ReActLoopResolveParticipant][max-at-startup] Ok Fodex.Supervisor.IAgentFodexFunV200+create@79[System.String,System.Object]
+2026-11-03 10:04:46.1719|Info|Fodex.Line.M018|[ReActLoopReadDataFlow][max-at-startup] Ok
+  FSharp.FGL.ArrayAdjacencyGraph.ArrayAdjacencyGraph`3[Fodex.Supervisor.Contracts.CoreMod+ReActEndpoint,Fodex.Supervisor.Contracts.CoreMod+ReActNode,Fodex.Supervisor.Contracts.CoreMod+ReActEvent`1[System.String]]
+2026-11-03 10:04:46.2183|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:46.2188|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:46.2471|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:46.2474|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.7244|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.7244|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.7244|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.7244|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.7244|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.7244|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.7244|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.7244|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.7315|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.7315|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:47.7358|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.7358|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:47.7396|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.7396|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:47.7438|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.7438|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:47.7485|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.7485|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:47.7527|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.7527|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:47.7566|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.7566|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:47.7975|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.8002|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.8002|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:47.8139|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.8139|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.8214|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.8214|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.8242|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.8242|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:47.8242|Info|Fodex.Line.M018|[ReActLoopResolveParticipant][max-at-startup] Ok Fodex.Supervisor.IAgentFodexFunV200+create@79[System.String,System.Object]
+2026-11-03 10:04:47.8253|Info|Fodex.Line.M018|[ReActLoopReadDataFlow][max-at-startup] Ok
+  FSharp.FGL.ArrayAdjacencyGraph.ArrayAdjacencyGraph`3[Fodex.Supervisor.Contracts.CoreMod+ReActEndpoint,Fodex.Supervisor.Contracts.CoreMod+ReActNode,Fodex.Supervisor.Contracts.CoreMod+ReActEvent`1[System.String]]
+2026-11-03 10:04:47.8303|Info|Fodex.Line.M018|[ReActLoopReadDataFlow][max-at-startup] Ok
+  FSharp.FGL.ArrayAdjacencyGraph.ArrayAdjacencyGraph`3[Fodex.Supervisor.Contracts.CoreMod+ReActEndpoint,Fodex.Supervisor.Contracts.CoreMod+ReActNode,Fodex.Supervisor.Contracts.CoreMod+ReActEvent`1[System.String]]
+2026-11-03 10:04:47.8303|Info|akka.tcp://fodex-line-m018-e754ee96ca254930bc2e59a020232e28@127.0.0.1:6496/user/wrapper-v300-e59b1be92d4d4ee7842832855d28ce02|FODEX_TURN completed N=2 cause=24 elapsedMs=1659.455
+2026-11-03 10:04:47.8325|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.8582|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.8582|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.8597|Info|Fodex.Line.M018|[ReActLoopReadDataFlow][max-at-startup] Ok
+  FSharp.FGL.ArrayAdjacencyGraph.ArrayAdjacencyGraph`3[Fodex.Supervisor.Contracts.CoreMod+ReActEndpoint,Fodex.Supervisor.Contracts.CoreMod+ReActNode,Fodex.Supervisor.Contracts.CoreMod+ReActEvent`1[System.String]]
+2026-11-03 10:04:47.8612|Info|Fodex.Line.M018|[ReActLoopResolveParticipant][max-at-startup] Ok Fodex.Supervisor.IAgentFodexFunV200+create@79[System.String,System.Object]
+2026-11-03 10:04:47.8616|Info|Fodex.Line.M018|[IAgentStart][max-at-creation] Ok 0
+2026-11-03 10:04:47.8693|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.8693|Info|akka.tcp://fodex-line-m018-e754ee96ca254930bc2e59a020232e28@127.0.0.1:6496/user/native-app-v300-ee3847264434439a9ddac723ae8d6ba0|FODEX_NATIVE_SETTINGS {"effort":"medium","fast":false,"memory":true,"model":"gpt-6.1-sol","participant":2,"stage":"turn.start"}
+2026-11-03 10:04:47.8693|Info|Fodex.Line.M018|[ReActLoopResolveParticipant][max-at-startup] Ok Fodex.Supervisor.IAgentFodexFunV200+create@79[System.String,System.Object]
+2026-11-03 10:04:47.8712|Info|Fodex.Line.M018|[ReActLoopReadDataFlow][max-at-startup] Ok
+  FSharp.FGL.ArrayAdjacencyGraph.ArrayAdjacencyGraph`3[Fodex.Supervisor.Contracts.CoreMod+ReActEndpoint,Fodex.Supervisor.Contracts.CoreMod+ReActNode,Fodex.Supervisor.Contracts.CoreMod+ReActEvent`1[System.String]]
+2026-11-03 10:04:47.9336|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:47.9336|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:48.0128|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:48.0128|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.2183|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.2344|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.2345|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.2345|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.2345|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.2345|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.2345|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.2396|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.2396|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:50.2442|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.2442|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:50.2485|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.2485|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:50.2529|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.2531|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:50.2571|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.2571|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:50.2621|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.2621|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:50.3010|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.3035|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.3035|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:50.3351|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.3351|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.3468|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.3472|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.3496|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:04:50.3496|Info|Fodex.Line.M018|[ReActLoopRouteReActDataStream][max-at-startup] Ok 1
+2026-11-03 10:04:50.3496|Info|Fodex.Line.M018|[ReActLoopResolveParticipant][max-at-startup] Ok Fodex.Supervisor.IAgentFodexFunV200+create@79[System.String,System.Object]
+2026-11-03 10:04:50.3509|Info|Fodex.Line.M018|[ReActLoopReadDataFlow][max-at-startup] Ok
+  FSharp.FGL.ArrayAdjacencyGraph.ArrayAdjacencyGraph`3[Fodex.Supervisor.Contracts.CoreMod+ReActEndpoint,Fodex.Supervisor.Contracts.CoreMod+ReActNode,Fodex.Supervisor.Contracts.CoreMod+ReActEvent`1[System.String]]
+2026-11-03 10:04:50.3560|Info|Fodex.Line.M018|[ReActLoopReadDataFlow][max-at-startup] Ok
+  FSharp.FGL.ArrayAdjacencyGraph.ArrayAdjacencyGraph`3[Fodex.Supervisor.Contracts.CoreMod+ReActEndpoint,Fodex.Supervisor.Contracts.CoreMod+ReActNode,Fodex.Supervisor.Contracts.CoreMod+ReActEvent`1[System.String]]
+2026-11-03 10:04:50.3562|Info|akka.tcp://fodex-line-m018-e754ee96ca254930bc2e59a020232e28@127.0.0.1:6496/user/wrapper-v300-e59b1be92d4d4ee7842832855d28ce02|FODEX_TURN completed N=2 cause=46 elapsedMs=2486.337
+2026-11-03 10:04:50.3582|Info|Fodex.Line.M018|[IAgentSend][max-at-creation] Ok 1
+2026-11-03 10:05:09.6976|Info|Fodex.Line.M018|[IAgentStop][max-at-creation] Ok 1
+2026-11-03 10:05:09.6976|Info|Fodex.Line.M018|[IAgentStop][max-at-creation] Ok 1

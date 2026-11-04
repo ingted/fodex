@@ -1,0 +1,36 @@
+E2E database-created FodexM018TestSub5_94fe7d706ceb41cfa157a03e7f0596e7
+E2E loaded-supervisor F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\win-x64\Fodex.Supervisor.dll version=0.0.1.0
+[37m[[37m09:55:50 [37mINF[37m] [37mEXPECTO? Running tests...[37m [37m<[37mExpecto[37m>[37m
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"1c238b82f6574cb5892b4101c4491504","disposition":"reply","messages":[{"type":"text","text":"\u5C0D\u8A71\u6A21\u5F0F\u5DF2\u8A2D\u70BA general\u3002"}],"msgOut":"\u5C0D\u8A71\u6A21\u5F0F\u5DF2\u8A2D\u70BA general\u3002","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"21f82bcdd3474a8eb7d922be37355970","disposition":"reply","messages":[{"type":"text","text":"\u5C0D\u8A71\u6A21\u5F0F\u5DF2\u8A2D\u70BA general\u3002"}],"msgOut":"\u5C0D\u8A71\u6A21\u5F0F\u5DF2\u8A2D\u70BA general\u3002","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"a627662cede64010a70dd6f02898daa7","disposition":"reply","messages":[{"type":"text","text":"\u672C\u6B21 agent \u8655\u7406\u5931\u6557\uFF0C\u672A\u57F7\u884C\u4EFB\u4F55\u4EA4\u6613\u52D5\u4F5C\u3002\u8ACB\u7A0D\u5F8C\u91CD\u8A66\u3002\u8FFD\u8E64\u78BC=a627662cede64010a70dd6f02898daa7"}],"msgOut":"\u672C\u6B21 agent \u8655\u7406\u5931\u6557\uFF0C\u672A\u57F7\u884C\u4EFB\u4F55\u4EA4\u6613\u52D5\u4F5C\u3002\u8ACB\u7A0D\u5F8C\u91CD\u8A66\u3002\u8FFD\u8E64\u78BC=a627662cede64010a70dd6f02898daa7","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25h[37m[[37m09:55:51 [31mERR[37m] [36mM018 LINE simulated-backend live-native.text, route deduplication and multi-session memory isolation[37m errored in [32m00:00:00.1620000[37m [37m<[37mExpecto[37m>[37m
+System.IO.IOException: The process cannot access the file 'G:\PulseTrade.fs\temp\sub-5\M018-fodex-test\events.jsonl' because it is being used by another process.
+[37m   at System.IO.File.OpenHandle(String path, FileMode mode, FileAccess access, FileShare share, FileOptions options, Int64 preallocationSize)[37m
+[37m   at System.IO.File.WriteToFile(String path, FileMode mode, ReadOnlySpan`1 contents, Encoding encoding)[37m
+[37m   at System.IO.File.AppendAllText(String path, String contents, Encoding encoding)[37m
+[37m   at FSI_0005.log(String event, String value)[37m
+[37m   at FSI_0005.ask@84.MoveNext()[37m
+[0m[1000D[?25h[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"9aef13b3aa4a485d8df4faa050097eec","disposition":"reply","messages":[{"type":"text","text":"\u672C\u6B21 agent \u8655\u7406\u5931\u6557\uFF0C\u672A\u57F7\u884C\u4EFB\u4F55\u4EA4\u6613\u52D5\u4F5C\u3002\u8ACB\u7A0D\u5F8C\u91CD\u8A66\u3002\u8FFD\u8E64\u78BC=9aef13b3aa4a485d8df4faa050097eec"}],"msgOut":"\u672C\u6B21 agent \u8655\u7406\u5931\u6557\uFF0C\u672A\u57F7\u884C\u4EFB\u4F55\u4EA4\u6613\u52D5\u4F5C\u3002\u8ACB\u7A0D\u5F8C\u91CD\u8A66\u3002\u8FFD\u8E64\u78BC=9aef13b3aa4a485d8df4faa050097eec","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hReceived LINE route.
+[0m[1000D[?25hline-image-stage=downloaded route=d742b93a44354487bbc8f92326cb0735 atUtc=11/3/2026 1:55:51 AM +00:00
+[0m[1000D[?25hline-image-stage=stored route=d742b93a44354487bbc8f92326cb0735 atUtc=11/3/2026 1:55:51 AM +00:00
+[0m[1000D[?25hline-multimedia-response.rejected=unexpected-InvalidOperationException
+[0m[1000D[?25hline-multimedia-response.exception=#0 type=System.InvalidOperationException message=line-image-external-origin-must-be-https | stack=   at FSI_0003.Line_bot_rn_nuget.multimedia.multisession.almighty.clo@3722-20.MoveNext()\r\n   at FSI_0003.Line_bot_rn_nuget.multimedia.multisession.almighty.replyAsync@3738-1.MoveNext()
+[0m[1000D[?25hE2E line-multimedia-response-rejected:unexpected-InvalidOperationException line-image-external-origin-must-be-https
+[0m[1000D[?25h[37m[[37m09:55:51 [31mERR[37m] [36mM018 LINE simulated-backend live-native.normalized image crosses real native turn and typed image reply[37m errored in [32m00:00:00.0350000[37m [37m<[37mExpecto[37m>[37m
+System.InvalidOperationException: line-image-external-origin-must-be-https
+[37m   at FSI_0003.Line_bot_rn_nuget.multimedia.multisession.almighty.clo@3722-20.MoveNext()[37m
+[37m   at FSI_0003.Line_bot_rn_nuget.multimedia.multisession.almighty.replyAsync@3738-1.MoveNext()[37m
+[37m   at FSI_0005.ask@84.MoveNext()[37m
+[0m[1000D[?25h[1000D[?25hReceived LINE route.
+[0m[1000D[?25hE2E typed-reply {"routeHandle":"9a635a92740a46b795d7b870e148f9e2","disposition":"reply","messages":[{"type":"text","text":"\u672C\u6B21 agent \u8655\u7406\u5931\u6557\uFF0C\u672A\u57F7\u884C\u4EFB\u4F55\u4EA4\u6613\u52D5\u4F5C\u3002\u8ACB\u7A0D\u5F8C\u91CD\u8A66\u3002\u8FFD\u8E64\u78BC=9a635a92740a46b795d7b870e148f9e2"}],"msgOut":"\u672C\u6B21 agent \u8655\u7406\u5931\u6557\uFF0C\u672A\u57F7\u884C\u4EFB\u4F55\u4EA4\u6613\u52D5\u4F5C\u3002\u8ACB\u7A0D\u5F8C\u91CD\u8A66\u3002\u8FFD\u8E64\u78BC=9a635a92740a46b795d7b870e148f9e2","originalContentUrl":"","previewImageUrl":""}
+[0m[1000D[?25hE2E next-observation nativeRequestsDelta=0 reply=¥»¦¸ agent ³B²z¥¢±Ñ¡A¥¼°õ¦æ¥ô¦ó¥æ©ö°Ê§@¡C½Ðµy«á­«¸Õ¡C°lÂÜ½X=9a635a92740a46b795d7b870e148f9e2
+[0m[1000D[?25h[37m[[37m09:55:51 [37mINF[37m] [37mEXPECTO! [36m3[37m tests run in [32m00:00:00.2621487[37m for [36mM018 LINE simulated-backend live-native[37m ¡V [36m1[37m passed, [36m0[37m ignored, [36m0[37m failed, [36m2[37m errored. [36m[37m [37m<[37mExpecto[37m>[37m
+[0mE2E runtime-disposed all native wrappers stopped
+E2E database-dropped FodexM018TestSub5_94fe7d706ceb41cfa157a03e7f0596e7
