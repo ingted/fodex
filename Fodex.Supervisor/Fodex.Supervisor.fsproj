@@ -144,6 +144,11 @@
     <None Include="WrapperIAgentDemo.M019.fsx" />
     <None Include="Start-M019.ps1" />
     <None Include="README.M019.md" />
+    <!-- R001 output isolation is UI-only; preserve all compiled V300 implementations. -->
+    <None Include="WrapperIAgentDemo.M019.R001.Output.fsx" />
+    <None Include="WrapperIAgentDemo.M019.R001.fsx" />
+    <None Include="Start-M019.R001.ps1" />
+    <None Include="README.M019.R001.md" />
     <None Include="FodexFunRegistrationV100.fsx">
       <Link>Archive/FodexFunRegistrationV100.fsx</Link>
     </None>

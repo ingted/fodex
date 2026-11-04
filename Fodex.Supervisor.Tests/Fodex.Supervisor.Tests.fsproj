@@ -105,6 +105,8 @@
     <Compile Include="ConsoleOutputFodexFunV300Tests.fsx" />
     <Compile Include="../Fodex.Supervisor/WrapperIAgentDemo.M019.Input.fsx"><Link>Demo/M019.Input.fsx</Link></Compile>
     <Compile Include="M019ConsoleSubmissionTests.fsx" />
+    <Compile Include="../Fodex.Supervisor/WrapperIAgentDemo.M019.R001.Output.fsx"><Link>Demo/M019.R001.Output.fsx</Link></Compile>
+    <Compile Include="M019ConsoleOutputIsolationTests.fsx" />
     <Compile Include="NativeModelCatalogFodexFunV300Tests.fsx" />
     <Compile Include="WrapperContextFodexFunV300Tests.fsx" />
     <Compile Include="WrapperAgentV300Tests.fsx" />

@@ -22,6 +22,7 @@ let main argv =
         ConsoleInputFodexFunV300Tests.tests
         ConsoleOutputFodexFunV300Tests.tests
         M019ConsoleSubmissionTests.tests
+        M019ConsoleOutputIsolationTests.tests
         NativeModelCatalogFodexFunV300Tests.tests
         WrapperContextFodexFunV300Tests.tests
         WrapperAgentV300Tests.tests
