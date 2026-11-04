@@ -316,3 +316,14 @@ SELECT StreamId FROM dbo.FodexReActEvent WHERE SessionId=@sid AND Address=@addre
         FodexFunRegistry.register node targetFind version (findQuotation cs)
         FodexFunRegistry.register node targetRecent version (recentQuotation cs)
         FodexFunRegistry.register node targetPrune version pruneQuotation
+
+    /// 只自動開啟函數宣告，避免 main/target 等既有 helper 污染外部名稱。
+    [<AutoOpen>]
+    module Definitions =
+        /// 內建定義先進 BaseCD；FodexFunctions.initialize 首次使用時再接 SQL adapter。
+        /// q 不在此 eval，ActorSystem/ctx/可變資料均由執行 input 提供。
+        let builtins : (unit -> unit) array = [|
+            FodexFunRegistry.declare targetEncode version encodeQuotation
+            FodexFunRegistry.declare targetDecode version decodeQuotation
+            FodexFunRegistry.declare targetPrune version pruneQuotation
+        |]

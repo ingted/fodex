@@ -4,39 +4,52 @@ open Expecto
 
 /// 保留可搭配目前 Contract 的既有測試；舊 wiring 測試在 fsproj 以 None/Archive 留存。
 /// 每一個 V300 fsx 也可獨立 FSI 執行，Visual Studio 使用相同 [<Tests>] values。
+/// 按對外責任分組；只引用一次既有 tests，不複製案例或改變 assertion。
+/// 需求、root-cause 重現與仍缺少的整合驗收見 TestCases.BeforeRefactor.md。
 [<EntryPoint>]
 let main argv =
     testList "Supervisor" [
-        ReActJsonV200Tests.tests; ReActDataStoreV200Tests.tests; IAgentFodexFunV200Tests.tests
-        NativeAgentV200Tests.tests; WrapperOutputV200Tests.tests; ProcSupervisorV201Tests.tests
-        NativeAgentV201Tests.tests; WrapperOutputV201Tests.tests; NativeAppServerV202Tests.tests
-        NativeAgentV202Tests.tests; NativeAgentV203Tests.tests; ReActTraceV203Tests.tests
-        WrapperTurnTimingV100Tests.tests; SubagentFodexFunV206Tests.tests; ExplicitCotFodexFunV208Tests.tests
-        NativeOwnershipFodexFunV209Tests.tests; OrderHubV103Tests.tests; NativeOrderHubV104Tests.tests
-        HubClientV101Tests.tests; NLogLoggingTests.tests
-        WrapperCommandFodexFunV300Tests.tests; WrapperDraftFodexFunV300Tests.tests
-        ParticipantControlFodexFunV300Tests.tests
-        ReActTopologyFodexFunV300Tests.tests; ReActDataStoreV300Tests.tests; ReActCheckpointFodexFunV300Tests.tests; ReActLoopFodexFunV300Tests.tests
-        NativeSettingsFodexFunV300Tests.tests; NativeCompactFodexFunV300Tests.tests
-        ParticipantListingFodexFunV300Tests.tests
-        ConsoleInputFodexFunV300Tests.tests
-        ConsoleOutputFodexFunV300Tests.tests
-        M019ConsoleSubmissionTests.tests
-        M019ConsoleOutputIsolationTests.tests
-        NativeModelCatalogFodexFunV300Tests.tests
-        WrapperContextFodexFunV300Tests.tests
-        WrapperAgentV300Tests.tests
-        FodexFunRegistrationV300Tests.tests
-        OrderHubV300Tests.tests
-        SubagentFodexFunV300Tests.tests
-        RemoteControlFodexFunV300Tests.tests
-        NativeOutputFodexFunV300Tests.tests
-        SubagentCoordinatorV300Tests.tests
-        FodexFunBindingTests.tests
-        OrderHubFodexFunV301Tests.tests
-        SubagentFodexFunV301Tests.tests
-        FodexFunRegistrationV301Tests.tests
-        SubagentCoordinatorFodexFunV301Tests.tests
-        HubHostingFodexFunV301Tests.tests
-        WrapperCompositionV302Tests.tests
+        testList "Infrastructure" [
+            ReActJsonV200Tests.tests; ReActDataStoreV200Tests.tests; ReActDataStoreV300Tests.tests
+            ProcSupervisorV201Tests.tests; NLogLoggingTests.tests
+            QuotationStoreTests.tests
+            ContextFodexFunV400Tests.tests; ReActDataStoreV400Tests.tests
+        ]
+        testList "Native" [
+            IAgentFodexFunV200Tests.tests; NativeAgentV200Tests.tests; NativeAgentV201Tests.tests
+            NativeAppServerV202Tests.tests; NativeAgentV202Tests.tests; NativeAgentV203Tests.tests
+            NativeOwnershipFodexFunV209Tests.tests; NativeSettingsFodexFunV300Tests.tests
+            NativeCompactFodexFunV300Tests.tests; NativeModelCatalogFodexFunV300Tests.tests
+            NativeOutputFodexFunV300Tests.tests
+        ]
+        testList "ReActLoop" [
+            ParticipantControlFodexFunV300Tests.tests; ParticipantListingFodexFunV300Tests.tests
+            ReActTopologyFodexFunV300Tests.tests; ReActCheckpointFodexFunV300Tests.tests
+            ReActLoopFodexFunV300Tests.tests; SubagentFodexFunV206Tests.tests
+            SubagentFodexFunV300Tests.tests; SubagentFodexFunV301Tests.tests
+            OrderHubV103Tests.tests; NativeOrderHubV104Tests.tests; OrderHubV300Tests.tests
+            OrderHubFodexFunV301Tests.tests; SubagentCoordinatorV300Tests.tests
+            SubagentCoordinatorFodexFunV301Tests.tests
+        ]
+        testList "Wrapper" [
+            WrapperOutputV200Tests.tests; WrapperOutputV201Tests.tests
+            WrapperCommandFodexFunV300Tests.tests; WrapperDraftFodexFunV300Tests.tests
+            WrapperContextFodexFunV300Tests.tests; WrapperAgentV300Tests.tests
+            ExplicitCotFodexFunV208Tests.tests
+        ]
+        testList "Adapters" [
+            HubClientV101Tests.tests; RemoteControlFodexFunV300Tests.tests
+            HubHostingFodexFunV301Tests.tests
+        ]
+        testList "CreationAndRegistry" [
+            FodexFunBindingTests.tests; FodexFunRegistrationV300Tests.tests
+            FodexFunInitializationTests.tests
+            FodexFunRegistrationV400Tests.tests
+            FodexFunRegistrationV301Tests.tests; WrapperCompositionV302Tests.tests
+        ]
+        testList "DemoAndConsole" [
+            ReActTraceV203Tests.tests; WrapperTurnTimingV100Tests.tests
+            ConsoleInputFodexFunV300Tests.tests; ConsoleOutputFodexFunV300Tests.tests
+            M019ConsoleSubmissionTests.tests; M019ConsoleOutputIsolationTests.tests
+        ]
     ] |> runTestsWithCLIArgs [] argv

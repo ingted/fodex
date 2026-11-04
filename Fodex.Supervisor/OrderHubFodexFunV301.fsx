@@ -319,3 +319,21 @@ module OrderHubFodexFunV301 =
         FodexFunRegistry.register node targetForget version forgetQuotation
         FodexFunRegistry.register node targetCancel version cancelQuotation
         FodexFunRegistry.register node targetStop version stopQuotation
+
+    /// 只自動開啟函數宣告，避免 main/target 等既有 helper 污染外部名稱。
+    [<AutoOpen>]
+    module Definitions =
+        /// 內建定義先進 BaseCD；FodexFunctions.initialize 首次使用時再接 SQL adapter。
+        /// q 不在此 eval，ActorSystem/ctx/可變資料均由執行 input 提供。
+        let builtins : (unit -> unit) array = [|
+            FodexFunRegistry.declare targetCreate version createQuotation
+            FodexFunRegistry.declare targetOrder version orderQuotation
+            FodexFunRegistry.declare targetReceive version receiveQuotation
+            FodexFunRegistry.declare targetSeal version sealQuotation
+            FodexFunRegistry.declare targetWatch version watchQuotation
+            FodexFunRegistry.declare targetStatus version statusQuotation
+            FodexFunRegistry.declare targetConfigure version configureQuotation
+            FodexFunRegistry.declare targetForget version forgetQuotation
+            FodexFunRegistry.declare targetCancel version cancelQuotation
+            FodexFunRegistry.declare targetStop version stopQuotation
+        |]

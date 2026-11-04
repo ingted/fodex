@@ -117,3 +117,16 @@ module NativeSettingsFodexFunV300 =
         FodexFunRegistry.register node targetTurn version turnQuotation
         FodexFunRegistry.register node targetMemory version memoryQuotation
         FodexFunRegistry.register node targetReload version reloadQuotation
+
+    /// 只自動開啟函數宣告，避免 main/target 等既有 helper 污染外部名稱。
+    [<AutoOpen>]
+    module Definitions =
+        /// 內建定義先進 BaseCD；FodexFunctions.initialize 首次使用時再接 SQL adapter。
+        /// q 不在此 eval，ActorSystem/ctx/可變資料均由執行 input 提供。
+        let builtins : (unit -> unit) array = [|
+            FodexFunRegistry.declare targetCheck version checkQuotation
+            FodexFunRegistry.declare targetExec version execQuotation
+            FodexFunRegistry.declare targetTurn version turnQuotation
+            FodexFunRegistry.declare targetMemory version memoryQuotation
+            FodexFunRegistry.declare targetReload version reloadQuotation
+        |]

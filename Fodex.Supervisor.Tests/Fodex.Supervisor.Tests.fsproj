@@ -91,6 +91,11 @@
     <Compile Include="NLogLoggingTests.fsx" />
     <None Include="ProgramV200.fs"><Link>Archive/ProgramV200.fs</Link></None>
     <Compile Include="ImplementationTestSupportV300.fsx" />
+    <Compile Include="QuotationStoreTests.fsx" />
+    <Compile Include="FodexFunInitializationTests.fsx" />
+    <None Include="FodexFunInitializationProbe.fsx" />
+    <Compile Include="ContextFodexFunV400Tests.fsx" />
+    <Compile Include="ReActDataStoreV400Tests.fsx" />
     <Compile Include="WrapperCommandFodexFunV300Tests.fsx" />
     <Compile Include="ParticipantControlFodexFunV300Tests.fsx" />
     <Compile Include="WrapperDraftFodexFunV300Tests.fsx" />
@@ -121,6 +126,7 @@
     <None Include="M017MemorySmoke.fsx" />
     <None Include="M018ConsoleInputSmoke.fsx" />
     <Compile Include="ImplementationTestSupportV301.fsx" />
+    <Compile Include="FodexFunRegistrationV400Tests.fsx" />
     <Compile Include="FodexFunBindingTests.fsx" />
     <Compile Include="OrderHubFodexFunV301Tests.fsx" />
     <Compile Include="SubagentFodexFunV301Tests.fsx" />
@@ -129,6 +135,7 @@
     <Compile Include="HubHostingFodexFunV301Tests.fsx" />
     <Compile Include="WrapperCompositionV302Tests.fsx" />
     <Compile Include="ProgramV300.fs" />
+    <None Include="TestCases.BeforeRefactor.md" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Expecto" Version="11.1.1" />

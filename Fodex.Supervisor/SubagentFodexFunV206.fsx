@@ -106,3 +106,14 @@ module SubagentFodexFunV206 =
     let bind<'Input,'Output> (node: FodexNode) target requested =
         FodexFun<'Input,'Output,exn>(node,target) |> FodexFun.pin requested
         |> Option.defaultWith (fun () -> invalidOp ("Requested policy is not registered: " + target))
+
+    /// 只自動開啟函數宣告，避免 main/target 等既有 helper 污染外部名稱。
+    [<AutoOpen>]
+    module Definitions =
+        /// 內建定義先進 BaseCD；FodexFunctions.initialize 首次使用時再接 SQL adapter。
+        /// q 不在此 eval，ActorSystem/ctx/可變資料均由執行 input 提供。
+        let builtins : (unit -> unit) array = [|
+            FodexFunRegistry.declare targetCommand version parseCommand
+            FodexFunRegistry.declare targetInitialize version ensureParticipants
+            FodexFunRegistry.declare targetWorkPrompt version workPrompt
+        |]

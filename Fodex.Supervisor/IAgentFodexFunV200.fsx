@@ -93,3 +93,17 @@ module IAgentFodexFunV200 =
         | Ok _ ->
             try reply.Task.WaitAsync(TimeSpan.FromSeconds 5.).GetAwaiter().GetResult()
             with ex -> Error ex
+
+    /// 只自動開啟函數宣告，避免 main/target 等既有 helper 污染外部名稱。
+    [<AutoOpen>]
+    module Definitions =
+        /// 內建定義先進 BaseCD；FodexFunctions.initialize 首次使用時再接 SQL adapter。
+        /// q 不在此 eval，ActorSystem/ctx/可變資料均由執行 input 提供。
+        let builtins : (unit -> unit) array = [|
+            FodexFunRegistry.declare targetIAgentStart version start
+            FodexFunRegistry.declare targetIAgentStop version stop
+            FodexFunRegistry.declare targetIAgentSend version send<obj>
+            FodexFunRegistry.declare targetIAgentGetSessionId version getSessionId
+            FodexFunRegistry.declare targetIAgentAcquireParticipant version acquireParticipant
+            FodexFunRegistry.declare targetIAgentExportReActDataStreamJsonl version exportReActDataStreamJsonl
+        |]

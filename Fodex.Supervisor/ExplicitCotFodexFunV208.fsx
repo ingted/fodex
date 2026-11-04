@@ -110,3 +110,15 @@ module ExplicitCotFodexFunV208 =
         let argv = PL.parseLine ctx [|' '|] (Some '"') None true arguments
         ArgumentParser.Create<ExplicitCotArgumentV208>("Fodex explicit COT")
             .ParseCommandLine(argv,ignoreUnrecognized=true,raiseOnUsage=false)
+
+    /// 只自動開啟函數宣告，避免 main/target 等既有 helper 污染外部名稱。
+    [<AutoOpen>]
+    module Definitions =
+        /// 內建定義先進 BaseCD；FodexFunctions.initialize 首次使用時再接 SQL adapter。
+        /// q 不在此 eval，ActorSystem/ctx/可變資料均由執行 input 提供。
+        let builtins : (unit -> unit) array = [|
+            FodexFunRegistry.declare targetCommand version command
+            FodexFunRegistry.declare targetPrepare version prepare
+            FodexFunRegistry.declare targetMainInput version mainInput
+            FodexFunRegistry.declare targetNativePurpose version nativePurpose
+        |]

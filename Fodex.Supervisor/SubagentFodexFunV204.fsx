@@ -89,3 +89,13 @@ module SubagentFodexFunV204 =
         FodexFun<CompletedEdgeQueryV204,ReActDataStream<string> array,exn>(node,targetCompletedEdges)
         |> FodexFun.pin ((options ctx arguments).TryGetResult CompletedEdges)
         |> Option.defaultWith (fun () -> invalidOp "Requested SubagentCompletedEdges version is not registered")
+
+    /// 只自動開啟函數宣告，避免 main/target 等既有 helper 污染外部名稱。
+    [<AutoOpen>]
+    module Definitions =
+        /// 內建定義先進 BaseCD；FodexFunctions.initialize 首次使用時再接 SQL adapter。
+        /// q 不在此 eval，ActorSystem/ctx/可變資料均由執行 input 提供。
+        let builtins : (unit -> unit) array = [|
+            FodexFunRegistry.declare targetPreparePrompt version preparePrompt
+            FodexFunRegistry.declare targetCompletedEdges version selectCompleted
+        |]

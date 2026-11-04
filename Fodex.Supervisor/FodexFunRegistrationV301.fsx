@@ -55,3 +55,14 @@ module FodexFunRegistrationV301 =
     let registerFactories node loop cs ctx models =
         FodexFunRegistrationV300.registerFactories node loop cs ctx models
         FodexFunRegistry.register node FodexFunRegistrationV300.targetWrapper version (wrapperQuotation node loop ctx)
+
+    /// 只自動開啟函數宣告，避免 main/target 等既有 helper 污染外部名稱。
+    [<AutoOpen>]
+    module Definitions =
+        /// 內建定義先進 BaseCD；FodexFunctions.initialize 首次使用時再接 SQL adapter。
+        /// q 不在此 eval，ActorSystem/ctx/可變資料均由執行 input 提供。
+        let builtins : (unit -> unit) array = [|
+            FodexFunRegistry.declare targetLoop version loopQuotation
+            FodexFunRegistry.declare targetRoot version rootQuotation
+            FodexFunRegistry.declare targetRemote version remoteQuotation
+        |]

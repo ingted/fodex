@@ -45,6 +45,16 @@ module NativeOwnershipFodexFunV209 =
             with ex -> Error ex @>
     let register node = FodexFunRegistry.register node targetRead version read
 
+    /// 只自動開啟函數宣告，避免 main/target 等既有 helper 污染外部名稱。
+    [<AutoOpen>]
+    module Definitions =
+        /// 內建定義先進 BaseCD；FodexFunctions.initialize 首次使用時再接 SQL adapter。
+        /// q 不在此 eval，ActorSystem/ctx/可變資料均由執行 input 提供。
+        let builtins : (unit -> unit) array = [|
+            FodexFunRegistry.declare targetRead version read
+        |]
+
+
 [<AutoOpen>]
 module NativeOwnershipIAgentV209 =
     type IAgent<'P,'M> with

@@ -11,7 +11,10 @@
 #r "FSharp.FGL.dll"
 #r "FSharp.FGL.ArrayAdjacencyGraph.dll"
 #r "nuget: Microsoft.Extensions.ObjectPool, 10.0.14"
-#r "nuget: Microsoft.Data.SqlClient, 7.1.1"
+// SqlClient 的 FSI NuGet resolver 在目前 SDK 會載到 PNSE stub；使用 MSBuild 選好的 runtime asset。
+// 只 reference 正常 build output，不手工複製套件內部 lib/netX 檔案。
+#I "bin/Debug/net10.0/win-x64"
+#r "Microsoft.Data.SqlClient.dll"
 #r "Fodex.Supervisor.Contracts.dll"
 #load "../Fodex.Supervisor.Contract/LoggerAdapter.fsx"
 #load "../Fodex.Supervisor/FodexFunRegistry.fsx"

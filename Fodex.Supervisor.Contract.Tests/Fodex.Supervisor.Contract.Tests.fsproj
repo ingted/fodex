@@ -15,6 +15,8 @@
   <ItemGroup>
     <Compile Include="ContractTestSupport.fsx" />
     <Compile Include="FodexFunTests.fsx" />
+    <Compile Include="VersionRegistryBaselineTests.fsx" />
+    <Compile Include="VersionRegistryPersistenceTests.fsx" />
     <Compile Include="ReActDataStreamTests.fsx" />
     <Compile Include="ReActLoopRouteReActDataStreamTests.fsx" />
     <Compile Include="ReActLoopCollectTests.fsx" />

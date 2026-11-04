@@ -95,6 +95,27 @@ module ReActLoopFodexFunV300 =
         FodexFunRegistry.register node targetReActLoopGetParticipantCapabilities version getParticipantCapabilities<'P, 'M>
         FodexFunRegistry.register node targetReActLoopReadDataFlow version readDataFlow<'P, 'M>
 
+    /// 只自動開啟函數宣告，避免 main/target 等既有 helper 污染外部名稱。
+    [<AutoOpen>]
+    module Definitions =
+        /// 內建定義先進 BaseCD；FodexFunctions.initialize 首次使用時再接 SQL adapter。
+        /// q 不在此 eval，ActorSystem/ctx/可變資料均由執行 input 提供。
+        let builtins : (unit -> unit) array = [|
+            FodexFunRegistry.declare targetReActLoopUpsertParticipant version upsertParticipant<string,obj>
+            FodexFunRegistry.declare targetReActLoopRemoveParticipant version removeParticipant<string,obj>
+            FodexFunRegistry.declare targetReActLoopResolveParticipant version resolveParticipant<string,obj>
+            FodexFunRegistry.declare targetTryResolve version tryResolveParticipant<string,obj>
+            FodexFunRegistry.declare targetReActLoopListParticipants version listParticipants<string,obj>
+            FodexFunRegistry.declare targetReActLoopPostHumanPrompt version postHumanPrompt<string,obj>
+            FodexFunRegistry.declare targetReActLoopDispatchToParticipant version dispatchToParticipant<string,obj>
+            FodexFunRegistry.declare targetReActLoopRouteReActDataStream version routeReActDataStream<string,obj>
+            FodexFunRegistry.declare targetReActLoopCollect version collect<string,obj>
+            FodexFunRegistry.declare targetReActLoopGetStatus version getStatus<string,obj>
+            FodexFunRegistry.declare targetReActLoopGetParticipantCapabilities version getParticipantCapabilities<string,obj>
+            FodexFunRegistry.declare targetReActLoopReadDataFlow version readDataFlow<string,obj>
+        |]
+
+
 /// owner 向 root 配號；address 是 logical endpoint 的節點位置，不是新的一套 Number scope。
 type ParticipantReservationV300 = ReActParticipant * string * ReActParticipantKind * ReActRelation option * System.Net.IPAddress option
 type ParticipantObservationV300 = ReActParticipant * AgentSessionId option * string option * ReActParticipantStatus
@@ -183,6 +204,28 @@ module ReActLoopTopologyFodexFunV300 =
         FodexFunRegistry.register node targetRouteReceipt version routeReceipt
         FodexFunRegistry.register node targetOwnerStatus version ownerStatus
 
+    /// 只自動開啟函數宣告，避免 main/target 等既有 helper 污染外部名稱。
+    [<AutoOpen>]
+    module Definitions =
+        /// 內建定義先進 BaseCD；FodexFunctions.initialize 首次使用時再接 SQL adapter。
+        /// q 不在此 eval，ActorSystem/ctx/可變資料均由執行 input 提供。
+        let builtins : (unit -> unit) array = [|
+            FodexFunRegistry.declare targetOutputAddress version outputAddress
+            FodexFunRegistry.declare targetShowOutput version showOutput
+            FodexFunRegistry.declare targetTraceOutput version traceOutput
+            FodexFunRegistry.declare targetCheckpoint version checkpoint
+            FodexFunRegistry.declare targetCapture version capture
+            FodexFunRegistry.declare targetPrune version prune
+            FodexFunRegistry.declare targetReserve version reserve
+            FodexFunRegistry.declare targetObserve version observe
+            FodexFunRegistry.declare targetReplace version replace
+            FodexFunRegistry.declare targetRetire version retire
+            FodexFunRegistry.declare targetRecord version record
+            FodexFunRegistry.declare targetRouteReceipt version routeReceipt
+            FodexFunRegistry.declare targetOwnerStatus version ownerStatus
+        |]
+
+
 [<AutoOpen>]
 module ReActLoopTopologyExtensionsV300 =
     type ReActLoop<'P,'M when 'P: equality> with
@@ -231,4 +274,3 @@ module ReActLoopTopologyExtensionsV300 =
         /// root 在 handover 成功後提交摘要 coverage；SQL checkpoint 成功後才換入 live graph。
         member this.PinGraphPruner(versionText) =
             this.PinTopologyOperation<ReActParticipant * int64 * int64 array,int>(ReActLoopTopologyFodexFunV300.targetPrune,versionText)
-

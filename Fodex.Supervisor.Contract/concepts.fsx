@@ -186,19 +186,25 @@ module Concepts =
     type VersionedTarget<'T> = { Version: Version; Value: 'T }
 
     type Versioned<'T>
-        (registry: CD<TargetName, CD<Version, VersionedTarget<'T>>>, target: TargetName) =
+        (registry: CD<TargetName, CD<Version, VersionedTarget<'T>>>, target: TargetName,
+         ?persist: ((Version * 'T option) array -> Result<unit, exn>)) =
 
-        // 多 ActorSystem 的正式路徑：registry 依 node reference 分區。
+        // 直接 CD constructor 用於宣告 BaseCD 或準備匯入資料，不假裝它屬於某個 node。
+        // node constructor 才附上該分區的持久化路徑；執行函數使用哪個 node 仍由其 input 決定。
+        // 例：Versioned(baseCD, target) 宣告內建版；Versioned(node, target).Register(v, f) 寫回儲存。
         new (node: FodexNode, target: TargetName) =
-            Versioned<'T>(VersionRegistry<'T>.RegistryFor node, target)
+            Versioned<'T>(VersionRegistry<'T>.RegistryFor node, target,
+                persist = (fun changes ->
+                    changes
+                    |> Array.map (fun (version, value) -> target, version, value)
+                    |> fun batch -> VersionRegistry<'T>.Persist(node, batch)))
 
         member this.Target = target
 
+        // 讀取與診斷可取得 CD；正式版本變更必須使用 Register/UpsertVersioned/CleanVersioned。
+        // 直接寫入 CD 的 indexer 不會觸發 persistence，也不是這三個操作的替代品。
         member this.Registry: CD<Version, VersionedTarget<'T>> =
-            registry.GetOrAdd(
-                target,
-                fun _ -> CD<Version, VersionedTarget<'T>>()
-            )
+            registry.GetOrAdd(target, fun _ -> CD<Version, VersionedTarget<'T>>())
 
         member this.Item
             with get (version: Version) : 'T option =
@@ -206,11 +212,16 @@ module Concepts =
                 | true, versioned -> Some versioned.Value
                 | false, _ -> None
 
-        // 註冊相同版本時覆寫 runtime value；來源碼中的舊版本實作仍應保留。
+        /// 同版本覆寫；既有 pin 持有舊值，新 lookup 才取得新值。
+        /// 儲存失敗時維持原 CD。unit 簽章保留既有 API；錯誤由 caller 的 ROP 邊界接成 Error。
         member this.Register(version: Version, value: 'T) : unit =
-            this.Registry[version] <- { Version = version; Value = value }
+            lock registry (fun () ->
+                let save = defaultArg persist (fun _ -> Ok ())
+                match save [|version, Some value|] with
+                | Error error -> raise error
+                | Ok () -> this.Registry[version] <- { Version = version; Value = value })
 
-        // 未指定版本時使用目前註冊的最大 System.Version；沒有任何版本時回傳 None。
+        // 只有選版時計算最大 System.Version；後續執行使用先前 pin 的 FeasibleFun。
         member this.Instance : 'T option =
             this.Registry.Values
             |> Seq.sortByDescending (fun versioned -> versioned.Version)
@@ -218,10 +229,6 @@ module Concepts =
             |> Option.map (fun versioned -> versioned.Value)
 
     and VersionRegistry<'T> (node: FodexNode) =
-        (* to agent who develop this
-        正常來說多數的功能程式碼中會有最原始的一個版本。
-        其他由 DB 讀出的版本，讀取完成後透過 UpsertVersioned 注入 registry。
-        *)
         static let registriesByNode =
             System.Runtime.CompilerServices.ConditionalWeakTable<
                 FodexNode,
@@ -229,45 +236,84 @@ module Concepts =
 
         static let baseCD = CD<TargetName, CD<Version, VersionedTarget<'T>>>()
 
+        // Contract 定義儲存邊界；SqlClient/quotation serializer 屬於 implementation。
+        // None 是「已刪除」的持久化紀錄，不是「DB 沒有這一筆」。空陣列才表示沒有覆蓋資料。
+        // 未配置的普通 Versioned runtime value（例如 IActorRef）維持 node-local 行為。
+        // implementation 必須為持久化的 FodexFun 型別在自動宣告階段配置此接點。
+        static let mutable persistence:
+            (FodexNode -> Result<(TargetName * Version * 'T option) array, exn>) *
+            (FodexNode * (TargetName * Version * 'T option) array -> Result<unit, exn>) =
+                (fun _ -> Ok [||]), (fun _ -> Ok ())
+
+        /// 在建立 node 分區前配置。以一個 tuple 發布同一組 load/save，避免分別設定時配到不同儲存。
+        /// load 是唯讀：不得在 fallback 時將內建版本反向寫入 DB。
+        /// save 對整批變更提供交易語意；Error 表示這批資料未提交。
+        static member Persistence
+            with get () = persistence
+            and set value = persistence <- value
+
+        static member Persist(node: FodexNode, changes: (TargetName * Version * 'T option) array) : Result<unit, exn> =
+            let _, save = persistence
+            save (node, changes)
+
         static member RegistryFor
             (node: FodexNode)
             : CD<TargetName, CD<Version, VersionedTarget<'T>>> =
-            registriesByNode.GetOrAdd(
-                node,
-                fun _ -> 
-                    //按照 db 存的 TargetName * Version 取 VersionedTarget 建立 CD，baseCD 有但是 DB 沒有的就 fallback
-                    //目前還沒有 quotation 直接從 DB 取的實作，先用 fallback
-                    baseCD
-            )
-
+            registriesByNode.GetOrAdd(node, fun _ ->
+                // 兩層容器均屬於 node；只共用沒有 runtime 資源的函數定義。
+                let nodeCD = CD<TargetName, CD<Version, VersionedTarget<'T>>>()
+                for KeyValue(target, versions) in baseCD do
+                    nodeCD[target] <- CD<Version, VersionedTarget<'T>>(versions)
+                // GetOrAdd factory 在競爭下可執行多次；這裡只讀 DB、建立尚未發布的副本。
+                // 讀取失敗不快取，也不能視為 missing 而回傳基底，之後可對同 node 重試。
+                let load, _ = persistence
+                match load node with
+                | Error error -> raise error
+                | Ok changes ->
+                    for target, version, value in changes do
+                        match value with
+                        | Some value ->
+                            let versions = nodeCD.GetOrAdd(target, fun _ -> CD<Version, VersionedTarget<'T>>())
+                            versions[version] <- { Version = version; Value = value }
+                        | None ->
+                            match nodeCD.TryGetValue target with
+                            | true, versions -> versions.TryRemove version |> ignore
+                            | false, _ -> ()
+                    nodeCD)
 
         static member BaseCD = baseCD
 
         member this.Node = node
-
         member this.Registry = VersionRegistry<'T>.RegistryFor node
 
         member this.GetVersioned(target: TargetName) : Versioned<'T> =
-            Versioned<'T>(this.Registry, target)
+            // 不使用直接 CD constructor：那個 overload 用於宣告，沒有 node 的寫回路徑。
+            Versioned<'T>(node, target)
 
         member this.UpsertVersioned(target: TargetName, versioned: Versioned<'T>) : unit =
-            let targetRegistry =
-                this.Registry.GetOrAdd(
-                    target,
-                    fun _ -> CD<Version, VersionedTarget<'T>>()
-                )
-            for KeyValue(version, versionedTarget) in versioned.Registry do
-                targetRegistry[version] <- versionedTarget
+            let changes = versioned.Registry.ToArray() |> Array.map(fun pair -> target, pair.Key, Some pair.Value.Value)
+            if changes.Length > 0 then
+                lock this.Registry (fun () ->
+                    match VersionRegistry<'T>.Persist(node, changes) with
+                    | Error error -> raise error
+                    | Ok () ->
+                        let targetRegistry = this.Registry.GetOrAdd(target, fun _ -> CD<Version, VersionedTarget<'T>>())
+                        for _, version, value in changes do
+                            targetRegistry[version] <- { Version = version; Value = Option.get value })
 
-        member this.CleanVersioned(
-            target: TargetName,
-            versionsToRemoveProvider: unit -> Version []
-        ) : unit =
-            match this.Registry.TryGetValue target with
-            | true, targetRegistry ->
-                for version in versionsToRemoveProvider () do
-                    targetRegistry.TryRemove version |> ignore
-            | false, _ -> ()
+        member this.CleanVersioned(target: TargetName, versionsToRemoveProvider: unit -> Version []) : unit =
+            lock this.Registry (fun () ->
+                match this.Registry.TryGetValue target with
+                | true, targetRegistry ->
+                    let versions = versionsToRemoveProvider () |> Array.distinct
+                    if versions.Length > 0 then
+                        let changes = versions |> Array.map(fun version -> target, version, None)
+                        match VersionRegistry<'T>.Persist(node, changes) with
+                        | Error error -> raise error
+                        | Ok () ->
+                            for version in versions do targetRegistry.TryRemove version |> ignore
+                | false, _ -> ())
+
 
     type SimpleFun<'Input, 'Output> (q:Expr<'Input -> 'Output>) =
         member this.q = q
