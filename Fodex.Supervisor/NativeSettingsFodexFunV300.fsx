@@ -8,6 +8,15 @@ open Microsoft.FSharp.Quotations
 open LoggerUtil
 open Fodex.Supervisor.Contracts.Concepts
 open Fodex.Supervisor.Contracts.CoreMod
+open System.Threading
+open System.Threading.Tasks
+open Fodex.Supervisor.Contracts.CommandMod
+
+/// raw worker 不建立 IAgent。OrderHub 只送本機訊息，原生 process/session 仍由同一 exec actor 管理。
+type RawExecInputV300 =
+    | RawOrder of ReActParticipant * Guid * string * CancellationToken * TaskCompletionSource<Result<string * string,exn>>
+    | RawControl of WrapperCommandV300 * TaskCompletionSource<Result<string,exn>>
+    | RawCancel of Guid
 
 /// Native actor 保存下一個新 turn 的設定；執行中的 turn 已拿到自己的不可變快照。
 type NativeSettingsV300 = { Model: string; Effort: string; Fast: bool; Memory: bool }

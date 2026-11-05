@@ -42,11 +42,28 @@ module SubagentCoordinatorFodexFunV301 =
         let graph ()=loop.ReadDataFlow session |> required
         let metadata (view:WrappedReActDataFlow<string>) p =
             match view.GetLabel(endpoint p) with ReActNode.Participant info -> info | _ -> invalidOp "Missing participant metadata"
-        let subArguments =
-            let options=SupervisorArgs.parseText parentCtx arguments |> required
-            let values=options.GetAllResults() |> List.filter(function Native_Adapter _ -> false | _ -> true)
-            let settings=NativeSettingsFodexFunV300.fromArguments parentCtx arguments |> required
-            SupervisorArgs.format(values @ [Native_Adapter "exec"]) + sprintf " --fast %b --memory %b" settings.Fast settings.Memory
+        let defaultSubagentType =
+            let options = SupervisorArgs.parseText parentCtx arguments |> required
+            options.GetResult(Subagent_Type, defaultValue = "codex")
+
+        let getSubArguments (agentType: string) =
+            let options = SupervisorArgs.parseText parentCtx arguments |> required
+            let values = options.GetAllResults() |> List.filter(function Native_Adapter _ | Subagent_Type _ -> false | _ -> true)
+            if agentType.Equals("agy", StringComparison.OrdinalIgnoreCase) then
+                let agySettings = NativeAgySettingsFodexFunV300.fromArguments parentCtx arguments |> required
+                SupervisorArgs.format(values @ [Native_Adapter "agy"; Model agySettings.Model; Effort agySettings.Effort])
+            else
+                let settings = NativeSettingsFodexFunV300.fromArguments parentCtx arguments |> required
+                SupervisorArgs.format(values @ [Native_Adapter "exec"]) + sprintf " --fast %b --memory %b" settings.Fast settings.Memory
+
+        let subArguments = getSubArguments defaultSubagentType
+        // 舊版本備查
+        // 舊版預設 subArguments 留作備查：
+        // let _ = subArguments
+        // let options=SupervisorArgs.parseText parentCtx arguments |> required
+        // let values=options.GetAllResults() |> List.filter(function Native_Adapter _ -> false | _ -> true)
+        // let settings=NativeSettingsFodexFunV300.fromArguments parentCtx arguments |> required
+        // let _ = SupervisorArgs.format(values @ [Native_Adapter "exec"]) + sprintf " --fast %b --memory %b" settings.Fast settings.Memory
         let coordinator=spawn node ("subagent-coordinator-v301-"+Guid.NewGuid().ToString("N")) <| fun (mailbox:Actor<SubagentCoordinatorCallV300>) ->
             let ctx=ActorLogging.withLogger parentCtx (Akka.Event.Logging.GetLogger mailbox.Context)
             let resources=Dictionary<string,ReActParticipant * SubagentResourceV300>()
@@ -93,7 +110,8 @@ module SubagentCoordinatorFodexFunV301 =
             let publish ()=(configureHub(hub,roster (graph()) Set.empty) |> required)
 
             /// 僅 materialize 指定 identity；新建配號由 Create 分支負責。Start 恢復本機 wrapper/raw 時保留 SID。
-            let materialize who p kind =
+            let materialize who p kind customArgs =
+                let effectiveArgs = defaultArg customArgs subArguments
                 let resource =
                     match kind with
                     | ReActParticipantKind.Wrapper ->
@@ -104,13 +122,13 @@ module SubagentCoordinatorFodexFunV301 =
                                        RawControl=fun _ -> Task.FromResult(Error(NotSupportedException "No raw child"))
                                        RawSettings=fun _ -> Task.FromResult(Error(NotSupportedException "No raw child"))
                                        StopOrders=fun _ -> Task.FromResult(Ok ())}
-                        let agent=wrapper(p,subArguments,factories) |> required
+                        let agent=wrapper(p,effectiveArgs,factories) |> required
                         loop.UpsertParticipant(p,agent) |> required
                         IAgentResource agent
                     | ReActParticipantKind.RawExec ->
                         let info=metadata (graph()) p
                         let sid=match info.SessionId with Some(NativeCodexSessionId id) -> Some id | _ -> None
-                        let text=WrapperAgentV300.nativeArguments ctx subArguments "work" None sid
+                        let text=WrapperAgentV300.nativeArguments ctx effectiveArgs "work" None sid
                         let actor=raw(p,text) |> required
                         observe(p,None,Some(Akka.Serialization.Serialization.SerializedActorPath actor),info.Status) |> required
                         RawResource actor
@@ -201,7 +219,7 @@ module SubagentCoordinatorFodexFunV301 =
                             if info.Status=ReActParticipantStatus.Retired then invalidOp "Removed participant cannot be started"
                             if (binding (cached()) group).IsNone && (info.Kind=ReActParticipantKind.Wrapper || info.Kind=ReActParticipantKind.RawExec) then
                                 if (snd(snd group)).IsSome && snd group<>session then invalidOp "Remote participant must be rebound by its owner node"
-                                materialize info.Name group info.Kind |> ignore
+                                materialize info.Name group info.Kind None |> ignore
                     let affected=resources |> Seq.choose(fun pair -> if selectedIds.Contains(fst pair.Value) then Some pair.Key else None) |> Set.ofSeq
                     let snapshot=cached()
                     let remaining=roster (graph()) (if action=ParticipantLifecycleV300.Start then Set.empty else affected)
@@ -243,13 +261,24 @@ module SubagentCoordinatorFodexFunV301 =
                     configuring<-true
                     let added=ResizeArray<string*ReActParticipant>()
                     try
+                        let actualKind, actualType =
+                            match mode with
+                            | SubagentModeV300.Raw -> ReActParticipantKind.RawExec, defaultSubagentType
+                            | SubagentModeV300.Wrapper -> ReActParticipantKind.Wrapper, defaultSubagentType
+                            | SubagentModeV300.RawWithType t ->
+                                let str = match t with SubagentTypeV300.Agy -> "agy" | SubagentTypeV300.Codex -> "codex"
+                                ReActParticipantKind.RawExec, str
+                            | SubagentModeV300.WrapperWithType t ->
+                                let str = match t with SubagentTypeV300.Agy -> "agy" | SubagentTypeV300.Codex -> "codex"
+                                ReActParticipantKind.Wrapper, str
+                        let batchArgs = getSubArguments actualType
                         for _ in 1..count do
                             nextWho<-Checked.(+) nextWho 1L
                             let who=sprintf "sub-%d" nextWho
-                            let kind=if mode=SubagentModeV300.Wrapper then ReActParticipantKind.Wrapper else ReActParticipantKind.RawExec
+                            let kind=actualKind
                             let p=reserve(root,who,kind,None,None) |> required
                             added.Add((who,p))
-                            materialize who p kind |> ignore
+                            materialize who p kind (Some batchArgs) |> ignore
                         let batch=added.ToArray()
                         let snapshot=cached()
                         let work=task {
@@ -258,7 +287,7 @@ module SubagentCoordinatorFodexFunV301 =
                             | Some ex -> return Error ex
                             | None ->
                                 do! publish()
-                                return Ok((if mode=SubagentModeV300.Wrapper then Mcp else rawTransport),batch) }
+                                return Ok((if actualKind=ReActParticipantKind.Wrapper then Mcp else rawTransport),batch) }
                         complete work (fun result -> configuring<-false;reply.TrySetResult result |> ignore)
                     with ex ->
                         // 已配出的 N/who 不回收；失敗批次保留可診斷狀態，使用者可 /remove 該批。

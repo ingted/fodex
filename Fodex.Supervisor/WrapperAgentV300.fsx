@@ -569,7 +569,7 @@ module WrapperAgentV300 =
                 let rec execute cause original callback command =
                     if not started then
                         match command with
-                        | WrapperCommandV300.Immediate _ | WrapperCommandV300.Cot _ | WrapperCommandV300.Subagents _
+                        | WrapperCommandV300.Immediate _ | WrapperCommandV300.Cot _ | WrapperCommandV300.Subagents _ | WrapperCommandV300.SubagentsWithType _
                         | WrapperCommandV300.Compact | WrapperCommandV300.Restart | WrapperCommandV300.SendAll -> invalidOp "Wrapper is stopped; start it before submitting work"
                         | _ -> ()
                     // 一次固定清單並先送齊，再等全部結果。每個 operation 仍經既有 owner/IAgent 控制。
@@ -660,7 +660,8 @@ module WrapperAgentV300 =
                             | Error ex -> reply cause callback (Error ex)) |> ignore
                     | WrapperCommandV300.Compact -> beginReplacement cause true callback
                     | WrapperCommandV300.Restart -> beginReplacement cause false callback
-                    | WrapperCommandV300.Subagents(count,mode,instruction) ->
+                    | WrapperCommandV300.Subagents(count,mode,instruction)
+                    | WrapperCommandV300.SubagentsWithType(count,mode,_,instruction) ->
                         let chosen=mode |> Option.defaultWith(fun () -> match factories.Transport with Mcp -> SubagentModeV300.Wrapper | ShellClient _ -> SubagentModeV300.Raw)
                         asyncResult (factories.Subagents(owner,count,chosen)) (function
                             | Error ex -> reply cause callback (Error ex)

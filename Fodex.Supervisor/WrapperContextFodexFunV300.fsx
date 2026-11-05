@@ -52,7 +52,8 @@ module WrapperContextFodexFunV300 =
                     match WrapperCommandFodexFunV300.parse ctx text with
                     | Ok(WrapperCommandV300.Immediate prompt) -> add "HumanPrompt" prompt
                     | Ok(WrapperCommandV300.Cot instruction) -> add "HumanCotInstruction" instruction
-                    | Ok(WrapperCommandV300.Subagents(_,_,Some instruction)) -> add "HumanSubagentInstruction" instruction
+                    | Ok(WrapperCommandV300.Subagents(_,_,Some instruction))
+                    | Ok(WrapperCommandV300.SubagentsWithType(_,_,_,Some instruction)) -> add "HumanSubagentInstruction" instruction
                     | _ -> ()
                 | AgentWork(_,cause,MessageCompleted(messageId,text))
                 | AgentCot(_,cause,MessageCompleted(messageId,text)) ->

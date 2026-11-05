@@ -30,6 +30,8 @@ module FodexFunctions =
             NativeCompactFodexFunV300.Definitions.builtins
             ParticipantListingFodexFunV300.Definitions.builtins
             NativeModelCatalogFodexFunV300.Definitions.builtins
+            NativeAgyModelCatalogFodexFunV300.Definitions.builtins
+            NativeAgySettingsFodexFunV300.Definitions.builtins
             SubagentFodexFunV300.Definitions.builtins
             CliFodexFunV100.Definitions.builtins
             RemoteFodexFunV209.Definitions.builtins

@@ -553,7 +553,7 @@ module WrapperAgentV301 =
                 let rec execute cause original callback command =
                     if not started then
                         match command with
-                        | WrapperCommandV300.Immediate _ | WrapperCommandV300.Cot _ | WrapperCommandV300.Subagents _
+                        | WrapperCommandV300.Immediate _ | WrapperCommandV300.Cot _ | WrapperCommandV300.Subagents _ | WrapperCommandV300.SubagentsWithType _
                         | WrapperCommandV300.Compact | WrapperCommandV300.Restart | WrapperCommandV300.SendAll -> invalidOp "Wrapper is stopped; start it before submitting work"
                         | _ -> ()
                     // 一次固定清單並先送齊，再等全部結果。每個 operation 仍經既有 owner/IAgent 控制。
@@ -644,8 +644,21 @@ module WrapperAgentV301 =
                             | Error ex -> reply cause callback (Error ex)) |> ignore
                     | WrapperCommandV300.Compact -> beginReplacement cause true callback
                     | WrapperCommandV300.Restart -> beginReplacement cause false callback
-                    | WrapperCommandV300.Subagents(count,mode,instruction) ->
+                    | WrapperCommandV300.Subagents(count,mode,instruction)
+                    | WrapperCommandV300.SubagentsWithType(count,mode,None,instruction) ->
                         let chosen=mode |> Option.defaultWith(fun () -> match factories.Transport with Mcp -> SubagentModeV300.Wrapper | ShellClient _ -> SubagentModeV300.Raw)
+                        asyncResult (factories.Subagents(owner,count,chosen)) (function
+                            | Error ex -> reply cause callback (Error ex)
+                            | Ok(transport,children) ->
+                                let prompt=leadership(transport,children,instruction) |> required
+                                enqueue cause prompt None false
+                                reply cause callback (Ok(sprintf "Added %d %A sub participants; existing participants retained; leadership prompt queued" children.Length chosen)))
+                    | WrapperCommandV300.SubagentsWithType(count,mode,Some agentType,instruction) ->
+                        let baseMode=mode |> Option.defaultWith(fun () -> match factories.Transport with Mcp -> SubagentModeV300.Wrapper | ShellClient _ -> SubagentModeV300.Raw)
+                        let chosen=
+                            match baseMode with
+                            | SubagentModeV300.Raw | SubagentModeV300.RawWithType _ -> SubagentModeV300.RawWithType agentType
+                            | SubagentModeV300.Wrapper | SubagentModeV300.WrapperWithType _ -> SubagentModeV300.WrapperWithType agentType
                         asyncResult (factories.Subagents(owner,count,chosen)) (function
                             | Error ex -> reply cause callback (Error ex)
                             | Ok(transport,children) ->
@@ -745,8 +758,19 @@ module WrapperAgentV301 =
                             | WrapperCommandV300.Start selector -> withSelected selector (fun selected -> lifecycle cause (Some callback) ParticipantLifecycleV300.Start selected true)
                             | WrapperCommandV300.StopParticipants selector -> withSelected selector (fun selected -> lifecycle cause (Some callback) ParticipantLifecycleV300.Stop selected true)
                             | WrapperCommandV300.Cancel selector -> withSelected selector (fun selected -> execute cause text (Some callback) (WrapperCommandV300.Cancel selected))
-                            | WrapperCommandV300.Subagents(count,mode,_) ->
+                            | WrapperCommandV300.Subagents(count,mode,_)
+                            | WrapperCommandV300.SubagentsWithType(count,mode,None,_) ->
                                 let chosen=mode |> Option.defaultWith(fun () -> match factories.Transport with Mcp -> SubagentModeV300.Wrapper | ShellClient _ -> SubagentModeV300.Raw)
+                                asyncResult (factories.Subagents(owner,count,chosen)) (function
+                                    | Error ex -> finish callback (Error ex)
+                                    | Ok(_,children) ->
+                                        finish callback (Ok(JsonSerializer.Serialize {|created=children |> Array.map(fun (who,p) -> {|who=who;n=fst p|})|})))
+                            | WrapperCommandV300.SubagentsWithType(count,mode,Some agentType,_) ->
+                                let baseMode=mode |> Option.defaultWith(fun () -> match factories.Transport with Mcp -> SubagentModeV300.Wrapper | ShellClient _ -> SubagentModeV300.Raw)
+                                let chosen=
+                                    match baseMode with
+                                    | SubagentModeV300.Raw | SubagentModeV300.RawWithType _ -> SubagentModeV300.RawWithType agentType
+                                    | SubagentModeV300.Wrapper | SubagentModeV300.WrapperWithType _ -> SubagentModeV300.WrapperWithType agentType
                                 asyncResult (factories.Subagents(owner,count,chosen)) (function
                                     | Error ex -> finish callback (Error ex)
                                     | Ok(_,children) ->

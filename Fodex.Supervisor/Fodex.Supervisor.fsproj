@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <PlatformTarget>x64</PlatformTarget>
@@ -72,6 +72,9 @@
     <Compile Include="NativeCompactFodexFunV300.fsx"><Link>fodexFun/NativeCompact/NativeCompactFodexFunV300.fsx</Link></Compile>
     <Compile Include="ParticipantListingFodexFunV300.fsx"><Link>fodexFun/ParticipantListing/ParticipantListingFodexFunV300.fsx</Link></Compile>
     <Compile Include="NativeModelCatalogFodexFunV300.fsx"><Link>fodexFun/NativeModelCatalog/NativeModelCatalogFodexFunV300.fsx</Link></Compile>
+    <Compile Include="NativeAgyModelCatalogFodexFunV300.fsx"><Link>fodexFun/NativeAgyModelCatalog/NativeAgyModelCatalogFodexFunV300.fsx</Link></Compile>
+    <Compile Include="NativeAgySettingsFodexFunV300.fsx"><Link>fodexFun/NativeAgySettings/NativeAgySettingsFodexFunV300.fsx</Link></Compile>
+    <Compile Include="NativeAgyFodexFunV300.fsx"><Link>fodexFun/NativeAgy/NativeAgyFodexFunV300.fsx</Link></Compile>
     <Compile Include="NativeAppServerV300.fsx"><Link>fodexFun/NativeAppServer/NativeAppServerV300.fsx</Link></Compile>
     <Compile Include="NativeAgentV300.fsx"><Link>fodexFun/NativeAgent/NativeAgentV300.fsx</Link></Compile>
     <Compile Include="SubagentFodexFunV300.fsx"><Link>fodexFun/Subagent/SubagentFodexFunV300.fsx</Link></Compile>
@@ -127,6 +130,9 @@
     <None Include="WrapperIAgentDemo.M019.R002.fsx"><Link>Demo/WrapperIAgentDemo.M019.R002.fsx</Link></None>
     <None Include="Start-M019.R002.ps1"><Link>Demo/Start-M019.R002.ps1</Link></None>
     <None Include="README.M019.R002.md"><Link>Demo/README.M019.R002.md</Link></None>
+    <None Include="WrapperIAgentDemo.M020.fsx"><Link>Demo/WrapperIAgentDemo.M020.fsx</Link></None>
+    <None Include="Start-M020.ps1"><Link>Demo/Start-M020.ps1</Link></None>
+    <None Include="README.M020.md"><Link>Demo/README.M020.md</Link></None>
     <Compile Include="NativeOrderHubV104.fsx"><Link>fodexFun/NativeOrderHub/NativeOrderHubV104.fsx</Link></Compile>
     <Compile Include="HubToolsV103.fsx"><Link>fodexFun/HubTools/HubToolsV103.fsx</Link></Compile>
     <Compile Include="HubClientV101.fsx"><Link>fodexFun/HubClient/HubClientV101.fsx</Link></Compile>

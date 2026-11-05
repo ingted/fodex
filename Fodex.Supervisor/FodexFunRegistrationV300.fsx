@@ -38,6 +38,8 @@ module FodexFunRegistrationV300 =
         NativeCompactFodexFunV300.register node
         ParticipantListingFodexFunV300.register node
         NativeModelCatalogFodexFunV300.register node
+        NativeAgyModelCatalogFodexFunV300.register node
+        NativeAgySettingsFodexFunV300.register node
         // 此既有 policy 只依明確 role 分類 work/cot；M017 的 context 使用 V300 policy。
         ExplicitCotFodexFunV208.register node
 
@@ -61,7 +63,11 @@ module FodexFunRegistrationV300 =
         <@ fun _ -> fun (owner,arguments,factories) -> WrapperAgentV300.create node loop owner arguments ctx factories @>
     let rawQuotation node loop cs ctx models : Expr<(ReActParticipant * string) -> FeasibleT<_,IActorRef,exn>> =
         <@ fun _ -> fun (participant,arguments) ->
-            try NativeExecV300.createRaw models node loop cs participant arguments ctx
+            try
+                let options = SupervisorArgs.parseText ctx arguments |> ReActLoopHandlerV300.required
+                match options.GetResult(Native_Adapter, defaultValue="exec") with
+                | "agy" -> NativeAgyV300.createRaw models node loop cs participant arguments ctx
+                | _ -> NativeExecV300.createRaw models node loop cs participant arguments ctx
             with ex -> Error ex @>
 
     let registerFactories node loop cs ctx models =

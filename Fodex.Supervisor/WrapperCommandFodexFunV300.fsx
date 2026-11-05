@@ -13,7 +13,16 @@ open Fodex.Supervisor.Contracts.Concepts
 type ParticipantSelectorV300 = Main | Number of int64 | Range of int64 * int64 | Numbers of int64 list | All
 
 [<RequireQualifiedAccess>]
-type SubagentModeV300 = Raw | Wrapper
+type SubagentTypeV300 = Codex | Agy
+
+[<RequireQualifiedAccess>]
+type SubagentModeV300 =
+    | Raw
+    | Wrapper
+    | RawWithType of SubagentTypeV300
+    | WrapperWithType of SubagentTypeV300
+
+
 
 /// None 表示 toggle；不與 effort 做隱含轉換。
 [<RequireQualifiedAccess>]
@@ -27,6 +36,7 @@ type WrapperCommandV300 =
     | ReviewFailures of first: int * last: int option
     | Cot of string | Compact | Restart | ListParticipants | Help
     | Subagents of count: int * mode: SubagentModeV300 option * instruction: string option
+    | SubagentsWithType of count: int * mode: SubagentModeV300 option * agentType: SubagentTypeV300 option * instruction: string option
     | Cancel of ParticipantSelectorV300
     | Start of ParticipantSelectorV300
     | Remove of ParticipantSelectorV300
@@ -57,6 +67,7 @@ type WrapperArgumentV300 =
     | [<CustomCommandLine("--list_participant")>] List_Participants
     | [<CustomCommandLine("--subagent")>] Subagents of int
     | Subagent_Mode of string
+    | Subagent_Type of string
     | Cancel | Start | Remove
     | [<CustomCommandLine("--native_compact")>] Native_Compact
     | Stop_Main | Stop_Participants
@@ -80,7 +91,7 @@ type WrapperArgumentV300 =
             | WrapperArgumentV300.Compact -> "/wrapper_compact\n  中斷 main、分批摘要 graph，再交接給新 main。"
             | WrapperArgumentV300.Restart -> "/wrapper_restart\n  更換 main，不帶入舊 handover。"
             | WrapperArgumentV300.List_Participants -> "/list_participant\n  列出尚未 remove 的 participant；Stopped 仍可 /start。"
-            | WrapperArgumentV300.Subagents _ -> "/subagent(N[,raw|wrapper]) [instruction]\n  每次新增 N 個 sub；省略種類才使用啟動預設，不覆蓋既有 who/N。"
+            | WrapperArgumentV300.Subagents _ -> "/subagent(N[,raw|wrapper][,codex|agy]) [instruction]\n  每次新增 N 個 sub；省略種類或類型才使用啟動預設，不覆蓋既有 who/N。"
             | WrapperArgumentV300.Cancel -> "/cancel(N|i..j|i,j,k|ALL)\n  取消目前工作，保留 SID 與待辦。"
             | WrapperArgumentV300.Start -> "/start(N|i..j|i,j,k|ALL)\n  啟動已停止的 participant，沿用原 N 與 SID；remove 後不可 start。"
             | WrapperArgumentV300.Remove -> "/remove(N|i..j|i,j,k|ALL)\n  停止並解除 sub participant，從清單隱藏；歷史 graph/SQL 保留、N 不重用。"
@@ -95,7 +106,7 @@ type WrapperArgumentV300 =
             | WrapperArgumentV300.Trace -> "/trace [on|off|status]\n  原始 I/O 寫入獨立 NLog JSONL；預設關閉。"
             | WrapperArgumentV300.Help -> "/help\n  顯示 Argu 命令說明。"
             | WrapperArgumentV300.Participant_Numbers _ | WrapperArgumentV300.Participant_Range _
-            | WrapperArgumentV300.Participant_All | WrapperArgumentV300.Subagent_Mode _ -> ""
+            | WrapperArgumentV300.Participant_All | WrapperArgumentV300.Subagent_Mode _ | WrapperArgumentV300.Subagent_Type _ -> ""
 
 module WrapperCommandFodexFunV300 =
     [<Literal>]
@@ -145,7 +156,11 @@ module WrapperCommandFodexFunV300 =
         elif name="subagent" && indexed then
             match split indices with
             | [|count|] -> [|"--subagent";count|],payload
-            | [|count;mode|] -> [|"--subagent";count;"--subagent-mode";mode|],payload
+            | [|count;mode|] ->
+                let m=mode.ToLowerInvariant()
+                if m="agy" || m="codex" then [|"--subagent";count;"--subagent-type";mode|],payload
+                else [|"--subagent";count;"--subagent-mode";mode|],payload
+            | [|count;mode;agentType|] -> [|"--subagent";count;"--subagent-mode";mode;"--subagent-type";agentType|],payload
             | _ -> invalidArg "input" "Use /subagent(count[,raw|wrapper]) [instruction]"
         else
             Array.append [|"--"+name|] (if indexed then split indices else [||]),payload
@@ -181,9 +196,17 @@ module WrapperCommandFodexFunV300 =
                                       | "wrapper" | "wrappers" -> Some SubagentModeV300.Wrapper
                                       | _ -> invalidArg "mode" "Subagent mode must be raw or wrapper"
                          | _ -> invalidArg "mode" "Expected only one subagent mode"
+                let types=results |> List.choose(function WrapperArgumentV300.Subagent_Type value -> Some value | _ -> None)
+                let agentType=match types with
+                              | [] -> None
+                              | [value] -> match value.ToLowerInvariant() with
+                                           | "codex" -> Some SubagentTypeV300.Codex
+                                           | "agy" -> Some SubagentTypeV300.Agy
+                                           | _ -> invalidArg "type" "Subagent type must be codex or agy"
+                              | _ -> invalidArg "type" "Expected only one subagent type"
                 let commands=results |> List.filter(function
                     | WrapperArgumentV300.Participant_Numbers _ | WrapperArgumentV300.Participant_Range _
-                    | WrapperArgumentV300.Participant_All | WrapperArgumentV300.Subagent_Mode _ -> false
+                    | WrapperArgumentV300.Participant_All | WrapperArgumentV300.Subagent_Mode _ | WrapperArgumentV300.Subagent_Type _ -> false
                     | _ -> true)
                 let command=match commands with [value] -> value | _ -> invalidArg "input" "Expected exactly one wrapper command"
                 let supportsSelector=match command with
@@ -192,7 +215,7 @@ module WrapperCommandFodexFunV300 =
                                      | WrapperArgumentV300.Start | WrapperArgumentV300.Remove | WrapperArgumentV300.Stop_Participants -> true
                                      | _ -> false
                 if selected.IsSome && not supportsSelector then invalidArg "selector" "This command does not use participant numbers"
-                match command with WrapperArgumentV300.Subagents _ -> () | _ when mode.IsSome -> invalidArg "mode" "Only subagent accepts a mode" | _ -> ()
+                match command with WrapperArgumentV300.Subagents _ -> () | _ when mode.IsSome || agentType.IsSome -> invalidArg "mode" "Only subagent accepts mode or type" | _ -> ()
                 let selection required=match selected with Some value -> value | None when not required -> ParticipantSelectorV300.Main | _ -> invalidArg "selector" "Participant selector is required"
                 let text ()=payload |> Option.filter(String.IsNullOrWhiteSpace >> not) |> Option.defaultWith(fun () -> invalidArg "input" "Prompt/value is required")
                 let withoutText result=if payload.IsSome then invalidArg "input" "This command does not accept a text payload" else result
@@ -235,7 +258,10 @@ module WrapperCommandFodexFunV300 =
                            | WrapperArgumentV300.Help -> withoutText WrapperCommandV300.Help
                            | WrapperArgumentV300.Show -> WrapperCommandV300.ShowOutput(selection false,outputFlag())
                            | WrapperArgumentV300.Trace -> WrapperCommandV300.TraceOutput(outputFlag())
-                           | WrapperArgumentV300.Subagents n -> WrapperCommandV300.Subagents(positive n,mode,payload)
+                           | WrapperArgumentV300.Subagents n ->
+                               match agentType with
+                               | Some t -> WrapperCommandV300.SubagentsWithType(positive n,mode,Some t,payload)
+                               | None -> WrapperCommandV300.Subagents(positive n,mode,payload)
                            | WrapperArgumentV300.Cancel -> withoutText(WrapperCommandV300.Cancel(selection true))
                            | WrapperArgumentV300.Start -> withoutText(WrapperCommandV300.Start(selection true))
                            | WrapperArgumentV300.Remove -> withoutText(WrapperCommandV300.Remove(selection true))

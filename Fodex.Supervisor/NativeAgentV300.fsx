@@ -14,11 +14,11 @@ open Akka.FSharp
 open Fodex.Supervisor.Contracts.CommandMod
 open Fodex.Supervisor.Contracts.CoreMod
 
-/// raw worker 不建立 IAgent。OrderHub 只送本機訊息，原生 process/session 仍由同一 exec actor 管理。
-type RawExecInputV300 =
-    | RawOrder of ReActParticipant * Guid * string * CancellationToken * TaskCompletionSource<Result<string * string,exn>>
-    | RawControl of WrapperCommandV300 * TaskCompletionSource<Result<string,exn>>
-    | RawCancel of Guid
+/// 舊位置備查；型別已移至 NativeSettingsFodexFunV300.fsx 供多 adapter 共用。
+// type RawExecInputV300 =
+//     | RawOrder of ReActParticipant * Guid * string * CancellationToken * TaskCompletionSource<Result<string * string,exn>>
+//     | RawControl of WrapperCommandV300 * TaskCompletionSource<Result<string,exn>>
+//     | RawCancel of Guid
 
 module NativeExecV300 =
     // exec stdin 在送完 prompt 後即關閉，沒有 active-turn steer 的協定。
@@ -416,4 +416,5 @@ module NativeAgentV300 =
             match options.GetResult(Native_Adapter,defaultValue="app-server") with
             | "app-server" -> NativeAppServerV300.create models configuration node loop cs participant arguments ctx
             | "exec" -> NativeExecV300.create models configuration node loop cs participant arguments ctx
+            | "agy" -> NativeAgyV300.create models configuration node loop cs participant arguments ctx
             | value -> Error(ArgumentException("Unknown native adapter: " + value) :> exn))

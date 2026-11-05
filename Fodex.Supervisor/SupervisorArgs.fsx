@@ -16,6 +16,10 @@ type SupervisorArgument =
     | Sandbox of string
     | Prompt of string
     | Role of string
+    | Agy_Exe of string
+    | Subagent_Type of string
+    | Native_Agy_Model of string
+    | Native_Agy_Effort of string
     interface IArgParserTemplate with
         member _.Usage = "v1.0.0 Supervisor option"
 
