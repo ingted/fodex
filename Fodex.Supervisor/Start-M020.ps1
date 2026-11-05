@@ -2,9 +2,11 @@
 # Default adapter: agy (Google Antigravity CLI); subagent-type: codex.
 # Edit defaultArgumentsText in WrapperIAgentDemo.M020.fsx; optional CLI arguments override those defaults.
 # Usage examples:
-#   .\Start-M020.ps1                                              # Interactive mode (;; to submit)
-#   .\Start-M020.ps1 --interactive false --prompt "Hello Agy"     # Headless single prompt execution
-#   .\Start-M020.ps1 --native-adapter exec                        # Switch main adapter to Codex exec
+#   .\Start-M020.ps1                                              # Interactive mode (預設 main=agy, subagent=codex)
+#   .\Start-M020.ps1 --mainagent-type codex                       # 指定 Main Agent 為 Codex (app-server)
+#   .\Start-M020.ps1 --mainagent-type codex --native-adapter exec # 指定 Main Agent 為 Codex CLI exec
+#   .\Start-M020.ps1 --subagent-type agy                          # 指定預設 Subagent 為 agy
+#   .\Start-M020.ps1 --interactive false --prompt "Hello"         # Headless single prompt execution
 param()
 
 $ErrorActionPreference = 'Stop'

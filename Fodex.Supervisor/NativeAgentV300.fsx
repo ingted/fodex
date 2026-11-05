@@ -414,7 +414,9 @@ module NativeAgentV300 =
     let create models configuration node loop cs participant arguments ctx =
         SupervisorArgs.parseText ctx arguments |> Result.bind (fun options ->
             match options.GetResult(Native_Adapter,defaultValue="app-server") with
-            | "app-server" -> NativeAppServerV300.create models configuration node loop cs participant arguments ctx
+            // 原版備查：
+            // | "app-server" -> NativeAppServerV300.create models configuration node loop cs participant arguments ctx
+            | "app-server" | "codex" -> NativeAppServerV300.create models configuration node loop cs participant arguments ctx
             | "exec" -> NativeExecV300.create models configuration node loop cs participant arguments ctx
             | "agy" -> NativeAgyV300.create models configuration node loop cs participant arguments ctx
             | value -> Error(ArgumentException("Unknown native adapter: " + value) :> exn))

@@ -60,9 +60,22 @@ cd F:\fodex\Fodex.Supervisor
 ```
 執行完畢後會印出回答並自動呼叫 `stop ()` 退出（Exit Code 0）。
 
-#### C. 切換 Native Adapter 為 Codex
+#### C. 指定 Main Agent 與 Subagent 核心類型 (`--mainagent-type` 與 `--subagent-type`)
+M020 支援對稱的 Agent 類型指定：
+- `--mainagent-type agy`：指定 Main Wrapper 為 Google Antigravity（預設 adapter: `agy`，預設 model: `gemini-3.8-flash-high`）。
+- `--mainagent-type codex`：指定 Main Wrapper 為 OpenAI Codex（預設 adapter: `app-server`，預設 model: `gpt-6.1-sol`）。若欲使用 CLI exec，可加上 `--native-adapter exec`。
+- `--subagent-type codex|agy`：指定預設 Subagent 核心類型（預設為 `codex`）。
+
+範例：
 ```powershell
-.\Start-M020.ps1 --native-adapter exec --model gpt-6.1-sol --effort high
+# 1. Main 為 Codex (app-server)，預設 Subagent 為 agy
+.\Start-M020.ps1 --mainagent-type codex --subagent-type agy
+
+# 2. Main 為 Codex CLI exec，手動指定模型
+.\Start-M020.ps1 --mainagent-type codex --native-adapter exec --model gpt-6.1-sol
+
+# 3. Main 為 Agy，預設 Subagent 為 Codex (預設行為)
+.\Start-M020.ps1 --mainagent-type agy --subagent-type codex
 ```
 
 ---

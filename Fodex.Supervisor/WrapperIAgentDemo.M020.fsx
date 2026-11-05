@@ -26,6 +26,7 @@ type ConsoleArguments =
     | Fast of bool
     | Memory of bool
     | Native_Adapter of string
+    | Mainagent_Type of string
     | Subagent_Mode of string
     | Subagent_Type of string
     | Agy_Exe of string
@@ -46,6 +47,7 @@ let defaultArgumentsText="""
 --effort high
 --fast false
 --memory true
+--mainagent-type agy
 --native-adapter agy
 --subagent-mode wrappers
 --subagent-type codex
@@ -72,15 +74,37 @@ let ctx=UniLogger.toCtx(toUL(UniversalLogger<_>(logger)),"M020")
 ctx.logger.Tags["traceFile"]<-logger.Properties["traceFile"]
 let session=options.GetResult(Session,defaultValue=Guid.NewGuid()),Some(IPAddress.Parse(options.GetResult Bind_Ip))
 
+let mainagentType =
+    match options.TryGetResult Mainagent_Type with
+    | Some t -> t.ToLowerInvariant()
+    | None ->
+        match options.TryGetResult Native_Adapter with
+        | Some "agy" -> "agy"
+        | Some _ -> "codex"
+        | None -> "agy"
+
+let adapterOverridden = overrides |> Seq.exists (function Native_Adapter _ -> true | _ -> false)
+let effectiveAdapter =
+    if adapterOverridden then options.GetResult Native_Adapter
+    elif mainagentType = "agy" then "agy"
+    else "app-server"
+
+let modelOverridden = overrides |> Seq.exists (function Model _ -> true | _ -> false)
+let effectiveModel =
+    if modelOverridden then options.GetResult Model
+    elif mainagentType = "agy" then "gemini-3.8-flash-high"
+    else "gpt-6.1-sol"
+
 let nativeArguments =
     let extra = match options.TryGetResult Agy_Exe with Some exe -> [SupervisorArgument.Agy_Exe exe] | None -> []
     let baseArgs = [
-        SupervisorArgument.Model(options.GetResult Model)
+        SupervisorArgument.Model effectiveModel
         SupervisorArgument.Effort(options.GetResult Effort)
-        SupervisorArgument.Native_Adapter(options.GetResult Native_Adapter)
+        SupervisorArgument.Native_Adapter effectiveAdapter
         SupervisorArgument.Working_Directory(options.GetResult Working_Directory)
         SupervisorArgument.Sandbox "danger-full-access"
         SupervisorArgument.Subagent_Type(options.GetResult Subagent_Type)
+        SupervisorArgument.Mainagent_Type mainagentType
     ]
     let allArgs = baseArgs @ extra
     sprintf "%s --fast %b --memory %b" (SupervisorArgs.format allArgs) (options.GetResult Fast) (options.GetResult(Memory,defaultValue=true))
@@ -154,7 +178,7 @@ let commandUsage=ReActLoopHandlerV300.bind<unit,string> node WrapperCommandFodex
 
 let started=lazy (
     let cs=connectionString()
-    let adapter=options.GetResult Native_Adapter
+    let adapter=effectiveAdapter
     let models=
         if adapter="agy" then
             print "[startup] 查詢 agy models..."
@@ -221,8 +245,8 @@ let stop ()=
         NLog.LogManager.Flush()
         print "M020 closed."
 
-print(sprintf "M020 console ready. Wrapper sid=%A\nEVIDENCE=%s\nAdapter=%s; subagents=%s (type=%s); model=%s; effort=%s"
-    session evidence (options.GetResult Native_Adapter) (options.GetResult Subagent_Mode) (options.GetResult Subagent_Type) (options.GetResult Model) (options.GetResult Effort))
+print(sprintf "M020 console ready. Wrapper sid=%A\nEVIDENCE=%s\nMain=%s (adapter=%s, model=%s); subagents=%s (type=%s); effort=%s"
+    session evidence mainagentType effectiveAdapter effectiveModel (options.GetResult Subagent_Mode) (options.GetResult Subagent_Type) (options.GetResult Effort))
 
 if options.GetResult Interactive then
     print "模型程序尚未啟動；第一筆有效的非 /help 指令或 prompt 才建立／恢復 main，並發布 REMOTE_OWNER。"
