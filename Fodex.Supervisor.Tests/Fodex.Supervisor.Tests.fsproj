@@ -127,6 +127,10 @@
     <None Include="M018ConsoleInputSmoke.fsx" />
     <Compile Include="ImplementationTestSupportV301.fsx" />
     <Compile Include="FodexFunRegistrationV400Tests.fsx" />
+    <Compile Include="IAgentRequestFodexFunV401Tests.fsx" />
+    <Compile Include="SubagentCreationFodexFunV401Tests.fsx" />
+    <Compile Include="FodexFunRegistrationV401Tests.fsx" />
+    <Compile Include="HubClientFodexFunV101Tests.fsx" />
     <Compile Include="FodexFunBindingTests.fsx" />
     <Compile Include="OrderHubFodexFunV301Tests.fsx" />
     <Compile Include="SubagentFodexFunV301Tests.fsx" />

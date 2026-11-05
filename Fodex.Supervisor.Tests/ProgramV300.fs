@@ -45,6 +45,10 @@ let main argv =
             FodexFunBindingTests.tests; FodexFunRegistrationV300Tests.tests
             FodexFunInitializationTests.tests
             FodexFunRegistrationV400Tests.tests
+            IAgentRequestFodexFunV401Tests.tests
+            SubagentCreationFodexFunV401Tests.tests
+            FodexFunRegistrationV401Tests.tests
+            HubClientFodexFunV101Tests.tests
             FodexFunRegistrationV301Tests.tests; WrapperCompositionV302Tests.tests
         ]
         testList "DemoAndConsole" [

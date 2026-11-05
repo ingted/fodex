@@ -123,3 +123,22 @@ BaseCD 只保存編譯隨附的預設定義，啟動宣告不寫 DB；node CD �
 - 非同步 operation 的錯誤在 await 後仍遵守約定的 Result 通道，不能把 Ok(Task) 誤當作工作成功。
 
 以上各項需要對應可執行 assertions 後，才可以將被取代的舊檔退出 Compile。未完成條目不以空 testCase、永遠成功 assertion 或 skip 充數。
+
+## Request 與 agy 相容的 V401 實作（2026-11-06）
+
+本段接續使用者已確認的 `IAgent.Request`；以 `9f7a48b` 的 agy/mainagent-type 程式為起點，保留工作樹原有的 agy 測試與 notes 變更。未修改舊 V300/V301/V400，也未切換 M019/M020 的建立入口。
+
+| 測試檔 | 需求與可執行驗證 | 修正前證據 |
+|---|---|---|
+| `IAgentRequestFodexFunV401Tests.fsx` | eval/Invoke 後經 `IAgent.Request` 送達 actor；空回覆、失敗、逾時、late reply、native 不支援、SQL quotation roundtrip | `request-red.trx`：5 個案例失敗，缺少已宣告的 operation |
+| `SubagentCreationFodexFunV401Tests.fsx` | wrapper command 保留 raw/wrapper 與 agy；省略 provider 沿用設定；raw factory 真正建立 agy actor；未知 adapter 明確失敗 | `subagent-red.trx`：V400 的 4 個真實失敗；切換到 V401 後保持同一組 assertions |
+| `FodexFunRegistrationV401Tests.fsx` | raw/wrapper/root 三個 q 寫 SQL、讀回及 eval；root 保留實作回傳的同一 IAgent 物件 | root 身分規則承接 V400；新版 q 補上序列化驗證 |
+| `HubClientFodexFunV101Tests.fsx` | 無 ActorSystem 的 BaseCD lookup、eval/Invoke、HTTP 失敗與取消回 Error、不重送、SQL roundtrip | `hub-client-red.trx`：4 個案例失敗，缺少版本定義 |
+
+本段 Release 完整驗證 291/291，無 skipped；其中新增 16 項。證據保存在 ignored `artifacts/refactor-20261106/`。測試使用正常 SQL fixture、實際 registry/actor/FGL；生成 transport 使用 fixture，沒有據此宣稱 Codex/agy CLI 的端到端生成已驗證。建置使用隔離 artifacts，未覆寫正在執行的 M019/M020 DLL。
+
+四份新測試另以獨立 FSI 執行，共 16/16 通過；第一次 subagent FSI 有一例在 SQL fixture 的 ExecuteNonQuery 逾時，原始 log 保留，未修改 assertions 或提高 timeout，新的 FSI 程序重跑 5/5 通過。現有證據不足以斷定該次 SQL 等待的根因。Compiled client 另以 loopback HTTP fixture 實跑成功與 503 兩條出口，確認 scoped URL、stdout、exit code 與不重送。
+
+`HubClientMain` 已改用 `FodexFun.pin (Some "1.0.1")` 及 `FeasibleFun.invoke`，原 HTTP/Argu helper 留存。Request 使用已 pin 的 Send operation；不從 UI 直接 Tell actor，不把 `Ok(Task)` 當作完成，也不因逾時自動重送。
+
+後續仍須把 multiple/mixed participant 的建立、控制與派工移到 ReActLoop member，才能撤掉 composition callback tuple／FodexEntry；本段不將這些未遷移項目標為完成。

@@ -122,6 +122,11 @@
     <Compile Include="ReActLoopHandlerV400.fsx"><Link>fodexFun/ReActLoopHandler/ReActLoopHandlerV400.fsx</Link></Compile>
     <Compile Include="WrapperAgentV400.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV400.fsx</Link></Compile>
     <Compile Include="FodexFunRegistrationV400.fsx"><Link>fodexFun/FodexFunRegistration/FodexFunRegistrationV400.fsx</Link></Compile>
+    <Compile Include="WrapperAgentV401.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV401.fsx</Link></Compile>
+    <Compile Include="FodexFunRegistrationV401.fsx"><Link>fodexFun/FodexFunRegistration/FodexFunRegistrationV401.fsx</Link></Compile>
+    <Compile Include="IAgentRequestFodexFunV401.fsx"><Link>fodexFun/IAgentRequest/IAgentRequestFodexFunV401.fsx</Link></Compile>
+    <Compile Include="HubClientV101.fsx"><Link>fodexFun/HubClient/HubClientV101.fsx</Link></Compile>
+    <Compile Include="HubClientFodexFunV101.fsx"><Link>fodexFun/HubClient/HubClientFodexFunV101.fsx</Link></Compile>
     <Compile Include="FodexFunctions.fsx" />
     <Compile Include="FodexEntry.fsx" />
     <None Include="M017CompositionV300.fsx"><Link>Archive/fodexFun/M017Composition/M017CompositionV300.fsx</Link></None>
@@ -135,7 +140,6 @@
     <None Include="README.M020.md"><Link>Demo/README.M020.md</Link></None>
     <Compile Include="NativeOrderHubV104.fsx"><Link>fodexFun/NativeOrderHub/NativeOrderHubV104.fsx</Link></Compile>
     <Compile Include="HubToolsV103.fsx"><Link>fodexFun/HubTools/HubToolsV103.fsx</Link></Compile>
-    <Compile Include="HubClientV101.fsx"><Link>fodexFun/HubClient/HubClientV101.fsx</Link></Compile>
     <Compile Include="WrapperTurnTimingV100.fsx"><Link>fodexFun/WrapperTurnTiming/WrapperTurnTimingV100.fsx</Link></Compile>
     <None Include="HubParticipantsV101.fsx"><Link>Archive/fodexFun/HubParticipants/HubParticipantsV101.fsx</Link></None>
     <None Include="HubParticipantsV102.fsx"><Link>Archive/fodexFun/HubParticipants/HubParticipantsV102.fsx</Link></None>

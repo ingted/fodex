@@ -47,6 +47,9 @@ module FodexFunctions =
             ContextFodexFunV400.Definitions.builtins
             ReActDataStoreV400.Definitions.builtins
             FodexFunRegistrationV400.Definitions.builtins
+            FodexFunRegistrationV401.Definitions.builtins
+            IAgentRequestFodexFunV401.Definitions.builtins
+            HubClientFodexFunV101.Definitions.builtins
         |]
         |> Array.concat
 
