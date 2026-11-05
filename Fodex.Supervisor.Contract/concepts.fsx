@@ -36,6 +36,10 @@ module LiteralsMod =
     [<Literal>]
     let targetReActLoopUpsertParticipant = "ReActLoopUpsertParticipant"
     [<Literal>]
+    let targetReActLoopCreateParticipants = "ReActLoopCreateParticipants"
+    [<Literal>]
+    let targetReActLoopControlParticipants = "ReActLoopControlParticipants"
+    [<Literal>]
     let targetReActLoopRemoveParticipant = "ReActLoopRemoveParticipant"
     [<Literal>]
     let targetReActLoopResolveParticipant = "ReActLoopResolveParticipant"
@@ -100,6 +104,8 @@ module CommandMod =
     | WrapperAgent of CommandVersion
     | ReActLoopHandler of CommandVersion
     | ReActLoopUpsertParticipant of CommandVersion
+    | ReActLoopCreateParticipants of CommandVersion
+    | ReActLoopControlParticipants of CommandVersion
     | ReActLoopRemoveParticipant of CommandVersion
     | ReActLoopResolveParticipant of CommandVersion
     | ReActLoopListParticipants of CommandVersion
@@ -355,6 +361,7 @@ module Concepts =
 
 module TypesMod =
     open Akka.Actor
+    open System.Threading.Tasks
     open Concepts
     open CommandMod
 
@@ -378,6 +385,16 @@ module TypesMod =
     //type of IAgent participant acquisition
     type TIAgentAcquireParticipant<'TParticipant, 'TAgent> =
         FeasibleT<'TParticipant * string, 'TAgent, exn>
+
+    /// 建立工作完成後才取得 logical identities；不是 mailbox 接單的 ack。
+    /// owner/count/kind/arguments 都是本次 operation input，registry 的 node 只選擇版本。
+    type TReActLoopCreateParticipants<'TParticipant, 'TKind> =
+        'TParticipant * int * 'TKind * string -> Task<Result<'TParticipant [], exn>>
+
+    /// 外層 Error 表示整筆請求無法執行；Ok 內仍須逐筆檢查，不能掩蓋部分 participant 失敗。
+    type TReActLoopControlParticipants<'TParticipant, 'TControl> =
+        'TParticipant * 'TControl * 'TParticipant [] ->
+            Task<Result<('TParticipant * Result<unit, exn>) [], exn>>
 
     type TReActLoopUpsertParticipant<'TParticipant, 'TAgent> =
         FeasibleT<'TParticipant * 'TAgent, unit, exn>
@@ -419,6 +436,7 @@ module TypesMod =
 
 module CoreMod =
     open System
+    open System.Threading.Tasks
     open System.Collections.Concurrent
     open System.Net
     open Akka.Actor
@@ -558,6 +576,16 @@ module CoreMod =
     | Wrapper
     | Native
     | RawExec
+
+    /// 生命週期意圖，不規定 Process／service／transport 的實作。
+    /// Start：啟用既有 participant；Stop：停止工作並停用，保留身分與 sid 供 Start。
+    /// Cancel：只中斷當前生成，participant 仍可接新工作；Retire：退出可用清單且不再派工。
+    /// Retire 不刪 SQL／graph 歷史，也不回收 Number。這不同於 RemoveParticipant 的 live binding 移除。
+    type ReActParticipantControl =
+    | StartParticipant
+    | StopParticipant
+    | CancelParticipant
+    | RetireParticipant
 
     /// owner 最後確認的狀態，不因 graph 留有節點就代表資源仍存活。
     /// Stopped 表示工作中斷，仍可使用同一身分／sid；Retired 表示不再接受新派工。
@@ -939,6 +967,10 @@ module CoreMod =
 
         let cmd = FodexCommanddHelper.ParseStr ctx argString
 
+        let createParticipantsVersion =
+            cmd.TryGetResult CommonCommand.ReActLoopCreateParticipants
+        let controlParticipantsVersion =
+            cmd.TryGetResult CommonCommand.ReActLoopControlParticipants
         let upsertParticipantVersion =
             cmd.TryGetResult CommonCommand.ReActLoopUpsertParticipant
         let removeParticipantVersion =
@@ -962,6 +994,16 @@ module CoreMod =
         let getParticipantCapabilitiesVersion =
             cmd.TryGetResult CommonCommand.ReActLoopGetParticipantCapabilities
 
+        let versionedCreateParticipants =
+            reActLoopFodexFun<
+                ReActParticipant * int * ReActParticipantKind * string,
+                Task<Result<ReActParticipant [], exn>>
+            > node targetReActLoopCreateParticipants
+        let versionedControlParticipants =
+            reActLoopFodexFun<
+                ReActParticipant * ReActParticipantControl * ReActParticipant [],
+                Task<Result<(ReActParticipant * Result<unit, exn>) [], exn>>
+            > node targetReActLoopControlParticipants
         let versionedUpsertParticipant =
             reActLoopFodexFun<
                 ReActParticipant * IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>,
@@ -1024,6 +1066,8 @@ module CoreMod =
             : FeasibleFun<ReActLoopFunInput<'Input>, 'Success, exn> option =
             FodexFun.pin versionText versioned
 
+        let createParticipants = pinAtStartup createParticipantsVersion versionedCreateParticipants
+        let controlParticipants = pinAtStartup controlParticipantsVersion versionedControlParticipants
         let upsertParticipant = pinAtStartup upsertParticipantVersion versionedUpsertParticipant
         let removeParticipant = pinAtStartup removeParticipantVersion versionedRemoveParticipant
         let resolveParticipant = pinAtStartup resolveParticipantVersion versionedResolveParticipant
@@ -1063,8 +1107,54 @@ module CoreMod =
                     )
                 errorT (ctx, target, versionLabel, err)
 
+        /// 非同步 operation 共用 ROP 邊界；不在 actor caller 裡同步等另一個 mailbox。
+        /// prepare、invoke、faulted/cancelled Task 都回 Error，只在工作完成後記錄結果。
+        let runPinnedAsync target versionText operation operationInput = task {
+            let versionLabel = defaultArg versionText "max-at-startup"
+            let! result = task {
+                try
+                    match operation with
+                    | Some feasibleFun ->
+                        match FeasibleFun.invoke (node, reActLoopHandler, operationInput) feasibleFun with
+                        | Ok work -> return! work
+                        | Error error -> return Error error
+                    | None ->
+                        return Error (exn (sprintf
+                            "%s function for version %s was not pinned at ReActLoop startup"
+                            target versionLabel))
+                with error -> return Error error
+            }
+            return
+                match result with
+                | Ok _ as ok -> infoT (ctx, target, versionLabel, ok)
+                | Error _ as error -> errorT (ctx, target, versionLabel, error)
+        }
+
         member this.Node = node
         member this.ReActLoopHandler = reActLoopHandler
+
+        /// 例：let! result = loop.CreateParticipants(owner, 3, ReActParticipantKind.RawExec, args)。
+        /// 由 loop/handler 統一管理建立、graph 配號及 owner 關係；成功時回傳可控制的 identities。
+        /// count 是本次新增數量，不是目標總數；不同批次可混合 wrapper/native/raw，N 不回收。
+        /// Codex／agy、遠端部署與 process 設定由 implementation 解讀 argString，不成為 Contract enum。
+        /// Name/who、實際 sid 仍從 graph metadata 讀取；不回傳 callback tuple、Process 或 hub。
+        /// 失敗不能宣稱已建立完整批次；implementation 必須清理本次未成功的資源並留下正確狀態。
+        abstract member CreateParticipants:
+            TReActLoopCreateParticipants<ReActParticipant, ReActParticipantKind>
+        default this.CreateParticipants =
+            fun input ->
+                runPinnedAsync targetReActLoopCreateParticipants createParticipantsVersion createParticipants input
+
+        /// 例：let! outcomes = loop.ControlParticipants(owner, CancelParticipant, selected)。
+        /// UI 的 N/range/ALL 與 MCP selector 先由 graph 解析為 logical identities；此層不解析 slash syntax。
+        /// implementation 檢查 owner 權限／關係，對同一 participant 維持命令順序；重複 identity 只做一次。
+        /// Ok 內為各 participant 的完成結果，保留部分失敗；外層 Error 表示整筆請求無法執行。
+        /// 不因 timeout 自動重送，也不刪除歷史 edge。此 member 不代表 Settings/model/effort 調整。
+        abstract member ControlParticipants:
+            TReActLoopControlParticipants<ReActParticipant, ReActParticipantControl>
+        default this.ControlParticipants =
+            fun input ->
+                runPinnedAsync targetReActLoopControlParticipants controlParticipantsVersion controlParticipants input
 
         // 更新 logical participant 的 live IAgent binding；同一 logical identity 會覆寫目前的 IAgent。
         // 此 API 不等於 metadata／配號的 durable 註冊；raw exec 可以只有 owner worker 而沒有 IAgent。

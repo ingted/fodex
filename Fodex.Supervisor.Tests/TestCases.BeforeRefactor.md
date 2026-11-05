@@ -142,3 +142,12 @@ BaseCD 只保存編譯隨附的預設定義，啟動宣告不寫 DB；node CD �
 `HubClientMain` 已改用 `FodexFun.pin (Some "1.0.1")` 及 `FeasibleFun.invoke`，原 HTTP/Argu helper 留存。Request 使用已 pin 的 Send operation；不從 UI 直接 Tell actor，不把 `Ok(Task)` 當作完成，也不因逾時自動重送。
 
 後續仍須把 multiple/mixed participant 的建立、控制與派工移到 ReActLoop member，才能撤掉 composition callback tuple／FodexEntry；本段不將這些未遷移項目標為完成。
+
+## ReActLoop participant member 草稿（2026-11-06，待使用者 review）
+
+- 前段實作已以 `959adc5` commit/push。修改 Contract 前，先以 `43737bd` 推送 `concepts.202611060553.fsx` 快照；WinMerge 比較該檔與 `concepts.fsx`。
+- 新增 `CreateParticipants(owner, count, kind, argString)` 與 `ControlParticipants(owner, action, participants)`。前者回傳 logical identities，後者逐筆保留成功／失敗；不引入 hub/coordinator/Process 的 Contract type。
+- `ReActParticipantControl` 區分 Start／Stop／Cancel／Retire。TypesMod、LiteralsMod、Argu 版本選擇、startup pin 與非同步 default member 同時補齊。
+- `ReActLoopParticipantOperationsTests.fsx` 先在未加 API 的基線建置確認缺少 type/target/member；新增 17 個案例驗證 input 兩階段、執行 node/handler、版本選擇與固定、node 隔離、pending Task、同步／非同步／取消錯誤、逐 participant 的部分失敗。
+- Release：Contract 76/76、實作重新建置後 291/291；該測試獨立 FSI 17/17，無 skipped。證據：`artifacts/refactor-20261106/participant-contract-red.log`、`contract-participant-green.trx`、`implementation-after-contract.trx`、`fsi-ReActLoopParticipantOperations.log`。
+- 此段只驗證 Contract 介面與相容性。尚未提供兩個新 member 的 production quotation，也未遷移 coordinator/MCP/M019/M020；graph 配號、資源建立／釋放與跨節點控制仍須後續實作驗收。依使用者既定流程停在這個 review 點。

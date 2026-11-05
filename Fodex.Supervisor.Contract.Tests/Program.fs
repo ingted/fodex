@@ -10,6 +10,7 @@ let main _ =
     testList "Contract" [
         FodexFunTests.tests
         IAgentRequestTests.tests
+        ReActLoopParticipantOperationsTests.tests
         VersionRegistryBaselineTests.tests
         VersionRegistryPersistenceTests.tests
         ReActDataStreamTests.tests

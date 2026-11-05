@@ -16,6 +16,7 @@
     <Compile Include="ContractTestSupport.fsx" />
     <Compile Include="FodexFunTests.fsx" />
     <Compile Include="IAgentRequestTests.fsx" />
+    <Compile Include="ReActLoopParticipantOperationsTests.fsx" />
     <Compile Include="VersionRegistryBaselineTests.fsx" />
     <Compile Include="VersionRegistryPersistenceTests.fsx" />
     <Compile Include="ReActDataStreamTests.fsx" />
