@@ -143,6 +143,8 @@
     <Compile Include="ConsolePolicyFodexFunV403Tests.fsx" />
     <Compile Include="ConsolePrinterFodexFunV403Tests.fsx" />
     <Compile Include="ConsoleHostFodexFunV403Tests.fsx" />
+    <Compile Include="ConsolePolicyFodexFunV404Tests.fsx" />
+    <Compile Include="ConsoleHostFodexFunV404Tests.fsx" />
     <Compile Include="FodexFunBindingTests.fsx" />
     <Compile Include="OrderHubFodexFunV301Tests.fsx" />
     <Compile Include="SubagentFodexFunV301Tests.fsx" />

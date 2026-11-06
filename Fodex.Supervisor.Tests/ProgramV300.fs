@@ -61,6 +61,8 @@ let main argv =
             ConsolePolicyFodexFunV403Tests.tests
             ConsolePrinterFodexFunV403Tests.tests
             ConsoleHostFodexFunV403Tests.tests
+            ConsolePolicyFodexFunV404Tests.tests
+            ConsoleHostFodexFunV404Tests.tests
             FodexFunRegistrationV301Tests.tests; WrapperCompositionV302Tests.tests
         ]
         testList "DemoAndConsole" [

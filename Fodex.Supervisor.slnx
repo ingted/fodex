@@ -113,5 +113,7 @@
     <File Path="Fodex.Supervisor.Tests/ConsolePolicyFodexFunV403Tests.fsx" />
     <File Path="Fodex.Supervisor.Tests/ConsolePrinterFodexFunV403Tests.fsx" />
     <File Path="Fodex.Supervisor.Tests/ConsoleHostFodexFunV403Tests.fsx" />
+    <File Path="Fodex.Supervisor.Tests/ConsolePolicyFodexFunV404Tests.fsx" />
+    <File Path="Fodex.Supervisor.Tests/ConsoleHostFodexFunV404Tests.fsx" />
   </Folder>
 </Solution>

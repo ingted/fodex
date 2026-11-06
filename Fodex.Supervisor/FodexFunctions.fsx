@@ -62,6 +62,8 @@ module FodexFunctions =
             ConsolePolicyFodexFunV403.Definitions.builtins
             ConsolePrinterFodexFunV403.Definitions.builtins
             ConsoleHostFodexFunV403.Definitions.builtins
+            ConsolePolicyFodexFunV404.Definitions.builtins
+            ConsoleHostFodexFunV404.Definitions.builtins
         |]
         |> Array.concat
 

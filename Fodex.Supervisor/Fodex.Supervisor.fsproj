@@ -139,6 +139,8 @@
     <Compile Include="ConsolePolicyFodexFunV403.fsx"><Link>fodexFun/Console/ConsolePolicyFodexFunV403.fsx</Link></Compile>
     <Compile Include="ConsolePrinterFodexFunV403.fsx"><Link>fodexFun/Console/ConsolePrinterFodexFunV403.fsx</Link></Compile>
     <Compile Include="ConsoleHostFodexFunV403.fsx"><Link>fodexFun/Console/ConsoleHostFodexFunV403.fsx</Link></Compile>
+    <Compile Include="ConsolePolicyFodexFunV404.fsx"><Link>fodexFun/Console/ConsolePolicyFodexFunV404.fsx</Link></Compile>
+    <Compile Include="ConsoleHostFodexFunV404.fsx"><Link>fodexFun/Console/ConsoleHostFodexFunV404.fsx</Link></Compile>
     <Compile Include="FodexFunctions.fsx" />
     <Compile Include="FodexAgent.fsx" />
     <None Include="FodexEntry.fsx"><Link>Archive/FodexEntry.fsx</Link></None>
@@ -166,7 +168,8 @@
     <None Include="WrapperHubHostingV105.fsx"><Link>Archive/fodexFun/WrapperHubHosting/WrapperHubHostingV105.fsx</Link></None>
     <None Include="NativeHubHostingV106.fsx"><Link>Archive/fodexFun/NativeHubHosting/NativeHubHostingV106.fsx</Link></None>
     <None Include="HubClientMain.fs"><Link>Archive/HubClientMain.fs</Link></None>
-    <Compile Include="ProgramV403.fs" />
+    <None Include="ProgramV403.fs"><Link>Archive/ProgramV403.fs</Link></None>
+    <Compile Include="ProgramV404.fs" />
     <!-- Link changes only the project view; explicit TargetPath preserves runtime config lookup. -->
     <None Include="NLog.conf" CopyToOutputDirectory="PreserveNewest"><Link>Archive/NLog.conf</Link><TargetPath>NLog.conf</TargetPath></None>
     <None Include="NLog.M017.conf" CopyToOutputDirectory="PreserveNewest"><Link>Demo/NLog.M017.conf</Link><TargetPath>NLog.M017.conf</TargetPath></None>
