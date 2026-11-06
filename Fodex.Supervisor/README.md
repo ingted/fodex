@@ -1,5 +1,8 @@
 # Fodex.Supervisor v1.0.0 implementations
 
+目前互動入口請看 [M022：同一 Fodex.Supervisor.exe 的互動模式](README.M022.md)；
+原有 main/sub、wrapper/raw、agy/codex 組合測試保留於 [M021](README.M021.md)。下方是早期版本說明。
+
 目前的 M010–M016 腳本、共用 logger 與驗收方式請看 [README.M010-M016.md](README.M010-M016.md)。
 
 目前 FGL-native 核心開發請看 [README.V200.md](README.V200.md)。以下保留 V100/V101 歷史說明；

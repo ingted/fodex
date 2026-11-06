@@ -58,6 +58,9 @@ let main argv =
             HubHostingFodexFunV402Tests.tests
             FodexAgentFodexFunV402Tests.tests
             M021MixedAgentTests.tests
+            ConsolePolicyFodexFunV403Tests.tests
+            ConsolePrinterFodexFunV403Tests.tests
+            ConsoleHostFodexFunV403Tests.tests
             FodexFunRegistrationV301Tests.tests; WrapperCompositionV302Tests.tests
         ]
         testList "DemoAndConsole" [

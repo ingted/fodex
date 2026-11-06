@@ -140,6 +140,9 @@
     <Compile Include="HubHostingFodexFunV402Tests.fsx" />
     <Compile Include="FodexAgentFodexFunV402Tests.fsx" />
     <Compile Include="M021MixedAgentTests.fsx" />
+    <Compile Include="ConsolePolicyFodexFunV403Tests.fsx" />
+    <Compile Include="ConsolePrinterFodexFunV403Tests.fsx" />
+    <Compile Include="ConsoleHostFodexFunV403Tests.fsx" />
     <Compile Include="FodexFunBindingTests.fsx" />
     <Compile Include="OrderHubFodexFunV301Tests.fsx" />
     <Compile Include="SubagentFodexFunV301Tests.fsx" />

@@ -59,6 +59,9 @@ module FodexFunctions =
             ReActLoopHandlerV402.Definitions.builtins
             HubHostingFodexFunV402.Definitions.builtins
             FodexAgentFodexFunV402.Definitions.builtins
+            ConsolePolicyFodexFunV403.Definitions.builtins
+            ConsolePrinterFodexFunV403.Definitions.builtins
+            ConsoleHostFodexFunV403.Definitions.builtins
         |]
         |> Array.concat
 

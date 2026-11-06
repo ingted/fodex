@@ -107,4 +107,11 @@
     <File Path="Fodex.Supervisor/README.M021.md" />
     <File Path="Fodex.Supervisor.Tests/M021MixedAgentTests.fsx" />
   </Folder>
+  <Folder Name="/M022/">
+    <File Path="Fodex.Supervisor/Start-M022.ps1" />
+    <File Path="Fodex.Supervisor/README.M022.md" />
+    <File Path="Fodex.Supervisor.Tests/ConsolePolicyFodexFunV403Tests.fsx" />
+    <File Path="Fodex.Supervisor.Tests/ConsolePrinterFodexFunV403Tests.fsx" />
+    <File Path="Fodex.Supervisor.Tests/ConsoleHostFodexFunV403Tests.fsx" />
+  </Folder>
 </Solution>

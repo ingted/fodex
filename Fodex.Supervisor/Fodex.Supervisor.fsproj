@@ -136,6 +136,9 @@
     <Compile Include="ReActLoopHandlerV402.fsx"><Link>fodexFun/ReActLoopHandler/ReActLoopHandlerV402.fsx</Link></Compile>
     <Compile Include="HubHostingFodexFunV402.fsx"><Link>fodexFun/HubHosting/HubHostingFodexFunV402.fsx</Link></Compile>
     <Compile Include="FodexAgentFodexFunV402.fsx"><Link>fodexFun/FodexAgent/FodexAgentFodexFunV402.fsx</Link></Compile>
+    <Compile Include="ConsolePolicyFodexFunV403.fsx"><Link>fodexFun/Console/ConsolePolicyFodexFunV403.fsx</Link></Compile>
+    <Compile Include="ConsolePrinterFodexFunV403.fsx"><Link>fodexFun/Console/ConsolePrinterFodexFunV403.fsx</Link></Compile>
+    <Compile Include="ConsoleHostFodexFunV403.fsx"><Link>fodexFun/Console/ConsoleHostFodexFunV403.fsx</Link></Compile>
     <Compile Include="FodexFunctions.fsx" />
     <Compile Include="FodexAgent.fsx" />
     <None Include="FodexEntry.fsx"><Link>Archive/FodexEntry.fsx</Link></None>
@@ -143,6 +146,8 @@
     <None Include="WrapperIAgentDemo.M021.fsx"><Link>Demo/WrapperIAgentDemo.M021.fsx</Link></None>
     <None Include="Start-M021.ps1"><Link>Demo/Start-M021.ps1</Link></None>
     <None Include="README.M021.md"><Link>Demo/README.M021.md</Link></None>
+    <None Include="Start-M022.ps1"><Link>Demo/Start-M022.ps1</Link></None>
+    <None Include="README.M022.md"><Link>Demo/README.M022.md</Link></None>
     <None Include="M017CompositionV300.fsx"><Link>Archive/fodexFun/M017Composition/M017CompositionV300.fsx</Link></None>
     <None Include="SupervisorReferences.fsx"><Link>Demo/SupervisorReferences.fsx</Link></None>
     <None Include="ConsolePrinter.fsx"><Link>Demo/ConsolePrinter.fsx</Link></None>
@@ -160,7 +165,8 @@
     <None Include="NativeHubParticipantsV103.fsx"><Link>Archive/fodexFun/NativeHubParticipants/NativeHubParticipantsV103.fsx</Link></None>
     <None Include="WrapperHubHostingV105.fsx"><Link>Archive/fodexFun/WrapperHubHosting/WrapperHubHostingV105.fsx</Link></None>
     <None Include="NativeHubHostingV106.fsx"><Link>Archive/fodexFun/NativeHubHosting/NativeHubHostingV106.fsx</Link></None>
-    <Compile Include="HubClientMain.fs" />
+    <None Include="HubClientMain.fs"><Link>Archive/HubClientMain.fs</Link></None>
+    <Compile Include="ProgramV403.fs" />
     <!-- Link changes only the project view; explicit TargetPath preserves runtime config lookup. -->
     <None Include="NLog.conf" CopyToOutputDirectory="PreserveNewest"><Link>Archive/NLog.conf</Link><TargetPath>NLog.conf</TargetPath></None>
     <None Include="NLog.M017.conf" CopyToOutputDirectory="PreserveNewest"><Link>Demo/NLog.M017.conf</Link><TargetPath>NLog.M017.conf</TargetPath></None>
