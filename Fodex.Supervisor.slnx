@@ -100,4 +100,11 @@
     <File Path="Fodex.Supervisor/README.M019.R002.md" />
     <File Path="Fodex.Supervisor.Tests/M019ConsoleOutputIsolationTests.fsx" />
   </Folder>
+  <Folder Name="/M021/">
+    <File Path="Fodex.Supervisor/WrapperIAgentDemo.M021.fsx" />
+    <File Path="Fodex.Supervisor/M021References.fsx" />
+    <File Path="Fodex.Supervisor/Start-M021.ps1" />
+    <File Path="Fodex.Supervisor/README.M021.md" />
+    <File Path="Fodex.Supervisor.Tests/M021MixedAgentTests.fsx" />
+  </Folder>
 </Solution>

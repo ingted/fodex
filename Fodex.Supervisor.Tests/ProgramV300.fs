@@ -49,6 +49,15 @@ let main argv =
             SubagentCreationFodexFunV401Tests.tests
             FodexFunRegistrationV401Tests.tests
             HubClientFodexFunV101Tests.tests
+            ParticipantOperationsFodexFunV402Tests.tests
+            ParticipantArgumentsFodexFunV402Tests.tests
+            ParticipantConfigurationFodexFunV402Tests.tests
+            ParticipantManagerFodexFunV402Tests.tests
+            IAgentRequestFodexFunV402Tests.tests
+            WrapperAgentV402Tests.tests
+            HubHostingFodexFunV402Tests.tests
+            FodexAgentFodexFunV402Tests.tests
+            M021MixedAgentTests.tests
             FodexFunRegistrationV301Tests.tests; WrapperCompositionV302Tests.tests
         ]
         testList "DemoAndConsole" [

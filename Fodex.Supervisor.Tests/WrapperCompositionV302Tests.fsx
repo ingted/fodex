@@ -12,10 +12,18 @@ open ImplementationTestSupportV301
 open Fodex.Supervisor
 open Fodex.Supervisor.Contracts.CoreMod
 
+// 歷史 V302 quotation 的回歸案例仍保留；已移除的 FodexEntry 不再是 Library 入口。
+let createVersioned version input =
+    try
+        Expect.isGreaterThan FodexFunctions.builtins.Length 0 "declare builtins"
+        let _,node,_,_,_,_,_,_,_,_ = input
+        FodexFunBinding.pin<WrapperCompositionInput,Task<WrapperCompositionOutput>> node version WrapperCompositionV302.target input
+    with error -> Error error
+
 [<Tests>]
 let tests=testList "V302 wrapper entry quotation" [
     testCase "missing explicit version returns Error before creating resources" <| fun () -> withNode(fun node ->
-        let result=FodexEntry.createWrapper (Some "99.0.0")
+        let result=createVersioned (Some "99.0.0")
                        (ignore,node,"must not connect",(Guid.NewGuid(),None),arguments,ctx,models,Mcp,"http://127.0.0.1:1",ignore)
         Expect.isError result "public entry respects version selection and Result boundary")
     testCase "single host entry builds through registry and exposes actor control without starting a Codex turn" <| fun () -> withDatabase(fun cs -> withNode(fun node ->
@@ -25,7 +33,7 @@ let tests=testList "V302 wrapper entry quotation" [
         let url=sprintf "http://127.0.0.1:%d" ((port.LocalEndpoint :?> System.Net.IPEndPoint).Port)
         port.Stop()
         let wrapper,loop,hub,remote,cleanup=
-            FodexEntry.createWrapper (Some "3.0.2") (ignore,node,cs,session,arguments.Replace("app-server","exec"),ctx,models,Mcp,url,ignore) |> required |> wait
+            createVersioned (Some "3.0.2") (ignore,node,cs,session,arguments.Replace("app-server","exec"),ctx,models,Mcp,url,ignore) |> required |> wait
         try
             let accepted,finished,failed,_=Hub.status node hub |> required |> wait
             Expect.equal (accepted,finished,failed) (0,0,0) "creation does not dispatch work"

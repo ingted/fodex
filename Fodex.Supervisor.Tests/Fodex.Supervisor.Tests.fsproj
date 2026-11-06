@@ -131,6 +131,15 @@
     <Compile Include="SubagentCreationFodexFunV401Tests.fsx" />
     <Compile Include="FodexFunRegistrationV401Tests.fsx" />
     <Compile Include="HubClientFodexFunV101Tests.fsx" />
+    <Compile Include="ParticipantOperationsFodexFunV402Tests.fsx" />
+    <Compile Include="ParticipantArgumentsFodexFunV402Tests.fsx" />
+    <Compile Include="ParticipantConfigurationFodexFunV402Tests.fsx" />
+    <Compile Include="ParticipantManagerFodexFunV402Tests.fsx" />
+    <Compile Include="IAgentRequestFodexFunV402Tests.fsx" />
+    <Compile Include="WrapperAgentV402Tests.fsx" />
+    <Compile Include="HubHostingFodexFunV402Tests.fsx" />
+    <Compile Include="FodexAgentFodexFunV402Tests.fsx" />
+    <Compile Include="M021MixedAgentTests.fsx" />
     <Compile Include="FodexFunBindingTests.fsx" />
     <Compile Include="OrderHubFodexFunV301Tests.fsx" />
     <Compile Include="SubagentFodexFunV301Tests.fsx" />

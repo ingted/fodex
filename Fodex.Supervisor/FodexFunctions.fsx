@@ -50,6 +50,15 @@ module FodexFunctions =
             FodexFunRegistrationV401.Definitions.builtins
             IAgentRequestFodexFunV401.Definitions.builtins
             HubClientFodexFunV101.Definitions.builtins
+            ParticipantOperationsFodexFunV402.Definitions.builtins
+            IAgentRequestFodexFunV402.Definitions.builtins
+            ParticipantArgumentsFodexFunV402.Definitions.builtins
+            ParticipantConfigurationFodexFunV402.Definitions.builtins
+            WrapperAgentV402.Definitions.builtins
+            ParticipantManagerFodexFunV402.Definitions.builtins
+            ReActLoopHandlerV402.Definitions.builtins
+            HubHostingFodexFunV402.Definitions.builtins
+            FodexAgentFodexFunV402.Definitions.builtins
         |]
         |> Array.concat
 
