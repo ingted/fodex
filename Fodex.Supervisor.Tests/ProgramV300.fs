@@ -64,6 +64,9 @@ let main argv =
             ConsolePolicyFodexFunV404Tests.tests
             ConsolePolicyFodexFunV405Tests.tests
             ConsolePolicyFodexFunV406Tests.tests
+            ConsolePolicyFodexFunV407Tests.tests
+            ConsoleHostFodexFunV407Tests.tests
+            ServiceHostFodexFunV101Tests.tests
             ConsoleHostFodexFunV404Tests.tests
             ConsoleOutputFodexFunV405Tests.tests
             SubagentFodexFunV302Tests.tests

@@ -24,15 +24,15 @@ JSON 重用現有 **`Fodex.ReActEdge`, schemaVersion 3**，完整保留 source�
 
 ```powershell
 # Akka supervisor；不啟動 MCP endpoint。
-.\bin\CLI\Fodex.Supervisor.exe --mode supervisor 21824 --json
+.\bin\CLI\Fodex.Supervisor.exe --mode supervisor --akkaport 21824 --akkaname fodex-service --json
 
 # 同一個 supervisor 加上供外部 client 使用的 MCP endpoint。
-.\bin\CLI\Fodex.Supervisor.exe --mode mcp 18824 --json --port 21825
+.\bin\CLI\Fodex.Supervisor.exe --mode mcp --mcpport 18824 --akkaport 21825 --akkaname fodex-mcp --json
 ```
 
-V406 支援 `--mode <mode> <port>`：`console`／`supervisor` 的 port 是 Akka node port；`mcp` 的 port 是 MCP HTTP port，Akka port 可另用 `--port` 指定。Akka 接受 0～65535（0 由 OS 分配）；MCP HTTP 接受 1～65535。
+V407 使用獨立參數：`--mode <console|supervisor|mcp>`、`--mcpport <HTTP-port>`、`--akkaport <Akka-port>`、`--akkaname <ActorSystem-name>`。不再接受 V406 的 `--mode <mode> <port>` 寫法。`--mcpport` 控制 MCP service HTTP listener；`--akkaport` 與 `--akkaname` 適用所有 host 模式，名稱也會出現在實際 actor address，並保存在 console resume 命令中。
 
-省略 mode 後的 port 時保留原預設；舊的 `--mode supervisor --port 21824`、`--mode mcp --service-url http://127.0.0.1:18824` 仍可使用。若同時使用新舊寫法，同一設定的 port 必須相同，衝突會直接報錯。例如 `--mode mcp 18824 --service-url http://localhost:18824` 可指定 host；不能再用 URL 指定另一個 HTTP port。
+省略新旗標時沿用原設定：Akka port 21822、MCP HTTP port 18824，ActorSystem 名稱仍自動產生。Akka 接受 0～65535（0 由 OS 分配）；MCP HTTP 接受 1～65535。舊 `--port`／`--service-url` 保留相容性；與新旗標同時使用時，同一 port 必須一致。需要指定 HTTP host 時，例如 `--mcpport 18824 --service-url http://localhost:18824`。
 
 啟動會公布 `SUPERVISOR_ADDRESS=akka.tcp://.../user/fodex-supervisor`；MCP 模式另公布 `MCP_URL=http://127.0.0.1:18824/mcp`。這些 readiness 資訊寫到 stderr。啟動 service 本身不連 SQL、不建立 wrapper 或執行 native CLI；收到 `create` 後才 provision。
 
@@ -112,5 +112,6 @@ client 斷線不取消工作、不 Dispose wrapper。重連後先 `attach`，再
 - CLI 另完成 agy main 查 metadata、Codex raw sub ECHO、.NET 自動收回結果再交 main 的整輪；沒有使用 `hub_receive` 輪詢，也沒有把 subagent 工作標成 AgentCot。
 - 預設 `bin/CLI` 已重新建置並直接實測：時間 prompt、labels/help/exit、MCP health 與 Ctrl+C 正常；service 在 SQL 不可連線時仍可啟動，沒有提早建立 native。
 - V406 port 語法另通過 20 個新案例及 18 個既有 parser 案例，VSTest／獨立 FSI 均通過。重新建置的 `bin/CLI` 已實測指定 Akka port、MCP HTTP port 與兩者獨立配置；actor address、TCP listener、HTTP `/health` 與 Ctrl+C 皆符合設定，證據在 `artifacts/cli-20261106-v406/`。
+- V407 改回獨立 `--mcpport`／`--akkaport`／`--akkaname`：39 項相關 VSTest 全數通過，三份新版 `.fsx` 均獨立 FSI 通過；Debug／Release build 成功。實際 `bin/CLI` 已驗證 service 的 ActorSystem 名稱、兩種 listener port、MCP health、console resume 名稱保存、舊 tuple 語法拒絕及正常關閉；證據在 `artifacts/cli-20261106-v407/`。
 
 證據位於 `artifacts/cli-20261106-v405/`。上述模型實測是本機觀察，耗時不代表 provider 延遲保證。service 的外網 reverse proxy、驗證配置與正式部署未包含在此次測試。

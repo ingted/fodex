@@ -149,13 +149,16 @@
     <Compile Include="ConsolePolicyFodexFunV404.fsx"><Link>fodexFun/Console/ConsolePolicyFodexFunV404.fsx</Link></Compile>
     <Compile Include="ConsolePolicyFodexFunV405.fsx"><Link>fodexFun/Console/ConsolePolicyFodexFunV405.fsx</Link></Compile>
     <Compile Include="ConsolePolicyFodexFunV406.fsx"><Link>fodexFun/Console/ConsolePolicyFodexFunV406.fsx</Link></Compile>
+    <Compile Include="ConsolePolicyFodexFunV407.fsx"><Link>fodexFun/Console/ConsolePolicyFodexFunV407.fsx</Link></Compile>
     <Compile Include="ConsoleHostFodexFunV404.fsx"><Link>fodexFun/Console/ConsoleHostFodexFunV404.fsx</Link></Compile>
     <Compile Include="ConsoleHostFodexFunV405.fsx"><Link>fodexFun/Console/ConsoleHostFodexFunV405.fsx</Link></Compile>
+    <Compile Include="ConsoleHostFodexFunV407.fsx"><Link>fodexFun/Console/ConsoleHostFodexFunV407.fsx</Link></Compile>
     <Compile Include="ServiceProtocolFodexFunV100.fsx"><Link>fodexFun/Service/ServiceProtocolFodexFunV100.fsx</Link></Compile>
     <Compile Include="ServiceSupervisorFodexFunV100.fsx"><Link>fodexFun/Service/ServiceSupervisorFodexFunV100.fsx</Link></Compile>
     <Compile Include="ServiceWrapperFodexFunV100.fsx"><Link>fodexFun/Service/ServiceWrapperFodexFunV100.fsx</Link></Compile>
     <Compile Include="ServiceMcpFodexFunV100.fsx"><Link>fodexFun/Service/ServiceMcpFodexFunV100.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV100.fsx"><Link>fodexFun/Service/ServiceHostFodexFunV100.fsx</Link></Compile>
+    <Compile Include="ServiceHostFodexFunV101.fsx"><Link>fodexFun/Service/ServiceHostFodexFunV101.fsx</Link></Compile>
     <Compile Include="FodexFunctions.fsx" />
     <Compile Include="FodexAgent.fsx" />
     <None Include="FodexEntry.fsx"><Link>Archive/FodexEntry.fsx</Link></None>
@@ -188,7 +191,8 @@
     <None Include="ProgramV403.fs"><Link>Archive/ProgramV403.fs</Link></None>
     <None Include="ProgramV404.fs"><Link>Archive/ProgramV404.fs</Link></None>
     <None Include="ProgramV405.fs"><Link>Archive/ProgramV405.fs</Link></None>
-    <Compile Include="ProgramV406.fs" />
+    <None Include="ProgramV406.fs"><Link>Archive/ProgramV406.fs</Link></None>
+    <Compile Include="ProgramV407.fs" />
     <!-- Link changes only the project view; explicit TargetPath preserves runtime config lookup. -->
     <None Include="NLog.conf" CopyToOutputDirectory="PreserveNewest"><Link>Archive/NLog.conf</Link><TargetPath>NLog.conf</TargetPath></None>
     <None Include="NLog.M017.conf" CopyToOutputDirectory="PreserveNewest"><Link>Demo/NLog.M017.conf</Link><TargetPath>NLog.M017.conf</TargetPath></None>
