@@ -62,7 +62,21 @@ let main argv =
             ConsolePrinterFodexFunV403Tests.tests
             ConsoleHostFodexFunV403Tests.tests
             ConsolePolicyFodexFunV404Tests.tests
+            ConsolePolicyFodexFunV405Tests.tests
             ConsoleHostFodexFunV404Tests.tests
+            ConsoleOutputFodexFunV405Tests.tests
+            SubagentFodexFunV302Tests.tests
+            HubClientFodexFunV102Tests.tests
+            NativeOutputFodexFunV301Tests.tests
+            WrapperAgentV405Tests.tests
+            HubHostingFodexFunV405Tests.tests
+            FodexAgentFodexFunV405Tests.tests
+            ConsoleHostFodexFunV405Tests.tests
+            ServiceProtocolFodexFunV100Tests.tests
+            ServiceSupervisorFodexFunV100Tests.tests
+            ServiceWrapperFodexFunV100Tests.tests
+            ServiceMcpFodexFunV100Tests.tests
+            ServiceHostFodexFunV100Tests.tests
             FodexFunRegistrationV301Tests.tests; WrapperCompositionV302Tests.tests
         ]
         testList "DemoAndConsole" [

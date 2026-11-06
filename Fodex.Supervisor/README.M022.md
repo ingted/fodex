@@ -25,17 +25,21 @@ V404 接回 M020 的 provider 選項：預設使用 SQL Server `localhost`／DB 
 
 ## 互動
 
+V405 的提示字元改為 `fdx.yyMMddHHmmss> `，每次讀入／重顯更新本機時間。`--labels false` 或 `/labels off` 可隱藏 AgentWork／AgentEnd／native I/O 標頭，保留正文；完全關閉 raw I/O 顯示則用 `/show(ALL) off`。
+
+`--json` 將正式 wrapper 輸出改為 Fodex ReActEvent JSONL，提示與原始 stdio 另走 stderr。同一 executable 也支援 `--mode supervisor`／`--mode mcp`；啟動方式、Akka protocol 與兩種 MCP 收送方式見 [Service 文件](README.Service.md)；供外部 agent 使用的 [Skill](../skills/fodex-service/SKILL.md) 另列工具操作流程。
+
 沿用 M019：Enter／右鍵貼上的換行先累積文字，**獨立一行 `;;` 才提交**。例如：
 
 ```text
-fodex> /list_participant
-fodex> ;;
-fodex> /subagent(2, raw, agy)
-fodex> ;;
-fodex> /subagent(2, wrapper, codex)
-fodex> ;;
-fodex> 請讓現有 subagent 分工處理這個任務……
-fodex> ;;
+fdx.261106143000> /list_participant
+fdx.261106143001> ;;
+fdx.261106143005> /subagent(2, raw, agy)
+fdx.261106143006> ;;
+fdx.261106143010> /subagent(2, wrapper, codex)
+fdx.261106143011> ;;
+fdx.261106143015> 請讓現有 subagent 分工處理這個任務……
+fdx.261106143016> ;;
 ```
 
 `/help` 顯示既有 wrapper 命令：COT、compact/restart、participant start/stop/remove/cancel、model/effort/fast/memory、draft、show/trace 等，都透過同一個 `IAgent.Request`；生成輸出仍由 ReActLoop/printer 顯示。生成中可以繼續輸入命令。實體 console 保留 Shift+Enter／Ctrl+J 換行與基本行編輯。
