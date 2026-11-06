@@ -29,6 +29,8 @@ V405 的提示字元改為 `fdx.yyMMddHHmmss> `，每次讀入／重顯更新本
 
 `--json` 將正式 wrapper 輸出改為 Fodex ReActEvent JSONL，提示與原始 stdio 另走 stderr。同一 executable 也支援 `--mode supervisor`／`--mode mcp`；啟動方式、Akka protocol 與兩種 MCP 收送方式見 [Service 文件](README.Service.md)；供外部 agent 使用的 [Skill](../skills/fodex-service/SKILL.md) 另列工具操作流程。
 
+V406 可直接使用 `--mode supervisor 21824` 指定 Akka port，或 `--mode mcp 18824 --port 21825` 分別指定 MCP HTTP 與 Akka port；互動模式也接受 `--mode console 21822`。省略 port 時保留既有預設。
+
 沿用 M019：Enter／右鍵貼上的換行先累積文字，**獨立一行 `;;` 才提交**。例如：
 
 ```text

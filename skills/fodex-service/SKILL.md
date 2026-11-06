@@ -7,6 +7,8 @@ description: Connect to a running Fodex wrapper MCP service to create or reconne
 
 這個 skill 操作使用者指定的 Fodex **service MCP endpoint**，通常為 `http://127.0.0.1:18824/mcp`。以實際 `MCP_URL` 為準，不猜測其他 M 系列或 subagent hub 的 port。沒有 endpoint 時先向使用者取得；不要自行建立另一個 service。
 
+若使用者明確要求啟動，服務語法為 `Fodex.Supervisor.exe --mode mcp <HTTP-port> --json`；另加 `--port <Akka-port>` 可設定 Akka node。`--mode supervisor <Akka-port>` 只有 Akka service，沒有 MCP endpoint。既有單一 mode／`--service-url` 語法仍可用，但新舊參數明確指定的同一個 port 不能衝突。
+
 先確認 client 已連到正確 server，查看 `tools/list`。本 service 應提供 `create_wrapper`、`list_wrappers`、`attach_wrapper`、`send_prompt`、`send_prompt_and_wait`、`receive_result`、`close_wrapper`。若看到的是 `hub_order`／`hub_receive`，那是 wrapper native 的 subagent hub，不能拿來建立 root wrapper。
 
 ## 建立或重連

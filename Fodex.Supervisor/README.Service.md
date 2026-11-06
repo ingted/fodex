@@ -24,11 +24,15 @@ JSON 重用現有 **`Fodex.ReActEdge`, schemaVersion 3**，完整保留 source�
 
 ```powershell
 # Akka supervisor；不啟動 MCP endpoint。
-.\bin\CLI\Fodex.Supervisor.exe --mode supervisor --json --port 21824
+.\bin\CLI\Fodex.Supervisor.exe --mode supervisor 21824 --json
 
 # 同一個 supervisor 加上供外部 client 使用的 MCP endpoint。
-.\bin\CLI\Fodex.Supervisor.exe --mode mcp --json --port 21824 --service-url http://127.0.0.1:18824
+.\bin\CLI\Fodex.Supervisor.exe --mode mcp 18824 --json --port 21825
 ```
+
+V406 支援 `--mode <mode> <port>`：`console`／`supervisor` 的 port 是 Akka node port；`mcp` 的 port 是 MCP HTTP port，Akka port 可另用 `--port` 指定。Akka 接受 0～65535（0 由 OS 分配）；MCP HTTP 接受 1～65535。
+
+省略 mode 後的 port 時保留原預設；舊的 `--mode supervisor --port 21824`、`--mode mcp --service-url http://127.0.0.1:18824` 仍可使用。若同時使用新舊寫法，同一設定的 port 必須相同，衝突會直接報錯。例如 `--mode mcp 18824 --service-url http://localhost:18824` 可指定 host；不能再用 URL 指定另一個 HTTP port。
 
 啟動會公布 `SUPERVISOR_ADDRESS=akka.tcp://.../user/fodex-supervisor`；MCP 模式另公布 `MCP_URL=http://127.0.0.1:18824/mcp`。這些 readiness 資訊寫到 stderr。啟動 service 本身不連 SQL、不建立 wrapper 或執行 native CLI；收到 `create` 後才 provision。
 
@@ -107,5 +111,6 @@ client 斷線不取消工作、不 Dispose wrapper。重連後先 `attach`，再
 - `close_wrapper` 與 service Ctrl+C 正常清理；該輪 service stdout 沒有診斷雜訊，未留下符合本輪工作目錄的 native 程序。
 - CLI 另完成 agy main 查 metadata、Codex raw sub ECHO、.NET 自動收回結果再交 main 的整輪；沒有使用 `hub_receive` 輪詢，也沒有把 subagent 工作標成 AgentCot。
 - 預設 `bin/CLI` 已重新建置並直接實測：時間 prompt、labels/help/exit、MCP health 與 Ctrl+C 正常；service 在 SQL 不可連線時仍可啟動，沒有提早建立 native。
+- V406 port 語法另通過 20 個新案例及 18 個既有 parser 案例，VSTest／獨立 FSI 均通過。重新建置的 `bin/CLI` 已實測指定 Akka port、MCP HTTP port 與兩者獨立配置；actor address、TCP listener、HTTP `/health` 與 Ctrl+C 皆符合設定，證據在 `artifacts/cli-20261106-v406/`。
 
 證據位於 `artifacts/cli-20261106-v405/`。上述模型實測是本機觀察，耗時不代表 provider 延遲保證。service 的外網 reverse proxy、驗證配置與正式部署未包含在此次測試。

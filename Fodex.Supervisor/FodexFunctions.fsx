@@ -71,6 +71,7 @@ module FodexFunctions =
             ConsoleHostFodexFunV403.Definitions.builtins
             ConsolePolicyFodexFunV404.Definitions.builtins
             ConsolePolicyFodexFunV405.Definitions.builtins
+            ConsolePolicyFodexFunV406.Definitions.builtins
             ConsoleHostFodexFunV404.Definitions.builtins
             ConsoleHostFodexFunV405.Definitions.builtins
             ServiceProtocolFodexFunV100.Definitions.builtins

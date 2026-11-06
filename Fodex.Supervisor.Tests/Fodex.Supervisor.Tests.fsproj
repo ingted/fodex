@@ -145,6 +145,7 @@
     <Compile Include="ConsoleHostFodexFunV403Tests.fsx" />
     <Compile Include="ConsolePolicyFodexFunV404Tests.fsx" />
     <Compile Include="ConsolePolicyFodexFunV405Tests.fsx" />
+    <Compile Include="ConsolePolicyFodexFunV406Tests.fsx" />
     <Compile Include="ConsoleHostFodexFunV404Tests.fsx" />
     <Compile Include="FodexFunBindingTests.fsx" />
     <Compile Include="OrderHubFodexFunV301Tests.fsx" />
