@@ -67,7 +67,9 @@ type CodexAppServerConnectionV101(socket:ClientWebSocket,notify:JsonElement -> u
         cancellation.Dispose()
     } :> Task)
 
-    /// 完整可取消的 RPC。25 秒沿用 V100 RPC 上限；逾時與 caller 取消分開回報。
+    /// 完整可取消的 RPC。V101 的 25 秒涵蓋 send（含寫入鎖等待）與 reply；
+    /// V100 則在同步 send 結束後才開始等 reply 25 秒，兩者不是相同的總等待上限。
+    /// 逾時與 caller 取消分開回報。
     /// finally 清除 correlation，遲到的 response 不能覆寫下一筆 request。
     member _.CallAsync(methodName:string,parameters:obj,ct:CancellationToken) : Task<Result<JsonElement,exn>> = task {
         let id = Interlocked.Increment(&nextId)
@@ -106,6 +108,18 @@ type CodexAppServerConnectionV101(socket:ClientWebSocket,notify:JsonElement -> u
         member this.DisposeAsync() = ValueTask(this.CloseAsync())
 
 module CodexAppServerV101 =
+    /// connect 已成功建立 reader 後，必須由這裡決定移交或回收，不能直接丟棄 Ok。
+    /// 在此點觀察到 caller 取消，先 await Close 才回 Error；未取消則移交 owner。
+    /// 取消若發生在移交決策之後，由收到 Ok 的 owner 按一般生命週期關閉。
+    let completeConnection (ct:CancellationToken) (result:Result<CodexAppServerConnectionV101,exn>) = task {
+        match result with
+        | Ok connection when ct.IsCancellationRequested ->
+            do! connection.CloseAsync()
+            return Error(OperationCanceledException(ct) :> exn)
+        | Error _ when ct.IsCancellationRequested -> return Error(OperationCanceledException(ct) :> exn)
+        | _ -> return result
+    }
+
     /// 15 秒沿用 V100 連線上限；每次 Connect 有一秒上限，失敗後 await 100ms。
     /// 例如：let! result = connectAsync endpoint notify closed cancellationToken。
     /// 只有資源成功建立才移交 socket；每個失敗 attempt 都關掉自己的 socket。
@@ -125,10 +139,11 @@ module CodexAppServerV101 =
                 result <- Error error
                 if not lifetime.IsCancellationRequested then
                     try do! Task.Delay(100,lifetime.Token) with :? OperationCanceledException -> ()
-        if ct.IsCancellationRequested then return Error(OperationCanceledException(ct) :> exn)
-        elif lifetime.IsCancellationRequested && Result.isError result then
+        let! completed = completeConnection ct result
+        match completed with
+        | Error _ when not ct.IsCancellationRequested && lifetime.IsCancellationRequested ->
             return Error(TimeoutException "Codex listener did not become ready" :> exn)
-        else return result
+        | _ -> return completed
     }
 
     /// wire 握手維持 V100 內容；只替換等待方式，避免默默改變 Codex 協定。

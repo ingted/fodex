@@ -67,6 +67,7 @@ type DelayedRpcServerV101() =
             | :? OperationCanceledException -> ()
             | :? HttpListenerException -> ()
             | :? WebSocketException when cancellation.IsCancellationRequested -> ()
+            | :? EndOfStreamException when cancellation.IsCancellationRequested -> ()
             cancellation.Dispose()
         })
 
@@ -185,6 +186,25 @@ let tests = testSequenced <| testList "Codex RPC dispatcher V101" [
         let! result = pending.WaitAsync(TimeSpan.FromSeconds 2.)
         Expect.isError result "closing a connection cannot leave a pending RPC behind"
         // 不放行 server 回覆；fixture Dispose 會取消它，證明結束不依賴遠端回覆。
+    }
+
+    taskCase "cancellation after successful connect closes the resource before returning Error" <| fun () -> task {
+        use server = new DelayedRpcServerV101()
+        use socket = new ClientWebSocket()
+        do! socket.ConnectAsync(Uri server.Endpoint,CancellationToken.None)
+        // 精確建立『Connect 成功、reader 已開始、尚未移交 caller』的狀態。
+        // 呼叫的 completion function 就是 production connectAsync 的最後收尾點，無測試 hook。
+        use connection = new CodexAppServerConnectionV101(socket,ignore,ignore)
+        use cancelled = new CancellationTokenSource()
+        cancelled.Cancel()
+        let! handoff = CodexAppServerV101.completeConnection cancelled.Token (Ok connection)
+        match handoff with
+        | Error (:? OperationCanceledException) -> ()
+        | other -> failtestf "Expected cancelled handoff, got %A" other
+        let! closed = connection.CallAsync("must/not-send",box {| |}).WaitAsync(TimeSpan.FromSeconds 2.)
+        match closed with
+        | Error (:? ObjectDisposedException) -> ()
+        | other -> failtestf "An unowned connection survived cancelled handoff: %A" other
     }
 ]
 
