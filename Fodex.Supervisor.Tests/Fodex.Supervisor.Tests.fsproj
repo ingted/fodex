@@ -184,7 +184,9 @@
     <Compile Include="FodexFunRegistrationV406Tests.fsx"><Link>fodexFun/Registration/FodexFunRegistrationV406Tests.fsx</Link></Compile>
     <Compile Include="ConsoleHostFodexFunV408Tests.fsx"><Link>fodexFun/ConsoleHost/ConsoleHostFodexFunV408Tests.fsx</Link></Compile>
     <Compile Include="ServiceWrapperFodexFunV101Tests.fsx"><Link>fodexFun/ServiceWrapper/ServiceWrapperFodexFunV101Tests.fsx</Link></Compile>
+    <Compile Include="ServiceWrapperFodexFunV102Tests.fsx"><Link>fodexFun/ServiceWrapper/ServiceWrapperFodexFunV102Tests.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV102Tests.fsx"><Link>fodexFun/ServiceHost/ServiceHostFodexFunV102Tests.fsx</Link></Compile>
+    <Compile Include="ServiceHostFodexFunV103Tests.fsx"><Link>fodexFun/ServiceHost/ServiceHostFodexFunV103Tests.fsx</Link></Compile>
     <Compile Include="ProgramV300.fs" />
     <None Include="TestCases.BeforeRefactor.md" />
   </ItemGroup>

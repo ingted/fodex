@@ -90,10 +90,12 @@ module FodexFunctions =
             ServiceSupervisorFodexFunV101.Definitions.builtins
             ServiceWrapperFodexFunV100.Definitions.builtins
             ServiceWrapperFodexFunV101.Definitions.builtins
+            ServiceWrapperFodexFunV102.Definitions.builtins
             ServiceMcpFodexFunV100.Definitions.builtins
             ServiceHostFodexFunV100.Definitions.builtins
             ServiceHostFodexFunV101.Definitions.builtins
             ServiceHostFodexFunV102.Definitions.builtins
+            ServiceHostFodexFunV103.Definitions.builtins
         |]
         |> Array.concat
 

@@ -18,8 +18,8 @@ let main argv =
             FodexAgentFodexFunV406Tests.tests; FodexAgentFodexFunV407Tests.tests
             FodexFunRegistrationV406Tests.tests
             ConsoleHostFodexFunV408Tests.tests
-            ServiceWrapperFodexFunV101Tests.tests
-            ServiceHostFodexFunV102Tests.tests
+            ServiceWrapperFodexFunV101Tests.tests; ServiceWrapperFodexFunV102Tests.tests
+            ServiceHostFodexFunV102Tests.tests; ServiceHostFodexFunV103Tests.tests
             QuotationStoreTests.tests
             ContextFodexFunV400Tests.tests; ReActDataStoreV400Tests.tests
         ]
