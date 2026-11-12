@@ -193,6 +193,9 @@
     <Compile Include="IAgentAsyncFodexFunV301Tests.fsx"><Link>fodexFun/IAgent/IAgentAsyncFodexFunV301Tests.fsx</Link></Compile>
     <Compile Include="ReActLoopAsyncFodexFunV301Tests.fsx"><Link>fodexFun/ReActLoop/ReActLoopAsyncFodexFunV301Tests.fsx</Link></Compile>
     <Compile Include="ReActLoopHandlerV403Tests.fsx"><Link>fodexFun/ReActLoopHandler/ReActLoopHandlerV403Tests.fsx</Link></Compile>
+    <Compile Include="NativeAppServerFixtureV302.fsx"><Link>fodexFun/NativeAppServer/NativeAppServerFixtureV302.fsx</Link></Compile>
+    <Compile Include="FodexFunRegistrationV407Tests.fsx"><Link>fodexFun/FodexFunRegistration/FodexFunRegistrationV407Tests.fsx</Link></Compile>
+    <Compile Include="NativeCompactFodexFunV302Tests.fsx"><Link>fodexFun/NativeCompact/NativeCompactFodexFunV302Tests.fsx</Link></Compile>
     <Compile Include="ProgramV300.fs" />
     <None Include="TestCases.BeforeRefactor.md" />
   </ItemGroup>

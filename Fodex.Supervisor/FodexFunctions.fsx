@@ -35,6 +35,7 @@ module FodexFunctions =
             NativeSettingsFodexFunV300.Definitions.builtins
             NativeCompactFodexFunV300.Definitions.builtins
             NativeCompactFodexFunV301.Definitions.builtins
+            NativeCompactFodexFunV302.Definitions.builtins
             ParticipantListingFodexFunV300.Definitions.builtins
             NativeModelCatalogFodexFunV300.Definitions.builtins
             NativeModelCatalogFodexFunV301.Definitions.builtins
@@ -60,6 +61,7 @@ module FodexFunctions =
             FodexFunRegistrationV400.Definitions.builtins
             FodexFunRegistrationV401.Definitions.builtins
             FodexFunRegistrationV406.Definitions.builtins
+            FodexFunRegistrationV407.Definitions.builtins
             IAgentRequestFodexFunV401.Definitions.builtins
             HubClientFodexFunV101.Definitions.builtins
             HubClientFodexFunV102.Definitions.builtins

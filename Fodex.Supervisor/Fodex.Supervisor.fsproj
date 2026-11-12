@@ -89,6 +89,10 @@
     <Compile Include="NativeAppServerV301.fsx"><Link>fodexFun/NativeAppServer/NativeAppServerV301.fsx</Link></Compile>
     <Compile Include="NativeAgentV300.fsx"><Link>fodexFun/NativeAgent/NativeAgentV300.fsx</Link></Compile>
     <Compile Include="NativeAgentV301.fsx"><Link>fodexFun/NativeAgent/NativeAgentV301.fsx</Link></Compile>
+    <Compile Include="NativeAppServerV302.fsx"><Link>fodexFun/NativeAppServer/NativeAppServerV302.fsx</Link></Compile>
+    <Compile Include="NativeAgyFodexFunV302.fsx"><Link>fodexFun/NativeAgy/NativeAgyFodexFunV302.fsx</Link></Compile>
+    <Compile Include="NativeCompactFodexFunV302.fsx"><Link>fodexFun/NativeCompact/NativeCompactFodexFunV302.fsx</Link></Compile>
+    <Compile Include="NativeAgentV302.fsx"><Link>fodexFun/NativeAgent/NativeAgentV302.fsx</Link></Compile>
     <Compile Include="SubagentFodexFunV300.fsx"><Link>fodexFun/Subagent/SubagentFodexFunV300.fsx</Link></Compile>
     <Compile Include="WrapperAgentV300.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV300.fsx</Link></Compile>
     <Compile Include="WrapperAgentV200.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV200.fsx</Link></Compile>
@@ -140,6 +144,7 @@
     <Compile Include="WrapperAgentV401.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV401.fsx</Link></Compile>
     <Compile Include="FodexFunRegistrationV401.fsx"><Link>fodexFun/FodexFunRegistration/FodexFunRegistrationV401.fsx</Link></Compile>
     <Compile Include="FodexFunRegistrationV406.fsx"><Link>fodexFun/FodexFunRegistration/FodexFunRegistrationV406.fsx</Link></Compile>
+    <Compile Include="FodexFunRegistrationV407.fsx"><Link>fodexFun/FodexFunRegistration/FodexFunRegistrationV407.fsx</Link></Compile>
     <Compile Include="IAgentRequestFodexFunV401.fsx"><Link>fodexFun/IAgentRequest/IAgentRequestFodexFunV401.fsx</Link></Compile>
     <Compile Include="HubClientV101.fsx"><Link>fodexFun/HubClient/HubClientV101.fsx</Link></Compile>
     <Compile Include="HubClientFodexFunV101.fsx"><Link>fodexFun/HubClient/HubClientFodexFunV101.fsx</Link></Compile>
