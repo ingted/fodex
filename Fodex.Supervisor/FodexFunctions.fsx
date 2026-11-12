@@ -17,6 +17,7 @@ module FodexFunctions =
             NativeOutputFodexFunV300.Definitions.builtins
             NativeOutputFodexFunV301.Definitions.builtins
             NativeProcessFodexFunV301.Definitions.builtins
+            NativeOwnershipLeaseFodexFunV302.Definitions.builtins
             WrapperCommandFodexFunV300.Definitions.builtins
             ParticipantControlFodexFunV300.Definitions.builtins
             WrapperDraftFodexFunV300.Definitions.builtins
