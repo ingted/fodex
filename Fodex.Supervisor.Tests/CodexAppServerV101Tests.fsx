@@ -85,19 +85,7 @@ type AwaitRpcActorV101(connection:CodexAppServerConnectionV101) as self =
 
 /// 故意只給 default dispatcher 一個獨立 worker，穩定暴露 sync-over-async。
 /// 這是測試資源限制，不更動正式服務，也不修改整機 ThreadPool 設定。
-let oneWorkerNode () =
-    ActorSystem.Create("rpc-await-test-"+Guid.NewGuid().ToString("N"),
-        ConfigurationFactory.ParseString """
-akka.loglevel=OFF
-akka.stdout-loglevel=OFF
-akka.actor.default-dispatcher {
-  type=ForkJoinDispatcher
-  dedicated-thread-pool {
-    thread-count=1
-    threadtype=background
-  }
-}
-""")
+let oneWorkerNode () = ImplementationTestSupportV301.singleWorkerNode()
 
 let taskCase name (test:unit -> Task<unit>) =
     testCaseAsync name (async { do! test() |> Async.AwaitTask })

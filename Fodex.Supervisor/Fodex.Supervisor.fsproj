@@ -130,6 +130,7 @@
     <Compile Include="WrapperCompositionV302.fsx"><Link>fodexFun/WrapperComposition/WrapperCompositionV302.fsx</Link></Compile>
     <Compile Include="ContextFodexFunV400.fsx"><Link>fodexFun/Context/ContextFodexFunV400.fsx</Link></Compile>
     <Compile Include="ReActDataStoreV400.fsx"><Link>fodexFun/ReActDataStore/ReActDataStoreV400.fsx</Link></Compile>
+    <Compile Include="ReActDataStoreV401.fsx"><Link>fodexFun/ReActDataStore/ReActDataStoreV401.fsx</Link></Compile>
     <Compile Include="ReActLoopHandlerV400.fsx"><Link>fodexFun/ReActLoopHandler/ReActLoopHandlerV400.fsx</Link></Compile>
     <Compile Include="WrapperAgentV400.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV400.fsx</Link></Compile>
     <Compile Include="FodexFunRegistrationV400.fsx"><Link>fodexFun/FodexFunRegistration/FodexFunRegistrationV400.fsx</Link></Compile>

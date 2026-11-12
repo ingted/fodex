@@ -53,6 +53,7 @@ module FodexFunctions =
             WrapperCompositionV302.Definitions.builtins
             ContextFodexFunV400.Definitions.builtins
             ReActDataStoreV400.Definitions.builtins
+            ReActDataStoreV401.Definitions.builtins
             FodexFunRegistrationV400.Definitions.builtins
             FodexFunRegistrationV401.Definitions.builtins
             FodexFunRegistrationV406.Definitions.builtins
