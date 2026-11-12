@@ -72,7 +72,9 @@ module FodexFunctions =
             WrapperAgentV402.Definitions.builtins
             WrapperAgentV405.Definitions.builtins
             WrapperAgentV406.Definitions.builtins
+            WrapperAgentV407.Definitions.builtins
             ParticipantManagerFodexFunV402.Definitions.builtins
+            ParticipantManagerFodexFunV403.Definitions.builtins
             ReActLoopHandlerV402.Definitions.builtins
             ReActLoopHandlerV403.Definitions.builtins
             HubHostingFodexFunV402.Definitions.builtins
