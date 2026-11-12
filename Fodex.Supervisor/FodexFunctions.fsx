@@ -22,6 +22,7 @@ module FodexFunctions =
             ParticipantControlFodexFunV300.Definitions.builtins
             WrapperDraftFodexFunV300.Definitions.builtins
             IAgentFodexFunV200.Definitions.builtins
+            IAgentAsyncFodexFunV301.Definitions.builtins
             ReActLoopFodexFunV300.Definitions.builtins
             ReActLoopTopologyFodexFunV300.Definitions.builtins
             WrapperContextFodexFunV300.Definitions.builtins

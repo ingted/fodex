@@ -189,6 +189,7 @@
     <Compile Include="ServiceHostFodexFunV103Tests.fsx"><Link>fodexFun/ServiceHost/ServiceHostFodexFunV103Tests.fsx</Link></Compile>
     <Compile Include="CodexAppServerV101Tests.fsx"><Link>fodexFun/CodexAppServer/CodexAppServerV101Tests.fsx</Link></Compile>
     <Compile Include="ReActDataStoreV401Tests.fsx"><Link>fodexFun/ReActDataStore/ReActDataStoreV401Tests.fsx</Link></Compile>
+    <Compile Include="IAgentAsyncFodexFunV301Tests.fsx"><Link>fodexFun/IAgent/IAgentAsyncFodexFunV301Tests.fsx</Link></Compile>
     <Compile Include="ProgramV300.fs" />
     <None Include="TestCases.BeforeRefactor.md" />
   </ItemGroup>
