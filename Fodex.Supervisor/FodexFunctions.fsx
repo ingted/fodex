@@ -73,6 +73,7 @@ module FodexFunctions =
             FodexAgentFodexFunV402.Definitions.builtins
             FodexAgentFodexFunV405.Definitions.builtins
             FodexAgentFodexFunV406.Definitions.builtins
+            FodexAgentFodexFunV407.Definitions.builtins
             ConsolePolicyFodexFunV403.Definitions.builtins
             ConsolePrinterFodexFunV403.Definitions.builtins
             ConsoleHostFodexFunV403.Definitions.builtins

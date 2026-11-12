@@ -15,7 +15,7 @@ let main argv =
             NativeProcessFodexFunV301Tests.tests; NativeOwnershipLeaseFodexFunV302Tests.tests; WrapperAgentV406Tests.tests
             NativeCompactFodexFunV301Tests.tests
             NativeModelCatalogFodexFunV301Tests.tests
-            FodexAgentFodexFunV406Tests.tests
+            FodexAgentFodexFunV406Tests.tests; FodexAgentFodexFunV407Tests.tests
             FodexFunRegistrationV406Tests.tests
             ConsoleHostFodexFunV408Tests.tests
             ServiceWrapperFodexFunV101Tests.tests

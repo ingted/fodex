@@ -153,6 +153,7 @@
     <Compile Include="FodexAgentFodexFunV402.fsx"><Link>fodexFun/FodexAgent/FodexAgentFodexFunV402.fsx</Link></Compile>
     <Compile Include="FodexAgentFodexFunV405.fsx"><Link>fodexFun/FodexAgent/FodexAgentFodexFunV405.fsx</Link></Compile>
     <Compile Include="FodexAgentFodexFunV406.fsx"><Link>fodexFun/FodexAgent/FodexAgentFodexFunV406.fsx</Link></Compile>
+    <Compile Include="FodexAgentFodexFunV407.fsx"><Link>fodexFun/FodexAgent/FodexAgentFodexFunV407.fsx</Link></Compile>
     <Compile Include="ConsolePolicyFodexFunV403.fsx"><Link>fodexFun/Console/ConsolePolicyFodexFunV403.fsx</Link></Compile>
     <Compile Include="ConsolePrinterFodexFunV403.fsx"><Link>fodexFun/Console/ConsolePrinterFodexFunV403.fsx</Link></Compile>
     <Compile Include="ConsoleHostFodexFunV403.fsx"><Link>fodexFun/Console/ConsoleHostFodexFunV403.fsx</Link></Compile>

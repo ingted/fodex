@@ -180,6 +180,7 @@
     <Compile Include="NativeCompactFodexFunV301Tests.fsx"><Link>fodexFun/NativeCompact/NativeCompactFodexFunV301Tests.fsx</Link></Compile>
     <Compile Include="NativeModelCatalogFodexFunV301Tests.fsx"><Link>fodexFun/NativeModelCatalog/NativeModelCatalogFodexFunV301Tests.fsx</Link></Compile>
     <Compile Include="FodexAgentFodexFunV406Tests.fsx"><Link>fodexFun/FodexAgent/FodexAgentFodexFunV406Tests.fsx</Link></Compile>
+    <Compile Include="FodexAgentFodexFunV407Tests.fsx"><Link>fodexFun/FodexAgent/FodexAgentFodexFunV407Tests.fsx</Link></Compile>
     <Compile Include="FodexFunRegistrationV406Tests.fsx"><Link>fodexFun/Registration/FodexFunRegistrationV406Tests.fsx</Link></Compile>
     <Compile Include="ConsoleHostFodexFunV408Tests.fsx"><Link>fodexFun/ConsoleHost/ConsoleHostFodexFunV408Tests.fsx</Link></Compile>
     <Compile Include="ServiceWrapperFodexFunV101Tests.fsx"><Link>fodexFun/ServiceWrapper/ServiceWrapperFodexFunV101Tests.fsx</Link></Compile>
