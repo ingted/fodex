@@ -59,6 +59,7 @@
     <None Include="ReActLoopFodexFunV101.fsx"><Link>Archive/fodexFun/ReActLoop/ReActLoopFodexFunV101.fsx</Link></None>
     <Compile Include="ProcSupervisorV100.fsx"><Link>fodexFun/ProcSupervisor/ProcSupervisorV100.fsx</Link></Compile>
     <Compile Include="ProcSupervisorV201.fsx"><Link>fodexFun/ProcSupervisor/ProcSupervisorV201.fsx</Link></Compile>
+    <Compile Include="NativeProcessFodexFunV301.fsx"><Link>fodexFun/NativeProcess/NativeProcessFodexFunV301.fsx</Link></Compile>
     <Compile Include="CodexAppServerV100.fsx"><Link>fodexFun/CodexAppServer/CodexAppServerV100.fsx</Link></Compile>
     <Compile Include="NativeAgentV200.fsx"><Link>fodexFun/NativeAgent/NativeAgentV200.fsx</Link></Compile>
     <Compile Include="NativeAgentV201.fsx"><Link>fodexFun/NativeAgent/NativeAgentV201.fsx</Link></Compile>
@@ -71,13 +72,18 @@
     <Compile Include="NativeAgentV208.fsx"><Link>fodexFun/NativeAgent/NativeAgentV208.fsx</Link></Compile>
     <Compile Include="NativeSettingsFodexFunV300.fsx"><Link>fodexFun/NativeSettings/NativeSettingsFodexFunV300.fsx</Link></Compile>
     <Compile Include="NativeCompactFodexFunV300.fsx"><Link>fodexFun/NativeCompact/NativeCompactFodexFunV300.fsx</Link></Compile>
+    <Compile Include="NativeCompactFodexFunV301.fsx"><Link>fodexFun/NativeCompact/NativeCompactFodexFunV301.fsx</Link></Compile>
     <Compile Include="ParticipantListingFodexFunV300.fsx"><Link>fodexFun/ParticipantListing/ParticipantListingFodexFunV300.fsx</Link></Compile>
     <Compile Include="NativeModelCatalogFodexFunV300.fsx"><Link>fodexFun/NativeModelCatalog/NativeModelCatalogFodexFunV300.fsx</Link></Compile>
+    <Compile Include="NativeModelCatalogFodexFunV301.fsx"><Link>fodexFun/NativeModelCatalog/NativeModelCatalogFodexFunV301.fsx</Link></Compile>
     <Compile Include="NativeAgyModelCatalogFodexFunV300.fsx"><Link>fodexFun/NativeAgyModelCatalog/NativeAgyModelCatalogFodexFunV300.fsx</Link></Compile>
     <Compile Include="NativeAgySettingsFodexFunV300.fsx"><Link>fodexFun/NativeAgySettings/NativeAgySettingsFodexFunV300.fsx</Link></Compile>
     <Compile Include="NativeAgyFodexFunV300.fsx"><Link>fodexFun/NativeAgy/NativeAgyFodexFunV300.fsx</Link></Compile>
+    <Compile Include="NativeAgyFodexFunV301.fsx"><Link>fodexFun/NativeAgy/NativeAgyFodexFunV301.fsx</Link></Compile>
     <Compile Include="NativeAppServerV300.fsx"><Link>fodexFun/NativeAppServer/NativeAppServerV300.fsx</Link></Compile>
+    <Compile Include="NativeAppServerV301.fsx"><Link>fodexFun/NativeAppServer/NativeAppServerV301.fsx</Link></Compile>
     <Compile Include="NativeAgentV300.fsx"><Link>fodexFun/NativeAgent/NativeAgentV300.fsx</Link></Compile>
+    <Compile Include="NativeAgentV301.fsx"><Link>fodexFun/NativeAgent/NativeAgentV301.fsx</Link></Compile>
     <Compile Include="SubagentFodexFunV300.fsx"><Link>fodexFun/Subagent/SubagentFodexFunV300.fsx</Link></Compile>
     <Compile Include="WrapperAgentV300.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV300.fsx</Link></Compile>
     <Compile Include="WrapperAgentV200.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV200.fsx</Link></Compile>
@@ -127,6 +133,7 @@
     <Compile Include="FodexFunRegistrationV400.fsx"><Link>fodexFun/FodexFunRegistration/FodexFunRegistrationV400.fsx</Link></Compile>
     <Compile Include="WrapperAgentV401.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV401.fsx</Link></Compile>
     <Compile Include="FodexFunRegistrationV401.fsx"><Link>fodexFun/FodexFunRegistration/FodexFunRegistrationV401.fsx</Link></Compile>
+    <Compile Include="FodexFunRegistrationV406.fsx"><Link>fodexFun/FodexFunRegistration/FodexFunRegistrationV406.fsx</Link></Compile>
     <Compile Include="IAgentRequestFodexFunV401.fsx"><Link>fodexFun/IAgentRequest/IAgentRequestFodexFunV401.fsx</Link></Compile>
     <Compile Include="HubClientV101.fsx"><Link>fodexFun/HubClient/HubClientV101.fsx</Link></Compile>
     <Compile Include="HubClientFodexFunV101.fsx"><Link>fodexFun/HubClient/HubClientFodexFunV101.fsx</Link></Compile>
@@ -137,12 +144,14 @@
     <Compile Include="ParticipantConfigurationFodexFunV402.fsx"><Link>fodexFun/ParticipantConfiguration/ParticipantConfigurationFodexFunV402.fsx</Link></Compile>
     <Compile Include="WrapperAgentV402.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV402.fsx</Link></Compile>
     <Compile Include="WrapperAgentV405.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV405.fsx</Link></Compile>
+    <Compile Include="WrapperAgentV406.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV406.fsx</Link></Compile>
     <Compile Include="ParticipantManagerFodexFunV402.fsx"><Link>fodexFun/ParticipantManager/ParticipantManagerFodexFunV402.fsx</Link></Compile>
     <Compile Include="ReActLoopHandlerV402.fsx"><Link>fodexFun/ReActLoopHandler/ReActLoopHandlerV402.fsx</Link></Compile>
     <Compile Include="HubHostingFodexFunV402.fsx"><Link>fodexFun/HubHosting/HubHostingFodexFunV402.fsx</Link></Compile>
     <Compile Include="HubHostingFodexFunV405.fsx"><Link>fodexFun/HubHosting/HubHostingFodexFunV405.fsx</Link></Compile>
     <Compile Include="FodexAgentFodexFunV402.fsx"><Link>fodexFun/FodexAgent/FodexAgentFodexFunV402.fsx</Link></Compile>
     <Compile Include="FodexAgentFodexFunV405.fsx"><Link>fodexFun/FodexAgent/FodexAgentFodexFunV405.fsx</Link></Compile>
+    <Compile Include="FodexAgentFodexFunV406.fsx"><Link>fodexFun/FodexAgent/FodexAgentFodexFunV406.fsx</Link></Compile>
     <Compile Include="ConsolePolicyFodexFunV403.fsx"><Link>fodexFun/Console/ConsolePolicyFodexFunV403.fsx</Link></Compile>
     <Compile Include="ConsolePrinterFodexFunV403.fsx"><Link>fodexFun/Console/ConsolePrinterFodexFunV403.fsx</Link></Compile>
     <Compile Include="ConsoleHostFodexFunV403.fsx"><Link>fodexFun/Console/ConsoleHostFodexFunV403.fsx</Link></Compile>
@@ -153,12 +162,16 @@
     <Compile Include="ConsoleHostFodexFunV404.fsx"><Link>fodexFun/Console/ConsoleHostFodexFunV404.fsx</Link></Compile>
     <Compile Include="ConsoleHostFodexFunV405.fsx"><Link>fodexFun/Console/ConsoleHostFodexFunV405.fsx</Link></Compile>
     <Compile Include="ConsoleHostFodexFunV407.fsx"><Link>fodexFun/Console/ConsoleHostFodexFunV407.fsx</Link></Compile>
+    <Compile Include="ConsoleHostFodexFunV408.fsx"><Link>fodexFun/ConsoleHost/ConsoleHostFodexFunV408.fsx</Link></Compile>
     <Compile Include="ServiceProtocolFodexFunV100.fsx"><Link>fodexFun/Service/ServiceProtocolFodexFunV100.fsx</Link></Compile>
     <Compile Include="ServiceSupervisorFodexFunV100.fsx"><Link>fodexFun/Service/ServiceSupervisorFodexFunV100.fsx</Link></Compile>
+    <Compile Include="ServiceSupervisorFodexFunV101.fsx"><Link>fodexFun/Service/ServiceSupervisorFodexFunV101.fsx</Link></Compile>
     <Compile Include="ServiceWrapperFodexFunV100.fsx"><Link>fodexFun/Service/ServiceWrapperFodexFunV100.fsx</Link></Compile>
+    <Compile Include="ServiceWrapperFodexFunV101.fsx"><Link>fodexFun/ServiceWrapper/ServiceWrapperFodexFunV101.fsx</Link></Compile>
     <Compile Include="ServiceMcpFodexFunV100.fsx"><Link>fodexFun/Service/ServiceMcpFodexFunV100.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV100.fsx"><Link>fodexFun/Service/ServiceHostFodexFunV100.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV101.fsx"><Link>fodexFun/Service/ServiceHostFodexFunV101.fsx</Link></Compile>
+    <Compile Include="ServiceHostFodexFunV102.fsx"><Link>fodexFun/ServiceHost/ServiceHostFodexFunV102.fsx</Link></Compile>
     <Compile Include="FodexFunctions.fsx" />
     <Compile Include="FodexAgent.fsx" />
     <None Include="FodexEntry.fsx"><Link>Archive/FodexEntry.fsx</Link></None>
@@ -192,7 +205,8 @@
     <None Include="ProgramV404.fs"><Link>Archive/ProgramV404.fs</Link></None>
     <None Include="ProgramV405.fs"><Link>Archive/ProgramV405.fs</Link></None>
     <None Include="ProgramV406.fs"><Link>Archive/ProgramV406.fs</Link></None>
-    <Compile Include="ProgramV407.fs" />
+    <None Include="ProgramV407.fs"><Link>Archive/ProgramV407.fs</Link></None>
+    <Compile Include="ProgramV408.fs" />
     <!-- Link changes only the project view; explicit TargetPath preserves runtime config lookup. -->
     <None Include="NLog.conf" CopyToOutputDirectory="PreserveNewest"><Link>Archive/NLog.conf</Link><TargetPath>NLog.conf</TargetPath></None>
     <None Include="NLog.M017.conf" CopyToOutputDirectory="PreserveNewest"><Link>Demo/NLog.M017.conf</Link><TargetPath>NLog.M017.conf</TargetPath></None>

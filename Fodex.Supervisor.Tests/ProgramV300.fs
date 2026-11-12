@@ -12,6 +12,14 @@ let main argv =
         testList "Infrastructure" [
             ReActJsonV200Tests.tests; ReActDataStoreV200Tests.tests; ReActDataStoreV300Tests.tests
             ProcSupervisorV201Tests.tests; NLogLoggingTests.tests
+            NativeProcessFodexFunV301Tests.tests; WrapperAgentV406Tests.tests
+            NativeCompactFodexFunV301Tests.tests
+            NativeModelCatalogFodexFunV301Tests.tests
+            FodexAgentFodexFunV406Tests.tests
+            FodexFunRegistrationV406Tests.tests
+            ConsoleHostFodexFunV408Tests.tests
+            ServiceWrapperFodexFunV101Tests.tests
+            ServiceHostFodexFunV102Tests.tests
             QuotationStoreTests.tests
             ContextFodexFunV400Tests.tests; ReActDataStoreV400Tests.tests
         ]
@@ -20,7 +28,7 @@ let main argv =
             NativeAppServerV202Tests.tests; NativeAgentV202Tests.tests; NativeAgentV203Tests.tests
             NativeOwnershipFodexFunV209Tests.tests; NativeSettingsFodexFunV300Tests.tests
             NativeCompactFodexFunV300Tests.tests; NativeModelCatalogFodexFunV300Tests.tests
-            NativeOutputFodexFunV300Tests.tests
+            NativeAgyFodexFunV300Tests.tests; NativeAgyFodexFunV301Tests.tests; NativeOutputFodexFunV300Tests.tests
         ]
         testList "ReActLoop" [
             ParticipantControlFodexFunV300Tests.tests; ParticipantListingFodexFunV300Tests.tests
@@ -78,6 +86,7 @@ let main argv =
             ConsoleHostFodexFunV405Tests.tests
             ServiceProtocolFodexFunV100Tests.tests
             ServiceSupervisorFodexFunV100Tests.tests
+            ServiceSupervisorFodexFunV101Tests.tests
             ServiceWrapperFodexFunV100Tests.tests
             ServiceMcpFodexFunV100Tests.tests
             ServiceHostFodexFunV100Tests.tests

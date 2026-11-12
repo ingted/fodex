@@ -113,6 +113,7 @@
     <Compile Include="../Fodex.Supervisor/WrapperIAgentDemo.M019.R001.Output.fsx"><Link>Demo/M019.R001.Output.fsx</Link></Compile>
     <Compile Include="M019ConsoleOutputIsolationTests.fsx" />
     <Compile Include="NativeModelCatalogFodexFunV300Tests.fsx" />
+    <Compile Include="NativeAgyFodexFunV300Tests.fsx" />
     <Compile Include="WrapperContextFodexFunV300Tests.fsx" />
     <Compile Include="WrapperAgentV300Tests.fsx" />
     <Compile Include="FodexFunRegistrationV300Tests.fsx" />
@@ -126,6 +127,9 @@
     <None Include="M017MemorySmoke.fsx" />
     <None Include="M018ConsoleInputSmoke.fsx" />
     <Compile Include="ImplementationTestSupportV301.fsx" />
+    <Compile Include="NativeProcessFodexFunV301Tests.fsx"><Link>fodexFun/NativeProcess/NativeProcessFodexFunV301Tests.fsx</Link></Compile>
+    <Compile Include="NativeAgyFodexFunV301Tests.fsx"><Link>fodexFun/NativeAgy/NativeAgyFodexFunV301Tests.fsx</Link></Compile>
+    <Compile Include="WrapperAgentV406Tests.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV406Tests.fsx</Link></Compile>
     <Compile Include="FodexFunRegistrationV400Tests.fsx" />
     <Compile Include="IAgentRequestFodexFunV401Tests.fsx" />
     <Compile Include="SubagentCreationFodexFunV401Tests.fsx" />
@@ -168,9 +172,17 @@
     <Compile Include="ServiceTestSupportV100.fsx" />
     <Compile Include="ServiceProtocolFodexFunV100Tests.fsx" />
     <Compile Include="ServiceSupervisorFodexFunV100Tests.fsx" />
+    <Compile Include="ServiceSupervisorFodexFunV101Tests.fsx"><Link>fodexFun/ServiceSupervisor/ServiceSupervisorFodexFunV101Tests.fsx</Link></Compile>
     <Compile Include="ServiceWrapperFodexFunV100Tests.fsx" />
     <Compile Include="ServiceMcpFodexFunV100Tests.fsx" />
     <Compile Include="ServiceHostFodexFunV100Tests.fsx" />
+    <Compile Include="NativeCompactFodexFunV301Tests.fsx"><Link>fodexFun/NativeCompact/NativeCompactFodexFunV301Tests.fsx</Link></Compile>
+    <Compile Include="NativeModelCatalogFodexFunV301Tests.fsx"><Link>fodexFun/NativeModelCatalog/NativeModelCatalogFodexFunV301Tests.fsx</Link></Compile>
+    <Compile Include="FodexAgentFodexFunV406Tests.fsx"><Link>fodexFun/FodexAgent/FodexAgentFodexFunV406Tests.fsx</Link></Compile>
+    <Compile Include="FodexFunRegistrationV406Tests.fsx"><Link>fodexFun/Registration/FodexFunRegistrationV406Tests.fsx</Link></Compile>
+    <Compile Include="ConsoleHostFodexFunV408Tests.fsx"><Link>fodexFun/ConsoleHost/ConsoleHostFodexFunV408Tests.fsx</Link></Compile>
+    <Compile Include="ServiceWrapperFodexFunV101Tests.fsx"><Link>fodexFun/ServiceWrapper/ServiceWrapperFodexFunV101Tests.fsx</Link></Compile>
+    <Compile Include="ServiceHostFodexFunV102Tests.fsx"><Link>fodexFun/ServiceHost/ServiceHostFodexFunV102Tests.fsx</Link></Compile>
     <Compile Include="ProgramV300.fs" />
     <None Include="TestCases.BeforeRefactor.md" />
   </ItemGroup>

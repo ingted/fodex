@@ -51,7 +51,7 @@ let tests = testList "M017 command quotation" [
         WrapperCommandFodexFunV300.register node ctx
         let usage=evaluated<unit,string> node WrapperCommandFodexFunV300.targetUsage
         let text=usage() |> required
-        for syntax in ["/subagent(N[,raw|wrapper]) [instruction]";"/wrapper_cot instruction";"/wrapper_sendAll";
+        for syntax in ["/subagent(N[,raw|wrapper][,codex|agy]) [instruction]";"/wrapper_cot instruction";"/wrapper_sendAll";
                        "/stop sub(N|i..j|i,j,k|ALL)";"/memory[(N|i..j|i,j,k|ALL)] [on|off|status]";"/help"] do
             Expect.stringContains text syntax "usable slash syntax"
         Expect.isFalse (text.Contains "--text") "normalization transport is not a public command"
@@ -123,7 +123,10 @@ let tests = testList "M017 command quotation" [
         Expect.equal (parse "/subagent(5)" |> required) (WrapperCommandV300.Subagents(5,None,None)) "startup default is only used when mode absent"
         Expect.equal (parse "/subagent(3) review" |> required) (WrapperCommandV300.Subagents(3,None,Some "review")) "work"
         Expect.equal (parse "/subagent(2, raw) review (x)" |> required) (WrapperCommandV300.Subagents(2,Some SubagentModeV300.Raw,Some "review (x)")) "explicit raw"
-        Expect.equal (parse "/subagent(3,wrapper)" |> required) (WrapperCommandV300.Subagents(3,Some SubagentModeV300.Wrapper,None)) "explicit wrapper")
+        Expect.equal (parse "/subagent(3,wrapper)" |> required) (WrapperCommandV300.Subagents(3,Some SubagentModeV300.Wrapper,None)) "explicit wrapper"
+        Expect.equal (parse "/subagent(2, wrapper, codex)" |> required) (WrapperCommandV300.SubagentsWithType(2,Some SubagentModeV300.Wrapper,Some SubagentTypeV300.Codex,None)) "explicit codex"
+        Expect.equal (parse "/subagent(2, raw, agy) analyze" |> required) (WrapperCommandV300.SubagentsWithType(2,Some SubagentModeV300.Raw,Some SubagentTypeV300.Agy,Some "analyze")) "explicit agy"
+        Expect.equal (parse "/subagent(4, agy)" |> required) (WrapperCommandV300.SubagentsWithType(4,None,Some SubagentTypeV300.Agy,None)) "type only agy")
 
     testCase "cancel and stop retain different scheduling semantics" <| fun () -> withParser (fun parse ->
         Expect.equal (parse "/cancel(9000000000)" |> required) (WrapperCommandV300.Cancel(ParticipantSelectorV300.Number 9000000000L)) "participant Int64"

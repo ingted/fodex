@@ -17,7 +17,9 @@ open ImplementationTestSupportV301
 
 /// 只替代模型/SQL 資源，測試真正 supervisor mailbox、registry、protocol 和 formatter。
 /// real factory/SQL 與 provider 的整合另由 ServiceWrapper tests 及 executable smoke 驗證。
-let fixture node json =
+/// 可注入 dispose gate/失敗，驗證真正 supervisor 的關閉順序；不啟 SQL 或模型。
+/// version 只選 registry quotation；例："1.0.0" 重現舊競態，"1.0.1" 驗證修復。
+let fixtureWithDispose version (dispose:Guid -> Task) node json =
     // 純函數 fixture 必須實際讀取宣告，不能讓 ignore 被最佳化掉。
     // 此處不配置 SQL quotation writer；真實 executable/factory 測試另驗證完整初始化。
     Expecto.Expect.isGreaterThan FodexFunctions.builtins.Length 0 "declarations evaluated"
@@ -44,9 +46,12 @@ let fixture node json =
                                emit(ReActEndpoint.Human,owner,HumanInit(cause,HumanPrompt text))
                                started.Writer.TryWrite(sid,cause,text) |> ignore
                                Task.FromResult(Ok "accepted"))}
-        Ok(Task.FromResult(Ok(agent,(fun () -> Ok(history.ToArray())),(fun () -> disposals.Enqueue sid;Task.CompletedTask))))
-    let root=evaluated<ServiceSupervisorInputV100,IActorRef> "1.0.0" node ServiceSupervisorFodexFunV100.target (node,ctx,make,json,false) |> required
+        Ok(Task.FromResult(Ok(agent,(fun () -> Ok(history.ToArray())),(fun () -> disposals.Enqueue sid;dispose sid))))
+    let root=evaluated<ServiceSupervisorInputV100,IActorRef> version node ServiceSupervisorFodexFunV100.target (node,ctx,make,json,false) |> required
     root,started,finishers,creations,disposals
+
+/// 舊案例維持原本立即成功的 dispose 與 1.0.0，不更動其斷言/行為。
+let fixture node json = fixtureWithDispose "1.0.0" (fun _ -> Task.CompletedTask) node json
 
 let ask (root:IActorRef) request = root.Ask<string>(ServiceProtocolFodexFunV100.encode request,TimeSpan.FromSeconds 8.)
 let json text=System.Text.Json.JsonDocument.Parse(text:string)
