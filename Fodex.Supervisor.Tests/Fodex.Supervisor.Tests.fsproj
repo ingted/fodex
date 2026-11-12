@@ -191,6 +191,7 @@
     <Compile Include="ReActDataStoreV401Tests.fsx"><Link>fodexFun/ReActDataStore/ReActDataStoreV401Tests.fsx</Link></Compile>
     <Compile Include="IAgentAsyncFodexFunV301Tests.fsx"><Link>fodexFun/IAgent/IAgentAsyncFodexFunV301Tests.fsx</Link></Compile>
     <Compile Include="ReActLoopAsyncFodexFunV301Tests.fsx"><Link>fodexFun/ReActLoop/ReActLoopAsyncFodexFunV301Tests.fsx</Link></Compile>
+    <Compile Include="ReActLoopHandlerV403Tests.fsx"><Link>fodexFun/ReActLoopHandler/ReActLoopHandlerV403Tests.fsx</Link></Compile>
     <Compile Include="ProgramV300.fs" />
     <None Include="TestCases.BeforeRefactor.md" />
   </ItemGroup>

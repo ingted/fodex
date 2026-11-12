@@ -94,6 +94,7 @@ let main argv =
             ReActDataStoreV401Tests.tests
             IAgentAsyncFodexFunV301Tests.tests
             ReActLoopAsyncFodexFunV301Tests.tests
+            ReActLoopHandlerV403Tests.tests
             FodexFunRegistrationV301Tests.tests; WrapperCompositionV302Tests.tests
         ]
         testList "DemoAndConsole" [

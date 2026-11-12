@@ -152,6 +152,7 @@
     <Compile Include="WrapperAgentV406.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV406.fsx</Link></Compile>
     <Compile Include="ParticipantManagerFodexFunV402.fsx"><Link>fodexFun/ParticipantManager/ParticipantManagerFodexFunV402.fsx</Link></Compile>
     <Compile Include="ReActLoopHandlerV402.fsx"><Link>fodexFun/ReActLoopHandler/ReActLoopHandlerV402.fsx</Link></Compile>
+    <Compile Include="ReActLoopHandlerV403.fsx"><Link>fodexFun/ReActLoopHandler/ReActLoopHandlerV403.fsx</Link></Compile>
     <Compile Include="HubHostingFodexFunV402.fsx"><Link>fodexFun/HubHosting/HubHostingFodexFunV402.fsx</Link></Compile>
     <Compile Include="HubHostingFodexFunV405.fsx"><Link>fodexFun/HubHosting/HubHostingFodexFunV405.fsx</Link></Compile>
     <Compile Include="FodexAgentFodexFunV402.fsx"><Link>fodexFun/FodexAgent/FodexAgentFodexFunV402.fsx</Link></Compile>
