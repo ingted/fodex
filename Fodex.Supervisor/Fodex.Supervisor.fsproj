@@ -44,6 +44,7 @@
     <Compile Include="IAgentAsyncFodexFunV301.fsx"><Link>fodexFun/IAgent/IAgentAsyncFodexFunV301.fsx</Link></Compile>
     <None Include="ReActLoopFodexFunV200.fsx"><Link>Archive/fodexFun/ReActLoop/ReActLoopFodexFunV200.fsx</Link></None>
     <Compile Include="ReActLoopFodexFunV300.fsx"><Link>fodexFun/ReActLoop/ReActLoopFodexFunV300.fsx</Link></Compile>
+    <Compile Include="ReActLoopAsyncFodexFunV301.fsx"><Link>fodexFun/ReActLoop/ReActLoopAsyncFodexFunV301.fsx</Link></Compile>
     <None Include="NativeOrderFodexFunV205.fsx"><Link>Archive/fodexFun/NativeOrder/NativeOrderFodexFunV205.fsx</Link></None>
     <Compile Include="ReActTraceV203.fsx"><Link>fodexFun/ReActTrace/ReActTraceV203.fsx</Link></Compile>
     <Compile Include="ReActTraceV300.fsx"><Link>fodexFun/ReActTrace/ReActTraceV300.fsx</Link></Compile>

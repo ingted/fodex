@@ -24,6 +24,7 @@ module FodexFunctions =
             IAgentFodexFunV200.Definitions.builtins
             IAgentAsyncFodexFunV301.Definitions.builtins
             ReActLoopFodexFunV300.Definitions.builtins
+            ReActLoopAsyncFodexFunV301.Definitions.builtins
             ReActLoopTopologyFodexFunV300.Definitions.builtins
             WrapperContextFodexFunV300.Definitions.builtins
             SubagentFodexFunV204.Definitions.builtins

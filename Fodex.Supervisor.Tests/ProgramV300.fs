@@ -93,6 +93,7 @@ let main argv =
             CodexAppServerV101Tests.tests
             ReActDataStoreV401Tests.tests
             IAgentAsyncFodexFunV301Tests.tests
+            ReActLoopAsyncFodexFunV301Tests.tests
             FodexFunRegistrationV301Tests.tests; WrapperCompositionV302Tests.tests
         ]
         testList "DemoAndConsole" [
