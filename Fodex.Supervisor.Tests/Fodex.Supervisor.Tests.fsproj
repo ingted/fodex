@@ -128,6 +128,7 @@
     <None Include="M018ConsoleInputSmoke.fsx" />
     <Compile Include="ImplementationTestSupportV301.fsx" />
     <Compile Include="NativeProcessFodexFunV301Tests.fsx"><Link>fodexFun/NativeProcess/NativeProcessFodexFunV301Tests.fsx</Link></Compile>
+    <Compile Include="NativeProcessFodexFunV302Tests.fsx"><Link>fodexFun/NativeProcess/NativeProcessFodexFunV302Tests.fsx</Link></Compile>
     <Compile Include="NativeOwnershipLeaseFodexFunV302Tests.fsx"><Link>fodexFun/NativeOwnership/NativeOwnershipLeaseFodexFunV302Tests.fsx</Link></Compile>
     <Compile Include="NativeAgyFodexFunV301Tests.fsx"><Link>fodexFun/NativeAgy/NativeAgyFodexFunV301Tests.fsx</Link></Compile>
     <Compile Include="WrapperAgentV406Tests.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV406Tests.fsx</Link></Compile>

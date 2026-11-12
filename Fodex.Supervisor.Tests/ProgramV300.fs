@@ -12,7 +12,8 @@ let main argv =
         testList "Infrastructure" [
             ReActJsonV200Tests.tests; ReActDataStoreV200Tests.tests; ReActDataStoreV300Tests.tests
             ProcSupervisorV201Tests.tests; NLogLoggingTests.tests
-            NativeProcessFodexFunV301Tests.tests; NativeOwnershipLeaseFodexFunV302Tests.tests; WrapperAgentV406Tests.tests
+            NativeProcessFodexFunV301Tests.tests
+            NativeProcessFodexFunV302Tests.tests; NativeOwnershipLeaseFodexFunV302Tests.tests; WrapperAgentV406Tests.tests
             NativeCompactFodexFunV301Tests.tests
             NativeModelCatalogFodexFunV301Tests.tests
             FodexAgentFodexFunV406Tests.tests; FodexAgentFodexFunV407Tests.tests
