@@ -62,6 +62,7 @@
     <Compile Include="NativeProcessFodexFunV301.fsx"><Link>fodexFun/NativeProcess/NativeProcessFodexFunV301.fsx</Link></Compile>
     <Compile Include="NativeOwnershipLeaseFodexFunV302.fsx"><Link>fodexFun/NativeOwnership/NativeOwnershipLeaseFodexFunV302.fsx</Link></Compile>
     <Compile Include="CodexAppServerV100.fsx"><Link>fodexFun/CodexAppServer/CodexAppServerV100.fsx</Link></Compile>
+    <Compile Include="CodexAppServerV101.fsx"><Link>fodexFun/CodexAppServer/CodexAppServerV101.fsx</Link></Compile>
     <Compile Include="NativeAgentV200.fsx"><Link>fodexFun/NativeAgent/NativeAgentV200.fsx</Link></Compile>
     <Compile Include="NativeAgentV201.fsx"><Link>fodexFun/NativeAgent/NativeAgentV201.fsx</Link></Compile>
     <Compile Include="NativeAppServerV202.fsx"><Link>fodexFun/NativeAppServer/NativeAppServerV202.fsx</Link></Compile>

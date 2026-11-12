@@ -90,6 +90,7 @@ let main argv =
             ServiceWrapperFodexFunV100Tests.tests
             ServiceMcpFodexFunV100Tests.tests
             ServiceHostFodexFunV100Tests.tests
+            CodexAppServerV101Tests.tests
             FodexFunRegistrationV301Tests.tests; WrapperCompositionV302Tests.tests
         ]
         testList "DemoAndConsole" [
