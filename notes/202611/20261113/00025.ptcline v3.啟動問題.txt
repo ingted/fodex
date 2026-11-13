@@ -1,0 +1,166 @@
+› LINE RN 正在啟動：Akka port=15979；Fodex=akka.tcp://fodex-line@127.0.0.1:21824/user/fodex-supervisor
+  System.InvalidOperationException: v3-unfinished-run-use-Stop-LineFodexV3
+     at FSI_0001.Line_provider_fodex_v3_lifecycle.RunJournal..ctor(Settings settings, String control) in G:
+  \PulseTrade.fs\misc\line_provider_fodex_v3_lifecycle.fsx:line 65
+     at FSI_0001.Line_provider_fodex_v3_line.runHost(Settings settings) in G:\PulseTrade.fs\misc\line_provider_fodex_v3_line.fsx:line 296
+     at FSI_0003.run() in G:\PulseTrade.fs\misc\line_bot_rn_nuget.multimedia.multisession.fodex.v3.fsx:line 19
+     at <StartupCode$FSI_0003>.$FSI_0003.main@() in G:\PulseTrade.fs\misc\line_bot_rn_nuget.multimedia.multisession.fodex.v3.fsx:line 52
+     at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+     at System.Reflection.RuntimeMethodInfo.Invoke(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+  Stopped due to error
+  [launcher] Fodex service retained at akka.tcp://fodex-line@127.0.0.1:21824/user/fodex-supervisor
+  Exception: G:\PulseTrade.fs\misc\Start-LineFodexV3.ps1:121
+  Line |
+   121 |  … DE -ne 0) { throw "LINE v3 exited with code $LASTEXITCODE. Read $prov …
+       |                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+       | LINE v3 exited with code 1. Read G:\PulseTrade.fs\deployment\process\dev\line-fodex-v3\output\startup\fodex-line.15979.host.log; the independent
+  Fodex
+       | service is retained.
+  PS C:\Users\Administrator>
+
+  為什麼不能執行 PS C:\Users\Administrator> G:\PulseTrade.fs\misc\Start-LineFodexV3.ps1
+
+
+• 這個錯誤表示 v3 找到前一次尚未完成清理的 run 紀錄，因此拒絕覆蓋。我先核對紀錄裡的程序是否還活著，以及 wrapper 的 ownership 狀態，確認該如何安全恢復啟動。
+
+• Ran Read-CodexStdout { rg -n 'RunJournal|unfinished-run|Stop-LineFodexV3|RuntimeOwner' C:/Users/Administrator/.codex/memories/MEMORY.md | head -8; git -C
+  │ G:/PulseTrade.fs status --short -- misc/Start-LineFodexV3.ps1 misc/Stop-LineFodexV3.fsx misc/line_provider_fodex_v3_lifecycle.fsx misc/
+  │ line_provider_fodex_v3_line.fsx; Get-Content -LiteralPath G:/PulseTrade.fs/deployment/process/dev/line-fodex-v3/output/line-v3-run.json -Encoding utf8
+  │ … +3 lines
+  └ {"RunId":"9a9d22d8-e0c1-4ca8-af6f-7ac2ccada3e9","Host":{"Pid":58092,"BirthUtc":"2026-11-13T00:13:06.233026Z","ParentPid":0,"Name":"dotnet"},"HostTree":
+    [],"Supervisor":"akka.tcp://fodex-line@127.0.0.1:21824/user/fodex-supervisor","Control":"akka.tcp://PulseTradeCommResourceNode@127.0.0.1:15979/user/
+    line-v3-lifecycle","StoreServer":"localhost","StoreDatabase":"FodexM018","Status":"running","Native":[],"UpdatedUtc":"2026-11-13T00:13:43.3683848Z"}
+    +138 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { $path='G:/PulseTrade.fs/deployment/process/dev/line-fodex-v3/output/line-v3-run.json'; $run=Get-Content -LiteralPath $path -Encoding
+  │ utf8 -Raw | ConvertFrom-Json; $old=Get-CimInstance Win32_Process -Filter "ProcessId=$($run.Host.Pid)"; if($old){$old | Select-Object
+  │ ProcessId,Name,@{n='BirthUtc';e={$_.CreationDate.ToUniversalTime().ToString('o')}} | Format-List}else{'RECEIPT_HOST_NOT_RUNNING='+$run.Host.Pid}; sqlcmd
+  │ … +4 lines
+  └ WARNING: Command wrote 177 bytes to C:\Users\Administrator\.codex\temp\output-guard\01a16f6c-722c-7da3-816c-caae933504f8\stderr.raw
+    RECEIPT_HOST_NOT_RUNNING=58092
+    9A9D22D8-E0C1-4CA8-AF6F-7AC2CCADA3E9 idle 1
+    +7 lines (ctrl+t to view transcript)
+
+• 確認了：紀錄中的舊 host PID 58092 已退出，但 receipt 仍是 running，SQL 也還保留它的一個 wrapper ownership；目前沒有未完成的 route。
+
+  我會用既有 Stop-LineFodexV3.ps1 清理這個舊 run，保留 session 與歷史資料，再驗證 service 可連線。這與你從 C:\Users\Administrator 呼叫腳本無關。
+
+Working (1m 54s • esc to interrupt) · 1 background terminal running · /ps to view · /stop to close
+
+
+› Ask Codex to do anything
+
+  GPT-6.1-Sol xhigh · F:\fodex · fodex · ← for agents                                                 Goal paused (/goal resume)    ⚠ 2 warnings · f2 to view
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+• 原因是前一次 LINE host 已退出，但 run 紀錄仍為 running，新啟動因此被擋下，避免覆蓋尚未清理的 ownership。
+
+  我已完成清理：
+
+  • 舊 run 已變為 closed，ownership 已釋放。
+  • Fodex service 連線驗證成功。
+  • session 與歷史資料保留。
+
+  現在可以重新執行：
+
+  G:\PulseTrade.fs\misc\Start-LineFodexV3.ps1
+
+  日後正常停止請使用：
+
+  G:\PulseTrade.fs\misc\Stop-LineFodexV3.ps1
+
+  Worked for 3m 13s • 10:13 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6.1-Sol xhigh · F:\fodex · fodex · ← for agents                                                 Goal paused (/goal resume)    ⚠ 2 warnings · f2 to view  
+
+
+
+
+
+
+
+
+
+
+
+
+• 1. 已建立 Read-Chrome-Line.fsx (G:/PulseTrade.fs/misc/Read-Chrome-Line.fsx)，並用既有 Chrome 實讀成功：
+
+     dotnet fsi G:\PulseTrade.fs\misc\Read-Chrome-Line.fsx --port 9222 --sendTo "d9System_test2"
+
+     預設讀最近 20 筆收到的訊息；支援 --json true、--direction all、--after。不另開 Chrome。
+
+  2. 你沒有誤解。正確流程就是：graph → handover.md → 新開 native → 完成交接 → 取新 native 回傳的 SID → 啟用。舊 SID 只留歷史。AGY 生成中 SID 為 None，成功
+     terminal 後才取得新 SID。
+
+  Contract 草稿 Debug／Release 各 101/101 通過。依文件 §10.2，停等你比較快照 (Fodex.Supervisor.Contract/concepts.202611131436.fsx)與草稿
+  (Fodex.Supervisor.Contract/concepts.fsx)後確認。
+
+  Read 工具已提交 3f17f9923；發布 G repo 新遠端分支的確認仍待回覆，因 AGENTS.md §9 (G:/PulseTrade.fs/AGENTS.md:137)要求建立 branch 須明確批准。
+
+  Worked for 41m 33s • 3:45 PM
+
+  ↳ Recap: 目標是恢復 LINE agent 體驗，並以 graph handover 支援 AGY↔Codex 重啟，保留 N、使用新 SID。讀訊腳本已實讀成功；effort 與圖片 echo 修正通過 39/39 測
+           試，但部署及 LINE 修復實測尚未確認。Contract 草稿 Debug／Release 各 101/101 通過，跨 provider handover 尚待實作。
+           Next: 請確認是否接受 Contract 草稿並繼續實作，以及是否同意發布 G repo 的新遠端分支。
+
+
+› Ask Codex to do anything
+
+  GPT-6.1-Sol xhigh · F:\fodex · fodex · ← for agents                                                 Goal paused (/goal resume)    ⚠ 2 warnings · f2 to view  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+• 已完成實作並部署新版 CLI，Contract 維持核准版。
+
+  • Codex↔AGY 切換保留 participant N，建立新 SID，先讀 graph handover；排除 stdout／stderr。
+  • Release：611 通過、2 項既有選跑略過；Test Explorer 16/16；LINE integration 42/42。
+  • 真實 LINE 已驗證切換、重啟沿用新 SID，以及最終部署版正常回覆。
+
+  詳見實作與驗收紀錄 (doc/ProviderRestart.Runtime.20261114.md)。
+
+  Fodex 4edfa0a 已 push；LINE 修正 3710df486 已本機提交，遠端分支建立待你批准，依據 G repo §9.4 (G:/PulseTrade.fs/AGENTS.md:137)。
+
+  Worked for 5h 45m 42s • 4:22 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6.1-Sol xhigh · F:\fodex · fodex · ← for agents                                                 Goal paused (/goal resume)    ⚠ 2 warnings · f2 to view
+
+
+
+
+
+
+  
