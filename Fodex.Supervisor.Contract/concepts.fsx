@@ -40,6 +40,8 @@ module LiteralsMod =
     [<Literal>]
     let targetReActLoopControlParticipants = "ReActLoopControlParticipants"
     [<Literal>]
+    let targetReActLoopRestartParticipant = "ReActLoop.RestartParticipant"
+    [<Literal>]
     let targetReActLoopRemoveParticipant = "ReActLoopRemoveParticipant"
     [<Literal>]
     let targetReActLoopResolveParticipant = "ReActLoopResolveParticipant"
@@ -51,6 +53,8 @@ module LiteralsMod =
     let targetReActLoopDispatchToParticipant = "ReActLoopDispatchToParticipant"
     [<Literal>]
     let targetReActLoopRouteReActDataStream = "ReActLoopRouteReActDataStream"
+    [<Literal>]
+    let targetReActLoopRouteNativeReActDataStream = "ReActLoop.RouteNativeReActDataStream"
     [<Literal>]
     let targetReActLoopCollect = "ReActLoopCollect"
     [<Literal>]
@@ -106,12 +110,14 @@ module CommandMod =
     | ReActLoopUpsertParticipant of CommandVersion
     | ReActLoopCreateParticipants of CommandVersion
     | ReActLoopControlParticipants of CommandVersion
+    | ReActLoopRestartParticipant of CommandVersion
     | ReActLoopRemoveParticipant of CommandVersion
     | ReActLoopResolveParticipant of CommandVersion
     | ReActLoopListParticipants of CommandVersion
     | ReActLoopPostHumanPrompt of CommandVersion
     | ReActLoopDispatchToParticipant of CommandVersion
     | ReActLoopRouteReActDataStream of CommandVersion
+    | ReActLoopRouteNativeReActDataStream of CommandVersion
     | ReActLoopCollect of CommandVersion
     | ReActLoopReadDataFlow of CommandVersion
     | ReActLoopGetStatus of CommandVersion
@@ -396,6 +402,11 @@ module TypesMod =
         'TParticipant * 'TControl * 'TParticipant [] ->
             Task<Result<('TParticipant * Result<unit, exn>) [], exn>>
 
+    /// 跨 provider 重啟完成後才回傳實際 execution participant 的最新資訊。
+    /// facade 等待 Task；兩階段 FeasibleFun 的 prepare/invoke 仍由 registry operation 提供。
+    type TReActLoopRestartParticipant<'TParticipant, 'TAgentType, 'TInfo> =
+        'TParticipant * 'TAgentType * string -> Task<Result<'TInfo, exn>>
+
     type TReActLoopUpsertParticipant<'TParticipant, 'TAgent> =
         FeasibleT<'TParticipant * 'TAgent, unit, exn>
 
@@ -419,6 +430,11 @@ module TypesMod =
 
     type TReActLoopRouteReActDataStream<'TStream> =
         FeasibleT<'TStream, PersistedReActDataCount, exn>
+
+    /// generation 屬於 native session binding，不是每次 exec process 的 launch id。
+    /// implementation 必須先驗證 generation；拒絕舊代時不能降級走一般 route。
+    type TReActLoopRouteNativeReActDataStream<'TParticipant, 'TGeneration, 'TStream> =
+        FeasibleT<'TParticipant * 'TGeneration * 'TStream, PersistedReActDataCount, exn>
 
     type TReActLoopCollect<'TSessionId, 'TStream> =
         FeasibleT<'TSessionId, 'TStream [], exn>
@@ -561,12 +577,25 @@ module CoreMod =
 
     type CodexSessionId = string
 
-    // Wrapper 暴露 Fodex 自己的 session id；Native 暴露可由 Codex 恢復的 id。
+    /// provider 是版本化 implementation 解讀的名稱，Contract 不把可用廠商列成封閉 enum。
+    /// 例如 "agy"／"codex"；先正規化與驗證，再比較 provider，不能以 SID 的 UUID 外形猜測。
+    type NativeAgentType = string
+    type NativeSessionIdentity = NativeAgentType * string
+
+    /// 同一 N 的 native session 世代。provider 改變／明確 fresh replacement 才增加；
+    /// 同 SID 的 actor/process rebind 不增加。0 可用於尚未遷移的既有 binding。
+    type NativeSessionGeneration = int64
+
+    // Wrapper 暴露 Fodex 自己的 session id；Native 暴露其 provider 的真實 session id。
     // exec adapter 取 CODEX_SESSION_ID；app-server adapter 取 thread.id，不能以
     // 同一 session tree 共用的 thread.sessionId 取代 thread.id。
     type AgentSessionId =
     | WrapperSessionId of ReActParticipantSessionId
+    /// 保留供舊格式 decode；舊 AGY 實作也曾借用這個 case，不能只靠 case 名稱猜 provider。
     | NativeCodexSessionId of CodexSessionId
+    /// 新 binding 明確攜帶 provider；同 SID 字串跨 provider 不代表同一原生對話。
+    /// 例：NativeAgentSessionId ("agy", actualConversationId)。不得拿 Codex SID 給 AGY resume。
+    | NativeAgentSessionId of agentType: NativeAgentType * sid: string
 
     /// 描述被管理的 participant，不描述它使用 app-server 還是 exec transport。
     /// RawExec 沒有 sub wrapper／IAgent；ActorAddress 指向管理該工作的 owner worker。
@@ -657,7 +686,8 @@ module CoreMod =
 
     // ReActLoop 只依 capability 決定可呼叫的操作，不把 exec／app-server 寫死在 topology。
     // CanInterruptTurn 表示中斷 active turn 後 logical session 仍可使用；單純 kill OS process 不足以宣告此能力。
-    // CanResumeSession 表示新 runtime instance 可重新綁定既有 NativeCodexSessionId。
+    // CanResumeSession 表示新 runtime instance 可重新綁定同一 provider 的既有 native SID；
+    // 不表示另一個 agent-type 也能使用該 SID。跨 provider 須走 RestartParticipant handover。
     type ReActParticipantCapability =
     | CanStartTurn
     | CanSteerTurn
@@ -717,13 +747,36 @@ module CoreMod =
         main participant 的 Codex session 上生成；產出只能經 durable RouteReActDataStream 後再 steer 給 main。
 
         COT／其他輔助 participant 無法 resume 時可移除，不要求自動重建；main participant 無法 resume
-        時必須保留可讀取的 NativeCodexSessionId，並允許把 wrapper session 的 persisted stream 匯出為 handoff JSONL。
+        時必須保留可讀取的 provider/native SID（新格式 NativeAgentSessionId，舊格式 NativeCodexSessionId），
+        並允許把 wrapper session 的 persisted stream 匯出為 handoff JSONL。
     *)
 
 
     type ProgressAndStatus = string
 
     type StreamId = int64 //ReActLoop session 中每個 edge event 的唯一順序編號
+
+    /// 跨 provider 重啟的 durable 階段資料；不是另一個 runtime/service class。
+    /// 每個階段使用相同 transitionId，只有 Activated 允許更新 active binding。
+    /// 候選 SID 不提前取代原 SID；handover artifact 的內容／60KiB selection 由實作負責，
+    /// StdOut／StdErr／raw process IO 不得放進 handover.md，也不算進 context 預算。
+    /// 同 N 的前後 SID 關聯保存在 Activated self-edge，graph 不另建 session vertex。
+    type ParticipantRestartPhase =
+    /// 記錄預期舊代與新 provider 設定；必須先讀舊設定，不能先用新預設覆蓋。
+    | Requested of transitionId: Guid * expectedGeneration: NativeSessionGeneration * agentType: NativeAgentType * arguments: string
+    /// through 是固定 context cutoff，不代表 graph/SQL 只保留到此或刪掉其他歷史。
+    | HandoverPrepared of transitionId: Guid * through: StreamId * artifactId: Guid * sha256: string
+    /// 啟動／生成中若尚未取得真實 SID（例如 AGY print mode），candidateSid=None，不能先填舊 SID。
+    /// AGY 成功 terminal 後才取得 conversation_id；app-server 可較早觀察到 thread.id。
+    /// 有實際 provider 證據後可記 Some sid，但兩者都須等 handover 完成才可 Activated。
+    | CandidateStarted of transitionId: Guid * agentType: NativeAgentType * candidateSid: string option * bootstrapRequestId: Guid
+    /// bootstrap 正常終止且 handover 完成後，才以 CAS 原子切換 generation／SID／有效設定。
+    /// previous=None 只適用沒有既有 native binding 的情況；不能藉此跳過不明 SID 的恢復責任。
+    | Activated of transitionId: Guid * nextGeneration: NativeSessionGeneration * previous: NativeSessionIdentity option * current: NativeSessionIdentity * artifactId: Guid
+    /// 留穩定 phase/error code 與 correlation，不在此序列化 exn、stderr 或 stdout 全文。
+    /// Activated 之後若只是舊資源 cleanup 失敗，此事件不能把 active SID 回滾到 previous。
+    | Failed of transitionId: Guid * phaseCode: string * errorCode: string
+
     // 一筆事件只有一組 source/target。原 Cot/Work batch 必須拆成不同 StreamId 的 edges，
     // 可使用相同 causedBy；不可將不同目的地的 data 放入同一個 edge。
     /// Edge label 保留事件階段、唯一 StreamId 與 causedBy；例如 AgentCot (2L, 1L, Message "分析")。
@@ -745,9 +798,16 @@ module CoreMod =
     /// owner -> child 的關係事件；isActive=false 解除關係，但不刪除歷史 edge／節點／編號。
     /// 同一 (source,target,relation) 以最大 StreamId 的值為準，不能以 ContainsEdge 判斷仍 active。
     /// main 切換的解除／新增與舊 main 退役必須由 owner 原子 commit，讀者不得看見半完成狀態。
-    /// 新 main 使用新 logical key／Number／Codex sid；只重綁 actor 則保留原身分。
+    /// 明確 fresh/reset main 的替換可使用新 logical key／Number；只重綁 actor 保留原身分。
+    /// 跨 provider 的 RestartParticipant 則保留原 N／Main 關係，改由 ParticipantRestartChanged 記錄 SID 換代。
     /// 例：(wrapper, native, ParticipantRelationChanged (11L, ReActRelation.Owns, true))。
     | ParticipantRelationChanged of streamId: StreamId * relation: ReActRelation * isActive: bool
+    /// source/target 必須是同一 logical participant。這是 topology/control self-edge，
+    /// 不派送給模型／user，也不是 AgentCot。Activated 保存 previous→current native 身分，
+    /// 更新該 N 的 SessionId label；N、who、parent、wrapper SID 與 Main 關係保持不變。
+    /// 例：(p,p,ParticipantRestartChanged(50L,40L,Activated(id,2L,Some("codex",oldSid),("agy",newSid),artifact)))。
+    /// 硬性驗證、atomic persist/project、generation fence 與 physical cleanup 都由實作負責。
+    | ParticipantRestartChanged of streamId: StreamId * causedBy: StreamId * phase: ParticipantRestartPhase
 
     // 原生 FGL labelled edge；不另包 envelope 或複製方向欄位。
     /// 例如 (ReActEndpoint.Human, wrapperEndpoint, HumanInit (1L, HumanPrompt "review"))。
@@ -971,6 +1031,8 @@ module CoreMod =
             cmd.TryGetResult CommonCommand.ReActLoopCreateParticipants
         let controlParticipantsVersion =
             cmd.TryGetResult CommonCommand.ReActLoopControlParticipants
+        let restartParticipantVersion =
+            cmd.TryGetResult CommonCommand.ReActLoopRestartParticipant
         let upsertParticipantVersion =
             cmd.TryGetResult CommonCommand.ReActLoopUpsertParticipant
         let removeParticipantVersion =
@@ -985,6 +1047,8 @@ module CoreMod =
             cmd.TryGetResult CommonCommand.ReActLoopDispatchToParticipant
         let routeReActDataStreamVersion =
             cmd.TryGetResult CommonCommand.ReActLoopRouteReActDataStream
+        let routeNativeReActDataStreamVersion =
+            cmd.TryGetResult CommonCommand.ReActLoopRouteNativeReActDataStream
         let collectVersion =
             cmd.TryGetResult CommonCommand.ReActLoopCollect
         let readDataFlowVersion =
@@ -1004,6 +1068,11 @@ module CoreMod =
                 ReActParticipant * ReActParticipantControl * ReActParticipant [],
                 Task<Result<(ReActParticipant * Result<unit, exn>) [], exn>>
             > node targetReActLoopControlParticipants
+        let versionedRestartParticipant =
+            reActLoopFodexFun<
+                ReActParticipant * NativeAgentType * string,
+                Task<Result<ReActParticipantInfo, exn>>
+            > node targetReActLoopRestartParticipant
         let versionedUpsertParticipant =
             reActLoopFodexFun<
                 ReActParticipant * IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>,
@@ -1038,6 +1107,11 @@ module CoreMod =
                 ReActDataStream<'TypedCmdToWrapper>,
                 PersistedReActDataCount
             > node targetReActLoopRouteReActDataStream
+        let versionedRouteNativeReActDataStream =
+            reActLoopFodexFun<
+                ReActParticipant * NativeSessionGeneration * ReActDataStream<'TypedCmdToWrapper>,
+                PersistedReActDataCount
+            > node targetReActLoopRouteNativeReActDataStream
         let versionedCollect =
             reActLoopFodexFun<
                 ReActParticipantSessionId,
@@ -1068,6 +1142,7 @@ module CoreMod =
 
         let createParticipants = pinAtStartup createParticipantsVersion versionedCreateParticipants
         let controlParticipants = pinAtStartup controlParticipantsVersion versionedControlParticipants
+        let restartParticipant = pinAtStartup restartParticipantVersion versionedRestartParticipant
         let upsertParticipant = pinAtStartup upsertParticipantVersion versionedUpsertParticipant
         let removeParticipant = pinAtStartup removeParticipantVersion versionedRemoveParticipant
         let resolveParticipant = pinAtStartup resolveParticipantVersion versionedResolveParticipant
@@ -1075,6 +1150,7 @@ module CoreMod =
         let postHumanPrompt = pinAtStartup postHumanPromptVersion versionedPostHumanPrompt
         let dispatchToParticipant = pinAtStartup dispatchToParticipantVersion versionedDispatchToParticipant
         let routeReActDataStream = pinAtStartup routeReActDataStreamVersion versionedRouteReActDataStream
+        let routeNativeReActDataStream = pinAtStartup routeNativeReActDataStreamVersion versionedRouteNativeReActDataStream
         let collect = pinAtStartup collectVersion versionedCollect
         let readDataFlow = pinAtStartup readDataFlowVersion versionedReadDataFlow
         let getStatus = pinAtStartup getStatusVersion versionedGetStatus
@@ -1155,6 +1231,22 @@ module CoreMod =
         default this.ControlParticipants =
             fun input ->
                 runPinnedAsync targetReActLoopControlParticipants controlParticipantsVersion controlParticipants input
+
+        /// 例：let! result = loop.RestartParticipant(native,"agy","--effort high")。
+        /// wrapper N 先由 implementation 解析為其當前 main native；回傳實際 execution N 的資訊。
+        /// provider 不同必須新建 SID、保留 N/who/parent，先從可還原 graph 建 handover，
+        /// 新 native 第一筆只收 handover bootstrap；它完成前一般 prompt/order 留在原有 queue。
+        /// 只有真實 SID、成功 terminal／handover 證據、durable Activated 全部確認後才回 Ok。
+        /// 不把舊 provider SID 給新 provider resume，不用新 N 掩蓋 replacement，
+        /// 不自動重送取消前可能已有副作用的工作。失敗保留舊身分／歷史與可追查的 transition。
+        /// 舊資源 cleanup 尚未確認時不回 Ok；若 Activated 已提交，重試只完成原 transition，
+        /// 保留已啟用的新 SID，不因 ACK/cleanup 失敗再開第三個 session。
+        /// 60KiB、artifact 格式與 native 建立是實作政策；這裡只 pin/eval/invoke registry function。
+        abstract member RestartParticipant:
+            TReActLoopRestartParticipant<ReActParticipant, NativeAgentType, ReActParticipantInfo>
+        default this.RestartParticipant =
+            fun input ->
+                runPinnedAsync targetReActLoopRestartParticipant restartParticipantVersion restartParticipant input
 
         // 更新 logical participant 的 live IAgent binding；同一 logical identity 會覆寫目前的 IAgent。
         // 此 API 不等於 metadata／配號的 durable 註冊；raw exec 可以只有 owner worker 而沒有 IAgent。
@@ -1246,6 +1338,22 @@ module CoreMod =
                     routeReActDataStreamVersion
                     routeReActDataStream
                     stream
+
+        /// 例：loop.RouteNativeReActDataStream(native,2L,(fromEndpoint,toEndpoint,event))。
+        /// generation 是 native session 世代，不是 actor/process launch 次數；implementation
+        /// 必須在 durable commit 前檢查 current generation，拒絕舊 actor 的延遲輸出。
+        /// bootstrap/candidate 資料只能按該 transition 的 gate 處理，不可完成一般 user turn。
+        /// 回傳值同 RouteReActDataStream 的 committed count；缺少這個 target 時直接 Error，
+        /// 不能降級走沒有 generation fence 的一般 route。facade 不直接 tell 任何 actor。
+        abstract member RouteNativeReActDataStream:
+            TReActLoopRouteNativeReActDataStream<ReActParticipant, NativeSessionGeneration, ReActDataStream<'TypedCmdToWrapper>>
+        default this.RouteNativeReActDataStream =
+            fun input ->
+                runPinned
+                    targetReActLoopRouteNativeReActDataStream
+                    routeNativeReActDataStreamVersion
+                    routeNativeReActDataStream
+                    input
 
         /// 讀整個 ReActLoop session 的持久化歷史，依 StreamId 遞增回傳原生 edges。
         /// 用法：loop.Collect wrapperSessionId；不是讀未 commit mailbox，也不是 ReadDataFlow 的別名。

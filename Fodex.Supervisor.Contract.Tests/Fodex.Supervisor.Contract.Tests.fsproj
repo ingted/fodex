@@ -24,6 +24,9 @@
     <Compile Include="ReActLoopCollectTests.fsx" />
     <Compile Include="ReActLoopReadDataFlowTests.fsx" />
     <Compile Include="ReActTopologyTests.fsx" />
+    <Compile Include="ParticipantRestartDataTests.fsx" />
+    <Compile Include="ReActLoopRestartParticipantTests.fsx" />
+    <Compile Include="ReActLoopRouteNativeReActDataStreamTests.fsx" />
     <Compile Include="Program.fs" />
     <None Include="README.md" />
   </ItemGroup>
