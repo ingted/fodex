@@ -20,11 +20,11 @@ let main argv =
                 NativeCompactFodexFunV301Tests.tests
                 NativeCompactFodexFunV302Tests.tests
                 NativeModelCatalogFodexFunV301Tests.tests
-                FodexAgentFodexFunV406Tests.tests; FodexAgentFodexFunV407Tests.tests
+                FodexAgentFodexFunV406Tests.tests; FodexAgentFodexFunV407Tests.tests; FodexAgentFodexFunV408Tests.tests
                 FodexFunRegistrationV406Tests.tests
                 ConsoleHostFodexFunV408Tests.tests
-                ServiceWrapperFodexFunV101Tests.tests; ServiceWrapperFodexFunV102Tests.tests
-                ServiceHostFodexFunV102Tests.tests; ServiceHostFodexFunV103Tests.tests
+                ServiceWrapperFodexFunV101Tests.tests; ServiceWrapperFodexFunV102Tests.tests; ServiceWrapperFodexFunV103Tests.tests
+                ServiceHostFodexFunV102Tests.tests; ServiceHostFodexFunV103Tests.tests; ServiceHostFodexFunV104Tests.tests
                 QuotationStoreTests.tests
                 ContextFodexFunV400Tests.tests; ReActDataStoreV400Tests.tests
             ]
@@ -91,7 +91,7 @@ let main argv =
                 ConsoleHostFodexFunV405Tests.tests
                 ServiceProtocolFodexFunV100Tests.tests
                 ServiceSupervisorFodexFunV100Tests.tests
-                ServiceSupervisorFodexFunV101Tests.tests
+                ServiceSupervisorFodexFunV101Tests.tests; ServiceSupervisorFodexFunV102Tests.tests
                 ServiceWrapperFodexFunV100Tests.tests
                 ServiceMcpFodexFunV100Tests.tests
                 ServiceHostFodexFunV100Tests.tests

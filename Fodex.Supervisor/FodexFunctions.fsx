@@ -83,6 +83,7 @@ module FodexFunctions =
             FodexAgentFodexFunV405.Definitions.builtins
             FodexAgentFodexFunV406.Definitions.builtins
             FodexAgentFodexFunV407.Definitions.builtins
+            FodexAgentFodexFunV408.Definitions.builtins
             ConsolePolicyFodexFunV403.Definitions.builtins
             ConsolePrinterFodexFunV403.Definitions.builtins
             ConsoleHostFodexFunV403.Definitions.builtins
@@ -97,14 +98,17 @@ module FodexFunctions =
             ServiceProtocolFodexFunV100.Definitions.builtins
             ServiceSupervisorFodexFunV100.Definitions.builtins
             ServiceSupervisorFodexFunV101.Definitions.builtins
+            ServiceSupervisorFodexFunV102.Definitions.builtins
             ServiceWrapperFodexFunV100.Definitions.builtins
             ServiceWrapperFodexFunV101.Definitions.builtins
             ServiceWrapperFodexFunV102.Definitions.builtins
+            ServiceWrapperFodexFunV103.Definitions.builtins
             ServiceMcpFodexFunV100.Definitions.builtins
             ServiceHostFodexFunV100.Definitions.builtins
             ServiceHostFodexFunV101.Definitions.builtins
             ServiceHostFodexFunV102.Definitions.builtins
             ServiceHostFodexFunV103.Definitions.builtins
+            ServiceHostFodexFunV104.Definitions.builtins
         |]
         |> Array.concat
 
