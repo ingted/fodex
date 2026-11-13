@@ -18,6 +18,8 @@ let tests=testSequenced <| testList "Agy V303 terminal ownership" [
         Expect.isError (parse(Some "old-codex",0,None,terminal,"")) "cannot accept wrong resume identity"
         Expect.isError (parse(None,1,None,terminal,"")) "no SID success on failed process"
         Expect.isError (parse(None,0,None,"broken","")) "JSON mandatory"
+        Expect.isError (parse(None,0,None,"""{"status":"SUCCESS","conversation_id":"x","usage":{"tokens":42}}""","")) "native JSON cannot substitute for a missing response"
+        Expect.isError (parse(None,0,None,"""{"status":"SUCCESS","conversation_id":"x","response":null}""","")) "null response cannot become a business message"
         Expect.isError (parse(None,0,None,"""{"status":"ERROR","conversation_id":"x"}""","")) "unsuccessful terminal")
     testCase "CLI exit diagnostics include bounded actual stdout error and stderr" <| fun () -> withNode(fun node ->
         FodexFunctions.initialize()

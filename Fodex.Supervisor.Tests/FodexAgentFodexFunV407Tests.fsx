@@ -51,6 +51,7 @@ let failingWrapper ((node,_,_,context,_,session,_,arguments,_):WrapperCreationV4
     IAgentFodexFunV200.create<string,obj> node (Wrapper reference) arguments context
 
 let fixture version action=withDatabase(fun cs -> withNode(fun node ->
+    useQuotationDatabase node cs
     Expect.isGreaterThan FodexFunctions.builtins.Length 0 "builtin declarations initialized"
     let quote:Expr<WrapperCreationV402 -> FeasibleT<_,IAgent<string,obj>,exn>> = <@ fun _ -> fun input -> Ok(failingWrapper input) @>
     // Intentional NODE-LOCAL runtime override for the transport fixture. No entrypoint

@@ -44,7 +44,11 @@ module NativeAgyTerminalFodexFunV303 =
             match expected with
             | Some old when old<>sid -> invalidOp "AGY resume returned another conversation_id; expected binding retained"
             | _ -> ()
-            Ok(sid,text "response" stdout)
+            // stdout 是 provider 協定，不是模型答案。缺少 response 時禁止把整個
+            // terminal（usage、diagnostic 等）寫成 Message，否則會滲入 handover。
+            match root.TryGetProperty "response" with
+            | true,response when response.ValueKind=JsonValueKind.String -> Ok(sid,response.GetString())
+            | _ -> invalidOp "AGY successful terminal requires a string response"
         with error -> Error error
     let quotation : Microsoft.FSharp.Quotations.Expr<(string option*int*string option*string*string) -> FeasibleT<_,string*string,exn>> = <@ fun _ -> fun input -> parse input @>
     [<AutoOpen>]
@@ -57,9 +61,11 @@ module NativeAgyV303 =
     let createActor notify (configuration: IDictionary<string,obj>) (models: JsonElement array) (node: FodexNode) (loop: ReActLoop<string,obj>) cs participant argumentText ctx =
         let incarnation=NativeIncarnationV303.generation configuration loop participant
         let parseTerminal=FodexFunBinding.pin<string option*int*string option*string*string,string*string> node (Some "3.0.3") NativeAgyTerminalFodexFunV303.target
+        let fromArguments=FodexFunBinding.pin<UniContext*string,NativeAgySettingsV300> node (Some "3.0.1") NativeAgySettingsFodexFunV301.targetFromArguments
+        let check=FodexFunBinding.pin<JsonElement array*NativeAgySettingsV300*SettingChangeV300,NativeAgySettingsV300> node (Some "3.0.1") NativeAgySettingsFodexFunV301.targetCheck
+        let buildArguments=FodexFunBinding.pin<NativeAgySettingsV300*string*string option,string list> node (Some "3.0.1") NativeAgySettingsFodexFunV301.targetArguments
         SupervisorArgs.parseText ctx argumentText |> Result.bind (fun options ->
-            let initial = NativeAgySettingsFodexFunV301.fromArguments ctx argumentText |> ReActLoopHandlerV300.required
-            let check = NativeAgySettingsFodexFunV301.check
+            let initial = fromArguments(ctx,argumentText) |> ReActLoopHandlerV300.required
             let initial = check(models, initial, SettingChangeV300.Model initial.Model) |> ReActLoopHandlerV300.required
             let directory = options.GetResult(Working_Directory, defaultValue = Environment.CurrentDirectory) |> Path.GetFullPath
             let agyExe = options.GetResult(Agy_Exe, defaultValue = NativeAgyModelCatalogFodexFunV300.defaultExecutable())
@@ -175,7 +181,7 @@ module NativeAgyV303 =
                         observe ReActParticipantStatus.Running
 
                         let promptStr = string prompt
-                        let arguments = NativeAgySettingsFodexFunV301.arguments settings promptStr session
+                        let arguments = buildArguments(settings,promptStr,session) |> ReActLoopHandlerV300.required
                         let generation=launchId
                         let io = {
                             Akka.Proc.Supervisor.ProcLocalIo.Input = ""

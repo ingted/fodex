@@ -149,7 +149,7 @@ let withWrapper action=withDatabase(fun cs -> withNode(fun node ->
 /// RPC/SQL fixtures 共用的單工 dispatcher；只限制測試 ActorSystem，不調整整機 ThreadPool。
 /// 放在無 test entrypoint 的 support，讓 SQL .fsx 不會因重用 fixture 而連帶執行 RPC 測試。
 let singleWorkerNode () =
-    ActorSystem.Create("dispatcher-test-"+Guid.NewGuid().ToString("N"),
+    let node=ActorSystem.Create("dispatcher-test-"+Guid.NewGuid().ToString("N"),
         Akka.Configuration.ConfigurationFactory.ParseString """
 akka.loglevel=OFF
 akka.stdout-loglevel=OFF
@@ -160,4 +160,5 @@ akka.actor.default-dispatcher {
     threadtype=background
   }
 }
-""")
+        """)
+    QuotationTestScope.attach node

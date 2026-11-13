@@ -27,6 +27,24 @@ let loopCase name action=testCase name <| fun () -> withDatabase(fun cs -> withN
 
 [<Tests>]
 let tests=testSequenced <| testList "Restart handler V404 barriers" [
+    loopCase "Prepared recovery retains transition H and rejects candidate replay" <| fun cs node loop -> task {
+        let args="--native-adapter agy --effort high"
+        let! first=request<Guid*int64*WrappedReActDataFlow<string>*IAgent<string,obj> option> loop (fun reply -> CaptureRestart((native,"agy",args),reply))
+        let tid,h,_,_=first |> required
+        let! saved=request<unit> loop (fun reply -> RecordRestartPhase((native,ParticipantRestartPhase.HandoverPrepared(tid,h,artifact,String.replicate 64 "a")),reply))
+        saved |> required
+        // No further writes through the first handle. New handler restores only SQL authority.
+        let create=evaluated<LoopCreationV301,ReActLoop<string,obj>> "4.0.4" node FodexFunRegistrationV301.targetLoop
+        let recovered=create(node,cs,session,ctx,ignore) |> required
+        let! resumed=request<Guid*int64*WrappedReActDataFlow<string>*IAgent<string,obj> option> recovered (fun reply -> CaptureRestart((native,"agy",args),reply))
+        let actualTid,actualH,_,_=resumed |> required
+        Expect.equal (actualTid,actualH) (tid,h) "same transition, not a fresh history window"
+        let! started=request<unit> recovered (fun reply -> RecordRestartPhase((native,ParticipantRestartPhase.CandidateStarted(tid,"agy",None,bootstrap)),reply))
+        started |> required
+        let indeterminate=create(node,cs,session,ctx,ignore) |> required
+        let! rejected=request<Guid*int64*WrappedReActDataFlow<string>*IAgent<string,obj> option> indeterminate (fun reply -> CaptureRestart((native,"agy",args),reply))
+        Expect.isError rejected "candidate may already have consumed the artifact; never resend automatically"
+    }
     loopCase "candidate output isolated; terminal plus SID plus exact footer required" <| fun _ _ loop -> task {
         let! captured=request<Guid*int64*WrappedReActDataFlow<string>*IAgent<string,obj> option> loop (fun reply -> CaptureRestart((native,"agy","--native-adapter agy --effort high"),reply))
         let tid,h,_,_=captured |> required

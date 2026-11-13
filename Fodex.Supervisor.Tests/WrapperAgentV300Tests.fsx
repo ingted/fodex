@@ -124,6 +124,7 @@ let request (wrapper: IAgent<string,obj>) text =
 
 /// 每個 case 都有真 SQL / graph / wrapper。只有 Native 被 deterministic actor 取代。
 let withWrapperPolicy allowCreate action = withDatabase(fun cs -> withNode(fun node ->
+    useQuotationDatabase node cs
     ReActCheckpointFodexFunV300.initialize cs |> required
     IAgentFodexFunV200.register<obj> node
     ReActDataStoreV300.register node cs

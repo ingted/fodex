@@ -21,6 +21,26 @@ let run name action=testCase name <| fun () -> withDatabase(fun cs -> action cs 
 
 [<Tests>]
 let tests=testSequenced <| testList "Restart atomic SQL V402" [
+    run "reserved native with no previous SID can activate exactly once" <| fun cs -> task {
+        let! init=ReActDataStoreV402.initialize cs
+        init |> required
+        let empty=topology |> Array.map(fun (s,t,event) ->
+            match event with
+            | ParticipantMetadataChanged(id,p) when p.Number=2L -> s,t,ParticipantMetadataChanged(id,{p with SessionId=None})
+            | _ -> s,t,event)
+        let! initial=invoke<_,int> ReActDataStoreV300.targetPersist (cs,(session,0L,empty))
+        initial |> required |> ignore
+        let phases=restart |> Array.map(fun (s,t,event) ->
+            match event with
+            | ParticipantRestartChanged(id,cause,ParticipantRestartPhase.Activated(tid,g,_,current,a)) -> s,t,ParticipantRestartChanged(id,cause,ParticipantRestartPhase.Activated(tid,g,None,current,a))
+            | _ -> s,t,event)
+        let! activated=invoke<_,int> ReActDataStoreV300.targetPersist (cs,(session,4L,phases))
+        Expect.equal (activated |> required) 5 "first native binding created atomically"
+        let! binding=ReActDataStoreV402.readBinding cs native
+        Expect.equal (binding |> required) (Some(newIdentity,1L)) "fresh provider owns its observed SID"
+        let! retry=invoke<_,int> ReActDataStoreV300.targetPersist (cs,(session,4L,phases))
+        Expect.equal (retry |> required) 0 "exact journal retry inserts no new events"
+    }
     run "activation updates event binding args atomically and supports exact retry" <| fun cs -> task {
         let! init=ReActDataStoreV402.initialize cs
         init |> required

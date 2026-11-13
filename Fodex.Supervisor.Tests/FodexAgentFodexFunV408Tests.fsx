@@ -28,11 +28,12 @@ let dispose factory = (box factory :?> IAsyncDisposable).DisposeAsync().AsTask()
 
 [<Tests>]
 let tests = testSequenced <| testList "Service FodexAgent factory V408" [
-    testCase "service factory selects loop403 and wrapper407 while original None factory stays unchanged" <| fun () -> withDatabase(fun cs -> withNode(fun node ->
+    testCase "service factory selects loop403 and wrapper407 while explicit old factory pin stays unchanged" <| fun () -> withDatabase(fun cs -> withNode(fun node ->
         Expect.isGreaterThan FodexFunctions.builtins.Length 0 "automatic definitions are loaded"
         let create = evaluated<FodexAgentCreationV402,FodexAgent<string,obj>> "4.0.8" node FodexAgentFodexFunV408.target
         let factory = create(node,cs,(Guid.NewGuid(),None),models,Mcp,freeUrl(),ignore,ignore) |> required
-        let original = FodexFunBinding.pin<FodexAgentCreationV402,FodexAgent<string,obj>> node None FodexAgentFodexFunV407.target
+        // Canonical target now also contains 4.0.9. None intentionally selects its startup maximum.
+        let original = FodexFunBinding.pin<FodexAgentCreationV402,FodexAgent<string,obj>> node (Some "4.0.7") FodexAgentFodexFunV407.target
         let oldFactory = original(node,cs,(Guid.NewGuid(),None),models,Mcp,freeUrl(),ignore,ignore) |> required
         try
             let loop = factory.CreateReActLoop(node,arguments,ctx) |> required
@@ -40,12 +41,13 @@ let tests = testSequenced <| testList "Service FodexAgent factory V408" [
             Expect.isTrue (loop.ReActLoopHandler.Path.Name.StartsWith "react-v403-") "service uses awaited SQL handler"
             Expect.isTrue ((IAgentFodexFunV200.actorRef wrapper.Instance).Path.Name.StartsWith "wrapper-v407-") "service uses the isolated wrapper"
             let oldLoop = oldFactory.CreateReActLoop(node,arguments,ctx) |> required
-            Expect.isTrue (oldLoop.ReActLoopHandler.Path.Name.StartsWith "react-v402-") "new service target did not upgrade the original None factory"
+            Expect.isTrue (oldLoop.ReActLoopHandler.Path.Name.StartsWith "react-v402-") "explicit historical version remains callable"
         finally
             dispose factory |> waitUnit
             dispose oldFactory |> waitUnit))
 
     testCase "failed async Stop preserves loop and wrapper for a later successful factory Close" <| fun () -> withDatabase(fun cs -> withNode(fun node ->
+        useQuotationDatabase node cs
         Expect.isGreaterThan FodexFunctions.builtins.Length 0 "automatic definitions are loaded"
         let session = Guid.NewGuid(),None
         let create = evaluated<FodexAgentCreationV402,FodexAgent<string,obj>> "4.0.8" node FodexAgentFodexFunV408.target

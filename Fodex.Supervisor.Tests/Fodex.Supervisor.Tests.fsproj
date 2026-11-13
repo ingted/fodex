@@ -36,6 +36,7 @@
     <Compile Include="..\Fodex.Supervisor.Contract\LoggerAdapter.fsx">
       <Link>LoggerAdapter.fsx</Link>
     </Compile>
+    <Compile Include="QuotationTestScope.fsx" />
     <Compile Include="ImplementationTestSupportV200.fsx" />
     <Compile Include="ReActJsonV200Tests.fsx" />
     <Compile Include="ReActDataStoreV200Tests.fsx" />
@@ -133,11 +134,20 @@
     <Compile Include="ReActCheckpointFodexFunV301Tests.fsx"><Link>fodexFun/ReActCheckpoint/ReActCheckpointFodexFunV301Tests.fsx</Link></Compile>
     <Compile Include="ReActDataStoreV402Tests.fsx"><Link>fodexFun/ReActDataStore/ReActDataStoreV402Tests.fsx</Link></Compile>
     <Compile Include="ParticipantHandoverFodexFunV400Tests.fsx"><Link>fodexFun/ParticipantHandover/ParticipantHandoverFodexFunV400Tests.fsx</Link></Compile>
+    <Compile Include="ParticipantHandoverFodexFunV401Tests.fsx"><Link>fodexFun/ParticipantHandover/ParticipantHandoverFodexFunV401Tests.fsx</Link></Compile>
     <Compile Include="ParticipantOperationsFodexFunV403Tests.fsx"><Link>fodexFun/ParticipantOperations/ParticipantOperationsFodexFunV403Tests.fsx</Link></Compile>
+    <Compile Include="ParticipantOperationsFodexFunV404Tests.fsx"><Link>fodexFun/ParticipantOperations/ParticipantOperationsFodexFunV404Tests.fsx</Link></Compile>
+    <Compile Include="RemoteFodexFunV210Tests.fsx"><Link>fodexFun/Remote/RemoteFodexFunV210Tests.fsx</Link></Compile>
+    <Compile Include="ParticipantListingFodexFunV301Tests.fsx"><Link>fodexFun/ParticipantListing/ParticipantListingFodexFunV301Tests.fsx</Link></Compile>
+    <Compile Include="SubagentFodexFunV303Tests.fsx"><Link>fodexFun/Subagent/SubagentFodexFunV303Tests.fsx</Link></Compile>
     <Compile Include="ReActLoopHandlerV404Tests.fsx"><Link>fodexFun/ReActLoopHandler/ReActLoopHandlerV404Tests.fsx</Link></Compile>
     <Compile Include="NativeAgySettingsFodexFunV301Tests.fsx"><Link>fodexFun/NativeAgySettings/NativeAgySettingsFodexFunV301Tests.fsx</Link></Compile>
     <Compile Include="NativeAgyFodexFunV303Tests.fsx"><Link>fodexFun/NativeAgy/NativeAgyFodexFunV303Tests.fsx</Link></Compile>
     <Compile Include="ParticipantConfigurationFodexFunV403Tests.fsx"><Link>fodexFun/ParticipantConfiguration/ParticipantConfigurationFodexFunV403Tests.fsx</Link></Compile>
+    <Compile Include="FodexFunRegistrationV408Tests.fsx"><Link>fodexFun/Registration/FodexFunRegistrationV408Tests.fsx</Link></Compile>
+    <Compile Include="ParticipantManagerFodexFunV404Tests.fsx"><Link>fodexFun/ParticipantManager/ParticipantManagerFodexFunV404Tests.fsx</Link></Compile>
+    <Compile Include="WrapperAgentV408Tests.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV408Tests.fsx</Link></Compile>
+    <Compile Include="FodexAgentFodexFunV409Tests.fsx"><Link>fodexFun/FodexAgent/FodexAgentFodexFunV409Tests.fsx</Link></Compile>
     <Compile Include="NativeProcessFodexFunV301Tests.fsx"><Link>fodexFun/NativeProcess/NativeProcessFodexFunV301Tests.fsx</Link></Compile>
     <Compile Include="NativeProcessFodexFunV302Tests.fsx"><Link>fodexFun/NativeProcess/NativeProcessFodexFunV302Tests.fsx</Link></Compile>
     <Compile Include="NativeOwnershipLeaseFodexFunV302Tests.fsx"><Link>fodexFun/NativeOwnership/NativeOwnershipLeaseFodexFunV302Tests.fsx</Link></Compile>
@@ -185,6 +195,7 @@
     <Compile Include="ServiceTestSupportV100.fsx" />
     <Compile Include="ServiceTestSupportV102.fsx" />
     <Compile Include="ServiceSupervisorFodexFunV102Tests.fsx" />
+    <Compile Include="ServiceSupervisorFodexFunV103Tests.fsx"><Link>fodexFun/ServiceSupervisor/ServiceSupervisorFodexFunV103Tests.fsx</Link></Compile>
     <Compile Include="ServiceProtocolFodexFunV100Tests.fsx" />
     <Compile Include="ServiceSupervisorFodexFunV100Tests.fsx" />
     <Compile Include="ServiceSupervisorFodexFunV101Tests.fsx"><Link>fodexFun/ServiceSupervisor/ServiceSupervisorFodexFunV101Tests.fsx</Link></Compile>
@@ -198,12 +209,15 @@
     <Compile Include="FodexAgentFodexFunV408Tests.fsx" />
     <Compile Include="FodexFunRegistrationV406Tests.fsx"><Link>fodexFun/Registration/FodexFunRegistrationV406Tests.fsx</Link></Compile>
     <Compile Include="ConsoleHostFodexFunV408Tests.fsx"><Link>fodexFun/ConsoleHost/ConsoleHostFodexFunV408Tests.fsx</Link></Compile>
+    <Compile Include="ConsoleHostFodexFunV409Tests.fsx"><Link>fodexFun/ConsoleHost/ConsoleHostFodexFunV409Tests.fsx</Link></Compile>
     <Compile Include="ServiceWrapperFodexFunV101Tests.fsx"><Link>fodexFun/ServiceWrapper/ServiceWrapperFodexFunV101Tests.fsx</Link></Compile>
     <Compile Include="ServiceWrapperFodexFunV102Tests.fsx"><Link>fodexFun/ServiceWrapper/ServiceWrapperFodexFunV102Tests.fsx</Link></Compile>
     <Compile Include="ServiceWrapperFodexFunV103Tests.fsx" />
+    <Compile Include="ServiceWrapperFodexFunV104Tests.fsx"><Link>fodexFun/ServiceWrapper/ServiceWrapperFodexFunV104Tests.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV102Tests.fsx"><Link>fodexFun/ServiceHost/ServiceHostFodexFunV102Tests.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV103Tests.fsx"><Link>fodexFun/ServiceHost/ServiceHostFodexFunV103Tests.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV104Tests.fsx" />
+    <Compile Include="ServiceHostFodexFunV105Tests.fsx"><Link>fodexFun/ServiceHost/ServiceHostFodexFunV105Tests.fsx</Link></Compile>
     <Compile Include="CodexAppServerV101Tests.fsx"><Link>fodexFun/CodexAppServer/CodexAppServerV101Tests.fsx</Link></Compile>
     <Compile Include="ReActDataStoreV401Tests.fsx"><Link>fodexFun/ReActDataStore/ReActDataStoreV401Tests.fsx</Link></Compile>
     <Compile Include="IAgentAsyncFodexFunV301Tests.fsx"><Link>fodexFun/IAgent/IAgentAsyncFodexFunV301Tests.fsx</Link></Compile>

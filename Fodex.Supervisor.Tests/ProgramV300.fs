@@ -13,10 +13,21 @@ let main argv =
     | None ->
         testList "Supervisor" [
             testList "Infrastructure" [
+                FodexAgentFodexFunV409Tests.tests
+                ConsoleHostFodexFunV409Tests.tests
+                ServiceWrapperFodexFunV104Tests.tests
+                ServiceSupervisorFodexFunV103Tests.tests
+                ServiceHostFodexFunV105Tests.tests
+                WrapperAgentV408Tests.tests
+                FodexFunRegistrationV408Tests.tests; ParticipantManagerFodexFunV404Tests.tests
                 ParticipantConfigurationFodexFunV403Tests.tests
                 NativeAgySettingsFodexFunV301Tests.tests; NativeAgyFodexFunV303Tests.tests
                 ReActLoopHandlerV404Tests.tests; ParticipantOperationsFodexFunV403Tests.tests
+                ParticipantOperationsFodexFunV404Tests.tests
+                RemoteFodexFunV210Tests.tests
+                ParticipantListingFodexFunV301Tests.tests; SubagentFodexFunV303Tests.tests
                 ParticipantHandoverFodexFunV400Tests.tests
+                ParticipantHandoverFodexFunV401Tests.tests
                 ReActDataStoreV402Tests.tests
                 ReActCheckpointFodexFunV301Tests.tests
                 ReActJsonV301Tests.tests; ReActTopologyFodexFunV301Tests.tests
@@ -117,4 +128,6 @@ let main argv =
                 ConsoleInputFodexFunV300Tests.tests; ConsoleOutputFodexFunV300Tests.tests
                 M019ConsoleSubmissionTests.tests; M019ConsoleOutputIsolationTests.tests
             ]
-        ] |> runTestsWithCLIArgs [] argv
+        // Same fixture scheduling as Tests.runsettings. Temporary process-wide configuration
+        // must not overlap; concurrency remains explicit inside actor/SQL race test cases.
+        ] |> testSequenced |> runTestsWithCLIArgs [] argv

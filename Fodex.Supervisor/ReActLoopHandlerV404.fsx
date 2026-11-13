@@ -28,6 +28,8 @@ module ReActLoopHandlerV404 =
         mutable Token:string option; mutable Terminal:string option; mutable Failure:exn option
         mutable Ready:TaskCompletionSource<Result<NativeSessionIdentity,exn>> option
         mutable Activated:bool
+        mutable StopRequested:bool
+        mutable StopEpoch:int64
     }
 
     let requireLoopV404 = function Ok value -> value | Error (error:exn) -> raise error
@@ -406,17 +408,29 @@ module ReActLoopHandlerV404 =
                 let leaf=ReActTopologyFodexFunV301.main(graph,participant) |> requireLoopV404
                 if restarts.ContainsKey leaf then invalidOp "Restart already pending; join/retry its retained operation"
                 let history=graph.GetEdges() |> Array.choose(fun (source,_,event) ->
-                    match event with ParticipantRestartChanged(id,_,phase) when source=ReActEndpoint.Participant leaf -> Some(id,phase) | _ -> None) |> Array.sortBy fst
-                match Array.tryLast history with
-                | Some(_,ParticipantRestartPhase.CandidateStarted _) -> invalidOp "RestartIndeterminate: verify retained candidate; bootstrap must not be resent"
-                | Some(_,ParticipantRestartPhase.Requested _) | Some(_,ParticipantRestartPhase.HandoverPrepared _) -> invalidOp "RestartPending: resume retained transition/artifact before a new request"
-                | _ -> ()
+                    match event with ParticipantRestartChanged(id,cause,phase) when source=ReActEndpoint.Participant leaf -> Some(id,cause,phase) | _ -> None) |> Array.sortBy(fun (id,_,_) -> id)
                 let generation=ReActTopologyFodexFunV301.sessionGeneration graph leaf
-                let through=lastId
-                let tid=Guid.NewGuid()
+                let pending=match Array.tryLast history with
+                            | Some(_,_,ParticipantRestartPhase.CandidateStarted _) -> invalidOp "RestartIndeterminate: verify retained candidate; bootstrap must not be resent"
+                            | Some(_,_,ParticipantRestartPhase.Requested(tid,_,_,_))
+                            | Some(_,_,ParticipantRestartPhase.HandoverPrepared(tid,_,_,_)) -> Some tid
+                            | _ -> None
+                let tid,through,requestedStream=
+                    match pending with
+                    | Some tid ->
+                        history |> Array.pick(fun (id,h,phase) ->
+                            match phase with
+                            | ParticipantRestartPhase.Requested(original,g,p,args) when original=tid ->
+                                if g<>generation || p<>provider || args<>arguments then invalidOp "RestartPending: request differs from retained transition"
+                                Some(tid,h,id)
+                            | _ -> None)
+                    | None -> Guid.NewGuid(),lastId,lastId+1L
                 let key=ReActEndpoint.Participant leaf
-                do! commitTopology [|key,key,ParticipantRestartChanged(0L,through,ParticipantRestartPhase.Requested(tid,generation,provider,arguments))|]
-                restarts[leaf]<-{Transition=tid;Through=through;RequestedStream=lastId;Provider=provider;Generation=generation;Held=Queue();Candidate=None;Address=None;Token=None;Terminal=None;Failure=None;Ready=None;Activated=false}
+                let starting={metadata leaf with Status=ReActParticipantStatus.Starting;ObservedAtUtc=DateTimeOffset.UtcNow}
+                if pending.IsNone then
+                    do! commitTopology [|key,key,ParticipantRestartChanged(0L,through,ParticipantRestartPhase.Requested(tid,generation,provider,arguments))
+                                         key,key,ParticipantMetadataChanged(0L,starting)|]
+                restarts[leaf]<-{Transition=tid;Through=through;RequestedStream=requestedStream;Provider=provider;Generation=generation;Held=Queue();Candidate=None;Address=None;Token=None;Terminal=None;Failure=None;Ready=None;Activated=false;StopRequested=false;StopEpoch=0L}
                 let copy=ReActJsonV301.snapshot graph |> requireLoopV404
                 let binding=match bindings.TryGetValue leaf with true,(agent,_) -> Some agent | _ -> None
                 return Ok(tid,through,copy,binding)
@@ -451,7 +465,8 @@ module ReActLoopHandlerV404 =
                     | None -> ()
                     barrier.Address<-Option.orElse barrier.Address address
                     finishBootstrap barrier
-                | _ when generation=ReActTopologyFodexFunV301.sessionGeneration graph participant && not(restarts.ContainsKey participant) ->
+                | _ when generation=ReActTopologyFodexFunV301.sessionGeneration graph participant &&
+                         (not(restarts.ContainsKey participant) || restarts[participant].Activated || status=ReActParticipantStatus.Idle || status=ReActParticipantStatus.Stopped) ->
                     do! observe(participant,sid,address,status)
                 | _ -> invalidOp "StaleGeneration: native observation rejected"
                 return Ok() })
@@ -474,13 +489,18 @@ module ReActLoopHandlerV404 =
                 | _ -> return Error(InvalidOperationException "StaleGeneration: native output rejected") })
             | ActivateRestartBinding((participant,phase,newAgent),reply) -> do! restartAnswer reply (fun () -> task {
                 let barrier=restarts[participant]
+                if barrier.StopRequested then invalidOp "Restart was cancelled before activation"
                 match phase,barrier.Ready with
                 | ParticipantRestartPhase.Activated(_,generation,_,current,_),Some ready when ready.Task.IsCompletedSuccessfully && ready.Task.Result=Ok current && generation=barrier.Generation+1L -> ()
                 | _ -> invalidOp "Activation requires successful terminal, SID and exact readiness token"
                 let! capabilities=task {
                     match newAgent with Some agent -> return! agent.PinCapabilitiesAsync(node,Some "3.0.1")() | None -> return Ok [||] }
                 let capabilities=capabilities |> requireLoopV404
-                do! restartPhase participant phase
+                let current=match phase with ParticipantRestartPhase.Activated(_,_,_,current,_) -> current | _ -> invalidOp "Expected activation"
+                let key=ReActEndpoint.Participant participant
+                let info={metadata participant with SessionId=Some(NativeAgentSessionId current);ActorAddress=barrier.Address;Status=ReActParticipantStatus.Idle;ObservedAtUtc=DateTimeOffset.UtcNow}
+                do! commitTopology [|key,key,ParticipantRestartChanged(0L,barrier.RequestedStream,phase)
+                                     key,key,ParticipantMetadataChanged(0L,info)|]
                 match newAgent with Some agent -> bindings[participant]<-agent,capabilities | None -> bindings.Remove participant |> ignore
                 barrier.Activated<-true
                 active.Remove participant |> ignore
@@ -488,6 +508,7 @@ module ReActLoopHandlerV404 =
             | ReleaseRestart((participant,transition),reply) -> do! restartAnswer reply (fun () -> task {
                 let barrier=restarts[participant]
                 if transition<>barrier.Transition || not barrier.Activated then invalidOp "Cannot release an unactivated restart"
+                if barrier.StopRequested then invalidOp "Stopped restart requires an explicit Start before release"
                 // Caller owns physical old-resource cleanup. It calls this only after confirmed Stop.
                 while barrier.Held.Count>0 do
                     emit(barrier.Held.Peek()) |> ignore
@@ -503,6 +524,30 @@ module ReActLoopHandlerV404 =
                 barrier.Failure<-Some(InvalidOperationException(stage+":"+code))
                 finishBootstrap barrier
                 return Ok() })
+            | AbandonRestartAfterCleanup((participant,transition),reply) -> do! restartAnswer reply (fun () -> task {
+                let barrier=restarts[participant]
+                if transition<>barrier.Transition || barrier.Activated || barrier.Failure.IsNone then invalidOp "Only a failed, unactivated candidate can be abandoned after physical cleanup"
+                while barrier.Held.Count>0 do
+                    let _,_,event=barrier.Held.Dequeue()
+                    match event with
+                    | AgentWork(id,_,ParticipantInput(_,_,replyTo)) | AgentCot(id,_,ParticipantInput(_,_,replyTo)) ->
+                        let target=replyTo |> Option.map ReActEndpoint.Participant |> Option.defaultValue ReActEndpoint.Human
+                        let! failed=route true (ReActEndpoint.Participant participant,target,AgentEnd(0L,id,Message "Native restart cancelled; input was not executed"))
+                        failed |> requireLoopV404 |> ignore
+                    | _ -> ()
+                restarts.Remove participant |> ignore
+                return Ok() })
+            | ReadRestartStopEpoch(participant,reply) ->
+                reply.TrySetResult(Ok(match restarts.TryGetValue participant with true,barrier -> barrier.StopEpoch | _ -> 0L)) |> ignore
+            | ResumeActivatedRestart((participant,expectedEpoch),reply) -> do! restartAnswer reply (fun () -> task {
+                match restarts.TryGetValue participant with
+                | true,barrier when barrier.Activated ->
+                    if barrier.StopEpoch<>expectedEpoch then invalidOp "Another Stop superseded this Start"
+                    if (metadata participant).Status<>ReActParticipantStatus.Idle then invalidOp "Current native must confirm Start before restart resumes"
+                    barrier.StopRequested<-false
+                | true,_ -> invalidOp "Candidate cleanup must complete before resuming the old native"
+                | _ -> ()
+                return Ok() })
         }
         let answer (sender:IActorRef) operation =
             let result = try operation() with error -> Error error
@@ -513,6 +558,24 @@ module ReActLoopHandlerV404 =
         }
         let receive (sender:IActorRef) (message:obj) = task {
             match message with
+            | :? string as wire ->
+                // Remoting 不傳本機 TCS。先轉回本機 manager protocol，立即釋放 mailbox，
+                // 讓 bootstrap callbacks 可以繼續進來；完成才回原 remote Ask actor。
+                let mutable correlation=""
+                let mutable participant=1L,session
+                try
+                    let id,((target,_,_) as input)=ParticipantOperationsFodexFunV404.decodeRequest wire
+                    correlation<-id
+                    participant<-target
+                    if not(graph.ContainsVertex(ReActEndpoint.Participant target)) then invalidOp "Restart request does not belong to this owning loop"
+                    let completion=TaskCompletionSource<Result<ReActParticipantInfo,exn>>(TaskCreationOptions.RunContinuationsAsynchronously)
+                    do! handleRestart(RestartOwnedParticipant(input,completion))
+                    Task.Run(fun () -> task {
+                        let! result=completion.Task
+                        sender.Tell(ParticipantOperationsFodexFunV404.encodeReply id target result,selfRef)
+                    }) |> ignore
+                with error ->
+                    sender.Tell(ParticipantOperationsFodexFunV404.encodeReply correlation participant (Error error),selfRef)
             | :? ParticipantRestartCallV403 as call -> do! handleRestart call
             | :? ParticipantServicesCallV402 as call ->
                 match call with
@@ -524,6 +587,17 @@ module ReActLoopHandlerV404 =
                         | _ -> Error(InvalidOperationException "Participant services require a local manager and cannot replace live services" :> exn)
                     reply.TrySetResult result |> ignore
             | :? ParticipantCallV402 as call ->
+                let stopping=match call with
+                             | ControlOwnedParticipants((_,action,selected),_) when action<>StartParticipant -> Some(ParticipantControlFodexFunV300.descendants graph selected)
+                             | DisposeOwnedParticipants _ -> Some(System.Collections.Generic.HashSet<ReActParticipant>(restarts.Keys))
+                             | _ -> None
+                stopping |> Option.iter(fun selected ->
+                    for entry in restarts do
+                        if selected.Contains entry.Key then
+                            entry.Value.StopRequested<-true
+                            entry.Value.StopEpoch<-entry.Value.StopEpoch+1L
+                            entry.Value.Failure<-Some(OperationCanceledException "Participant stop/dispose requested")
+                            finishBootstrap entry.Value)
                 match participantServices with
                 | Some(manager,_) -> manager.Tell(call,selfRef)
                 | None -> ParticipantOperationsFodexFunV402.reject (InvalidOperationException "Participant services are not configured") call

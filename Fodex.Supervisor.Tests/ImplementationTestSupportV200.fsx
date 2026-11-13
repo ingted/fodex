@@ -19,6 +19,7 @@
 #r "Fodex.Supervisor.Contracts.dll"
 #r "Fodex.Supervisor.dll"
 #load "../Fodex.Supervisor.Contract/LoggerAdapter.fsx"
+#load "QuotationTestScope.fsx"
 #else
 module ImplementationTestSupportV200
 #endif
@@ -63,6 +64,7 @@ let withNode action =
     let node = Akka.Actor.ActorSystem.Create("fodex-v200-" + Guid.NewGuid().ToString("N"), config)
     let mutable actionError: string option = None
     try
+        QuotationTestScope.attach node |> ignore
         try action node
         with ex -> actionError <- Some(ex.GetType().Name); reraise()
     finally
@@ -84,22 +86,6 @@ let withNode action =
 /// 每個 integration case 擁有自己建立的 DB；不改環境變數、不連使用者指定的正式 DB。
 /// DROP 的唯一識別由本函數產生，CREATE 成功後才進入 finally；Pooling=false 不干擾其他連線池。
 let withDatabase action =
-    let name = "FodexTestsV200_" + Guid.NewGuid().ToString("N")
-    let masterCs = "Server=localhost;Database=master;Integrated Security=true;TrustServerCertificate=true;Pooling=false;Connect Timeout=5"
-    use connection = new Microsoft.Data.SqlClient.SqlConnection(masterCs)
-    connection.Open()
-    use command = connection.CreateCommand()
-    command.CommandText <- "CREATE DATABASE [" + name + "]"
-    command.ExecuteNonQuery() |> ignore
-    try
-        let builder = Microsoft.Data.SqlClient.SqlConnectionStringBuilder(masterCs)
-        builder.InitialCatalog <- name
-        let cs = builder.ConnectionString
+    QuotationTestScope.withDatabase "FodexTestsV200_" (fun cs ->
         Fodex.Supervisor.ReActDataStoreV200.initialize cs |> expectOk
-        action cs
-    finally
-        // name 不接受外部輸入，仍檢查固定 prefix 與完整 GUID，防止未來修改擴大刪除範圍。
-        let suffix = name.Substring("FodexTestsV200_".Length)
-        if name.StartsWith("FodexTestsV200_", StringComparison.Ordinal) && (Guid.TryParseExact(suffix, "N") |> fst) then
-            command.CommandText <- "DROP DATABASE [" + name + "]"
-            command.ExecuteNonQuery() |> ignore
+        action cs)

@@ -12,6 +12,7 @@ module NativeAgySettingsFodexFunV301 =
     let version = System.Version(3,0,1)
     let targetCheck = "NativeAgySettings.Check"
     let targetArguments = "NativeAgySettings.Arguments"
+    let targetFromArguments = "NativeAgySettings.FromArguments"
 
     let defaultModel = "gemini-3.8-flash-high"
     let defaultEffort = "high"
@@ -72,13 +73,13 @@ module NativeAgySettingsFodexFunV301 =
     let quotationArguments : Expr<NativeAgySettingsV300 * string * string option -> FeasibleT<_,string list,exn>> =
         <@ fun _ -> fun (settings,prompt,sid) -> Ok(arguments settings prompt sid) @>
 
-    let register node =
-        FodexFunRegistry.register node targetCheck version quotationCheck
-        FodexFunRegistry.register node targetArguments version quotationArguments
+    let quotationFromArguments : Expr<UniContext*string -> FeasibleT<_,NativeAgySettingsV300,exn>> =
+        <@ fun _ -> fun (ctx,text) -> fromArguments ctx text @>
 
     [<AutoOpen>]
     module Definitions =
         let builtins : (unit -> unit) array = [|
+            FodexFunRegistry.declare targetFromArguments version quotationFromArguments
             FodexFunRegistry.declare targetCheck version quotationCheck
             FodexFunRegistry.declare targetArguments version quotationArguments
         |]

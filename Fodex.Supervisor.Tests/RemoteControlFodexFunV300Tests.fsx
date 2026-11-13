@@ -20,9 +20,11 @@ open Fodex.Supervisor.Contracts.CoreMod
 [<Tests>]
 let tests=testList "M017 remote control quotation" [
     testCase "local and remote topology reservations share one durable number allocator" <| fun () -> withDatabase(fun cs ->
-        let owner=RemoteControlFodexFunV300.createNode ("m017-topology-owner-"+Guid.NewGuid().ToString("N")) "127.0.0.1" 0
-        let client=RemoteControlFodexFunV300.createNode ("m017-topology-client-"+Guid.NewGuid().ToString("N")) "127.0.0.1" 0
+        let owner=RemoteControlFodexFunV301.createNode ("m017-topology-owner-"+Guid.NewGuid().ToString("N")) "127.0.0.1" 0
+        let client=RemoteControlFodexFunV301.createNode ("m017-topology-client-"+Guid.NewGuid().ToString("N")) "127.0.0.1" 0
         try
+            QuotationTestScope.attach owner |> ignore
+            QuotationTestScope.attach client |> ignore
             let session=Guid.NewGuid(),Some System.Net.IPAddress.Loopback
             ReActCheckpointFodexFunV300.initialize cs |> required
             FodexFunRegistrationV300.registerFunctions owner cs ctx
@@ -43,6 +45,8 @@ let tests=testList "M017 remote control quotation" [
     testCase "real TCP actor command enters owner IAgent and returns data only" <| fun () ->
         use owner=ActorSystem.Create("m017-owner-"+Guid.NewGuid().ToString("N"),RemoteFodexFunV209.config "127.0.0.1" 0)
         use client=ActorSystem.Create("m017-client-"+Guid.NewGuid().ToString("N"),RemoteFodexFunV209.config "127.0.0.1" 0)
+        QuotationTestScope.attach owner |> ignore
+        QuotationTestScope.attach client |> ignore
         IAgentFodexFunV200.register<obj> owner
         let actorRef=spawn owner "test-wrapper" <| fun (mailbox:Actor<obj>) ->
             let rec receive()=actor {

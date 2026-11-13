@@ -36,6 +36,7 @@ let execCase cancel failCleanup = testCase (if failCleanup then "failed compact 
     withDatabase(fun cs ->
         Expect.isGreaterThan FodexFunctions.builtins.Length 0 "automatic quotation declarations are loaded"
         let node = singleWorkerNode()
+        useQuotationDatabase node cs
         let folder = Path.Combine("E:/deletable/fodex","compact-rpc-"+Guid.NewGuid().ToString("N"))
         Directory.CreateDirectory folder |> ignore
         let previous = Environment.GetEnvironmentVariable NativeAppServerFixtureV302.environmentName

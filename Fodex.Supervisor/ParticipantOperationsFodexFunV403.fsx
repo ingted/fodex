@@ -24,6 +24,15 @@ type ParticipantRestartCallV403 =
     | ActivateRestartBinding of (ReActParticipant*ParticipantRestartPhase*IAgent<string,obj> option)*TaskCompletionSource<Result<unit,exn>>
     | ReleaseRestart of (ReActParticipant*Guid)*TaskCompletionSource<Result<ReActParticipantInfo,exn>>
     | AbortRestart of (ReActParticipant*Guid*string*string)*TaskCompletionSource<Result<unit,exn>>
+    | AbandonRestartAfterCleanup of (ReActParticipant*Guid)*TaskCompletionSource<Result<unit,exn>>
+    | ReadRestartStopEpoch of ReActParticipant*TaskCompletionSource<Result<int64,exn>>
+    | ResumeActivatedRestart of (ReActParticipant*int64)*TaskCompletionSource<Result<unit,exn>>
+
+/// Wrapper 自己維護 prompt FIFO 及 native ownership；manager 不越過它操作內部 queue。
+type ParticipantOwnerRestartV403 =
+    | HoldNativeForRestart of ReActParticipant*TaskCompletionSource<Result<unit,exn>>
+    | AdoptNativeIncarnation of ReActParticipant*IAgent<string,obj>*string*TaskCompletionSource<Result<unit,exn>>
+    | ReleaseNativeAfterRestart of ReActParticipant*TaskCompletionSource<Result<unit,exn>>
 
 module ParticipantOperationsFodexFunV403 =
     let version=System.Version(4,0,3)
@@ -31,6 +40,9 @@ module ParticipantOperationsFodexFunV403 =
     /// First dispatch, then observe the retained operation. Timeout never creates another session.
     let request<'T> (node:FodexNode) (handler:IActorRef) (make:TaskCompletionSource<Result<'T,exn>> -> obj) : Result<Task<Result<'T,exn>>,exn> =
         try
+            let address=handler.Path.Address
+            if not(address.HasLocalScope || address=(node :?> ExtendedActorSystem).Provider.DefaultAddress) then
+                invalidOp "Local restart control/output cannot cross nodes; use RestartParticipant 4.0.4 on the remote owning loop"
             let timeout=node.Settings.Config.GetTimeSpan("fodex.participants.restart-timeout",TimeSpan.FromMinutes 10.)
             let reply=TaskCompletionSource<Result<'T,exn>>(TaskCreationOptions.RunContinuationsAsynchronously)
             handler.Tell(make reply,ActorRefs.NoSender)
@@ -46,6 +58,9 @@ module ParticipantOperationsFodexFunV403 =
         | ActivateRestartBinding(_,reply) -> reply.TrySetResult(Error error) |> ignore
         | ReleaseRestart(_,reply) -> reply.TrySetResult(Error error) |> ignore
         | AbortRestart(_,reply) -> reply.TrySetResult(Error error) |> ignore
+        | AbandonRestartAfterCleanup(_,reply) -> reply.TrySetResult(Error error) |> ignore
+        | ResumeActivatedRestart(_,reply) -> reply.TrySetResult(Error error) |> ignore
+        | ReadRestartStopEpoch(_,reply) -> reply.TrySetResult(Error error) |> ignore
 
     let restartQuotation : Expr<ReActLoopFunInput<ReActParticipant*NativeAgentType*string> -> FeasibleT<_,Task<Result<ReActParticipantInfo,exn>>,exn>> =
         <@ fun _ -> fun (node,handler,input) -> request node handler (fun reply -> box(RestartOwnedParticipant(input,reply))) @>

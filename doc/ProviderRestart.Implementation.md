@@ -18,3 +18,7 @@ Release build 通過；本次新增 30 項 Expecto 的相關分組已通過（co
 仍須完成 manager404／wrapper408、native factory／共享 FodexAgent409、service／console 入口、remote artifact 接線、完整 FSI／Explorer 與真實 LINE POC。既有 LINE 服務此時仍使用舊版。
 
 本機 LINE 的既有 root 有 legacy SID，但沒有 participant configuration 表；該 SID 的 Codex rollout 檔可供核對。正式 schema migration 必須先停止舊 Fodex 服務：新增 native 欄位後，舊版無 column list 的 INSERT 不相容，不能讓新舊 writer 混跑同庫。
+
+## 2026-11-14：完成服務接線及實際驗收
+
+前述「服務尚未切換」是 11 月 13 日的階段紀錄。新版入口、manager／wrapper、owner-side remote restart 與測試已完成；最終 CLI 已透過正式啟停流程部署。實際驗證 Codex exec → AGY → Codex app-server，以及 LINE 原有對話切至 AGY、停止後 resume 同 SID。最終 Release 回歸 611 passed、2 個既有 opt-in ignored，LINE consumer integration 42/42。詳細版本、失敗邊界、限制、LINE messageId 與部署 hash 見 [執行紀錄](ProviderRestart.Runtime.20261114.md)。

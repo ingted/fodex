@@ -18,6 +18,7 @@
 #r "Fodex.Supervisor.Contracts.dll"
 #load "../Fodex.Supervisor.Contract/LoggerAdapter.fsx"
 #load "../Fodex.Supervisor/FodexFunRegistry.fsx"
+#load "QuotationTestScope.fsx"
 #else
 module ImplementationTestSupportV300
 #endif
@@ -39,11 +40,22 @@ let required (result: Result<'T,exn>) =
     | Ok value -> value
     | Error ex -> failtestf "%O" ex
 
-/// 每個測試使用自己的 registry 分區；沒有 Codex、process 或 DB side effect。
+/// Intentional test hot-plugs use the fixture's real SQL authority, just like production.
+/// Install before the first typed registry access; never use a shared production database.
+let useQuotationDatabase (node:ActorSystem) (cs:string) =
+    node.Settings.InjectTopLevelFallback(ConfigurationFactory.ParseString(
+        "fodex.quotations.connection-string="+System.Text.Json.JsonSerializer.Serialize cs))
+
+/// 每個測試使用自己的 registry 分區與 quotation SQL；不啟動 Codex/native process。
 let withNode action =
     let node = ActorSystem.Create("m017-test-" + Guid.NewGuid().ToString("N"),
                                 ConfigurationFactory.ParseString "akka.loglevel=OFF\nakka.stdout-loglevel=OFF")
-    try action node
+    try
+        QuotationTestScope.attach node |> ignore
+        try action node
+        with error ->
+            Console.Error.WriteLine("FIXTURE_ACTION_FAILED "+error.GetType().FullName+" "+error.StackTrace)
+            reraise()
     finally node.Terminate().WaitAsync(TimeSpan.FromSeconds 10.).GetAwaiter().GetResult() |> ignore
 
 /// 先 eval 真正 production quotation，再取得 pinned operation；不以 test stub 取代它。
@@ -55,21 +67,5 @@ let evaluated<'Input,'Output> (node: ActorSystem) (target: string) =
 
 /// 沿用本機 SQL integration fixture：只建立及清除自己生成的測試 DB，不接受使用者 DB 名稱。
 let withDatabase action =
-    let prefix = "FodexTestsV300_"
-    let name = prefix + Guid.NewGuid().ToString("N")
-    let cs = "Server=localhost;Database=master;Integrated Security=true;TrustServerCertificate=true;Pooling=false;Connect Timeout=5"
-    use connection = new Microsoft.Data.SqlClient.SqlConnection(cs)
-    connection.Open()
-    use command = connection.CreateCommand()
-    command.CommandText <- "CREATE DATABASE [" + name + "]"
-    command.ExecuteNonQuery() |> ignore
-    try
-        let builder = Microsoft.Data.SqlClient.SqlConnectionStringBuilder(cs)
-        builder.InitialCatalog <- name
-        // 建表由 caller 的真正 production initializer 執行，不複製 SQL schema 到 fixture。
-        action builder.ConnectionString
-    finally
-        if not(name.StartsWith(prefix,StringComparison.Ordinal)) || not(fst(Guid.TryParseExact(name.Substring(prefix.Length),"N"))) then
-            invalidOp "Refuse to drop a database outside this test's generated scope"
-        command.CommandText <- "DROP DATABASE [" + name + "]"
-        command.ExecuteNonQuery() |> ignore
+    // Schema 仍由 production initializer 建立；scope 只擁有 database 與 node 設定。
+    QuotationTestScope.withDatabase "FodexTestsV300_" action

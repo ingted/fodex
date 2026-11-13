@@ -40,6 +40,7 @@ module FodexFunctions =
             NativeCompactFodexFunV301.Definitions.builtins
             NativeCompactFodexFunV302.Definitions.builtins
             ParticipantListingFodexFunV300.Definitions.builtins
+            ParticipantListingFodexFunV301.Definitions.builtins
             NativeModelCatalogFodexFunV300.Definitions.builtins
             NativeModelCatalogFodexFunV301.Definitions.builtins
             NativeAgyModelCatalogFodexFunV300.Definitions.builtins
@@ -47,6 +48,7 @@ module FodexFunctions =
             SubagentFodexFunV300.Definitions.builtins
             CliFodexFunV100.Definitions.builtins
             RemoteFodexFunV209.Definitions.builtins
+            RemoteFodexFunV210.Definitions.builtins
             RemoteControlFodexFunV300.Definitions.builtins
             ConsoleInputFodexFunV300.Definitions.builtins
             ConsoleOutputFodexFunV300.Definitions.builtins
@@ -54,6 +56,7 @@ module FodexFunctions =
             OrderHubFodexFunV301.Definitions.builtins
             SubagentFodexFunV301.Definitions.builtins
             SubagentFodexFunV302.Definitions.builtins
+            SubagentFodexFunV303.Definitions.builtins
             SubagentCoordinatorFodexFunV301.Definitions.builtins
             HubHostingFodexFunV301.Definitions.builtins
             FodexFunRegistrationV301.Definitions.builtins
@@ -63,8 +66,13 @@ module FodexFunctions =
             ReActDataStoreV401.Definitions.builtins
             ReActDataStoreV402.Definitions.builtins
             ParticipantHandoverFodexFunV400.Definitions.builtins
+            ParticipantHandoverFodexFunV401.Definitions.builtins
             ParticipantOperationsFodexFunV403.Definitions.builtins
+            ParticipantOperationsFodexFunV404.Definitions.builtins
             ReActLoopHandlerV404.Definitions.builtins
+            FodexFunRegistrationV408.Definitions.builtins
+            ParticipantManagerFodexFunV404.Definitions.builtins
+            WrapperAgentV408.Definitions.builtins
             NativeAgySettingsFodexFunV301.Definitions.builtins
             NativeAgyTerminalFodexFunV303.Definitions.builtins
             ParticipantConfigurationFodexFunV403.Definitions.builtins
@@ -94,6 +102,7 @@ module FodexFunctions =
             FodexAgentFodexFunV406.Definitions.builtins
             FodexAgentFodexFunV407.Definitions.builtins
             FodexAgentFodexFunV408.Definitions.builtins
+            FodexAgentFodexFunV409.Definitions.builtins
             ConsolePolicyFodexFunV403.Definitions.builtins
             ConsolePrinterFodexFunV403.Definitions.builtins
             ConsoleHostFodexFunV403.Definitions.builtins
@@ -105,20 +114,24 @@ module FodexFunctions =
             ConsoleHostFodexFunV405.Definitions.builtins
             ConsoleHostFodexFunV407.Definitions.builtins
             ConsoleHostFodexFunV408.Definitions.builtins
+            ConsoleHostFodexFunV409.Definitions.builtins
             ServiceProtocolFodexFunV100.Definitions.builtins
             ServiceSupervisorFodexFunV100.Definitions.builtins
             ServiceSupervisorFodexFunV101.Definitions.builtins
             ServiceSupervisorFodexFunV102.Definitions.builtins
+            ServiceSupervisorFodexFunV103.Definitions.builtins
             ServiceWrapperFodexFunV100.Definitions.builtins
             ServiceWrapperFodexFunV101.Definitions.builtins
             ServiceWrapperFodexFunV102.Definitions.builtins
             ServiceWrapperFodexFunV103.Definitions.builtins
+            ServiceWrapperFodexFunV104.Definitions.builtins
             ServiceMcpFodexFunV100.Definitions.builtins
             ServiceHostFodexFunV100.Definitions.builtins
             ServiceHostFodexFunV101.Definitions.builtins
             ServiceHostFodexFunV102.Definitions.builtins
             ServiceHostFodexFunV103.Definitions.builtins
             ServiceHostFodexFunV104.Definitions.builtins
+            ServiceHostFodexFunV105.Definitions.builtins
         |]
         |> Array.concat
 

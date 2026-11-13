@@ -128,18 +128,48 @@ let tests=testList "M018 native output quotations" [
         Expect.stringContains status "trace=false" "trace defaults off")
 
     testCase "raw batch crosses real Akka TCP as data and flushes small writes without polling" <| fun () ->
-        use owner=RemoteControlFodexFunV300.createNode ("output-owner-"+Guid.NewGuid().ToString("N")) "127.0.0.1" 0
-        use client=RemoteControlFodexFunV300.createNode ("output-client-"+Guid.NewGuid().ToString("N")) "127.0.0.1" 0
+        use owner=RemoteControlFodexFunV301.createNode ("output-owner-"+Guid.NewGuid().ToString("N")) "127.0.0.1" 0
+        use client=RemoteControlFodexFunV301.createNode ("output-client-"+Guid.NewGuid().ToString("N")) "127.0.0.1" 0
+        let originalSerialization=owner.Serialization
+        Expect.equal (originalSerialization.FindSerializerForType(typeof<NativeOutputCallV300>)).Identifier 300 "wire registered before config injection"
+        QuotationTestScope.attach owner |> ignore
+        QuotationTestScope.attach client |> ignore
+        Expect.isFalse (Object.ReferenceEquals(originalSerialization,owner.Serialization)) "settings rebuild the serialization extension"
+        Expect.equal (owner.Serialization.FindSerializerForType(typeof<NativeOutputCallV300>)).Identifier 300 "bootstrap setup restores the wire automatically"
+        for node in [owner;client] do
+            let errors=spawn node "output-error-evidence" (fun mailbox ->
+                let rec loop()=actor {
+                    let! message:obj=mailbox.Receive()
+                    match message with
+                    | :? Akka.Event.Error as error -> Console.Error.WriteLine("OUTPUT_ACTOR_ERROR "+string error.Cause)
+                    | :? Akka.Event.Warning as warning -> Console.Error.WriteLine("OUTPUT_ACTOR_WARN "+string warning.Message)
+                    | _ -> ()
+                    return! loop() }
+                loop())
+            node.EventStream.Subscribe(errors,typeof<Akka.Event.Error>) |> ignore
+            node.EventStream.Subscribe(errors,typeof<Akka.Event.Warning>) |> ignore
         NativeOutputFodexFunV300.register owner
         NativeOutputFodexFunV300.register client
         let target=evaluated<FodexNode*UniContext,IActorRef> owner NativeOutputFodexFunV300.targetHub (owner,ctx) |> required
+        Console.Error.WriteLine("OUTPUT_STAGE=hub "+string target.Path)
+        ready target
+        Console.Error.WriteLine("OUTPUT_STAGE=hub-ready")
         let rendered=Channel.CreateUnbounded<string>()
         evaluated<FodexNode*UniContext*IActorRef*(string->unit),IActorRef> owner NativeOutputFodexFunV300.targetPrinter
             (owner,ctx,target,fun text -> rendered.Writer.TryWrite text |> ignore) |> required |> ignore
+        Console.Error.WriteLine("OUTPUT_STAGE=printer-ready")
         NativeOutputFodexFunV300.ask<bool> target (SetOutputVisible [|participant|]) |> ignore
         let address=Akka.Serialization.Serialization.SerializedActorPath target
         let remote=client.ActorSelection(address).ResolveOne(TimeSpan.FromSeconds 5.).GetAwaiter().GetResult()
+        Console.Error.WriteLine("OUTPUT_STAGE=remote-resolved address="+address+" ref="+string remote.Path)
+        let outgoing=client.Serialization.FindSerializerForType typeof<NativeOutputCallV300>
+        let incoming=owner.Serialization.FindSerializerForType typeof<NativeOutputCallV300>
+        let decoded=incoming.FromBinary(outgoing.ToBinary(box OutputReady),typeof<NativeOutputCallV300>)
+        Console.Error.WriteLine(sprintf "OUTPUT_CODEC send=%d receive=%d value=%A equal=%b" outgoing.Identifier incoming.Identifier decoded (Object.Equals(decoded,box OutputReady)))
+        ready remote
+        Console.Error.WriteLine("OUTPUT_STAGE=remote-ready")
         let source=relay client remote
+        Console.Error.WriteLine("OUTPUT_STAGE=relay-ready")
         source.Tell(RawOutput(Guid.NewGuid(),AppServerNotification,"remote notification\n"))
         Expect.stringContains (take rendered) "remote notification" "timer flush and wire delivery"
         client.Terminate().GetAwaiter().GetResult() |> ignore

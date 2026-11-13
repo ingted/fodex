@@ -118,11 +118,21 @@ IF COL_LENGTH('dbo.FodexNativeSession','SessionGeneration') IS NULL ALTER TABLE 
                 command.Parameters.Add("@oldProvider",SqlDbType.NVarChar,32).Value<-previous |> Option.map(fst>>box) |> Option.defaultValue(box DBNull.Value)
                 command.Parameters.Add("@oldSid",SqlDbType.NVarChar,200).Value<-previous |> Option.map(snd>>box) |> Option.defaultValue(box DBNull.Value)
                 command.CommandText<-"""
+IF @oldSid IS NULL AND @expected=0
+BEGIN
+ IF EXISTS(SELECT 1 FROM dbo.FodexNativeSession WITH(UPDLOCK,HOLDLOCK) WHERE SessionId=@sid AND Address=@address AND ParticipantId=@number)
+  THROW 51000,'Fresh activation found an existing native identity',1;
+ INSERT dbo.FodexNativeSession(SessionId,Address,ParticipantId,CodexSessionId,AgentType,SessionGeneration)
+ VALUES(@sid,@address,@number,@native,@provider,@next);
+END
+ELSE
+BEGIN
 UPDATE dbo.FodexNativeSession WITH(UPDLOCK,HOLDLOCK)
  SET AgentType=@provider,CodexSessionId=@native,SessionGeneration=@next
  WHERE SessionId=@sid AND Address=@address AND ParticipantId=@number AND SessionGeneration=@expected
  AND CodexSessionId=@oldSid AND (AgentType=@oldProvider OR AgentType IS NULL);
-IF @@ROWCOUNT=0 THROW 51000,'Native binding generation or previous identity changed',1;"""
+IF @@ROWCOUNT=0 THROW 51000,'Native binding generation or previous identity changed',1;
+END"""
                 let! _=command.ExecuteNonQueryAsync()
                 do! ParticipantConfigurationFodexFunV403.writeInTransaction connection transaction root participant arguments
             | _ -> ()
