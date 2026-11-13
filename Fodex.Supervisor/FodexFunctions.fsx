@@ -12,7 +12,10 @@ namespace Fodex.Supervisor
 module FodexFunctions =
     let builtins =
         [|
+            ReActJsonV301.Definitions.builtins
+            ReActTopologyFodexFunV301.Definitions.builtins
             ReActTopologyFodexFunV300.Definitions.builtins
+            ReActCheckpointFodexFunV301.Definitions.builtins
             ReActCheckpointFodexFunV300.Definitions.builtins
             NativeOutputFodexFunV300.Definitions.builtins
             NativeOutputFodexFunV301.Definitions.builtins
@@ -58,6 +61,13 @@ module FodexFunctions =
             ContextFodexFunV400.Definitions.builtins
             ReActDataStoreV400.Definitions.builtins
             ReActDataStoreV401.Definitions.builtins
+            ReActDataStoreV402.Definitions.builtins
+            ParticipantHandoverFodexFunV400.Definitions.builtins
+            ParticipantOperationsFodexFunV403.Definitions.builtins
+            ReActLoopHandlerV404.Definitions.builtins
+            NativeAgySettingsFodexFunV301.Definitions.builtins
+            NativeAgyTerminalFodexFunV303.Definitions.builtins
+            ParticipantConfigurationFodexFunV403.Definitions.builtins
             FodexFunRegistrationV400.Definitions.builtins
             FodexFunRegistrationV401.Definitions.builtins
             FodexFunRegistrationV406.Definitions.builtins

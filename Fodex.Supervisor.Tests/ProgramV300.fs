@@ -13,6 +13,13 @@ let main argv =
     | None ->
         testList "Supervisor" [
             testList "Infrastructure" [
+                ParticipantConfigurationFodexFunV403Tests.tests
+                NativeAgySettingsFodexFunV301Tests.tests; NativeAgyFodexFunV303Tests.tests
+                ReActLoopHandlerV404Tests.tests; ParticipantOperationsFodexFunV403Tests.tests
+                ParticipantHandoverFodexFunV400Tests.tests
+                ReActDataStoreV402Tests.tests
+                ReActCheckpointFodexFunV301Tests.tests
+                ReActJsonV301Tests.tests; ReActTopologyFodexFunV301Tests.tests
                 ReActJsonV200Tests.tests; ReActDataStoreV200Tests.tests; ReActDataStoreV300Tests.tests
                 ProcSupervisorV201Tests.tests; NLogLoggingTests.tests
                 NativeProcessFodexFunV301Tests.tests

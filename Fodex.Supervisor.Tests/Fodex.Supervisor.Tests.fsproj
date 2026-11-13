@@ -127,6 +127,17 @@
     <None Include="M017MemorySmoke.fsx" />
     <None Include="M018ConsoleInputSmoke.fsx" />
     <Compile Include="ImplementationTestSupportV301.fsx" />
+    <Compile Include="ParticipantRestartTestSupport.fsx"><Link>fodexFun/ParticipantRestart/ParticipantRestartTestSupport.fsx</Link></Compile>
+    <Compile Include="ReActJsonV301Tests.fsx"><Link>fodexFun/ParticipantRestart/ReActJsonV301Tests.fsx</Link></Compile>
+    <Compile Include="ReActTopologyFodexFunV301Tests.fsx"><Link>fodexFun/ParticipantRestart/ReActTopologyFodexFunV301Tests.fsx</Link></Compile>
+    <Compile Include="ReActCheckpointFodexFunV301Tests.fsx"><Link>fodexFun/ReActCheckpoint/ReActCheckpointFodexFunV301Tests.fsx</Link></Compile>
+    <Compile Include="ReActDataStoreV402Tests.fsx"><Link>fodexFun/ReActDataStore/ReActDataStoreV402Tests.fsx</Link></Compile>
+    <Compile Include="ParticipantHandoverFodexFunV400Tests.fsx"><Link>fodexFun/ParticipantHandover/ParticipantHandoverFodexFunV400Tests.fsx</Link></Compile>
+    <Compile Include="ParticipantOperationsFodexFunV403Tests.fsx"><Link>fodexFun/ParticipantOperations/ParticipantOperationsFodexFunV403Tests.fsx</Link></Compile>
+    <Compile Include="ReActLoopHandlerV404Tests.fsx"><Link>fodexFun/ReActLoopHandler/ReActLoopHandlerV404Tests.fsx</Link></Compile>
+    <Compile Include="NativeAgySettingsFodexFunV301Tests.fsx"><Link>fodexFun/NativeAgySettings/NativeAgySettingsFodexFunV301Tests.fsx</Link></Compile>
+    <Compile Include="NativeAgyFodexFunV303Tests.fsx"><Link>fodexFun/NativeAgy/NativeAgyFodexFunV303Tests.fsx</Link></Compile>
+    <Compile Include="ParticipantConfigurationFodexFunV403Tests.fsx"><Link>fodexFun/ParticipantConfiguration/ParticipantConfigurationFodexFunV403Tests.fsx</Link></Compile>
     <Compile Include="NativeProcessFodexFunV301Tests.fsx"><Link>fodexFun/NativeProcess/NativeProcessFodexFunV301Tests.fsx</Link></Compile>
     <Compile Include="NativeProcessFodexFunV302Tests.fsx"><Link>fodexFun/NativeProcess/NativeProcessFodexFunV302Tests.fsx</Link></Compile>
     <Compile Include="NativeOwnershipLeaseFodexFunV302Tests.fsx"><Link>fodexFun/NativeOwnership/NativeOwnershipLeaseFodexFunV302Tests.fsx</Link></Compile>
