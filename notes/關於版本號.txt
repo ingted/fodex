@@ -1,0 +1,34 @@
+› FSharp.Core 跟 FSharp.Compiler.Service 例外，如果底下的 package 是舊的，那其實 fodex 自己硬要改用新的會有問題
+
+
+• 收到，這兩個套件明列例外：本次不強升 FSharp.Core 或 FSharp.Compiler.Service，也不因它們要求升級 SDK。v3 先維持目前配套的 FSharp.Compiler.Service 43.12.403
+  與 FSI FSharp.Core 10.1.403；Fodex 專案既有的 Core 設定也不順手改動。其餘套件仍按最新版本更新並驗證依賴相容性。
+
+• Ran Read-CodexStdout { Get-Content G:/PulseTrade.fs/misc/line_provider_fodex_v3_store.fsx -Encoding UTF8 | Select-Object -First 94; Get-Content
+  │ G:/PulseTrade.fs/misc/line_provider_fodex_v3_service.fsx -Encoding UTF8 | Select-Object -Skip 192 -First 100; Get-Content
+  │ Fodex.Supervisor/FodexAgentFodexFunV408.fsx -Encoding UTF8 | Select-Object -Skip 58 -First 40 }
+  └ // V3 keeps v2 SQL lease/FIFO/dedup rules in separate tables; native resources belong to Fodex service.
+    #r "nuget: Microsoft.Data.SqlClient, [7.1.1]"
+    #load "line_provider_fodex_v3_protocol.fsx"
+    +224 lines (ctrl+t to view transcript)
+
+
+› 另外既有的 FAkka / PulseTrade 系列 package 已經固定版本的東西你就不要再硬升
+
+
+• 好，最終套件政策固定為：
+
+  • FSharp.Core、FSharp.Compiler.Service：保留既有相容配套。
+  • 已固定版本的 FAkka.*、PulseTrade.*：原樣保留，不升版，也不為此重建發布。
+  • 其餘第三方套件：在 v3 專用副本與載入鏈中更新至查驗過的最新 stable；若與上述固定套件衝突，必須明確報告，不能自行改動固定版本。
+
+  前面查到的 Proc Supervisor 1.572.16 只會記為查驗資訊，不列入升級計畫。
+
+
+› 我的意思是 FAkka / PulseTrade 系列 假設引用了 X 的 Y 版，但是 Z 版更新，你不要多事改成 Z
+
+
+• 明白，你指的是固定套件所依賴的第三方版本也不能被我硬升。
+
+  例如固定的 FAkka.*／PulseTrade.* 引用了 X Y版，即使 X Z版 更新，我也不能在 v3 額外 #r X Z版 去覆蓋它。文件會以這些套件的 dependency closure 為約束；只有不受
+  這些既有依賴約束的第三方套件，才更新至最新 stable。這會取代前面「其餘第三方一律最新」的寫法。

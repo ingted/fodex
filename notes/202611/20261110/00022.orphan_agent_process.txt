@@ -1,0 +1,356 @@
+› 話說 fodex 有個潛在的問題可能要處理，就是我發現 wrapper 帶起的 native 在某些情境下會變成 orphan process
+
+
+• 我先檢查 wrapper／native 的建立、停止與 Proc Supervisor 接管流程，找出哪些路徑可能留下 orphan process；不會先清掉現有程序。
+
+• Ran Read-CodexStdout { rg -n -m 4 'orphan|ProcSupervisor|recovered ownership|Stop.*PID|starting-after-fence' 'C:
+  │ \Users\Administrator\.codex\memories\MEMORY.md'; git -C F:/fodex status --short; rg --files F:/fodex -g AGENTS.md -g GEMINI.md -g 'README*' -g
+  │ '*Lifecycle*' -g '*ProcSupervisor*' -g '*Native*V*.fsx' -g '*Wrapper*V*.fsx' -g '!**/archive/**' -g '!**/bin/**' -g '!**/obj/**' -g '!**/artifacts/**'
+  │ … +1 line
+  └ 1:# Task Group: PulseTrade ProcSupervisor recovered ownership and MDCQ capture readiness
+    3:scope: Recovered absent-PID Stop, ProcSupervisor 1.572.13 rollout, and separate live capture confirmation diagnosis.
+    14:- ProcSupervisor, RFC-PROC-0043, PROC-VFY-043, ownership-uncertain, restored-stopped, PBM Stop, 1.572.13, desiredRunning
+    +83 lines (ctrl+t to view transcript)
+
+? 你看到 orphan 的情境是 wrapper 正常 /exit／/stop、wrapper 崩潰或強制結束，還是 native 取消／重啟後留下？若手邊有 PID 或當時使用的 codex app-server／exec／
+  agy 類型，也請一起提供。
+
+• Ran Read-CodexStdout { bash.exe -lc 'sed -n "1,34p" /c/Users/Administrator/.codex/memories/MEMORY.md'; Get-Item -LiteralPath 'F:
+  │ \fodex\Fodex.Supervisor\README.md','F:\fodex\Fodex.Supervisor\README.Service.md','F:\fodex\Fodex.Supervisor\Fodex.Supervisor.fsproj' | Select-Object
+  │ Name,Length | Format-Table -AutoSize; Select-Xml -LiteralPath 'F:\fodex\Fodex.Supervisor\Fodex.Supervisor.fsproj' -XPath '//Compile' | ForEach-Object
+  │ … +2 lines
+  └ # Task Group: PulseTrade ProcSupervisor recovered ownership and MDCQ capture readiness
+
+    scope: Recovered absent-PID Stop, ProcSupervisor 1.572.13 rollout, and separate live capture confirmation diagnosis.
+    +117 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg -n 'PostStop|PreRestart|CoordinatedShutdown|Terminate|Kill|Dispose|stopAll|Stop\(|stopProc|ChildProcess|onExit|OnExit|register|
+  │ version|\.Start' 'F:\fodex\Fodex.Supervisor\ProcSupervisorV100.fsx' 'F:\fodex\Fodex.Supervisor\ProcSupervisorV201.fsx' 'F:
+  │ \fodex\Fodex.Supervisor\NativeOwnershipFodexFunV209.fsx' 'F:\fodex\Fodex.Supervisor\NativeAgentV300.fsx' 'F:
+  │ … +3 lines
+  └ F:\fodex\Fodex.Supervisor\NativeAgentV300.fsx:82:                    let mutable resource: ProcSupervisorV100.StartState option = None
+    F:\fodex\Fodex.Supervisor\NativeAgentV300.fsx:101:                            registration.Dispose()
+    F:\fodex\Fodex.Supervisor\NativeAgentV300.fsx:130:                                cancel.Dispose()
+    +38 lines (ctrl+t to view transcript)
+
+
+↪ Re: 你看到 orphan 的情境是 wrapper 正常 /exit／/stop、wrapper 崩潰或強制結束，還是 native 取消／重啟後留下？若手邊有 PID 或當時使用的 codex app-server／
+  exec／agy 類型，也請一起提供。
+
+  沒有任何資訊，但是 main wrapper 似乎沒有正常關閉
+
+
+• 了解。我會優先查「main wrapper 沒有正常關閉」時的清理路徑，分清楚是關閉流程漏掉 native，還是宿主突然中斷後缺少程序存活保護。即使沒有當時的 PID，也可以用我們
+  自行建立的測試程序重現。
+
+• Ran Read-CodexStdout { Get-Item -LiteralPath 'F:\fodex\Fodex.Supervisor\ProcSupervisorV100.fsx','F:\fodex\Fodex.Supervisor\ProcSupervisorV201.fsx','F:
+  │ \fodex\Fodex.Supervisor\NativeAgentV300.fsx','F:\fodex\Fodex.Supervisor\NativeAppServerV300.fsx','F:\fodex\Fodex.Supervisor\WrapperAgentV405.fsx','F:
+  │ \fodex\Fodex.Supervisor\WrapperAgentV402.fsx' | Select-Object Name,Length | Format-Table -AutoSize; bash.exe -lc 'cat /f/fodex/Fodex.Supervisor/
+  │ … +2 lines
+  └
+    Name                    Length
+    ----                    ------
+    +229 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg -n 'let (stop|dispose|cleanup|close)|Defer|PostStop|StopAgent|StopParticipant|\.Stop\(|Terminate|CoordinatedShutdown|ActorOf|
+  │ Watch\(' 'F:\fodex\Fodex.Supervisor\WrapperAgentV405.fsx' 'F:\fodex\Fodex.Supervisor\ServiceWrapperFodexFunV100.fsx' 'F:
+  │ \fodex\Fodex.Supervisor\ServiceSupervisorFodexFunV100.fsx' 'F:\fodex\Fodex.Supervisor\ConsoleHostFodexFunV407.fsx' 'F:
+  │ … +3 lines
+  └ F:\fodex\Fodex.Supervisor\ConsoleHostFodexFunV407.fsx:245:        try do! node.Terminate().WaitAsync(remaining())
+    F:\fodex\Fodex.Supervisor\ServiceSupervisorFodexFunV100.fsx:187:                        | :? Terminated as ended ->
+    F:\fodex\Fodex.Supervisor\ServiceSupervisorFodexFunV100.fsx:310:                    | :? Terminated as ended ->
+    +60 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash.exe -lc 'sed -n "115,170p" /f/fodex/Fodex.Supervisor/WrapperAgentV405.fsx; sed -n "868,918p" /f/fodex/Fodex.Supervisor/
+  │ WrapperAgentV405.fsx; sed -n "30,88p" /f/fodex/Fodex.Supervisor/NativeAgyFodexFunV300.fsx; sed -n "210,255p" /f/fodex/Fodex.Supervisor/
+  │ ConsoleHostFodexFunV407.fsx; sed -n "77,110p" /f/fodex/Fodex.Supervisor/ServiceHostFodexFunV101.fsx'; rg -n 'DisposeAsync|\.Stop\(|StopAgent|Close|
+  │ … +2 lines
+  └             let selectContext graph = selectDefinition(ctx,graph)
+                let splitContext = FodexFunBinding.pin<ContextMessageV300 array,string array> node None WrapperContextFodexFunV300.targetBatches
+                let summaryPrompt = FodexFunBinding.pin<int * int * string,string> node None WrapperContextFodexFunV300.targetSummary
+    +255 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash.exe -lc 'sed -n "47,94p" /f/fodex/Fodex.Supervisor/FodexAgentFodexFunV405.fsx; sed -n "880,904p" /f/fodex/Fodex.Supervisor/
+  │ WrapperAgentV405.fsx; sed -n "1,42p" /f/fodex/Fodex.Supervisor/NativeAgyFodexFunV300.fsx; tail -34 /f/fodex/Fodex.Supervisor/NativeAgyFodexFunV300.fsx';
+  │ rg -n 'stop|kill|JobObject|Dispose|PostStop|PreRestart|KillOnJob|KillOnClose|OnProcessExit' 'G:
+  │ … +3 lines
+  └             | None -> firstArguments<-Some arguments
+                | _ -> ()
+
+    +198 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg -n 'Version|RepositoryCommit|repository' 'C:
+  │ \Users\Administrator\.nuget\packages\fakka.proc.supervisor\1.572.12\fakka.proc.supervisor.nuspec' | Select-Object -First 5; rg -l 'type ProcNodeActor'
+  │ 'G:\PulseTrade.fs\Libs\Akka.Proc.Supervisor' -g '*.fs' -g '*.fsx' -g '!**/obj/**' -g '!**/bin/**'; rg -n 'kill|Kill|orphan|JobObject|Exit|ProcessExit'
+  │ … +3 lines
+  └ 9:    <repository type="git" url="https://github.com/ingted/PulseTrade.fs.git" branch="refs/heads/20261019_036.ptc_line_km"
+    commit="14960d36ba8d1236ef8ae79dcc1b7c0f9547254d" />
+    G:\PulseTrade.fs\Libs\Akka.Proc.Supervisor\ProcSupervisor.fs
+    +46 lines (ctrl+t to view transcript)
+
+• 程式碼裡已看到兩個具體缺口：wrapper 的 native 清理集中在收到 StopAgent 的路徑；agy native 又沒有 codex native 已有的 actor 結束清理 hook。這可能讓「actor 異
+  常結束、沒有走正常 Stop」留下資源。
+
+  我會再核對 Proc Supervisor 是否能在這種情況接手清理，避免把同一項責任重做一遍。
+
+• Ran Read-CodexStdout { git -C G:/PulseTrade.fs show 14960d36ba8d1236ef8ae79dcc1b7c0f9547254d:Libs/Akka.Proc.Supervisor/ProcSupervisor.fs | rg -n 'PostStop|
+  │ PreRestart|ProcessExit|Kill\(|killProcess|Dispose|StopProc|class ProcNode' | Select-Object -First 45; rg --files 'F:\fodex\Fodex.Supervisor.Tests' -g
+  │ '*Fixture*' -g '*Fake*' -g '*Worker*' -g '!**/bin/**' -g '!**/obj/**' | Select-Object -First 20; rg -n 'Environment.Exit|Kill\(|processTree|own.*tree|
+  │ … +2 lines
+  └ 177:    | ProcessExited of
+    205:    // OS exit 與 pipe EOF 不同；由既有 ProcessExited handler 解除，不能只看 Process.HasExited。
+    336:                        if force then p.Kill(true) else p.Kill()
+    +41 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { git -C G:/PulseTrade.fs show 14960d36ba8d1236ef8ae79dcc1b7c0f9547254d:Libs/Akka.Proc.Supervisor/ProcSupervisor.fs | bash.exe -lc 'sed
+  │ -n "319,352p;1852,1872p;1890,1933p"'; Select-Xml -LiteralPath 'F:\fodex\Fodex.Supervisor\Fodex.Supervisor.fsproj' -XPath '//Compile' | ForEach-Object
+  │ { $_.Node.Include } | Select-Object -Last 12; bash.exe -lc 'cat /f/fodex/Fodex.Supervisor.Tests/WrapperAgentV405Tests.fsx'; rg -n 'let withNode|let
+  │ … +2 lines
+  └ Exception: C:\Users\Administrator\.codex\lib\Read-CodexStdout.ps1:150
+    Line |
+     150 |          throw "Captured command failed with exit code $exitCode. $($d …
+    +3 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { git -C G:/PulseTrade.fs show 14960d36ba8d1236ef8ae79dcc1b7c0f9547254d:Libs/Akka.Proc.Supervisor/ProcSupervisor.fs | bash.exe -lc 'sed
+  │ -n "319,352p;1852,1872p;1890,1933p"'; Select-Xml -LiteralPath 'F:\fodex\Fodex.Supervisor\Fodex.Supervisor.fsproj' -XPath '//Compile' | ForEach-Object
+  │ { $_.Node.Include } | Select-Object -Last 12; bash.exe -lc 'cat /f/fodex/Fodex.Supervisor.Tests/WrapperAgentV405Tests.fsx'; rg --files 'F:
+  │ … +1 line
+  └             if not exitObserved then sessionAttachment |> Option.iter (fun attachment -> attachment.OwnerStopping force)
+                try
+                    if not exitObserved then
+    +154 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg -n 'type ProcSnapshot|type ProcLocalIo|type ProcStartSpec|type ProcSupervisorSettings' 'G:
+  │ \PulseTrade.fs\Libs\Akka.Proc.Supervisor' -g '*.fs' -g '!**/bin/**' -g '!**/obj/**'; bash.exe -lc 'sed -n "1,76p" /f/fodex/Fodex.Supervisor.Tests/
+  │ ImplementationTestSupportV301.fsx'; Get-Item -LiteralPath 'F:\fodex\Fodex.Supervisor\bin\Debug\net10.0\Fodex.Supervisor.dll','F:
+  │ … +2 lines
+  └ G:\PulseTrade.fs\Libs\Akka.Proc.Supervisor\ProcLocalIo.fs:13:type ProcLocalIoEvent =
+    G:\PulseTrade.fs\Libs\Akka.Proc.Supervisor\ProcLocalIo.fs:24:type ProcLocalIo =
+    G:\PulseTrade.fs\Libs\Akka.Proc.Supervisor\ProcContracts.fs:9:type ProcStartSpec =
+    +86 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash.exe -lc 'sed -n "1,43p" /g/PulseTrade.fs/Libs/Akka.Proc.Supervisor/ProcLocalIo.fs; sed -n "70,121p" /g/PulseTrade.fs/Libs/
+  │ Akka.Proc.Supervisor/ProcContracts.fs'; Get-ChildItem -LiteralPath 'F:\fodex\Fodex.Supervisor\bin\CLI' -File -Filter '*Contract*.dll' | Select-Object
+  │ Name,Length | Format-Table -AutoSize; rg -n 'ProcSnapshot|GetProc|snapshot|return|type' 'F:\fodex\Fodex.Supervisor\NativeOwnershipFodexFunV209.fsx' |
+  │ … +2 lines
+  └ namespace Akka.Proc.Supervisor
+
+    open System
+    +108 lines (ctrl+t to view transcript)
+
+• 另一個關鍵點確認了：Fodex 目前用的是 Proc Supervisor 的舊 ProcLocalIo 建構路徑；這個版本的 PostStop 只有新 ProcIoSession 路徑會主動清掉子程序。
+
+  我會用獨立 ActorSystem 和只做等待的測試子程序，比較正常 Stop 與直接關閉 ActorSystem。測試後只清理本次建立的程序。
+
+• Added temp\fodex\native-orphan-review-20261110\Probe.fsx (+64 -0)
+     1 +#r "nuget: FAkka.Proc.Supervisor, 1.572.12"
+     2 +#r "F:/fodex/Fodex.Supervisor/bin/CLI/Fodex.Supervisor.Contracts.dll"
+     3 +#r "F:/fodex/Fodex.Supervisor/bin/CLI/Fodex.Supervisor.dll"
+     4 +
+     5 +open System
+     6 +open System.Diagnostics
+     7 +open System.Threading.Tasks
+     8 +open Akka.Actor
+     9 +open Akka.Configuration
+    10 +open Akka.Proc.Supervisor
+    11 +open Fodex.Supervisor
+    12 +
+    13 +// Read-only lifecycle investigation: no model, SQL, service port, or user process.
+    14 +// Both cases launch a bounded sleeper through the actual shipped Fodex adapter.
+    15 +// Always retain the Process handle and creation time for exact test-owned cleanup.
+    16 +let required = function Ok value -> value | Error error -> raise error
+    17 +
+    18 +let probe name explicitStop =
+    19 +    let node = ActorSystem.Create("fodex-orphan-probe-" + Guid.NewGuid().ToString("N"), ConfigurationFactory.ParseString("akka.loglevel = ERROR"))
+    20 +    let started = TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously)
+    21 +    let io: ProcLocalIo =
+    22 +        { Input = ""
+    23 +          OnEvent = function
+    24 +              | ProcLocalIoEvent.Started(_,pid) -> started.TrySetResult(pid) |> ignore
+    25 +              | _ -> () }
+    26 +    let mutable child: Process option = None
+    27 +    let mutable birth: DateTime option = None
+    28 +    try
+    29 +        let state =
+    30 +            ProcSupervisorV201.launch node
+    31 +                @"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+    32 +                __SOURCE_DIRECTORY__
+    33 +                ["-NoLogo"; "-NoProfile"; "-NonInteractive"; "-Command"; "[System.Threading.Thread]::Sleep(120000)"] io
+    34 +            |> required
+    35 +        let pid = started.Task.WaitAsync(TimeSpan.FromSeconds 10.).GetAwaiter().GetResult()
+    36 +        let owned = Process.GetProcessById(pid)
+    37 +        child <- Some owned
+    38 +        birth <- Some owned.StartTime
+    39 +        if explicitStop then ProcSupervisorV100.stop state |> required
+    40 +        node.Terminate().WaitAsync(TimeSpan.FromSeconds 15.).GetAwaiter().GetResult() |> ignore
+    41 +        let alive = not(owned.WaitForExit(1000))
+    42 +        printfn "CASE=%s; OWNED_PID=%d; ALIVE_AFTER_SHUTDOWN=%b" name pid alive
+    43 +        alive
+    44 +    finally
+    45 +        match child,birth with
+    46 +        | Some owned,Some expectedBirth ->
+    47 +            try
+    48 +                if not owned.HasExited then
+    49 +                    if owned.StartTime <> expectedBirth then failwith "Test child identity changed; cleanup refused"
+    50 +                    owned.Kill(entireProcessTree=true)
+    51 +                    if not(owned.WaitForExit(10000)) then failwith "Test child cleanup timed out"
+    52 +                printfn "CLEANUP=%s; EXITED=%b" name owned.HasExited
+    53 +            finally owned.Dispose()
+    54 +        | _ -> ()
+    55 +        if not node.WhenTerminated.IsCompleted then
+    56 +            node.Terminate().WaitAsync(TimeSpan.FromSeconds 15.).GetAwaiter().GetResult() |> ignore
+    57 +
+    58 +printfn "PROC_ASSEMBLY=%s" typeof<ProcNodeActor>.Assembly.Location
+    59 +printfn "FODEX_ASSEMBLY=%s" typeof<ProcSupervisorV100.StartState>.Assembly.Location
+    60 +let normal = probe "explicit_StopProc" true
+    61 +let unexpected = probe "ActorSystem_Terminate_without_StopProc" false
+    62 +if normal then failwith "Normal StopProc unexpectedly left the test child running"
+    63 +if unexpected then printfn "REPRODUCED: current Fodex local-IO ownership does not stop the child on ActorSystem termination."
+    64 +else printfn "NOT_REPRODUCED: ActorSystem termination stopped the child in this environment."
+
+• Ran Read-CodexStdout { dotnet fsi --parallelcompilation- F:/fodex/temp/fodex/native-orphan-review-20261110/Probe.fsx }
+  └ Exception: C:\Users\Administrator\.codex\lib\Read-CodexStdout.ps1:150
+    Line |
+     150 |          throw "Captured command failed with exit code $exitCode. $($d …
+    +4 lines (ctrl+t to view transcript)
+
+• Called
+  └ comm.comm_message_send({"fromId":"fodex","scope":"direct","toId":"user.github.ingted","body":"Orphan process 排查：已新增隔離重現腳本 F:/fodex/temp/fodex/
+        native-orphan-review-20261110/Probe.fsx，正在執行。它用現有 CLI DLL 與 Proc Supervisor 1.572.12，經 ProcSupervisorV201.launch 啟動只 sleep 120 秒的測
+        試子程序，比較「先 StopProc 再 Terminate」與「直接 ActorSystem.Terminate」。目前原始碼顯示 local-IO 分支沒有 ioSession 的 PostStop KillTree；這個測試
+        用來確認是否真會留下程序，而非憑程式碼推斷。測試保留自己的 Process handle／建立時間，finally 只清理該次測試子程序；不使用模型、SQL或既有服務。尚未改實
+        作／Contract。"})
+    {"kind": "ptc-gw-comm-message-result", "status": "ok", "messageId": "msg-fsi-52e0f17958d24cd2b7b5499a9083bd36", "deliveryHint":
+    "direct:user.github.ingted", "body": "Orphan process 排查：已新增隔離重現腳本 F:/fodex/temp/fodex/native-orphan-review-20261110/Probe.fsx，正在執行。它用
+    現有 CLI DLL 與 Proc Supervisor 1.572.12，經 ProcSupervisorV201.launch 啟動只 sleep 120 秒的測試子程序，比較「先 StopProc 再 Terminate」與「直接
+    +1 line (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg -n 'ObjectPool|#r|#I' 'F:\fodex\Fodex.Supervisor\M017References.fsx' | Select-Object -First 24; Get-Item -LiteralPath 'C:\Program
+  │ Files\dotnet\sdk\10.0.203\FSharp\fsi.dll','C:\Program Files\dotnet\sdk\10.0.301\FSharp\fsi.dll' -ErrorAction SilentlyContinue | Select-Object FullName |
+  │ ConvertTo-Json -Compress }
+  └ 4:#I @"bin\Release\net10.0\win-x64"
+    6:#I @"bin\Debug\net10.0\win-x64"
+    8:#r "Akka.dll"
+    +10 lines (ctrl+t to view transcript)
+
+• Edited temp\fodex\native-orphan-review-20261110\Probe.fsx (+1 -0)
+    1  #r "nuget: FAkka.Proc.Supervisor, 1.572.12"
+    2 +#r "nuget: Microsoft.Extensions.ObjectPool, 10.0.14"
+    3  #r "F:/fodex/Fodex.Supervisor/bin/CLI/Fodex.Supervisor.Contracts.dll"
+
+• Ran Read-CodexStdout { dotnet 'C:/Program Files/dotnet/sdk/10.0.203/FSharp/fsi.dll' --parallelcompilation- F:/fodex/temp/fodex/
+  │ native-orphan-review-20261110/Probe.fsx }
+  └ WARNING: Command wrote 97 bytes to C:\Users\Administrator\.codex\temp\output-guard\01a16f6c-722c-7da3-816c-caae933504f8\stderr.raw
+    C:\Users\Administrator\.packagemanagement\nuget\Projects\37352--06368743-f083-40c8-a825-bd8fa342ccc2\Project.fsproj : warning NU1608: Detected package
+    version outside of dependency constraint: FSharp.Compiler.Service 43.12.402 requires FSharp.Core (= 10.1.402) but version FSharp.Core
+    +14 lines (ctrl+t to view transcript)
+
+• 已實際重現：同一套 Fodex adapter，先送 StopProc 再關閉 ActorSystem，子程序會結束；直接關閉 ActorSystem，子程序仍活著。兩個測試子程序都已清理。
+
+  所以即使沒有你當時的 PID，也能確認現有生命週期管理確實有缺口；目前尚未修改正式實作。
+
+• Ran Read-CodexStdout { $orphanProbeRemaining = @(Get-Process -Id 54360,64328 -ErrorAction SilentlyContinue | Select-Object Id,ProcessName,StartTime);
+  │ [pscustomobject]@{TestProcessesRemaining=$orphanProbeRemaining.Count;Processes=$orphanProbeRemaining} | ConvertTo-Json -Depth 3 -Compress; @'
+  │ from pathlib import Path
+  │ … +6 lines
+  └ {"TestProcessesRemaining":0,"Processes":[]}
+    Probe.fsx encoding: UTF-8 without BOM; no NUL or replacement characters.
+
+
+• Called
+  └ comm.comm_message_send({"fromId":"fodex","scope":"direct","toId":"user.github.ingted","body":"Orphan 排查結果已重現（尚未改正式實作）：使用實際 bin/CLI/
+        Fodex.Supervisor.dll 與 FAkka.Proc.Supervisor 1.572.12，ProcSupervisorV201.launch 啟動自己的有限時間 sleeper。explicit
+        StopProc→ActorSystem.Terminate：PID54360已退出；直接ActorSystem.Terminate：PID64328仍活著，finally已精確清理，兩個PID均不再存在。重現檔：F:/fodex/
+        temp/fodex/native-orphan-review-20261110/Probe.fsx。原因鏈是Fodex使用舊ProcLocalIo constructor、未使用有PostStop KillTree的新ioSession；wrapper的
+        StopAgent又是顯式清理路徑，native/ProcNode由ActorSystem直接建立，並非wrapper的child。另有兩個source缺口：ProcSupervisorV100.stop忽略StopProc snapshot
+        是否仍有PID便停掉監管actor；agy在stop前先丟resource且沒有codex已有的Defer清理。修正應補Fodex資源owner結束與停止確認，保留actor restart/OS process可組
+        合語意，不能把ActorSystem正常結束與宿主強殺視為同一條可用finally的路徑。"})
+    {"kind": "ptc-gw-comm-message-result", "status": "ok", "messageId": "msg-fsi-fe20b1b575a24eb88097b0fd8fb26720", "deliveryHint":
+    "direct:user.github.ingted", "body": "Orphan 排查結果已重現（尚未改正式實作）：使用實際 bin/CLI/Fodex.Supervisor.dll 與 FAkka.Proc.Supervisor 1.572.12，
+    ProcSupervisorV201.launch 啟動自己的有限時間 sleeper。explicit StopProc→ActorSystem.Terminate：PID54360已退出；直接ActorSystem.Terminate：PID64328仍活著，
+    +1 line (ctrl+t to view transcript)
+
+• 確實有缺口，而且已重現。
+
+  用現有 Fodex CLI DLL、Proc Supervisor 1.572.12 測試：
+
+  • 先送 StopProc 再關閉 ActorSystem：子程序正常結束。
+  • 直接關閉 ActorSystem：子程序仍存活。
+
+  找到的問題包括：
+
+  1. wrapper 清理 native 主要依賴顯式 StopAgent；它們並非 actor 父子關係。
+  2. Fodex 使用的舊 ProcLocalIo 路徑沒有新版 ProcIoSession 的 PostStop 清理。
+  3. ProcSupervisorV100.stop 沒確認回傳 snapshot 的 PID 已消失，就停止監管 actor。
+  4. agy 停止前先清掉 resource，失敗可能丟失追蹤；也缺少 actor 結束清理 hook。
+
+  修正需補齊「owner 結束、停止確認、失敗保留追蹤」，並區分 actor restart 與整個宿主退出。目前尚未修改正式實作；重現腳本 (temp/fodex/native-orphan-review-
+  20261110/Probe.fsx)已保留，測試程序全部清理完畢。
+
+  Worked for 10m 28s • 1:46 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex · ← for agents
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 64192 你起在背景? 前景看不到怎麼測?
+
+
+• 我先查 PID 64192 的父程序、啟動參數與輸出位置，確認它是怎麼被帶起的，再給你前景測試方式。
+
+• Ran Read-CodexStdout { $fodexService=Get-CimInstance Win32_Process -Filter 'ProcessId=64192'; if ($null -eq $fodexService) { 'PID_64192_NOT_RUNNING' } else
+  │ { $fodexService | Select-Object ProcessId,ParentProcessId,CreationDate,ExecutablePath,CommandLine | Format-List; Get-CimInstance Win32_Process -Filter
+  │ "ProcessId=$($fodexService.ParentProcessId)" | Select-Object ProcessId,ParentProcessId,CreationDate,ExecutablePath,CommandLine | Format-List }; rg -n -m
+  │ … +1 line
+  └
+    ProcessId       : 64192
+    ParentProcessId : 62052
+    +9 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg -n 'Start-Process|RedirectStandard|WindowStyle|serviceStd|service\.stderr|service\.stdout|ServiceExe|FodexExe|serviceProcess' G:/
+  │ PulseTrade.fs/misc/Start-LineFodexV3.ps1 | Select-Object -First 25; Get-ChildItem -LiteralPath G:/PulseTrade.fs/deployment/process/dev/line-fodex-v3/
+  │ output/startup -File | Sort-Object LastWriteTime -Descending | Select-Object -First 12 Name,Length,LastWriteTime; bash.exe -lc 'sed -n "88,105p" /c/
+  │ … +1 line
+  └ 10:    [string]$FodexExecutable = 'F:\fodex\Fodex.Supervisor\bin\CLI\Fodex.Supervisor.exe',
+    38:# Start-Process joins ArgumentList into a command line. Quote each value so spaces,
+    53:    if (-not (Test-Path -LiteralPath $FodexExecutable -PathType Leaf)) { throw "Missing Fodex executable: $FodexExecutable" }
+    +31 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { $fodexConsolePort=@(Get-NetTCPConnection -State Listen -LocalPort 18825 -ErrorAction SilentlyContinue);
+  │ "PORT_18825_LISTENERS=$($fodexConsolePort.Count)"; bash.exe -lc 'sed -n "56,72p" /g/PulseTrade.fs/misc/Start-LineFodexV3.ps1' }
+  └ PORT_18825_LISTENERS=0
+        New-Item -ItemType Directory -Path $LogDirectory -Force | Out-Null
+        $stdout = Join-Path $LogDirectory "$AkkaName.$AkkaPort.stdout.log"
+    +16 lines (ctrl+t to view transcript)
+
+• 對。64192 是先前 LINE v3 launcher 啟動的背景 supervisor 服務；啟動碼第 70 行 (G:/PulseTrade.fs/misc/Start-LineFodexV3.ps1:70) 設了 Hidden，輸出轉到 log。我
+  上一則沒有說清楚。
+
+  要在前景手動測新版 wrapper，直接在 PowerShell 執行：
+
+  F:\fodex\Fodex.Supervisor\bin\CLI-V408\Fodex.Supervisor.exe --mode console --mainagent-type codex --database FodexM018 --akkaport 0 --hub-url
+  http://127.0.0.1:18825
+
+  這會建立新的互動 wrapper，不影響現有 LINE 服務。輸入 /list_participant，再用獨立一行 ;; 送出。
+
+  如果要看 LINE 使用的 supervisor 前景輸出，則需要先停止 64192，再以前景啟動同一服務；我目前尚未停止它。
+
+  Worked for 1m 26s • 3:08 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex · ← for agents  

@@ -1,0 +1,132 @@
+› subagent 如果是 wrapper 模式，main wrapper 如何送達 prompt? 是直接 in-process 建立 iaref ，用 iaref 建立 wrapper，再使用 IAgent.send 嗎?還是是用 proc
+  supervisor 起動 proc supervisor (console application)?
+
+
+• 我先查目前 wrapper 模式的建立與派送路徑，確認哪些在同一個 ActorSystem、哪些才交給 Proc Supervisor。
+
+• Ran Read-CodexStdout { bash -lc 'rg -n "scope:|Compile|Archive" /c/Users/Administrator/.codex/memories/MEMORY.md | head -n 10; rg -n
+  │ "IAgentResource|WrapperOrder|\.Send|CreateSubagents|createChild|createWrapper|wrapper\(|NativeCreation|WrapperCreation|match
+  │ mode|SubagentMode|perform|registerFactories" Fodex.Supervisor/SubagentCoordinatorFodexFunV301.fsx Fodex.Supervisor/SubagentCoordinatorV300.fsx; rg -n
+  │ … +1 line
+  └ 3:scope: Evidence-bounded diagnosis of inaccessible public URLs whose hostname lacks DNS address records.
+    28:scope: Basder identity-safe read-only handover, LINE routing/history, echo heartbeat diagnosis, actor terminology, and newagent document routing at G:
+    \PulseTrade.fs.
+    +47 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc 'sed -n "54,82p" Fodex.Supervisor/FodexFunRegistrationV300.fsx; sed -n "72,114p"
+  │ Fodex.Supervisor/SubagentCoordinatorV300.fsx; rg -n "let create|spawn node|new
+  │ IAgent|Agent.Wrapper|Agent.Native|WrapperOrder|StartTurn|DispatchToParticipant|AcquireParticipant" Fodex.Supervisor/WrapperAgentV300.fsx | head -n 28;
+  │ … +2 lines
+  └     /// outer input 準備 function，inner input 執行本次建立；仍遵守 FeasibleFun 雙 input 語意。
+        /// 依賴綁在 node 的 quotation，不新增 concrete runtime／Application，也不跨 node 共用 registry。
+        let nativeQuotation node loop cs ctx models : Expr<NativeCreationV300 -> FeasibleT<_,IAgent<string,obj>,exn>> =
+    +118 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc 'tail -n 32 Fodex.Supervisor/WrapperAgentV300.fsx; sed -n "234,259p" Fodex.Supervisor/WrapperAgentV300.fsx; cat
+  │ Fodex.Supervisor/ProcSupervisorV201.fsx; rg -n "ParticipantInput|\.Send|RunTurn|DispatchToParticipant" Fodex.Supervisor/ReActLoopHandlerV300.fsx | head
+  │ -n 23; sed -n "22,54p" Fodex.Supervisor/WrapperCompositionV301.fsx; sed -n "1,22p" Fodex.Supervisor/Start-M019.ps1' }
+  └                                     | Some(target,_,job,_,_) when job.Cause=cause -> cancel cause (sprintf "/cancel(%d)" (fst target)) None
+    (ParticipantSelectorV300.Number(fst target)) false
+                                        | _ ->
+    +173 lines (ctrl+t to view transcript)
+
+• 目前是第一種：sub wrapper 建立在同一個 .NET process、同一個 ActorSystem，透過它的 IAgent.Send 接收派工。
+
+  建立順序是：
+
+  1. coordinator 從 registry 取得 wrapper factory。
+  2. factory 呼叫 WrapperAgent.create，以 spawn node 建立 actor，取得 IActorRef。
+  3. 用 Wrapper actorRef 建立 IAgent，再透過 loop.UpsertParticipant 登記。
+
+  見 建立 sub wrapper (/F:/fodex/Fodex.Supervisor/SubagentCoordinatorV300.fsx:95)、建立 wrapper actor (/F:/fodex/Fodex.Supervisor/WrapperAgentV300.fsx:106)。
+
+  送 prompt 的路徑是：
+
+  main native 呼叫 hub_order(who, instruction)
+    → hub／coordinator 找到 sub wrapper 的 IAgent
+    → subWrapper.Send(WrapperOrder(...))
+    → sub wrapper actor 排入工作
+    → ReActLoop 路由給該 wrapper 的 main native
+    → native 執行 Codex exec／resume
+
+  目前 Send 裡包的是 WrapperOrder，包含 instruction、causedBy、取消 token 與回覆 callback。見 派送位置 (/F:/fodex/Fodex.Supervisor/
+  SubagentCoordinatorV300.fsx:73)。
+
+  Proc Supervisor 不會再啟動另一個 Proc Supervisor console application。 目前直接使用 NuGet library，在既有 ActorSystem 建立 ProcRegistryActor／
+  ProcNodeActor，由它們啟動及管理外部 Codex CLI 程序。見 Proc Supervisor 建立與啟動 (/F:/fodex/Fodex.Supervisor/ProcSupervisorV201.fsx:13)。
+
+  所以，同一個程序裡可以有多個 wrapper/native actor；各 native 使用的 Codex CLI 才是另外的 OS process。
+
+  Worked for 1m 59s • 4:17 PM
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 之前 /subagent(N) 有起 raw / wrapper 模式的參數叫做啥? 現在還可以用參數切換嗎? 後來好像可以 /subagent(N, raw) /subagent(N, wrapper) 已經實作了?
+
+
+• 我確認一下目前的參數名稱，以及 /subagent(N, raw／wrapper) 是否仍有接到建立流程。
+
+• Ran Read-CodexStdout { bash -lc 'rg -n "Compile|Archive" /c/Users/Administrator/.codex/memories/MEMORY.md | head -n 4; rg -n
+  │ "Subagent_Mode|subagent-mode|SubagentMode|Subagent.*mode|subagent\\(" Fodex.Supervisor/SupervisorArgs.fsx
+  │ Fodex.Supervisor/WrapperCommandFodexFunV300.fsx Fodex.Supervisor/WrapperAgentV300.fsx Fodex.Supervisor/WrapperAgentV301.fsx
+  │ … +2 lines
+  └ 94:## Task 2: Read-only review of current Compile sources
+    103:- Fodex.Supervisor.fsproj, Compile, Archive, None, ParseLine.fsx, WrapperAgentV201.fsx, ReActLoopFodexFunV200.fsx, --debug-, 127.0.0.1:18789
+    180:- for review, the user asked “只做唯讀 review”, “不要把 Archive/None 舊版當成現行實作”, and at most five evidence-backed bugs -> inspect current
+    +42 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc 'sed -n "130,139p" Fodex.Supervisor/WrapperIAgentDemo.M019.fsx; sed -n "660,680p" Fodex.Supervisor/WrapperAgentV300.fsx; sed
+  │ -n "240,263p" Fodex.Supervisor/SubagentCoordinatorV300.fsx; rg -n "mixed|append|wrapper.*raw|raw.*wrapper"
+  │ Fodex.Supervisor.Tests/SubagentCoordinatorV300Tests.fsx Fodex.Supervisor.Tests/SubagentCoordinatorFodexFunV301Tests.fsx | head -n 10' }
+  └         | Ok None -> ()
+            | Error ex -> print("ERROR: "+ex.Message)
+
+    +62 lines (ctrl+t to view transcript)
+
+• 對，已實作，目前兩種方式都還能用。
+
+  啟動時，在 defaultArgumentsText 設定預設模式：
+
+  --subagent-mode wrappers
+
+  或：
+
+  --subagent-mode raw
+
+  注意啟動參數使用複數 wrappers。見 目前解析位置 (/F:/fodex/Fodex.Supervisor/WrapperIAgentDemo.M019.fsx:134)。
+
+  執行中可以逐批指定：
+
+  /subagent(3, wrapper)
+  /subagent(2, raw)
+  /subagent(4)
+
+  • 前兩行分別新增 3 個 wrapper、2 個 raw，可以混用。
+  • 第三行省略模式，沿用啟動設定。
+  • 每次都是追加；不會轉換或取代既有 subagent。這裡的數字是新增數量。
+
+  目前建立流程 (/F:/fodex/Fodex.Supervisor/WrapperAgentV300.fsx:663) 已接上這個選擇，不只是 parser 接受語法。
+
+  Worked for 1m 4s • 4:39 PM

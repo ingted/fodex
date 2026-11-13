@@ -36,7 +36,6 @@
     <File Path="Fodex.Supervisor/README.M006-M009.md" />
   </Folder>
   <Project Path="Fodex.Supervisor.Contract/Fodex.Supervisor.Contracts.fsproj" />
-  <Project Path="ClassLibrary1/ClassLibrary1.fsproj" Id="3108cd3c-6317-4e41-888b-2ebb8d697f43" />
   <Project Path="Fodex.Supervisor.Contract.Tests/Fodex.Supervisor.Contract.Tests.fsproj" />
   <Project Path="Fodex.Supervisor.Tests/Fodex.Supervisor.Tests.fsproj" />
   <Project Path="Fodex.Supervisor/Fodex.Supervisor.fsproj" />

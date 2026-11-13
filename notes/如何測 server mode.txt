@@ -1,0 +1,50 @@
+› 之前好像有提到 fodex.supervisor 可以啟動成兩種服務模式 (akka actor/api?) ?
+  然後你好像有說可以怎麼測試? 如果有文件說明請告知文件路徑，如果沒有請於 doc 資料夾中撰寫 .md 文件說明
+
+
+• 有，先前規劃的是 Akka supervisor 與 MCP server 兩種服務模式。我先確認目前程式的參數與文件位置；若缺少測試說明，就補到 doc。LINE 這兩筆驗收也會接著處理。
+
+• Ran Read-CodexStdout { rg -n -m 3 'FodexService|Fodex.*service|mcpport' C:/Users/Administrator/.codex/memories/MEMORY.md | Select-Object -First 7 |
+  │ ForEach-Object {if($_.Length -gt 450){$_.Substring(0,450)}else{$_}}; rg --files F:/fodex/doc -g '*.md' | Select-Object -First 35; rg -n --glob '*.md' --
+  │ 'mode supervisor|mode mcp|--mcpport|--akkaport|FodexService' F:/fodex/doc | Select-Object -First 18 | ForEach-Object {if($_.Length -gt 400)
+  │ … +1 line
+  └ F:/fodex/doc\NativeProcessLifecycleV301.md
+    F:/fodex/doc\FsiConsoleImplementationAnalysis.md
+    F:/fodex/doc\Fodex Agent 框架技術指南.md
+    +1 line (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { Get-Item -LiteralPath F:/fodex/AGENTS.md,F:/fodex/GEMINI.md -ErrorAction SilentlyContinue | Select-Object FullName,Length; git -C F:/
+  │ fodex status --short -- doc README.md AGENTS.md; rg --files F:/fodex/Fodex.Supervisor F:/fodex/Fodex.Supervisor.Tests -g '*Service*.fsx' -g
+  │ '*Service*.md' -g '*Mcp*.fsx' -g '*Cli*.fsx' -g '*Service*.fs' | Select-Object -First 35; rg -n -- '--mcpport|Mcpport|Mode of|Supervisor|Mcp_server|
+  │ … +1 line
+  └ WARNING: Command wrote 99 bytes to C:\Users\Administrator\.codex\temp\output-guard\01a16f6c-722c-7da3-816c-caae933504f8\stderr.raw
+
+    FullName           Length
+    +38 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { Get-Content -LiteralPath F:/fodex/AGENTS.md -Encoding utf8; Get-Item -LiteralPath F:/fodex/Fodex.Supervisor/README.Service.md |
+  │ Select-Object Length; rg -n '^#|--mode|測試|test|Probe|probe|http|Create|create|mcp' F:/fodex/Fodex.Supervisor/README.Service.md | Select-Object -First
+  │ 32 | ForEach-Object {if($_.Length -gt 450){$_.Substring(0,450)}else{$_}}; rg -n -- 'Mode|Mcpport|Akkaport|Akkaname|Supervisor|Mcp' F:/fodex/
+  │ … +1 line
+  └ # Agent 工作規範
+
+    以使用者原意與人類維護成本為準。以下原則涵蓋衍生步驟，不得換名、拆步或鑽字面漏洞規避。
+    +50 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { Get-Content -LiteralPath F:/fodex/Fodex.Supervisor/README.Service.md -Encoding utf8 | Select-Object -Skip 39 -First 65; rg -n --
+  │ '"supervisor"|"mcp"|SUPERVISOR_ADDRESS|MCP_URL|/healthz' F:/fodex/Fodex.Supervisor/ServiceHostFodexFunV100.fsx F:/fodex/Fodex.Supervisor/
+  │ ServiceHostFodexFunV102.fsx | Select-Object -First 18; rg --files F:/fodex -g '*Service*.fsx' -g '*service*.fsx' -g '*Sdk*.md' -g 'SKILL.md' |
+  │ … +1 line
+  └
+    MCP HTTP 預設只接受 loopback。跨網路的 web chatbot／MCP client 可經已有驗證機制的 reverse proxy 或 tunnel 連接；這一版不自行提供公開網際網路登入服務。Akka
+    address 用於受信任的 Akka 網路；client 應重用自己的 ActorSystem。
+    +90 lines (ctrl+t to view transcript)
+
+• 有，目前仍支援：
+
+  • --mode supervisor：透過 Akka actor 的 JSON string protocol 操作 wrapper。
+  • --mode mcp：同一個 supervisor 加上 HTTP /mcp，供 MCP client 使用。
+
+  現有文件在 README.Service.md (Fodex.Supervisor/README.Service.md:23)，包含啟動命令、Akka protocol、MCP tools、同步／非同步操作範例及有日期的測試紀錄。
+
+  目前 LINE 使用的服務佔用 21824，另開測試時請選其他 port。

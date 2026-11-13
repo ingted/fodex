@@ -1,0 +1,240 @@
+• 已完成並推送 ecd57e9。
+
+  main 固定是 wrapper；agy／Codex 選它的 native，wrapper／raw 只用於 sub。
+
+  • M021 八種組合全部實跑通過，兩輪維持同一 SID，沒有誤用 AgentCot。
+  • 回歸 320 通過；獨立 FSI 29/29；實際 launcher 兩組皆通過。
+  • V402 經 FodexAgent／IAgent／ReActLoop 與 registry quotation 執行；FodexEntry 已歸檔。
+
+  開啟 M021 腳本 (Fodex.Supervisor/WrapperIAgentDemo.M021.fsx)，修改 defaultArgumentsText 後在新 FSI 全選執行。操作與驗收說明
+  (Fodex.Supervisor/README.M021.md)。
+
+  你的原有未提交變更均保留。
+
+  Worked for 2h 12m 1s • 8:20 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex                                                                                              Goal paused (/goal resume)
+
+
+
+
+
+
+
+
+
+
+› 可編譯的 Fodex CLI <- 現在的 Fodex.Supervisor 專案不是 cli 嗎?
+
+
+• 是，Fodex.Supervisor 已經是 CLI 專案，OutputType 就是 Exe。我剛才說得不準確。
+
+  原本的 entrypoint 是 HubClientMain.fs，主要處理 --url／--action 的 HTTP 派工；M019 的互動 console 還在腳本裡。
+
+  這次是在同一個既有 exe 補上互動模式與退出處理，保留原本 HTTP client 用法，不新增 CLI 專案。M022 負責啟動這個互動模式，M021 混測保持原樣。
+
+
+
+
+
+
+
+
+
+
+• 是，Fodex.Supervisor 本來就是 OutputType=Exe 的 CLI。我先前用詞不精確；原入口主要提供 HTTP client，這次是在同一個執行檔加入互動模式。
+
+  已完成並推送 336bc95：
+
+  • M021 完整保留原本的組合測試。
+  • M022 啟動互動 CLI，不經過 FSI、不新增專案。
+  • 回歸測試 327 通過、2 略過；真實回覆、同 SID 恢復及 Ctrl+C 清理均已驗證。
+
+  cd F:\fodex\Fodex.Supervisor
+  .\Start-M022.ps1
+
+  沿用 M019：獨立一行 ;; 提交，/exit 離開。詳見 README.M022.md (/F:/fodex/Fodex.Supervisor/README.M022.md)。
+
+  Worked for 51m 56s • 10:55 AM
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+• 確實漏接了 M020 已有的啟動參數。已補齊 V404、更新 EXE，並推送 94fab8b。
+
+  現在可直接執行：
+
+  .\bin\CLI\Fodex.Supervisor.exe --mainagent-type agy
+  .\bin\CLI\Fodex.Supervisor.exe --mainagent-type codex
+  .\bin\CLI\Fodex.Supervisor.exe --mainagent-type codex --native-adapter exec
+
+  • 預設 main＝agy，sub＝codex／wrapper。
+  • 支援獨立的 --subagent-type、--subagent-mode，以及你列出的全部 /subagent 語法。
+  • 明確指定 adapter／model／effort 優先。
+  • 也補回 --agy-exe、--interactive false --prompt ...。
+
+  三種 main 路徑及混合 sub 均實跑通過；新增測試 20/20，完整回歸重跑 347 通過、2 略過。先前清理逾時與重跑紀錄已保留於 說明文件 (/F:/fodex/Fodex.Supervisor/
+  README.M022.md)。
+
+  Worked for 27m 25s • 11:36 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+↪ Re: --json 要輸出哪一種 JSON？
+
+  Fodex 的 ReActEvent JSONL，保留事件種類、來源與 streamId；原始 stdout 仍獨立（建議）
+
+
+• Ran Read-CodexStdout { rg -n -m 20 'let |quotation|target' Fodex.Supervisor/ReActJsonV300.fsx; rg --files artifacts/cli-build-20261106-v405/bin -g
+  │ 'Fodex.Supervisor*.dll' -g 'Fodex.Supervisor.exe'; bash -lc "head -58 Fodex.Supervisor/ProgramV405.fs; head -64 Fodex.Supervisor.Tests/ProgramV300.fs;
+  │ head -65 Fodex.Supervisor/ReActJsonV300.fsx" }
+  └ 11:    let streamIdOf (_, _, event: ReActEvent<'P>) =
+    18:    let withStreamId id (source, target, event: ReActEvent<'P>) =
+    19:        source, target,
+    +206 lines (ctrl+t to view transcript)
+
+
+↪ Re: 建立 wrapper 的外部 actor 或 MCP client 斷線後，wrapper 要怎麼處理？
+
+  保留 wrapper 與工作，允許憑 wrapper SID 重新連接收結果（建議）
+
+
+• Ran Read-CodexStdout { dotnet test Fodex.Supervisor.Tests/Fodex.Supervisor.Tests.fsproj -c Release --no-build --no-restore --artifacts-path
+  │ F:/fodex/artifacts/cli-build-20261106-v405 --filter 'FullyQualifiedName~V405|FullyQualifiedName~V302|FullyQualifiedName~V102|FullyQualifiedName~Native
+  │ output V301' --logger 'trx;LogFileName=targeted.trx' --results-directory F:/fodex/artifacts/cli-20261106-v405 -v:q *>
+  │ … +2 lines
+  └ Test run for F:\fodex\artifacts\cli-build-20261106-v405\bin\Fodex.Supervisor.Tests\release_win-x64\Fodex.Supervisor.Tests.dll (.NETCoreApp,Version=v10.0)
+    A total of 1 test files matched the specified pattern.
+    Results File: F:\fodex\artifacts\cli-20261106-v405\targeted.trx
+    +4 lines (ctrl+t to view transcript)
+
+
+↪ Re: MCP 的送 prompt／取回 result，要採哪種語意？
+
+  兩種都很常見都需要支援吧? PS. 請順便提供 Skill 文件說明該 mcp server與mcp tool 事宜
+
+
+• 收到，MCP 會同時提供兩種用法：送出後立即取得 requestId，再非同步收件；或同一個工具等待本輪完成。client 斷線後保留 wrapper 與工作，重連時可用 wrapper SID 接
+  回。
+
+  --json 確定輸出 Fodex 事件 JSONL；原始 stdout／stderr 繼續走獨立通道，啟動訊息與提示字元也不混進 JSONL。我會套用 skill-creator 的文件規範，補上 MCP 連線、工
+  具與收件語意的 SKILL.md。
+
+
+
+
+
+
+
+
+
+
+
+
+
+• 已完成，67d5775 已 commit／push，bin/CLI 已更新。
+
+  MCP 同時支援：
+
+  • send_prompt_and_wait：送出後等待本次 main turn 完成。
+  • send_prompt＋receive_result：接單即回，之後收結果。
+  • Client 斷線保留工作，可用 WSID 重連。
+
+  .\bin\CLI\Fodex.Supervisor.exe --mode mcp --json
+  # Akka supervisor 模式：
+  .\bin\CLI\Fodex.Supervisor.exe --mode supervisor --json
+
+  時間 prompt、/labels off、--json 也已完成；原始 stdout／stderr 與事件輸出分開。
+
+  使用與 protocol 文件 (Fodex.Supervisor/README.Service.md) · MCP Skill 文件 (skills/fodex-service/SKILL.md)
+
+  驗證：397 項通過、2 跳過；14 份獨立 FSI 測試及真實 MCP／Codex 往返通過。Contract 未改，你既有的變更保留。
+
+  Worked for 1h 43m 21s • 1:29 PM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex
+
+
+
+
+
+
+
+• 已加入，bin/CLI 已更新，commit 08eefd3 已 push。
+
+  # Akka node port
+  .\bin\CLI\Fodex.Supervisor.exe --mode supervisor 21824
+
+  # MCP HTTP port；另指定 Akka port
+  .\bin\CLI\Fodex.Supervisor.exe --mode mcp 18824 --port 21825
+
+  舊語法仍支援；同一個 port 設定若互相衝突會報錯。38 項測試、獨立 FSI 與實際監聽驗證均通過。
+
+  Worked for 13m 24s • 1:45 PM
+
+
+
+
+
+
+
+
+
+
+• 已新增並實跑 Start-LineFodexV3.ps1 (G:/PulseTrade.fs/misc/Start-LineFodexV3.ps1)：
+
+  G:\PulseTrade.fs\misc\Start-LineFodexV3.ps1
+
+  會依序啟動／重用 Fodex service，再執行 v3 RN；RN 結束後 service 保留。
+
+  目前已運行，不必重開：
+
+  • service：21824
+  • RN：15979，cluster 狀態 Up，已印出 V3_LINE_HOST
+
+  與 basder 合作完成修正，9 項整合測試、20 項協定測試及真實模型往返皆通過。真人 LINE 收發尚未驗證。
+
+  已推送 22a653084。
+
+  Worked for 46m 31s • 12:31 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex                                                                   Goal paused (/goal resume)    ⚠ 1 warning · f2 to view

@@ -1,6 +1,6 @@
-M018> 請閱讀 G:\PulseTrade.fs\misc\line_bot_rn_nuget.multimedia.multisession.fodex.fsx.md 並且說明 "這只是靜態證據，不等於 produc
-tion-ready。主要風險包括 Fodex active source 尚未形成可重現 Git authority、runtime 無 TTL／數量上限、重啟後不恢復 session mapping、route dedup 不持久、同 conversation 同時進訊息的順序未被保證，以及 danger-full-access + approval never。" 是什
-麼意思
+M018> 請閱讀 G:\PulseTrade.fs\misc\line_bot_rn_nuget.multimedia.multisession.fodex.fsx.md 
+      並且說明 "這只是靜態證據，不等於 production-ready。主要風險包括 Fodex active source 尚未形成可重現 Git authority、runtime 無 TTL／數量上限、
+      重啟後不恢復 session mapping、route dedup 不持久、同 conversation 同時進訊息的順序未被保證，以及 danger-full-access + approval never。" 是什麼意思
 
 [AgentWork completed]
 這段話的意思是：**程式的主要流程已接通，但還缺少長期運作、故障恢復、重送處理與權限控制的保障，因此不能僅憑程式碼就認定可正式上線。** 原文依據在[風險段落](G:/PulseTrade.fs/misc/line_bot_rn_nuget.multimedia.multisession.fodex.fsx.md:139)。

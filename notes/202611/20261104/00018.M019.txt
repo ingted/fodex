@@ -3568,3 +3568,510 @@ Working (10m 30s • esc to interrupt)
   本輪只修改專案分組；以上是靜態 review 結論，尚未動行為程式碼。
 
   Worked for 17m 46s • 7:38 PM
+
+
+
+
+
+
+
+
+
+
+› WrapperAgentVXXX
+  NativeAgentVxxx
+  ReActJsonVXXX
+  ReActTraceVXXX
+  你都沒搬
+
+
+• 對，是我上一輪分類太窄，只整理了直接宣告 quotation 的功能群，漏掉你列的這些版本實作。
+
+  我先補齊所有版本化的實作檔，包含 WrapperAgent、NativeAgent、ReActJson、ReActTrace 等，都用 Link 集中到 fodexFun/<名稱>/；不編譯的版本仍放在 Archive/
+  fodexFun/<名稱>/。
+
+• Called
+  └ comm.comm_message_send({"fromId":"fodex","toId":"user.github.ingted","scope":"direct","body":"補正 Fodex.Supervisor.fsproj 的分類範圍。上一輪只按直接宣告
+        quotation 的功能群分類，漏掉 WrapperAgentVxxx、NativeAgentVxxx、ReActJsonVxxx、ReActTraceVxxx 與其他版本實作。現在改以所有 V<版本>.fs/.fsx 實作檔為
+        準，例如 <Compile Include=\"WrapperAgentV400.fsx\"><Link>fodexFun/WrapperAgent/WrapperAgentV400.fsx</Link></Compile>；None 版本使用 Archive/fodexFun/
+        WrapperAgent/...。保留 Compile/None、來源與編譯順序，只補 project view；先完成這個遺漏，再回到公開 member 的重構。"})
+    {"kind": "ptc-gw-comm-message-result", "status": "ok", "messageId": "msg-fsi-c6047803fc26447aaf79ec061f03b75d", "deliveryHint":
+    "direct:user.github.ingted", "body": "補正 Fodex.Supervisor.fsproj 的分類範圍。上一輪只按直接宣告 quotation 的功能群分類，漏掉 WrapperAgentVxxx、
+    NativeAgentVxxx、ReActJsonVxxx、ReActTraceVxxx 與其他版本實作。現在改以所有 V<版本>.fs/.fsx 實作檔為準，例如 <Compile
+    +1 line (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout {
+  │ @'
+  │ from pathlib import Path
+  │ … +39 lines
+  └ Additional grouped: 48 Total: 107
+    Compile 76
+    None 31
+    +6 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout {
+  │ @'
+  │ from pathlib import Path
+  │ … +27 lines
+  └ MSBuild: all 107 versioned items grouped; 85 Compile source paths/order unchanged; no non-Link changes
+    Fodex.Supervisor/Fodex.Supervisor.fsproj
+
+
+• Ran Read-CodexStdout { dotnet build Fodex.Supervisor/Fodex.Supervisor.fsproj -c Release --no-restore --artifacts-path
+  │ F:/fodex/artifacts/refactor-tests-20261104 -v quiet }
+  └ F:\fodex\Fodex.Supervisor\ReActJsonV200.fsx(23,15): warning FS0025: Incomplete pattern matches on this expression. For example, the value
+    'ParticipantMetadataChanged (_, _)' may indicate a case not covered by the pattern(s). [F:\fodex\Fodex.Supervisor\Fodex.Supervisor.fsproj]
+    F:\fodex\Fodex.Supervisor\ReActJsonV200.fsx(30,15): warning FS0025: Incomplete pattern matches on this expression. For example, the value
+    +13 lines (ctrl+t to view transcript)
+
+• 你列的四組已全部補上，其他版本檔也一起檢查過了：現在共有 76 個 Compile、31 個 None 依名稱分組，沒有漏在根目錄的 Vxxx.fs／fsx。Release build 成功，85 個
+  Compile 項目的來源與順序維持原樣。
+
+  我先提交並推送這個整理結果，作為後續重構的保存點。
+
+• Ran Read-CodexStdout { git -c safe.directory=F:/fodex commit -m "chore: group all versioned implementations by project link" }
+  └ [master 6640920] chore: group all versioned implementations by project link
+     1 file changed, 107 insertions(+), 107 deletions(-)
+
+
+• Ran Read-CodexStdout { git -c safe.directory=F:/fodex -c core.sshCommand=C:/Windows/System32/OpenSSH/ssh.exe push origin master }
+  └ WARNING: Command wrote 71 bytes to C:\Users\Administrator\.codex\temp\output-guard\01a16f6c-722c-7da3-816c-caae933504f8\stderr.raw
+
+
+• Called
+  └ comm.comm_message_send({"fromId":"fodex","toId":"user.github.ingted","scope":"direct","body":"版本分組補正已 commit/push：6640920。107 個版本檔已依功能群
+        Link（76 Compile、31 None），包含你點出的四組；MSBuild 驗證無遺漏，Compile 順序不變，Release build 成功。接下來先處理第一個公開介面缺口：
+        IAgent.Request，用於 wrapper 指令的非同步回覆。原因：目前 demo/MCP 必須自己建立 TaskCompletionSource 與 implementation message。預計介面為 Request:
+        'TypedCmdToWrapper -> Task<Result<string,exn>>；Send 仍回覆送件接受狀態，生成內容仍走原本 ReActDataStream。Request 將從 registry pin quotation，再依既
+        有 FeasibleFun 雙 input 語意執行，失敗統一回 Error。先寫 Expecto 覆蓋 pin/版本選擇/同步與非同步錯誤，再修改 Contract；Contract 修改前建立並推送時間快
+        照，完成後依 review 規則停在這一小段，不先搬依賴它的 actor。"})
+    {"kind": "ptc-gw-comm-message-result", "status": "ok", "messageId": "msg-fsi-55d3a793695d485b9675f8927e0e0cec", "deliveryHint":
+    "direct:user.github.ingted", "body": "版本分組補正已 commit/push：6640920。107 個版本檔已依功能群 Link（76 Compile、31 None），包含你點出的四組；MSBuild
+    驗證無遺漏，Compile 順序不變，Release build 成功。接下來先處理第一個公開介面缺口：IAgent.Request，用於 wrapper 指令的非同步回覆。原因：目前 demo/MCP 必須
+    +1 line (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc 'cat Fodex.Supervisor.Contract.Tests/Fodex.Supervisor.Contract.Tests.fsproj; head -n 95
+  │ Fodex.Supervisor.Contract.Tests/README.md; rg --files Fodex.Supervisor.Contract.Tests -g "*.fsx" -g "*.fs" -g "!**/obj/**" -g "!**/bin/**" | head -n 24'
+  │ }
+  └ <Project Sdk="Microsoft.NET.Sdk">
+      <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+    +116 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc 'head -n 115 Fodex.Supervisor.Contract.Tests/ReActLoopCollectTests.fsx; head -n 95
+  │ Fodex.Supervisor.Contract.Tests/ContractTestSupport.fsx; cat Fodex.Supervisor.Contract.Tests/Program.fs; cat
+  │ Fodex.Supervisor.Contract/Fodex.Supervisor.Contracts.fsproj' }
+  └ #if INTERACTIVE
+    #I "bin/Debug/net10.0"
+    #r "Expecto.dll"
+    +195 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout {
+  │ @'
+  │ from pathlib import Path
+  │ … +14 lines
+  └ SNAPSHOT=Fodex.Supervisor.Contract\concepts.202611041951.fsx
+    SHA256=c1695a792338922e2cd837293a48721cae3a2cac5cd29e305b67695586f6ed84
+    Fodex.Supervisor.Contract\concepts.fsx BOM=False CRLF=1289 LF=1289
+    +3 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { git -c safe.directory=F:/fodex add -- Fodex.Supervisor.Contract/concepts.202611041951.fsx; git -c safe.directory=F:/fodex diff
+  │ --cached --name-only; git -c safe.directory=F:/fodex diff --cached --numstat }
+  └ Fodex.Supervisor.Contract/concepts.202611041951.fsx
+    1289    0    Fodex.Supervisor.Contract/concepts.202611041951.fsx
+
+
+• Ran Read-CodexStdout { git -c safe.directory=F:/fodex commit -m "chore: snapshot contract before agent request member" }
+  └ [master 2b9f258] chore: snapshot contract before agent request member
+     1 file changed, 1289 insertions(+)
+     create mode 100644 Fodex.Supervisor.Contract/concepts.202611041951.fsx
+    +1 line (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { git -c safe.directory=F:/fodex -c core.sshCommand=C:/Windows/System32/OpenSSH/ssh.exe push origin master }
+  └ WARNING: Command wrote 71 bytes to C:\Users\Administrator\.codex\temp\output-guard\01a16f6c-722c-7da3-816c-caae933504f8\stderr.raw
+
+
+• Ran Read-CodexStdout { bash -lc 'sed -n "163,215p" Fodex.Supervisor.Contract/concepts.fsx; sed -n "385,470p" Fodex.Supervisor.Contract/concepts.fsx; head -n
+  │ 80 Fodex.Supervisor.Contract.Tests/FodexFunTests.fsx' }
+  └     type Feasible<'TSuccess, 'TError> = FeasibleT<unit, 'TSuccess, 'TError>
+
+        // Process 操作在 Contract 中只規範可組合的 ROP 形狀；
+    +217 lines (ctrl+t to view transcript)
+
+• 第一段先補一個小介面：IAgent.Request，讓呼叫端取得 wrapper 指令的非同步回覆，不必自己接 callback。生成內容仍由 ReActDataStream 輸出。
+
+  快照 concepts.202611041951.fsx 已提交並推送。接著先放入測試，再補 member；這段完成後會提供 WinMerge 比對，停等你確認，再搬依賴它的實作。
+
+• Edited 3 files (+166 -0)
+  └ Fodex.Supervisor.Contract.Tests\Fodex.Supervisor.Contract.Tests.fsproj (+1 -0)
+    17      <Compile Include="FodexFunTests.fsx" />
+    18 +    <Compile Include="IAgentRequestTests.fsx" />
+    19      <Compile Include="VersionRegistryBaselineTests.fsx" />
+
+  └ Fodex.Supervisor.Contract.Tests\IAgentRequestTests.fsx (+164 -0)
+      1 +#if INTERACTIVE
+      2 +#I "bin/Debug/net10.0"
+      3 +#r "Expecto.dll"
+      4 +#load "ContractTestSupport.fsx"
+      5 +#else
+      6 +module IAgentRequestTests
+      7 +#endif
+      8 +
+      9 +open System
+     10 +open System.Threading
+     11 +open System.Threading.Tasks
+     12 +open Expecto
+     13 +open ContractTestSupport
+     14 +open Fodex.Supervisor.Contracts.Concepts
+     15 +open Fodex.Supervisor.Contracts.CoreMod
+     16 +open Fodex.Supervisor.Contracts.LiteralsMod
+     17 +
+     18 +// 測試直接走 IAgent 的 default member。沒有另外寫 production Request，
+     19 +// 也不靠 wrapper mailbox、SQL 或 Codex 才能檢驗 quotation 的執行與版本規則。
+     20 +let createAgent node arguments =
+     21 +    { new IAgent<string,obj>(node, Agent.Wrapper node.DeadLetters, arguments, context) with
+     22 +        member _.AcquireParticipant = fun _ -> Error (NotSupportedException "fixture has no children") }
+     23 +
+     24 +let requestRegistry node =
+     25 +    IAgentFodexFun<string,Task<Result<string,exn>>>(node, targetIAgentRequest)
+     26 +
+     27 +let requestFunction prefix =
+     28 +    FeasibleFun<IAgentFunInput<string>,Task<Result<string,exn>>,exn>(
+     29 +        <@ fun (_, _, prepared) -> fun (_, _, actual) ->
+     30 +            Ok (Task.FromResult (Ok (prefix + prepared + "/" + actual))) @>)
+     31 +
+     32 +let wait (work: Task<'T>) = work.WaitAsync(TimeSpan.FromSeconds 5.).GetAwaiter().GetResult()
+     33 +
+     34 +/// 同步準備、函數執行與非同步完成都可能失敗；caller 應只需 match Result。
+     35 +/// 例：assertError "failed" operation，驗證不能把 faulted Task 留給 UI 自己處理。
+     36 +let assertError message operation =
+     37 +    withNode <| fun node ->
+     38 +        operation.f.Value |> ignore
+     39 +        (requestRegistry node).Register(System.Version "1.0.0", operation)
+     40 +        let result = (createAgent node "").Request "command" |> wait
+     41 +        match result with
+     42 +        | Ok text -> failtestf "Expected Error, received %s" text
+     43 +        | Error error -> Expect.equal error.Message message "original error is retained"
+     44 +
+     45 +[<Tests>]
+     46 +let tests =
+     47 +    testList "IAgent Request contract" [
+     48 +        testCase "eval then invoke passes the same node actor and command to both stages" <| fun () ->
+     49 +            withNode <| fun node ->
+     50 +                let calls = ResizeArray<IAgentFunInput<string>>()
+     51 +                let operation =
+     52 +                    FeasibleFun<IAgentFunInput<string>,Task<Result<string,exn>>,exn>(
+     53 +                        <@ fun prepared ->
+     54 +                            calls.Add prepared
+     55 +                            fun actual ->
+     56 +                                calls.Add actual
+     57 +                                let _, _, text = actual
+     58 +                                Ok (Task.FromResult (Ok ("reply:" + text))) @>)
+     59 +                operation.f.Value |> ignore
+     60 +                Expect.isEmpty calls "quotation eval alone does not execute the function"
+     61 +                (requestRegistry node).Register(System.Version "1.0.0", operation)
+     62 +                let agent = createAgent node ""
+     63 +                Expect.equal (agent.Request "/list_participant" |> wait |> expectOk)
+     64 +                    "reply:/list_participant" "the caller receives the command reply"
+     65 +                Expect.sequenceEqual calls
+     66 +                    [node, agent.Instance, "/list_participant"; node, agent.Instance, "/list_participant"]
+     67 +                    "FeasibleFun prepares and invokes with identical input"
+     68 +
+     69 +        testCase "unversioned Request pins highest System.Version at agent creation" <| fun () ->
+     70 +            withNode <| fun node ->
+     71 +                let registry = requestRegistry node
+     72 +                registry.Register(System.Version "1.9.0", requestFunction "old:")
+     73 +                registry.Register(System.Version "1.10.0", requestFunction "current:")
+     74 +                let agent = createAgent node ""
+     75 +                registry.Register(System.Version "2.0.0", requestFunction "next:")
+     76 +                Expect.equal (agent.Request "x" |> wait |> expectOk) "current:x/x" "existing agent stays pinned"
+     77 +                Expect.equal ((createAgent node "").Request "x" |> wait |> expectOk) "next:x/x" "new agent sees the update"
+     78 +
+     79 +        testCase "explicit version and same-version overwrite affect only new agents" <| fun () ->
+     80 +            withNode <| fun node ->
+     81 +                let registry = requestRegistry node
+     82 +                registry.Register(System.Version "1.0.0", requestFunction "before:")
+     83 +                registry.Register(System.Version "2.0.0", requestFunction "newer:")
+     84 +                let agent = createAgent node "--request 1.0.0"
+     85 +                registry.Register(System.Version "1.0.0", requestFunction "after:")
+     86 +                Expect.equal (agent.Request "x" |> wait |> expectOk) "before:x/x" "old pin survives Register overwrite"
+     87 +                Expect.equal ((createAgent node "--request 1.0.0").Request "x" |> wait |> expectOk)
+     88 +                    "after:x/x" "explicit version never substitutes the largest version"
+     89 +
+     90 +        testCase "missing malformed and absent Request versions return Error" <| fun () ->
+     91 +            withNode <| fun node ->
+     92 +                Expect.isError ((createAgent node "").Request "x" |> wait) "unsupported member does not break agent construction"
+     93 +                (requestRegistry node).Register(System.Version "1.0.0", requestFunction "present:")
+     94 +                for arguments in ["--request 9.0.0"; "--request invalid"] do
+     95 +                    Expect.isError ((createAgent node arguments).Request "x" |> wait) "never silently fall back"
+     96 +
+     97 +        testCase "Request definitions remain isolated between nodes" <| fun () ->
+     98 +            withNode <| fun first ->
+     99 +                withNode <| fun second ->
+    100 +                    (requestRegistry first).Register(System.Version "1.0.0", requestFunction "first:")
+    101 +                    (requestRegistry second).Register(System.Version "1.0.0", requestFunction "second:")
+    102 +                    Expect.equal ((createAgent first "").Request "x" |> wait |> expectOk) "first:x/x" "first registry"
+    103 +                    Expect.equal ((createAgent second "").Request "x" |> wait |> expectOk) "second:x/x" "second registry"
+    104 +
+    105 +        testCase "Request returns a pending Task without blocking the caller" <| fun () ->
+    106 +            withNode <| fun node ->
+    107 +                let completion = TaskCompletionSource<Result<string,exn>>(TaskCreationOptions.RunContinuationsAsynchronously)
+    108 +                let operation =
+    109 +                    FeasibleFun<IAgentFunInput<string>,Task<Result<string,exn>>,exn>(
+    110 +                        <@ fun _ -> fun _ -> Ok completion.Task @>)
+    111 +                (requestRegistry node).Register(System.Version "1.0.0", operation)
+    112 +                let agent = createAgent node ""
+    113 +                // 用另一個 thread 觀察「已回傳 Task」，讓誤寫 .Result 的 regression 有有界失敗，
+    114 +                // 不讓整個 Test Explorer 卡死。finally 解除 fixture 的 pending reply。
+    115 +                let returned = TaskCompletionSource<Task<Result<string,exn>>>(TaskCreationOptions.RunContinuationsAsynchronously)
+    116 +                let caller = Task.Run(fun () -> returned.SetResult(agent.Request "pending"))
+    117 +                try
+    118 +                    let response = returned.Task |> wait
+    119 +                    Expect.isFalse response.IsCompleted "the reply has not arrived"
+    120 +                    completion.SetResult(Ok "completed")
+    121 +                    Expect.equal (response |> wait |> expectOk) "completed" "only the real reply completes Request"
+    122 +                finally
+    123 +                    completion.TrySetCanceled() |> ignore
+    124 +                    caller.Wait(TimeSpan.FromSeconds 5.) |> ignore
+    125 +
+    126 +        testCase "preparation exceptions are returned as Error" <| fun () ->
+    127 +            let operation =
+    128 +                FeasibleFun<IAgentFunInput<string>,Task<Result<string,exn>>,exn>(
+    129 +                    <@ fun _ -> raise (InvalidOperationException "prepare failed") @>)
+    130 +            assertError "prepare failed" operation
+    131 +
+    132 +        testCase "synchronous function Error is preserved" <| fun () ->
+    133 +            let operation =
+    134 +                FeasibleFun<IAgentFunInput<string>,Task<Result<string,exn>>,exn>(
+    135 +                    <@ fun _ -> fun _ -> Error (InvalidOperationException "invoke failed") @>)
+    136 +            assertError "invoke failed" operation
+    137 +
+    138 +        testCase "asynchronous operation Error is preserved" <| fun () ->
+    139 +            let operation =
+    140 +                FeasibleFun<IAgentFunInput<string>,Task<Result<string,exn>>,exn>(
+    141 +                    <@ fun _ -> fun _ -> Ok (Task.FromResult (Error (InvalidOperationException "reply failed" :> exn))) @>)
+    142 +            assertError "reply failed" operation
+    143 +
+    144 +        testCase "faulted Tasks become Error rather than faulting the public Task" <| fun () ->
+    145 +            let operation =
+    146 +                FeasibleFun<IAgentFunInput<string>,Task<Result<string,exn>>,exn>(
+    147 +                    <@ fun _ -> fun _ -> Ok (Task.FromException<Result<string,exn>>(InvalidOperationException "task failed")) @>)
+    148 +            assertError "task failed" operation
+    149 +
+    150 +        testCase "cancelled Tasks become an explicit cancellation Error" <| fun () ->
+    151 +            withNode <| fun node ->
+    152 +                let operation =
+    153 +                    FeasibleFun<IAgentFunInput<string>,Task<Result<string,exn>>,exn>(
+    154 +                        <@ fun _ -> fun _ -> Ok (Task.FromCanceled<Result<string,exn>>(CancellationToken(true))) @>)
+    155 +                (requestRegistry node).Register(System.Version "1.0.0", operation)
+    156 +                match (createAgent node "").Request "x" |> wait with
+    157 +                | Error (:? OperationCanceledException) -> ()
+    158 +                | other -> failtestf "Expected cancellation Error, received %A" other
+    159 +    ]
+    160 +
+    161 +#if INTERACTIVE
+    162 +let testExitCode = runTestsWithCLIArgs [] [||] tests
+    163 +if testExitCode <> 0 then failwithf "IAgentRequestTests failed: %d" testExitCode
+    164 +#endif
+
+  └ Fodex.Supervisor.Contract.Tests\Program.fs (+1 -0)
+    11          FodexFunTests.tests
+    12 +        IAgentRequestTests.tests
+    13          VersionRegistryBaselineTests.tests
+
+• Ran Read-CodexStdout {
+  │ @'
+  │ import subprocess
+  │ … +15 lines
+  └ BASELINE_EXIT=1
+    EVIDENCE=artifacts\refactor-tests-20261104\results\IAgentRequest.before.log
+    F:\fodex\Fodex.Supervisor.Contract.Tests\IAgentRequestTests.fsx(25,59): error FS0039: The value or constructor 'targetIAgentRequest' is not defined. Maybe
+    +10 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc 'sed -n "310,386p" Fodex.Supervisor.Contract/concepts.fsx; sed -n "798,823p" Fodex.Supervisor.Contract/concepts.fsx' }
+  └                         let changes = versions |> Array.map(fun version -> target, version, None)
+                            match VersionRegistry<'T>.Persist(node, changes) with
+                            | Error error -> raise error
+    +101 lines (ctrl+t to view transcript)
+
+• Edited Fodex.Supervisor.Contract.Tests\IAgentRequestTests.fsx (+1 -1)
+    35  /// 例：assertError "failed" operation，驗證不能把 faulted Task 留給 UI 自己處理。
+    36 -let assertError message operation =
+    36 +let assertError message (operation: FeasibleFun<IAgentFunInput<string>,Task<Result<string,exn>>,exn>) =
+    37      withNode <| fun node ->
+
+• Ran Read-CodexStdout {
+  │ @'
+  │ from pathlib import Path
+  │ … +78 lines
+  └ Added IAgent.Request target/selector/type/default member; original UTF-8 without BOM and CRLF preserved
+
+
+• Called
+  └ comm.comm_message_send({"fromId":"fodex","toId":"user.github.ingted","scope":"direct","body":"concepts.fsx 第一段完成，供你 review：LiteralsMod 新增
+        IAgentRequest target，CommonCommand 新增 --request <version>，TypesMod 新增 TIAgentRequest<'Command> = 'Command -> Task<Result<string,exn>>。IAgent 的
+        default Request 在建立時 pin 對應 FodexFun，執行時 FeasibleFun.invoke (node, instance, command)，同一 input 依既有雙層語意傳入兩次。同步 Error/
+        exception、Task 的 Error/fault/cancel 均合併為單一 Error，沒有 .Result/RunSynchronously，也不把尚未完成的 Task 記成成功回覆。這是指令回覆，不等待
+        native 整輪生成；未註冊實作回 Error，舊 IAgent object expressions 不必新增 override 才能編譯。IAgentRequestTests.fsx 已先寫 11 案並確認修改前因缺
+        Request/target 編譯失敗，現在準備跑修正後測試。相關的 demo request/callback 接線暫不搬，等此 Contract diff 確認後才遷移。"})
+    {"kind": "ptc-gw-comm-message-result", "status": "ok", "messageId": "msg-fsi-4dbe640b870c4cbca1841f26c6bc3d21", "deliveryHint":
+    "direct:user.github.ingted", "body": "concepts.fsx 第一段完成，供你 review：LiteralsMod 新增 IAgentRequest target，CommonCommand 新增 --request
+    <version>，TypesMod 新增 TIAgentRequest<'Command> = 'Command -> Task<Result<string,exn>>。IAgent 的 default Request 在建立時 pin 對應 FodexFun，執行時
+    +1 line (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { dotnet test Fodex.Supervisor.Contract.Tests/Fodex.Supervisor.Contract.Tests.fsproj -c Release --no-restore --artifacts-path
+  │ F:/fodex/artifacts/refactor-tests-20261104 -v quiet }
+  └ Test run for F:\fodex\artifacts\refactor-tests-20261104\bin\Fodex.Supervisor.Contract.Tests\release\Fodex.Supervisor.Contract.Tests.dll
+    (.NETCoreApp,Version=v10.0)
+    A total of 1 test files matched the specified pattern.
+    +3 lines (ctrl+t to view transcript)
+
+• IAgent.Request 的 11 個新案例已通過，Contract 測試共 59／59 通過。版本 pin、同 input 執行兩層函數，以及同步失敗、非同步失敗與取消，都已驗證。
+
+  接著確認單檔 FSI 能執行，並跑既有實作測試檢查相容性；這段 Contract 完成後就停在 review 點。
+
+• Ran Read-CodexStdout { bash -lc 'tail -n 35 Fodex.Supervisor.Tests/TestCases.BeforeRefactor.md; rg -n "targetIAgentRequest|TIAgentRequest|Request
+  │ of|pinnedIAgentRequest|abstract member Request|default this.Request" Fodex.Supervisor.Contract/concepts.fsx; git -c safe.directory=F:/fodex diff --stat;
+  │ git -c safe.directory=F:/fodex diff --check' }
+  └ Exception: C:\Users\Administrator\.codex\lib\Read-CodexStdout.ps1:150
+    Line |
+     150 |          throw "Captured command failed with exit code $exitCode. $($d …
+    +8 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { bash -lc 'tail -n 22 Fodex.Supervisor.Tests/TestCases.BeforeRefactor.md; rg -n "targetIAgentRequest|TIAgentRequest|Request
+  │ of|pinnedIAgentRequest|abstract member Request|default this.Request" Fodex.Supervisor.Contract/concepts.fsx; git -c safe.directory=F:/fodex diff --stat
+  │ -- Fodex.Supervisor.Contract/concepts.fsx Fodex.Supervisor.Contract.Tests; git -c safe.directory=F:/fodex diff --check --
+  │ … +1 line
+  └ WARNING: Command wrote 600 bytes to C:\Users\Administrator\.codex\temp\output-guard\01a16f6c-722c-7da3-816c-caae933504f8\stderr.raw
+    - `FodexFunRegistrationV400Tests`：loop/native/raw/wrapper/root 五種 q 的 SQL 序列化與 eval；真實 wrapper/loop/SQL 配 fixture native 往返；registry node
+    不等於 execution node；root 保留實作物件 identity。
+    +37 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout {
+  │ @'
+  │ from pathlib import Path
+  │ … +10 lines
+  └ WARNING: Command wrote 97 bytes to C:\Users\Administrator\.codex\temp\output-guard\01a16f6c-722c-7da3-816c-caae933504f8\stderr.raw
+    [19:57:34 INF] EXPECTO? Running tests... <Expecto>
+    [19:57:40 INF] EXPECTO! 11 tests run in 00:00:05.6518029 for IAgent Request contract – 11 passed, 0 ignored, 0 failed, 0 errored. Success! <Expecto>
+    +2 lines (ctrl+t to view transcript)
+
+• 單檔 FSI 的 11 個案例也已通過，確認載入的是本次隔離建置的 Contract DLL。既有實作測試仍在執行，用來確認新增 default member 不會破壞舊 object expression。
+
+  正式 M019 尚未切換到新入口；目前完成的是版本檔分組，以及第一段待你 review 的 Contract 介面。
+
+• Ran Read-CodexStdout { dotnet test Fodex.Supervisor.Tests/Fodex.Supervisor.Tests.fsproj -c Release --no-restore --artifacts-path
+  │ F:/fodex/artifacts/refactor-tests-20261104 -v quiet }
+  └ F:\fodex\Fodex.Supervisor\ReActJsonV200.fsx(23,15): warning FS0025: Incomplete pattern matches on this expression. For example, the value
+    'ParticipantMetadataChanged (_, _)' may indicate a case not covered by the pattern(s). [F:\fodex\Fodex.Supervisor\Fodex.Supervisor.fsproj]
+    F:\fodex\Fodex.Supervisor\ReActJsonV200.fsx(30,15): warning FS0025: Incomplete pattern matches on this expression. For example, the value
+    +7 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout {
+  │ @'
+  │ from pathlib import Path
+  │ … +8 lines
+  └ Fodex.Supervisor.Contract.Tests/README.md BOM=False CRLF=0 LF=72
+    Fodex.Supervisor.Tests/TestCases.BeforeRefactor.md BOM=False CRLF=0 LF=116
+     M Fodex.Supervisor.Contract.Tests/Fodex.Supervisor.Contract.Tests.fsproj
+    +9 lines (ctrl+t to view transcript)
+
+• Called
+  └ comm.comm_message_send({"fromId":"fodex","toId":"user.github.ingted","scope":"direct","body":"IAgent.Request 驗證完成：Contract 59/59（新增 11），實作專案
+        271/271，單檔 FSI 11/11，全部無 skipped。FSI 明確載入 artifacts 的本輪 Contract DLL，未覆寫正在使用的 M019 Debug DLL。接下來只在
+        Contract.Tests/README.md 與 TestCases.BeforeRefactor.md 記錄新 member 的用法/覆蓋與邊界：這次證明 registry pin、FeasibleFun 雙 input、非阻塞回覆與
+        Error 通道；尚未搬 production wrapper/MCP/腳本，不能宣稱 FodexEntry 已退役。快照 concepts.202611041951.fsx 已推送（2b9f258），本次 concepts.fsx diff
+        48 行新增，依你的 Contract review 規則停在此處。"})
+    {"kind": "ptc-gw-comm-message-result", "status": "ok", "messageId": "msg-fsi-37c7b7091eb4450db079538402a51ee4", "deliveryHint":
+    "direct:user.github.ingted", "body": "IAgent.Request 驗證完成：Contract 59/59（新增 11），實作專案 271/271，單檔 FSI 11/11，全部無 skipped。FSI 明確載入
+    artifacts 的本輪 Contract DLL，未覆寫正在使用的 M019 Debug DLL。接下來只在 Contract.Tests/README.md 與 TestCases.BeforeRefactor.md 記錄新 member 的用法/覆
+    +1 line (ctrl+t to view transcript)
+
+• Edited 2 files (+18 -0)
+  └ Fodex.Supervisor.Contract.Tests\README.md (+9 -0)
+    49  | `FodexFunTests.fsx` | quotation eval、雙層相同 input、最大版本、覆寫、缺版、跨 node 隔離 |
+    50 +| `IAgentRequestTests.fsx` | wrapper 指令非同步回覆、Request 選版/pin、相同 input、非阻塞、同步/非同步 Error 與取消；不啟動 native |
+    51  | `ReActDataStreamTests.fsx` | 原生 LEdge、多重邊、方向、replyTo/cause、六種 phase、Copy 的淺複製限制 |
+       ⋮
+    59
+    60 +`IAgent.Request` 的 11 個案例直接使用 Contract default member。它接受 wrapper 的 typed command，
+    61 +回傳 `Task<Result<string,exn>>`；`--request 1.0.0` 選版，不指定則 pin 建立時最大版。
+    62 +quotation 仍是 `IAgentFunInput<'Command> -> IAgentFunInput<'Command> -> Result<Task<Result<string,exn>>,exn>`，
+    63 +default member 將準備/執行失敗與非同步回覆失敗合併成 caller 所見的一個 Result。
+    64 +Request 只等待指令回覆；native 的生成內容仍走 ReActDataStream，不透過這個 Task 收整輪輸出。
+    65 +未提供 Request 實作時回 Error，既有 object expression 不必新增 override 才能編譯。
+    66 +production wrapper 的 callback 接線仍待 Contract review 後遷移，這些案例不代表 M019 已切換。
+    67 +
+    68  ## 驗證範圍
+
+  └ Fodex.Supervisor.Tests\TestCases.BeforeRefactor.md (+9 -0)
+    107
+    108 +## IAgent.Request 第一段 Contract 驗證（2026-11-04，待 review）
+    109 +
+    110 +- 修改前快照：`Fodex.Supervisor.Contract/concepts.202611041951.fsx`，先以 `2b9f258` commit/push，再修改 concepts.fsx。
+    111 +- 先加入 `IAgentRequestTests.fsx`，baseline build 確認缺少 Request/target；證據：`artifacts/refactor-tests-20261104/results/IAgentRequest.before.log`
+         。
+    112 +- 新 member 為 `'TypedCmdToWrapper -> Task<Result<string,exn>>`，用於 wrapper 指令的直接回覆；生成內容仍由 ReActDataStream 輸出。
+    113 +- 11 個案例覆蓋 quotation eval/雙層相同 input、System.Version 最大版、指定版、overwrite 後既有 pin 不變、缺版/無效版/node 隔離、pending Task 非阻塞、
+         同步與非同步失敗/取消回 Error。
+    114 +- 本段 Release 驗證：Contract 59/59、Implementation 271/271；獨立 FSI 11/11，無 skipped。VSTest 路徑驗證 discovery/execution，沒有宣稱操作過 VS UI。
+    115 +- 只驗證新增 Contract member 與舊實作相容性；尚未將 production Request 註冊、搬走 demo callback 或退出 FodexEntry。這些工作在 Contract review 後繼續
+         。
+    116 +
+    117  ## 尚未完成、不能計為通過的新骨架驗收
+
+• Edited Fodex.Supervisor.Contract.Tests\README.md (+1 -1)
+    55
+    56 -每個 operation 的測試都將 `FeasibleFun` quotation 註冊到 `ReActLoopFodexFun`，
+    56 +每個 operation 的測試都將 `FeasibleFun` quotation 註冊到相應的 `IAgentFodexFun`／`ReActLoopFodexFun`，
+    57  經真正 Contract default member 取用；不是直接呼叫一個不經 registry 的 substitute function。
+
+• Ran Read-CodexStdout {
+  │ @'
+  │ from pathlib import Path
+  │ … +28 lines
+  └ WARNING: Command wrote 579 bytes to C:\Users\Administrator\.codex\temp\output-guard\01a16f6c-722c-7da3-816c-caae933504f8\stderr.raw
+    Encoding/BOM/NUL/U+FFFD checks passed for 6 files
+    No forbidden visibility/qualification declarations introduced
+    +11 lines (ctrl+t to view transcript)
+
+• Called
+  └ comm.comm_message_send({"fromId":"fodex","toId":"user.github.ingted","scope":"direct","body":"本段收尾：測試需求對照已更新，明確區分『Contract Request
+        介面/選版/ROP 已驗證』與『production wrapper、MCP、demo 尚未遷移』，避免以 59/59、271/271 誤稱入口重構完成。WinMerge 比對
+        F:/fodex/Fodex.Supervisor.Contract/concepts.202611041951.fsx 與 concepts.fsx；新測試在 Contract.Tests/IAgentRequestTests.fsx。此次 Contract 僅新增 48
+        行，未修改舊函數行為。依你要求停等 Contract review；通過後，下一步才能把 demo 的 request/TCS/callback 收進 Request 的版本實作，再處理 ReActLoop 公開
+        members。版本檔 Link 補正已全部推送（6640920）；Contract 草稿與測試留工作區供你檢查。"})
+    {"kind": "ptc-gw-comm-message-result", "status": "ok", "messageId": "msg-fsi-c52e2f802de64a06b327cd09af5b181a", "deliveryHint":
+    "direct:user.github.ingted", "body": "本段收尾：測試需求對照已更新，明確區分『Contract Request 介面/選版/ROP 已驗證』與『production wrapper、MCP、demo 尚
+    未遷移』，避免以 59/59、271/271 誤稱入口重構完成。WinMerge 比對 F:/fodex/Fodex.Supervisor.Contract/concepts.202611041951.fsx 與 concepts.fsx；新測試在
+    +1 line (ctrl+t to view transcript)
+
+• 已補齊你指出的四組，其他版本實作也全部整理了：
+
+  • 編譯版本：fodexFun/<名稱>/
+  • 不編譯版本：Archive/fodexFun/<名稱>/
+
+  共 107 個版本檔，編譯順序不變，已 commit＋push：6640920。
+
+  依前面的 go，也完成第一段 Contract 草稿：新增經 registry pin、FeasibleFun 執行的非同步 IAgent.Request。請用 WinMerge 比較：
+
+  • 修改前快照 (/F:/fodex/Fodex.Supervisor.Contract/concepts.202611041951.fsx)
+  • 目前 concepts.fsx (/F:/fodex/Fodex.Supervisor.Contract/concepts.fsx:840)
+
+  驗證：Contract 59/59、實作 271/271、新測試獨立 FSI 11/11 通過。
+
+  依你先前「Contract 變更後先停等確認」的要求，目前停在這裡；FodexEntry 與其他組裝層尚未移除。
+
+  Worked for 22m 6s • 8:03 PM
+
+  ↳ Recap: 目標是將入口與操作收回 FodexAgent／IAgent／ReActLoop，移除多餘組裝層。SQL registry／V400 基底及 107 個版本檔的 Link 分組已推送。IAgent.Request
+           Contract 草稿通過 Contract 59/59、實作 271/271、FSI 11/11；目前停等介面 review，M019 尚未切換，FodexEntry 等舊組裝層尚未移除。
+           Next: 是否確認 IAgent.Request 的 Contract 變更，讓後續實作搬移繼續？
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex                                                                                              Goal paused (/goal resume)
+
+
+

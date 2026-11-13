@@ -1,0 +1,1605 @@
+› v3 似乎還有什麼腳本引用之類的問題? 版本必須 bump 啥的? 詳細回報狀況
+
+  ```
+  › 最外層service編寫/建置 -> 這是三小?
+
+
+  • 我指的是：讓現有 Fodex 服務入口實際使用剛修好的程式。
+
+    目前測試通過的是內部元件；LINE 使用的服務入口還引用舊實作。剩下要更新入口的版本選擇，並處理「建立 wrapper、查歷史」兩處同步等待，再產出可部署版本。
+  ```
+
+
+• Context compacted · 3m 12s
+
+• 我先核對 v3 腳本引用、Fodex 服務入口的版本選擇與現有測試證據，整理哪些已完成、哪些尚未接上。這次只查閱，不改碼、建置或重啟服務。
+
+• Ran Read-CodexStdout { rg -n 'service-only|actor.blocking|LINE v3|d39d2764' C:/Users/Administrator/.codex/memories/MEMORY.md; git status --short; git log -3
+  │ --format='%h %s'; rg --files -g AGENTS.md -g GEMINI.md -g '*ServiceHost*' -g '*ServiceWrapper*' -g '*ProgramV4*' -g '*V408*' -g '*ServiceSupervisor*' }
+  └ 254:# Task Group: PulseTrade LINE v3 package closure and G-drive stop handoff
+    256:scope: LINE v3 consumer closure, process-scoped FSI package resolution, independent test evidence and explicit shutdown before G-drive maintenance.
+     M Fodex.Supervisor.slnx
+    +53 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { Get-Content -LiteralPath F:/fodex/AGENTS.md -Encoding UTF8; rg -n 'ServiceHost|ConsoleHost|1\.0\.3|4\.0\.6'
+  │ Fodex.Supervisor/ProgramV409.fs Fodex.Supervisor/ConsoleHostFodexFunV408.fsx; rg -n 'ServiceWrapper|ServiceSupervisor|Some|Task.Run|version|target'
+  │ Fodex.Supervisor/ServiceHostFodexFunV103.fsx; rg -n 'Task.Run|collect|Collect|Create|4\.0\.7|Start\(' Fodex.Supervisor/ServiceWrapperFodexFunV102.fsx;
+  │ … +2 lines
+  └ # Agent 工作規範
+
+    以使用者原意與人類維護成本為準。以下原則涵蓋衍生步驟，不得換名、拆步或鑽字面漏洞規避。
+    +77 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg -n '^#|FS0999|0\.2\.19|20/20|22/22|closure' C:/Users/Administrator/.codex/memories/MEMORY.md | Select-Object -Skip 115 -First 20;
+  │ git -C G:/PulseTrade.fs status --short -- misc/Start-LineFodexV3.ps1 misc/line_bot_rn_nuget.multimedia.multisession.fodex.v3.fsx
+  │ misc/line_provider_fodex_v3_line.fsx misc/line_provider_fodex_v3_transport.fsx misc/line_provider_fodex_v3_store.fsx; rg -n
+  │ … +7 lines
+  └ 437:### keywords
+    441:## User preferences
+    445:## Reusable knowledge
+    +100 lines (ctrl+t to view transcript)
+
+• 已確認主要缺口：新元件已編入專案並通過個別測試，但服務入口仍明確指定舊版本，所以光重新 build 不會切到新實作。另外，LINE v3 腳本目前也保留共享 almighty 腳本
+  的載入鏈；我會把這條依賴與 Fodex 內部版本更新分開說明。
+
+• Ran Read-CodexStdout { Get-Content C:/Users/Administrator/.codex/memories/MEMORY.md -Encoding UTF8 | Select-Object -Skip 253 -First 30; rg -n
+  │ '^#r|^#load|Package|Version|LibraryMode|version' G:/PulseTrade.fs/misc/line_provider_fodex_v3_shared_bootstrap.fsx
+  │ G:/PulseTrade.fs/misc/line_provider_fodex_v3_shared_restore.fsx G:/PulseTrade.fs/misc/line_bot_rn_nuget.multimedia.multisession.almighty.fsx |
+  │ … +6 lines
+  └ # Task Group: PulseTrade LINE v3 package closure and G-drive stop handoff
+
+    scope: LINE v3 consumer closure, process-scoped FSI package resolution, independent test evidence and explicit shutdown before G-drive maintenance.
+    +123 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { Get-Content G:/PulseTrade.fs/misc/line_provider_fodex_v3_service.fsx -Encoding UTF8 | Select-Object -Skip 68 -First 44; Get-Content
+  │ G:/PulseTrade.fs/misc/line_provider_fodex_v3_line.fsx -Encoding UTF8 | Select-Object -Skip 306 -First 45; rg -n
+  │ 'OpenAsync|Execute.*Async|ExecuteReader\(|ExecuteNonQuery\(|connection.Open|\.Open\(' G:/PulseTrade.fs/misc/line_provider_fodex_v3_store.fsx |
+  │ … +4 lines
+  └     let gate = obj()
+        let owner = defaultArg runtimeOwner (Guid.NewGuid())
+        let close sid ct =
+    +123 lines (ctrl+t to view transcript)
+
+• 有，但要分清楚：目前主要未完成的是 Fodex 服務入口接上新版實作，以及 LINE v3 端仍有同步 SQL 路徑；不是已確認「缺某個 NuGet 新版本，所以不能跑」。
+
+  剛才已核對磁碟上的程式碼與測試檔。本次沒有改碼、建置或重啟服務。
+
+  1.「最外層 service」指現有服務入口，不是另建一套服務
+
+  目前實際編譯的呼叫鏈是：
+
+  ProgramV409
+    → ServiceHost V103
+        → ServiceSupervisor V101
+        → ServiceWrapper V102
+            → FodexAgent factory V407
+                → ReActLoop V402
+                → ParticipantManager V402
+                → WrapperAgent V406
+
+  服務仍明確指定這些版本：
+
+  • ProgramV409.fs:79 (Fodex.Supervisor/ProgramV409.fs:79)：選擇 ServiceHost 1.0.3。
+  • ServiceHostFodexFunV103.fsx:54 (Fodex.Supervisor/ServiceHostFodexFunV103.fsx:54)：選擇 ServiceWrapper 1.0.2、ServiceSupervisor 1.0.1。
+  • FodexAgentFodexFunV407.fsx:57 (Fodex.Supervisor/FodexAgentFodexFunV407.fsx:57)：仍選擇舊 loop／manager／wrapper。
+
+  因此，新版內部元件即使已編入 DLL，既有服務也不會自動使用它們。 這符合版本固定的設計；是我尚未完成入口整合。
+
+  2. 已完成與尚未完成
+
+   部分                                                         現況
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   RPC、SQL store、IAgent／ReActLoop 非同步操作                 已提交並有測試
+  ───────────────────────────────────────────────────────────  ──────────────────────────────────────────────────
+   ReActLoopHandler V403                                        已完成，5/5
+  ───────────────────────────────────────────────────────────  ──────────────────────────────────────────────────
+   NativeProcess V302                                           已完成，4/4
+  ───────────────────────────────────────────────────────────  ──────────────────────────────────────────────────
+   Native V302、service native factory、compact 清理重試        已完成，8/8
+  ───────────────────────────────────────────────────────────  ──────────────────────────────────────────────────
+   Wrapper V407、ParticipantManager V403                        已完成，3/3
+  ───────────────────────────────────────────────────────────  ──────────────────────────────────────────────────
+   FodexAgent factory V408                                      只有草稿與測試草稿，尚未加入編譯／註冊，也未測試
+  ───────────────────────────────────────────────────────────  ──────────────────────────────────────────────────
+   ServiceWrapper／ServiceSupervisor／ServiceHost 的接線更新    尚未完成
+  ───────────────────────────────────────────────────────────  ──────────────────────────────────────────────────
+   新版實際 LINE 驗收                                           尚未執行
+
+  這批最終元件測試紀錄合計 38 項通過；它們不能替代服務入口與真實 LINE 驗收。證據在 actor-blocking/20261113 (artifacts/actor-blocking/20261113)。
+
+  目前 HEAD 是 cf0ebd3。磁碟上 bin/CLI/Fodex.Supervisor.dll 的 SHA256 前綴仍是 F84D5E46437FE26C，沒有因內部元件完成就更新成新候選。
+
+  3. 為什麼不只是改版本號就好？
+
+  現有服務還有兩處需要實際修改：
+
+  • ServiceWrapperFodexFunV102.fsx:67 (Fodex.Supervisor/ServiceWrapperFodexFunV102.fsx:67)：建立 loop／wrapper、啟動 wrapper，以及提供
+    collect()，仍走同步介面。
+
+  • ServiceSupervisorFodexFunV101.fsx:57 (Fodex.Supervisor/ServiceSupervisorFodexFunV101.fsx:57)：查歷史仍使用同步 readHistory()，外面包 Task.Run。
+
+  待完成的是讓服務使用新版 factory，並讓歷史查詢一路等待非同步 Collect。不能只把名稱從 V102 換成 V103，就宣稱 blocking 已修好。
+
+  依你要求保留舊版，原先規劃的後續檔案版本是：
+
+  FodexAgent factory V408   ← 已有未驗證草稿
+  ServiceWrapper V103      ← 尚未寫完
+  ServiceSupervisor V102   ← 尚未寫完
+  ServiceHost V104         ← 尚未寫完
+  ProgramV410              ← 尚未接線
+
+  這些是實作／registry 版本更新，不是要求你發布一輪新的 NuGet，也不需要為此修改 Contract。
+
+  4. LINE v3 的腳本引用確實仍有依賴鏈
+
+  目前是：
+
+  Start-LineFodexV3.ps1
+    ├─ 啟動 bin/CLI/Fodex.Supervisor.exe
+    └─ FSI 載入 fodex.v3.fsx
+         → line_provider_fodex_v3_line.fsx
+             → shared_bootstrap
+             → almighty.fsx（LibraryMode）
+             → shared_restore
+             → service／images／lifecycle
+
+  入口見 line_provider_fodex_v3_line.fsx:1 (G:/PulseTrade.fs/misc/line_provider_fodex_v3_line.fsx:1)。
+
+  這表示 v3 還是會受 almighty 的 #r 套件引用影響；LibraryMode 只避免啟動舊服務，不會隔離套件載入。
+
+  目前另有兩個具體狀況：
+
+  • FSharp.Core 的既有解析問題已有 launcher 處理：啟動 FSI 前設定 FSharpCoreImplicitPackageVersion=10.1.403，結束後還原。直接執行 dotnet fsi ...v3.fsx 不會經
+    過這段處理。見 Start-LineFodexV3.ps1:102 (G:/PulseTrade.fs/misc/Start-LineFodexV3.ps1:102)。
+
+  • Proc Supervisor 引用不同：almighty 腳本固定 1.572.13，Fodex 專案固定 1.572.12。兩者在不同程序中，不能僅憑版本不同就判定衝突，也沒有證據顯示必須再發布新版
+    本。
+
+  此外，LINE v3 的 store.fsx:66 (G:/PulseTrade.fs/misc/line_provider_fodex_v3_store.fsx:66) 目前仍有同步 Open()、ExecuteReader()、ExecuteNonQuery()。這是 LINE
+  provider 端待處理的 blocking 範圍，不能靠 Fodex 內部升版一起消失。現有 PrepareAsync 與防重入 sweep 已存在，也不能因此把整條路徑算成非同步完成。
+
+  目前準確的交付狀態是：內部修正已完成一批；服務接線、LINE 端剩餘阻塞路徑與整體驗收未完成。 我先前用「最外層 service 編寫／建置」概括，沒有把這些差異講清楚。
+  現在仍維持暫停，沒有恢復開發或部署。
+
+  Worked for 4m 43s • 5:25 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra high · F:\fodex · fodex · ← for agents                                                  Goal paused (/goal resume)    ⚠ 2 warnings · f2 to view
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 你撰寫一份非常詳細的給 workhorse 的自己(我稍後要把你切成 gpt-6.1-sol) 看的 change spec + design
+  請撰寫 F:\fodex\notes\202611\20261113\00025.Fodex.Refine.Instruction.md 詳細說明:
+
+  1. 哪份檔案要改那些地方，修改策略(你上面的敘述像是摘要，先把摘要放在擋頭，後面撰寫明細)
+  2. 要寫什麼測試(測那些東西)
+  3. almighty 已經是過去式，v3 請全數使用最新版本 package
+  4. 以上 1. 2. 3. 請分章節 (服務接線 / LINE 端剩餘阻塞路徑) 撰寫，不要混在一起
+
+
+• 我會先把摘要放在檔頭，再分成「Fodex 服務接線」與「LINE 端剩餘阻塞路徑」兩章，逐檔寫清楚修改位置、設計、測試與驗收順序。LINE 章也會明確規劃移除 almighty 載入
+  依賴，並查驗套件版本；這輪只撰寫指定文件，不修改實作或啟停服務。
+
+• Ran Read-CodexStdout { Test-Path F:/fodex/notes/202611/20261113/00025.Fodex.Refine.Instruction.md; rg --files G:/PulseTrade.fs -g AGENTS.md -g GEMINI.md -g
+  │ '*fodex*v3*' -g '*[Vv]3*Tests*' -g '*[Vv]3*tests*' -g '*V3*Test*' | Select-Object -First 65; Get-Item
+  │ Fodex.Supervisor/ServiceWrapperFodexFunV102.fsx,Fodex.Supervisor/ServiceSupervisorFodexFunV101.fsx,Fodex.Supervisor/ServiceHostFodexFunV103.fsx,Fodex.Supervisor/FodexAgentFodexFunV408.fsx,G:/PulseTrade.fs/misc/line_provider_fodex_v3_line.fsx,G:/PulseTrade.fs/misc/line_provider_fodex_v3_service.fsx,G:/PulseTrade.fs/misc/line_provider_fodex_v3_store.fsx
+  │ … +1 line
+  └ False
+    G:/PulseTrade.fs\GEMINI.md
+    G:/PulseTrade.fs\AGENTS.md
+    +52 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { Get-Content G:/PulseTrade.fs/AGENTS.md -Encoding UTF8 -TotalCount 150; Get-Content G:/PulseTrade.fs/GEMINI.md -Encoding UTF8
+  │ -TotalCount 55; Get-Content Fodex.Supervisor/ServiceWrapperFodexFunV102.fsx -Encoding UTF8; Get-Content Fodex.Supervisor/ServiceHostFodexFunV103.fsx
+  │ -Encoding UTF8 }
+  └ Exception: C:\Users\Administrator\.codex\lib\Read-CodexStdout.ps1:142
+    Line |
+     142 |          throw "Captured output exceeds the read limit: exit=$exitCode …
+    +4 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg -n '^#|必須|禁止|commit|push|notes|DevLog|版本|merge' G:/PulseTrade.fs/AGENTS.md G:/PulseTrade.fs/GEMINI.md | Select-Object -First
+  │ 58; Get-Content Fodex.Supervisor/ServiceWrapperFodexFunV102.fsx -Encoding UTF8; Get-Content Fodex.Supervisor/ServiceHostFodexFunV103.fsx -Encoding UTF8
+  │ }
+  └ G:/PulseTrade.fs/GEMINI.md:1:## Gemini Added Memories
+    G:/PulseTrade.fs/GEMINI.md:14:   2. Client (`publish\Client\VlmAgent.Client.exe`): 全新版本，包含 PropertyGrid 設定介面、Cancel 按鈕，並且運行在 .NET 9
+    上。
+    +255 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { Get-Content G:/PulseTrade.fs/misc/line_provider_fodex_v3_line.fsx -Encoding UTF8 | Select-Object -First 168; rg -n 'Provider\.|
+  │ ProviderRegistration\.|Adapter|Prepare|Submit|Store\.|store\.|DynamicProvider|ResourceNode|shared|LibraryMode' G:/PulseTrade.fs/misc/
+  │ line_provider_fodex_v3_line.fsx | Select-Object -Last 45; Get-Content G:/PulseTrade.fs/misc/line_provider_fodex_v3_store.fsx -Encoding UTF8 |
+  │ … +1 line
+  └ Exception: C:\Users\Administrator\.codex\lib\Read-CodexStdout.ps1:142
+    Line |
+     142 |          throw "Captured output exceeds the read limit: exit=$exitCode …
+    +4 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { Get-Content G:/PulseTrade.fs/misc/line_provider_fodex_v3_line.fsx -Encoding UTF8 | Select-Object -First 105; rg -n 'Provider\.|
+  │ ProviderRegistration\.|Prepare|Submit|DynamicProvider|ResourceNode|LibraryMode' G:/PulseTrade.fs/misc/line_provider_fodex_v3_line.fsx | Select-Object
+  │ -Last 23 }
+  └ #load "line_provider_fodex_v3_shared_bootstrap.fsx"
+    #load "line_bot_rn_nuget.multimedia.multisession.almighty.fsx"
+    #load "line_provider_fodex_v3_shared_restore.fsx"
+    +126 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg -n 'PackageId|<Version>|TargetFramework' G:/PulseTrade.fs/Libs/PulseTrade.Comm.ResourceNode.Line/*.fsproj; rg --files G:/
+  │ PulseTrade.fs/Libs -g '*Line*.fsproj' -g '*Provider*.fsproj' -g '*Almighty*' -g '*almighty*'; rg -n '^#load|^#r' G:/PulseTrade.fs/misc/
+  │ line_provider_fodex_v3*.fsx | Select-Object -First 65; rg -n '^type |^    member|^    let|store\.' G:/PulseTrade.fs/misc/
+  │ … +1 line
+  └ WARNING: Command wrote 434 bytes to C:\Users\Administrator\.codex\temp\output-guard\01a16f6c-722c-7da3-816c-caae933504f8\stderr.raw
+    G:/PulseTrade.fs/Libs\PulseTrade.Comm\tests\PulseTrade.Comm.ResourceNode.Line.Tests\PulseTrade.Comm.ResourceNode.Line.Tests.fsproj
+    G:/PulseTrade.fs/Libs\PulseTrade.Comm\tests\PulseTrade.Comm.ResourceNode.Line.Dispatch.Tests\PulseTrade.Comm.ResourceNode.Line.Dispatch.Tests.fsproj
+    +77 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg -n '^#r|^#load' G:/PulseTrade.fs/misc -g 'line_provider_fodex_v3*.fsx' | Select-Object -First 45; Get-Content G:/PulseTrade.fs/
+  │ Libs/PulseTrade.Comm/src/PulseTrade.Comm.ResourceNode.Line/PulseTrade.Comm.ResourceNode.Line.fsproj -Encoding UTF8 | Select-Object -First 70; rg -n
+  │ 'type (RouteEventReader|ConversationStorage|ImageProviderStore|LineBatchCoordinator)|let startProviderCluster|type.*NormalizedLineInbound|
+  │ … +3 lines
+  └ G:/PulseTrade.fs/misc\line_provider_fodex_v3.integration.tests.fsx:1:#r "nuget: Expecto, [11.1.1]"
+    G:/PulseTrade.fs/misc\line_provider_fodex_v3.integration.tests.fsx:2:#load "line_provider_fodex_v3_test_mode.fsx"
+    G:/PulseTrade.fs/misc\line_provider_fodex_v3.integration.tests.fsx:3:#load "line_bot_rn_nuget.multimedia.multisession.fodex.v3.fsx"
+    +132 lines (ctrl+t to view transcript)
+
+
+› almighty 的檔案如果你需要 #load 那你就複製一份，變更檔名使用，裡面的 #r 全部改成最新的阿
+
+
+• 了解。文件會改成直接複製 almighty 為 v3 專用檔案、改名後由 v3 #load，保留需要的既有流程，並將副本及其載入鏈的 #r 更新為查驗過的最新版本。原 almighty 檔案不
+  動，也不另做大型抽取重構。
+
+• Ran Read-CodexStdout { rg -n '^#load|^#r|LibraryMode|PTC_|Environment.GetEnvironmentVariable|CurrentDomain.GetData'
+  │ G:/PulseTrade.fs/misc/line_bot_rn_nuget.multimedia.multisession.almighty.fsx | Select-Object -Last 32; Get-Content
+  │ G:/PulseTrade.fs/misc/line_provider_fodex_v3_shared_bootstrap.fsx -Encoding UTF8; Get-Content
+  │ … +3 lines
+  └ 26:#r "nuget: PulseTrade.Comm.Actor.Registry, [0.1.8]"
+    27:#r "nuget: PulseTrade.Infra.Logging, [1.572.0]"
+    28:#r "nuget: PulseTrade.Comm.ResourceNode, [0.1.1]"
+    +186 lines (ctrl+t to view transcript)
+
+• Browsing the web
+
+• Opened https://learn.microsoft.com/en-us/nuget/api/package-base-address-resource
+
+• Ran Read-CodexStdout { rg -n '^#r|^#load|^module ' G:/PulseTrade.fs/misc/line_provider_almighty_core.fsx; rg -n 'type ServiceWrapper|type ServiceCreate|type
+  │ ServiceSupervisorInput|type ServiceMessage|ServiceCreated' Fodex.Supervisor/ServiceSupervisorFodexFunV100.fsx; rg -n 'type ServiceWrapperCreation'
+  │ Fodex.Supervisor/ServiceWrapperFodexFunV100.fsx; rg -n 'member this.PinCollect|targetReActLoopCollect|collect'
+  │ … +3 lines
+  └ 19:type ServiceWrapperV100 = IAgent<string,obj> * (unit -> Result<ReActDataStream<string> array,exn>) * (unit -> Task)
+    20:type ServiceCreateInputV100 = Guid * string array * (ReActDataStream<string> -> unit)
+    21:type ServiceCreateV100 = FeasibleT<ServiceCreateInputV100,Task<Result<ServiceWrapperV100,exn>>,exn>
+    +51 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { $paths=@('G:/PulseTrade.fs/misc/line_bot_rn_nuget.multimedia.multisession.almighty.fsx') + @(Get-ChildItem G:/PulseTrade.fs/misc
+  │ -Filter 'line_provider_fodex_v3*.fsx' -File | ForEach-Object FullName); $packages=foreach($path in $paths){foreach($line in (Get-Content -LiteralPath
+  │ $path -Encoding UTF8)){if($line -match
+  │ … +6 lines
+  └ "Id","Current","FeedMax","Status"
+    "Akka","1.5.74","1.5.74","index-verified"
+    "Akka.Cluster","1.5.74","1.5.74","index-verified"
+    +45 lines (ctrl+t to view transcript)
+
+• 套件查驗已有具體差異：NuGet 公開索引上的 Proc Supervisor 是 1.572.16，FSharp.Compiler.Service 是 43.13.404，多個 Microsoft 套件已到 11.0.0。也有幾個 PTC 套
+  件的本機引用比公開索引新，另有兩個查不到公開索引；文件會逐項記錄來源待確認，避免下一輪誤降版，或把索引存在當成相容性已驗證。
+
+• Ran Read-CodexStdout { dotnet nuget list source --format Short;
+  │ $ids=@('esoptiongamma.data','pulsetrade.comm.resourcenode.es1kquotation','pulsetrade.comm.resourcenode.dynamic','pulsetrade.comm.resourcenode.taresearch
+  │ '); foreach($id in $ids){ $path=Join-Path C:/Users/Administrator/.nuget/packages $id; if(Test-Path $path){Get-ChildItem $path -Directory | Select-Object
+  │ … +4 lines
+  └ E https://api.nuget.org/v3/index.json
+    E G:\PulseTrade.fs\Libs\PulseTrade.Comm\artifacts\packages
+    EM C:\Program Files (x86)\Microsoft SDKs\NuGetPackages\
+    +98 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { Get-Content G:/PulseTrade.fs/misc/line_provider_fodex_v3_line.fsx -Encoding UTF8 | Select-Object -Skip 177 -First 63; Get-Content
+  │ G:/PulseTrade.fs/misc/line_provider_fodex_v3_service.fsx -Encoding UTF8 | Select-Object -Skip 121 -First 118; Get-Content
+  │ Fodex.Supervisor/FodexAgentFodexFunV408.fsx -Encoding UTF8 | Select-Object -Skip 58 -First 43; rg -n 'let evaluated|\.f|Invoke|SimpleFun'
+  │ … +1 line
+  └ Exception: C:\Users\Administrator\.codex\lib\Read-CodexStdout.ps1:150
+    Line |
+     150 |          throw "Captured command failed with exit code $exitCode. $($d …
+    +3 lines (ctrl+t to view transcript)
+
+
+› 另外，如果一些功能其實是要改進 fodex.supervisor 專案，而不應該是繼續放在 v3 腳本裡面的話，你也應該在本次提出
+
+
+• 我會加上「責任歸屬與搬移判準」：wrapper／native 的建立、取消、關閉、工作狀態與持久化輸出查詢，應由 Fodex service 提供；LINE 的 route、reply token、/next 消
+  費位置與媒體處理留在 v3。文件會逐項區分已有 API 可直接使用、Fodex 真正缺少的能力，以及這輪不必搬動的程式，避免兩邊重複實作。
+
+• Ran Read-CodexStdout { Get-Content G:/PulseTrade.fs/misc/line_provider_fodex_v3_line.fsx -Encoding UTF8 | Select-Object -Skip 177 -First 63; rg -n '^type |^  │ member|^let |requestId|pending|cursor|after|Task.Delay|GetAwaiter|send_wait|receive|status' G:/PulseTrade.fs/misc/line_provider_fodex_v3_transport.fsx |
+  │ Select-Object -First 80; rg --files Fodex.Supervisor -g '*Binding*'; rg -n 'let evaluated|\.f|Invoke|SimpleFun'
+  │ … +1 line
+  └     /// 既有 normalized reader 接點。正式 host 使用 PrepareAsync，避免 identity 後再讀 route。
+        member _.Process(input: Ingress,runtime: RemoteWrapper) =
+            process input runtime (fun () -> reader.ProcessAsync(input.RouteId,CancellationToken.None))
+    +102 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout {
+  │ $checks=@(@('fakka.proc.supervisor','1.572.16'),@('fsharp.compiler.service','43.13.404'),@('microsoft.extensions.hosting.windowsservices','11.0.0'),@('s
+  │ ystem.security.cryptography.pkcs','11.0.0'),@('pulsetrade.comm.resourcenode.pcsl','0.2.18'),@('pulsetrade.comm.resourcenode.durableproxy','0.2.15'),@('p
+  │ … +10 lines
+  └
+    Id                      Version   Listed
+    --                      -------   ------
+    +19 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { foreach($c in @(@('fsharp.compiler.service','43.13.404'),@('system.security.cryptography.pkcs','11.0.0'))){[xml]$nu=Invoke-RestMethod
+  │ ('https://api.nuget.org/v3-flatcontainer/'+$c[0]+'/'+$c[1]+'/'+$c[0]+'.nuspec') -TimeoutSec 15; $nu.package.metadata.dependencies.group | ForEach-Object
+  │ { [pscustomobject]@{Id=$c[0];Framework=$_.targetFramework;Dependencies=(($_.dependency | ForEach-Object {$_.id+'='+$_.version}) -join ';')} } |
+  │ … +2 lines
+  └ {"Id":"fsharp.compiler.service","Framework":".NETStandard2.0","Dependencies":"FSharp.Core=[10.1.404,
+    10.1.404];System.Buffers=4.6.1;System.Collections.Immutable=10.0.14;System.Diagnostics.DiagnosticSource=10.0.14;System.Memory=4.6.3;System.Reflection.Emit
+    =4.7.0;System.Reflection.Metadata=10.0.14;System.Runtime.CompilerServices.Unsafe=6.1.2"}
+    +84 lines (ctrl+t to view transcript)
+
+
+› 不要到實作階段才決策，你這次一次在文件中精確 SD
+
+
+• 收到。文件會給出固定設計，不把關鍵選擇留到實作時：新檔名、型別簽章、版本 pin、admission 順序、SQL 鎖與取消語意、Fodex／LINE 的責任邊界，以及測試的預期結果都
+  會定案。
+
+  套件的實際限制也會列成明確前置條件；例如已確認最新 FSharp.Compiler.Service 精確依賴 FSharp.Core 10.1.404，不能沿用目前 launcher 的 10.1.403 就當作完成升級。
+
+• Ran Read-CodexStdout { dotnet --list-sdks; Get-Content G:/PulseTrade.fs/global.json -Encoding UTF8 -ErrorAction SilentlyContinue;
+  │ $roots=@('G:/PulseTrade.fs/Libs/PulseTrade.Comm/artifacts/packages','C:/Program Files/dotnet/sdk/10.0.402/FSharp/library-packs'); foreach($root in
+  │ $roots){foreach($id in
+  │ … +4 lines
+  └ Exception: C:\Users\Administrator\.codex\lib\Read-CodexStdout.ps1:150
+    Line |
+     150 |          throw "Captured command failed with exit code $exitCode. $($d …
+    +20 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { $releases=Invoke-RestMethod 'https://builds.dotnet.microsoft.com/dotnet/release-metadata/10.0/releases.json' -TimeoutSec 20;
+  │ [pscustomobject]@{LatestSdk=$releases.'latest-sdk';LatestRelease=$releases.'latest-release';Date=$releases.'releases'[0].'release-date'} |
+  │ ConvertTo-Json -Compress; $releases.releases | ForEach-Object { $_.sdks } | Where-Object { $_.version -eq '10.0.404' } | ForEach-Object { $_.files |
+  │ … +3 lines
+  └ {"LatestSdk":"10.0.404","LatestRelease":"10.0.15","Date":"2026-11-10"}
+    {"name":"dotnet-sdk-win-x64.zip","url":"https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.404/
+    dotnet-sdk-10.0.404-win-x64.zip","hash":"330ddd2665b43cd2e428216a0d8ea1ac7bb19b5434fdc530e62010dc3b52823a620bf95489d628e1ed6f5122401793ee4887cca4a01912236
+    +10 lines (ctrl+t to view transcript)
+
+
+› FSharp.Core 跟 FSharp.Compiler.Service 例外，如果底下的 package 是舊的，那其實 fodex 自己硬要改用新的會有問題
+
+
+• 收到，這兩個套件明列例外：本次不強升 FSharp.Core 或 FSharp.Compiler.Service，也不因它們要求升級 SDK。v3 先維持目前配套的 FSharp.Compiler.Service 43.12.403
+  與 FSI FSharp.Core 10.1.403；Fodex 專案既有的 Core 設定也不順手改動。其餘套件仍按最新版本更新並驗證依賴相容性。
+
+• Ran Read-CodexStdout { Get-Content G:/PulseTrade.fs/misc/line_provider_fodex_v3_store.fsx -Encoding UTF8 | Select-Object -First 94; Get-Content
+  │ G:/PulseTrade.fs/misc/line_provider_fodex_v3_service.fsx -Encoding UTF8 | Select-Object -Skip 192 -First 100; Get-Content
+  │ Fodex.Supervisor/FodexAgentFodexFunV408.fsx -Encoding UTF8 | Select-Object -Skip 58 -First 40 }
+  └ // V3 keeps v2 SQL lease/FIFO/dedup rules in separate tables; native resources belong to Fodex service.
+    #r "nuget: Microsoft.Data.SqlClient, [7.1.1]"
+    #load "line_provider_fodex_v3_protocol.fsx"
+    +224 lines (ctrl+t to view transcript)
+
+
+› 另外既有的 FAkka / PulseTrade 系列 package 已經固定版本的東西你就不要再硬升
+
+
+• 好，最終套件政策固定為：
+
+  • FSharp.Core、FSharp.Compiler.Service：保留既有相容配套。
+  • 已固定版本的 FAkka.*、PulseTrade.*：原樣保留，不升版，也不為此重建發布。
+  • 其餘第三方套件：在 v3 專用副本與載入鏈中更新至查驗過的最新 stable；若與上述固定套件衝突，必須明確報告，不能自行改動固定版本。
+
+  前面查到的 Proc Supervisor 1.572.16 只會記為查驗資訊，不列入升級計畫。
+
+
+› 我的意思是 FAkka / PulseTrade 系列 假設引用了 X 的 Y 版，但是 Z 版更新，你不要多事改成 Z
+
+
+• 明白，你指的是固定套件所依賴的第三方版本也不能被我硬升。
+
+  例如固定的 FAkka.*／PulseTrade.* 引用了 X Y版，即使 X Z版 更新，我也不能在 v3 額外 #r X Z版 去覆蓋它。文件會以這些套件的 dependency closure 為約束；只有不受
+  這些既有依賴約束的第三方套件，才更新至最新 stable。這會取代前面「其餘第三方一律最新」的寫法。
+
+• Ran Read-CodexStdout {
+  │ $targets=@(@('fakka.proc.supervisor','1.572.13'),@('fakka.fsharp.quotations.evaluator','2.2.2'),@('pulsetrade.comm.resourcenode.line','0.1.8'),@('pulset
+  │ rade.comm.resourcenode.dynamic','0.1.7'),@('pulsetrade.comm.resourcenode.pcsl','0.2.15'),@('pulsetrade.infra.logging','1.572.0')); foreach($p in
+  │ … +5 lines
+  └ fakka.proc.supervisor@1.572.13 -> Akka 1.5.73
+    fakka.proc.supervisor@1.572.13 -> Akka.Cluster 1.5.73
+    fakka.proc.supervisor@1.572.13 -> Akka.Cluster.Sharding 1.5.73
+    +48 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { $direct=@{}; foreach($line in (Get-Content G:/PulseTrade.fs/misc/line_bot_rn_nuget.multimedia.multisession.almighty.fsx -Encoding
+  │ UTF8)){if($line -match '^#r\s+"nuget:\s*([^,]+),\s*\[([^\]]+)\]'){ $direct[$Matches[1].ToLowerInvariant()]=$Matches[2] }};
+  │ $queue=[Collections.Generic.Queue[object]]::new(); foreach($id in $direct.Keys){if($id -match '^(fakka\.|pulsetrade\.|fsharp\.)'){$queue.Enqueue(@($id,
+  │ … +8 lines
+  └ akka 1.5.74 protectedBy=pulsetrade.comm.resourcenode.sqlserver@0.2.14 declares [1.5.74]
+    akka.cluster 1.5.74 protectedBy=fakka.websocket@1.572.1 declares 1.5.73
+    akka.cluster.hosting 1.5.74 protectedBy=fakka.shared@10.2.7 declares 1.5.73
+    +31 lines (ctrl+t to view transcript)
+
+• 設計已收斂成兩條獨立工作線：Fodex 補完 service-only 的版本接線與非同步歷史查詢；LINE v3 改用自己的 almighty 副本，並修正入口同步等待及 SQL 在全域鎖內執行的
+  路徑。文件也會明定：admission 要維持順序，但不能讓 actor 等完整模型生成；套件更新不得破壞既有 FAkka／PulseTrade 依賴版本。接下來寫入逐檔規格與測試預期。
+
+• Added notes\202611\20261113\00025.Fodex.Refine.Instruction.md (+680 -0)
+      1 +# Fodex／LINE v3 refinement：change specification 與 software design
+      2 +
+      3 +日期：2026-11-13。讀者：接手本輪工作的 workhorse agent（包含切換為 gpt-6.1-sol 後的自己）。
+      4 +
+      5 +本文是實作前的固定設計，不是已完成報告。程式碼片段用於限定簽章與控制流程；仍須依既有 F# 型別、編譯順序完成編譯。只因文件寫了某個版本，不代表該版本已
+         建立、註冊、測試或部署。
+      6 +
+      7 +## 檔頭摘要：先看這一頁
+      8 +
+      9 +**產品目標**：LINE Official Account 是穩定的人機介面。LINE 訊息由 .NET code 確定地送進 Fodex wrapper，收到其 native 的結果；不依靠模型操作 COMM、不依
+         靠模型正確 blocking wait。支持 codex／agy、main／sub、wrapper／raw 的既有能力。
+     10 +
+     11 +**目前缺口分成兩章，禁止混為一談：**
+     12 +
+     13 +1. **A 章，Fodex 服務接線**：內部新元件已完成一批，但 CLI 的 service 分支仍 pin 舊 factory。完成 service-only factory V408、ServiceWrapper V103、Serv
+         iceSupervisor V102、ServiceHost V104、ProgramV410；歷史查詢改為真正 await。保持 console 分支、公開 Contract 與 service wire v1 不變。
+     14 +2. **B 章，LINE 端剩餘阻塞路徑**：v3 載入自己複製、改名的 almighty 副本；不再依賴原 almighty 檔案。修正 `PrepareAsync(...).GetResult()`、同步 SQL adm
+         ission、SQL 在 `lock gate` 內執行等問題。維持 durable route 去重、FIFO、owner fencing、圖片及 `/next` 行為。
+     15 +
+     16 +**使用者最後確認的套件規則，覆蓋先前「全部最新」的概括說法：**
+     17 +
+     18 +- `FSharp.Core`、`FSharp.Compiler.Service` 不硬升；保留既有相容配套。
+     19 +- 已固定的 `FAkka.*`、`PulseTrade.*` 不升版、不重建發布。
+     20 +- 上述固定套件所依賴的 X/Y 也受保護：不能因 X/Z 更新，就在 consumer 額外 `#r X/Z` 強行覆蓋。
+     21 +- 只有不破壞上述依賴配套的第三方套件才更新至最新 stable。不得以「NuGet 接受 higher version」取代相容性與使用者限制。
+     22 +- 不因 LINE 的套件更新，順手更新 Fodex 的全部套件。兩者是不同程序、不同編譯／載入閉包。
+     23 +
+     24 +**工作方式**：依本文順序完成小單元及相應測試，交由 basder review 固定候選；asteer 負責 G 槽 v3 腳本，fodex 負責 Fodex 實作與唯一 live 操作。不要讓兩
+         人同改同檔。不新增 Demo 專案、不新增另一套 actor runtime／queue／harness。
+     25 +
+     26 +**這份文件交付不等於恢復實作／部署授權**：寫文件時仍在暫停狀態。收到使用者恢復指令才執行。不要為了「收尾」啟動建置、模型、服務或 LINE 測試。
+     27 +
+     28 +---
+     29 +
+     30 +## 0. 基線、限制與證據
+     31 +
+     32 +### 0.1 本次已查核的磁碟狀態
+     33 +
+     34 +- Fodex repo：`F:\fodex`，master HEAD `cf0ebd3a7bdb7ecd2df614fde0285e1190b60371`。
+     35 +- 尚未編譯／註冊的兩個既有草稿：
+     36 +  - `Fodex.Supervisor/FodexAgentFodexFunV408.fsx`
+     37 +  - `Fodex.Supervisor.Tests/FodexAgentFodexFunV408Tests.fsx`
+     38 +- 不要重新發明這兩個草稿；先按 A 章補完並驗證。
+     39 +- `Fodex.Supervisor/bin/CLI/Fodex.Supervisor.dll` SHA256：`F84D5E46437FE26C9081D2F19BDA70803C95C38309FE5AB3B9C20D3ADED9A6D2`。這是本次讀到的部署目錄
+         檔案，不是宣稱目前程序一定載入此檔。
+     40 +- G repo 的 `misc/line_provider_fodex_v3.integration.tests.fsx` 已有未提交變更，包含兩個 nonblocking 測試；先與 asteer 核對，不覆蓋、不從舊版重抄。
+     41 +- `Fodex.Supervisor.slnx`、既有 notes、op_log、AGENTS 等其他 dirty 項目不屬於本次可任意覆蓋的檔案。
+     42 +- 行號只是 2026-11-13 的定位輔助；實作以本文列出的 symbol 為準，避免因別人的插入造成改錯區塊。
+     43 +
+     44 +### 0.2 已完成元件的測試證據
+     45 +
+     46 +根目錄：`F:/fodex/artifacts/actor-blocking/20261113/`。
+     47 +
+     48 +| 單元 | 最終 TRX 相對路徑 | 通過 |
+     49 +|---|---|---:|
+     50 +| RPC V101 | `rpc/CodexAppServerV101.race-fixed.trx` | 5 |
+     51 +| SQL store V401 | `store/ReActDataStoreV401.trx` | 7 |
+     52 +| IAgent async V301 | `agent/IAgentAsyncFodexFunV301.trx` | 4 |
+     53 +| Loop async V301 | `loop/ReActLoopAsyncFodexFunV301.trx` | 2（涵蓋 24 個 quotation） |
+     54 +| Handler V403 | `handler/ReActLoopHandlerV403.trx` | 5 |
+     55 +| Proc lifecycle V302 | `process/NativeProcessFodexFunV302.trx` | 4 |
+     56 +| Native/service factory/compact | `native/Native302.ServiceFactoriesAndCompact.final.trx` | 8 |
+     57 +| Wrapper407/Manager403 | `wrapper/Wrapper407.Manager403.trx` | 3 |
+     58 +
+     59 +總計 38 個最終通過案例。`Native302.CompactCleanupFailure.repro.trx` 是修復前刻意重現的 1 個失敗，不可刪除，也不可當作最終候選仍失敗。不要把舊的 7/7、
+         fixed、final 重複加總。
+     60 +
+     61 +這些結果代表對應元件測試，不代表外層 service 已完成，更不是新候選的真實 LINE 驗收。已凍結的 Native302、Wrapper407、Manager403 不重新大改；只有新整合
+         測試指出具體缺陷才重新打開。
+     62 +
+     63 +### 0.3 不可變條件
+     64 +
+     65 +- 公開 `Fodex.Supervisor.Contract` 本輪不改；不得偷偷加 abstract member。
+     66 +- 新版 FodexFun 必須以 quotation 宣告、首次使用自動註冊到既有 registry，再經 `FodexFun`／`FeasibleFun.invoke` 執行。不得直接呼叫新版 module function
+         繞過 registry。
+     67 +- `'Input -> 'Input -> Result<...>` 保持既有語意：input 送入吃 input 的函數。不要另造 callback binder 解釋這個型別。
+     68 +- 不使用 `private`、`internal`、`[<RequireQualifiedAccess>]`。FodexFun 所在 module 使用 `[<AutoOpen>]`，延用 `Definitions.builtins`。
+     69 +- `IAgent`／`FodexAgent` 使用 object expression。普通 Akka actor 繼承 `ReceiveActor` 不受此限制。
+     70 +- 舊版本保留；用 fsproj `Link` 分組，不將新版覆寫回舊 Vxxx。舊 entrypoint 變成 `None + Archive`，不刪檔。
+     71 +- 所有 actor message sender/context 在 receive 內取得；logger 來自該 actor 的 `ILoggingAdapter`，透過既有 `AkkaLoggerAdapter`／`toUL` 傳入 child cont
+         ext。不要自己 append log 檔。
+     72 +- stdout/stderr 與 ReActEvent 分開；service JSON 不混入 native 原始 stdio。
+     73 +- 不擅改模型、effort、sid、workdir、participant 編號／who；不以測試通過為由重置人類 session。
+     74 +- 所有 shell 使用既有 `Read-CodexStdout`，一次 capture 小於 20KB，不平行使用 guard。不要重讀 output-guard skill。
+     75 +- COMM 如需收訊，一次 `comm_inbox_read_chunk(participantId="fodex", count=20, maxResponseUtf8Bytes=16000)`；依 hasMore 續批，preview 使用 readToken。
+         禁止逐筆 get_next_message 迴圈。
+     76 +
+     77 +### 0.4 責任歸屬：本輪確定放哪裡
+     78 +
+     79 +| 能力 | 唯一責任位置 | 本輪處置 |
+     80 +|---|---|---|
+     81 +| 建 wrapper、native、sub；設定 provider／model | FodexAgent／IAgent／ReActLoop 及實作 registry | v3 只送既有 service 指令，不建立 native process |
+     82 +| native cancel、Stop、compact、資源清理重試 | Fodex.Supervisor | 使用既有 Native302／Wrapper407；不能讓 v3 以 PID kill 補假成功 |
+     83 +| wrapper lifecycle、service bridge、close ACK | Fodex.Supervisor | A 章補完，ACK 必須代表真正完成所宣告的動作 |
+     84 +| ReActEvent SQL 保存、graph、完整歷史／cursor 查詢 | Fodex.Supervisor | async Collect 接到 service receive；v3 不讀 Fodex graph 私有資料 |
+     85 +| service 的 request/cause correlation、訂閱與等候完成 | Fodex.Supervisor | 保留 wire v1、ServiceSupervisor 的職責與 FIFO admission |
+     86 +| LINE route、hash、generation、LINE redelivery／reply exactly-once | LINE v3 | 保留 LINE SQL store；不能移進通用 Fodex wrapper |
+     87 +| account/source/conversation 到 WSID 的對應、LINE 選定 target | LINE v3 | 保留 mapping，不把 WSID 假裝成 Codex SID |
+     88 +| `/next` 的已交付游標、LINE reply token、圖片權限與下載 | LINE v3／既有 RN Line package | 留在 B 章；沒有 LINE Push |
+     89 +| Akka remoting client 的 encode／exchange／receive 分頁 | v3 transport adapter | 本輪保留薄 client；不新增 Fodex SDK project、不載入 Fodex exe assem
+         bly 到 RN |
+     90 +| Windows PID/birth 額外驗收與部署 stop receipt | 既有 lifecycle／launcher | 保留作獨立驗收；不是 native lifecycle 的第二個實作 |
+     91 +
+     92 +**確定需要改善 Fodex，而不能繼續堆在 v3 的部分**：建立／關閉 wrapper 的 ownership、失敗後可重試、非同步歷史查詢、service request correlation、native
+         Stop 完成判定。全部在 A 章落實。LINE v3 不再加自己的 model wait loop、重建 Codex session、Process.Start 或另建 ActorSystem 去補這些能力。
+     93 +
+     94 +**本輪不新增 service 協議操作**：現有 create／attach／send／send_wait／receive／close／list／shutdown 足夠此次整合。若測試發現既有操作不符合承諾，修
+         owner 端實作；不能先在 LINE 增加 workaround，再稱其為永久架構。跨 service restart 的完整 requestId 索引重建不是本次新功能；仍維持現有 cursor recovery
+         ／不確定工作 fail-closed，不偷偷自動重送。
+     95 +
+     96 +---
+     97 +
+     98 +# A. Fodex 服務接線
+     99 +
+    100 +## A1. 現況與固定目標
+    101 +
+    102 +現況：
+    103 +
+    104 +```text
+    105 +ProgramV409 service branch
+    106 +  Service.Run 1.0.3
+    107 +    Service.CreateSupervisor 1.0.1
+    108 +    Service.CreateWrapper 1.0.2（外層 service factory signature）
+    109 +      FodexAgent.Create 4.0.7
+    110 +        loop 4.0.2 / manager 4.0.2 / wrapper 4.0.6
+    111 +```
+    112 +
+    113 +固定目標：
+    114 +
+    115 +```text
+    116 +ProgramV410 service branch
+    117 +  Service.Run 1.0.4
+    118 +    Service.CreateSupervisor 1.0.2（async-history signature）
+    119 +    Service.CreateWrapper 1.0.3（外層 service factory signature）
+    120 +      Service.CreateFodexAgent 4.0.8
+    121 +        loop 4.0.3
+    122 +        Service.CreateParticipantManager 4.0.3
+    123 +        Service.CreateWrapper 4.0.7（內層 IAgent factory signature）
+    124 +          Service.CreateNative / Service.CreateRaw 4.0.7
+    125 +            Native302 / Proc302 / RPC101
+    126 +```
+    127 +
+    128 +`Service.CreateWrapper` 的兩個使用點，名稱雖相同，但 input/output type 不同，屬於不同 typed registry。禁止因看見相同 literal 就誤改成同一個 factory。
+         新增測試必須驗證這個差異。
+    129 +
+    130 +console 分支保持 `ConsoleHostFodexFunV408`／原 factory `4.0.6`；原 `FodexAgent.Create` 的 None 選版不受新 service target 影響。不要把服務修正順手變成
+          console 升版。
+    131 +
+    132 +## A2. 執行邊界：何處 await、何處容許同步
+    133 +
+    134 +1. SQL handler V403 已採真正 async SQL，服務歷史查詢必須一路 Task／await，不可 `Task.Run(fun () -> loop.Collect ...)`。
+    135 +2. Wrapper407、Native302、OwnedProc302 的現有同步相容區域各用自己的真實 PinnedDispatcher。不能共用有限 worker pool；不能拿 default-blocking-io-dispat
+         cher 別名冒充隔離。
+    136 +3. FodexAgent.CreateReActLoop／CreateWrapper 的 Contract 仍是同步。外層服務只在建立一次資源時，使用 `Task.Factory.StartNew(..., TaskCreationOptions.L
+         ongRunning, TaskScheduler.Default)` 承接這段同步初始化。不得每筆 prompt／每次 collect 建 thread。
+    137 +4. SQL provisioning／首次 registry 載入等同步工作也在這個建立邊界內，不能在 service root mailbox 的呼叫前綴先做掉。
+    138 +5. 完成建立後，IAgent Start／Stop 使用 async pin；Collect 使用 async pin。服務 actor 自己只更新少量狀態、啟動 async operation、接收 completion。
+    139 +6. 不宣稱整個產品「完全無同步」。保留的同步邊界有具體理由、dispatcher、測試；歷史 16:15 的 heartbeat warning 仍未證明唯一原因，不能以此宣告已定位。
+    140 +
+    141 +## A3. 逐檔修改規格
+    142 +
+    143 +### A3.1 `FodexAgentFodexFunV408.fsx`：完成既有草稿
+    144 +
+    145 +位置：`Fodex.Supervisor/`。來源是 V407；V407 不改。
+    146 +
+    147 +- version `System.Version(4,0,8)`；target 固定 `Service.CreateFodexAgent`。
+    148 +- 同 input/output：`FodexAgentCreationV402 -> FodexAgent<string,obj>`，保留 object expression、arguments pin、node identity 檢查。
+    149 +- `loop`：明確 pin `4.0.3` 的既有 loop target，不能 None。
+    150 +- `CreateWrapper`：manager pin `ParticipantManagerFodexFunV403.target` `4.0.3`；IAgent factory pin `FodexFunRegistrationV407.targetServiceWrapper` `4
+         .0.7`。
+    151 +- manager operations/install/disposal 的既有 `4.0.2` 可保留：這是不同 operation，不是 manager constructor。禁止看到 V402 就全部字串取代。
+    152 +- owner watcher 使用草稿中的 `fodex-wrapper-owner-v408` PinnedDispatcher，避免同步 gate 與建立／清理相互等候。
+    153 +- `dispose`：使用 `wrapper.PinStopAsync(node, Some "3.0.1")()`，收到 Error 立即停止後續 destructive cleanup。保留 loop、binding、hub、資源 ownership
+         ；下一次 Close 重試同 factory。
+    154 +- Stop 成功之後才 participant disposal、hub disposal、actor 結束。不得先清 dictionary 再聲稱 Stop 成功。
+    155 +- 同一個尚未完成的 disposal task 重用；faulted/cancelled 後允許新一次 explicit Close。不得在 finally 將失敗狀態抹成 disposed。
+    156 +
+    157 +**草稿要特別驗證的點**：最後的 `node.Stop`／PoisonPill 只是發出停止請求，不能讓外層 close/termination 測試誤以為全部已 Terminated。若現有 factory Tas
+         k 在 actor 真正終止前完成，V408 在 Stop 成功後加入逐一 `GracefulStop`／既有 death-watch completion，等待已持有的 actor refs；先註冊／發起 termination
+          observation，再收尾。使用一次有界 shutdown budget，不為每個 actor 重置完整 timeout。失敗回傳原錯誤與 cleanup 錯誤，不提前宣告完成。這是本檔既有 disp
+         osal 的完善，不另建 runtime。
+    158 +
+    159 +### A3.2 `ServiceWrapperFodexFunV103.fsx`：新的 async history seam
+    160 +
+    161 +新增檔案，從 V102 保留設定驗證、logger、transport、SID、output sink、defaults precedence；不改原 V102。
+    162 +
+    163 +在本檔 namespace 下，先宣告實作專案專用型別（不要放 Contract）：
+    164 +
+    165 +```fsharp
+    166 +type ServiceWrapperV103 =
+    167 +    IAgent<string,obj>
+    168 +    * (unit -> Task<Result<ReActDataStream<string> array,exn>>)
+    169 +    * (unit -> Task)
+    170 +
+    171 +type ServiceCreateV103 =
+    172 +    FeasibleT<ServiceCreateInputV100,
+    173 +              Task<Result<ServiceWrapperV103,exn>>, exn>
+    174 +
+    175 +type ServiceSupervisorInputV102 =
+    176 +    ActorSystem * UniContext * ServiceCreateV103 * bool * bool
+    177 +```
+    178 +
+    179 +沿用 `ServiceWrapperCreationV100` 作 input；version `1.0.3`，target 仍 `Service.CreateWrapper`。只有 output signature 改為 Task<Result<ServiceWrapper
+         V103,exn>>。
+    180 +
+    181 +建立流程固定如下：
+    182 +
+    183 +1. parse override，只准既有 native/participant 設定；禁止 caller 改 database、network、output root。
+    184 +2. 準備 ctx、catalog、hub URL、session／arguments；保持原先語意，不順手增加 model/list 呼叫。
+    185 +3. pin `Service.CreateFodexAgent 4.0.8`，建立 factory，立刻保存 ownership reference。
+    186 +4. 在本章限定的 LongRunning 建立邊界呼叫 `factory.CreateReActLoop`、`factory.CreateWrapper`。
+    187 +5. `let! started = wrapper.PinStartAsync(node, Some "3.0.1")()`；檢查 Result。
+    188 +6. 將 loop 的 async Collect closure 與 factory.DisposeAsync closure 回傳。
+    189 +
+    190 +```fsharp
+    191 +let collect () : Task<Result<ReActDataStream<string> array,exn>> =
+    192 +    loop.PinCollectAsync(Some "3.0.1") session
+    193 +
+    194 +let dispose () : Task =
+    195 +    (box factory :?> IAsyncDisposable).DisposeAsync().AsTask()
+    196 +```
+    197 +
+    198 +Collect 取 SQL 完整歷史，不改成 graph snapshot；compact/prune 後 reconnect 仍能讀歷史。不要包 `Seq.toArray` 到同步查詢外面冒充 async。
+    199 +
+    200 +**建立失敗的 ownership 規則**：create 失敗時 await 已取得 factory 的 DisposeAsync；cleanup 也失敗時不能只 log 然後丟失 factory。新增本檔內的 `Service
+         CreateCleanupExceptionV103(error, cleanupError, retryCleanup: unit -> Task)`，作 Error exn 傳給 supervisor；它只攜帶未清理 ownership 的 retry callbac
+         k，不是另一套 runtime。原錯誤與 cleanup error 均保留，對外 JSON 只輸出安全錯誤資訊，不序列化 closure。
+    201 +
+    202 +Supervisor 見此 exception 保留該 callback，拒絕同 SID 的新 create/send，只允許 close 重試與錯誤查詢；重試成功才移除 failed bridge。這個額外型別有明確
+         用途：避免初始化一半時 native／hub 成 orphan。Exception 類別的正常繼承可用，IAgent 仍用 object expression。
+    203 +
+    204 +quotation 必須沿既有形式：
+    205 +
+    206 +```fsharp
+    207 +let quotation : Expr<ServiceWrapperCreationV100 ->
+    208 +    FeasibleT<ServiceWrapperCreationV100,
+    209 +              Task<Result<ServiceWrapperV103,exn>>,exn>> =
+    210 +    <@ fun _ -> fun input -> create input @>
+    211 +```
+    212 +
+    213 +### A3.3 `ServiceSupervisorFodexFunV102.fsx`：await history，不在 actor 等模型
+    214 +
+    215 +新增檔案，從 V101 複製；version `1.0.2`；target `Service.CreateSupervisor`；input 改為 `ServiceSupervisorInputV102`。
+    216 +
+    217 +- resource 改成 `ServiceWrapperV103 option`。
+    218 +- 新增最小 implementation message：`AsyncServiceCreatedV102 of Result<ServiceWrapperV103,exn>`。其餘 accepted/read/closed message 儘量重用 V100；不要
+         複製整套 public protocol DU。
+    219 +- `readHistory` 回傳 Task<Result<edge array,exn>>。
+    220 +- `pump` 保持 admission 一次一筆：await before history → await wrapper.Request → await after history → 找到對應 HumanInit cause → post ServiceAccepte
+         d。
+    221 +- 當前 pump 完成之前不開下一個 pump，避免兩個 caller 取到相同 baseline 配錯 cause。這只序列化接單，不等待 native AgentEnd。
+    222 +- `beginRead` 真正 await reader，再 post `ServiceReadCompleted`；移除只為包同步 Collect 的 Task.Run。不在 mailbox 中 GetResult。
+    223 +- background task 不修改 submissions、waiting、resource、observed 等 actor-owned state；捕捉必要 immutable refs，結果回 mailbox 更新。
+    224 +- continuation 不重新讀 Sender；一律使用接單時捕捉的 recipient/self。
+    225 +- close 成功仍先完成 dispose，再終止 bridge；shutdown 等 children 真正 Terminated。close 失敗保持可定位、可重試，不向 caller 回假成功。
+    226 +- 若 A3.2 回傳 create-cleanup exception：設置 failed-create 狀態及 cleanup callback；同 SID create/attach/send 回原失敗，不再建立第二份資源。close aw
+         ait retry callback，成功後結束 bridge；失敗保留 callback。
+    227 +- client disconnect 只解除 subscription，不 Stop wrapper。
+    228 +- preserves：send_wait、receive(waitMs=0/有限等待)、cursor、requestId 不符、同 ID 不同 text、event filtering、json/plain。
+    229 +- `--json` event payload 維持原格式，不把 exception stack、stdio 或診斷字串混入輸出。
+    230 +
+    231 +本檔不新增保存所有 event 的 queue，不複製 SQL store，不建立另一層 model execution state machine。
+    232 +
+    233 +### A3.4 `ServiceHostFodexFunV104.fsx`：唯一 service 組裝點
+    234 +
+    235 +新增自 V103，version `1.0.4`，target `Service.Run`，input 沿用 `ServiceHostInputV101`。
+    236 +
+    237 +- `make` 型別 `ServiceCreateV103`，pin ServiceWrapper `1.0.3`，output 必須寫完整 typed signature。
+    238 +- root pin `ServiceSupervisorInputV102 -> IActorRef` `1.0.2`。
+    239 +- 同一 service 只建立一個 ActorSystem；`--akkaname`、`--akkaport`、`--mcpport` 等既有參數不改。
+    240 +- `connection.Value` 若涉及同步 SQL provisioning，不在收到 create 的 actor worker 前綴求值；放在 A2 的一次性 LongRunning 初始化中。禁止根本沒建立 wra
+         pper 就連 DB、起 native。
+    241 +- 避免巢狀兩次 LongRunning：Host 的 make 是唯一同步 bootstrap 邊界，Wrapper103 的 create core 在這個 delegate 中執行同步建立段，後續 Start／cleanup
+         是 task await。Wrapper103 的公開 quotation 單獨使用時也必須有同樣安全的邊界；以一個共用具名 helper 提供 scheduling，Host 只延後 connection resolver
+         到該 helper，不再包第二層 thread。具體 input 使用既有 tuple中的 cs：Host 先在自己的 LongRunning 取得 cs，再呼叫 Wrapper103 的同一 async create core，
+         不可直接 module call；因此為此情況採用以下唯一規則：**LongRunning 設在 Host make，Wrapper103 本身不再 LongRunning；獨立 Wrapper103 測試由測試 driver
+         在一般 test thread 呼叫，不能從 actor mailbox 直接呼叫。**
+    242 +- 上一條是明確呼叫契約，不是允許任意 direct call：Host 仍透過 registry invoke Wrapper103。同步建立在 Host 的 LongRunning delegate 起始段，await 後的
+         continuation 不再執行同步 factory 建立。
+    243 +- supervisee create/attach 的 wire 語意不變。ServiceMcp V100 只消費既有 wire，不因 host 升版跟著重寫。
+    244 +- shutdown 與 Ctrl+C 沿用同一清理路徑、共用剩餘 budget；failure 不回成功 exit code。
+    245 +- ready 輸出仍寫既有 output channel，啟動時不建立 native；預設 stdout JSON 保持潔淨。
+    246 +
+    247 +**LongRunning 形狀**（Task factory overload 在編譯時須明確，不能誤留 Task<Task<_>>）：
+    248 +
+    249 +```fsharp
+    250 +Task.Factory.StartNew(
+    251 +    (fun () -> task {
+    252 +        // 同步 provision／registry 初始化只在 first await 之前。
+    253 +        let cs = connection.Value
+    254 +        let create = (* typed registry pin ServiceWrapper 1.0.3 *)
+    255 +        return! create(node,ctx,cs,options,input) |> required
+    256 +    }),
+    257 +    CancellationToken.None,
+    258 +    TaskCreationOptions.LongRunning,
+    259 +    TaskScheduler.Default).Unwrap()
+    260 +```
+    261 +
+    262 +`CancellationToken.None` 是 scheduler token，確保已接管 ownership 的 delegate 一定執行清理；業務 cancellation 仍由既有生命周期控制，不等於忽略 cancel
+         。
+    263 +
+    264 +### A3.5 `ProgramV410.fs` 與 project wiring
+    265 +
+    266 +- 複製 ProgramV409 → ProgramV410。只改 service branch pin `Service.Run 1.0.4`；console branch仍 4.0.8 host，不改其 factory4.0.6。
+    267 +- `Fodex.Supervisor.fsproj`：ProgramV409 改 None/Link `Archive/entrypoint/ProgramV409.fs`；ProgramV410 成為唯一 compiled entrypoint。
+    268 +- 新檔依 F# 順序加入 Compile：V408 在其依賴的 manager403/wrapper407 之後；Wrapper103 在既有 ServiceWrapperCreationV100 型別之後；Supervisor102 在 Wra
+         pper103 後；Host104 在 Supervisor102 後；全部在 FodexFunctions 及 entrypoint之前。
+    269 +- 新檔 Link：`fodexFun/FodexAgent/`、`fodexFun/ServiceWrapper/`、`fodexFun/ServiceSupervisor/`、`fodexFun/ServiceHost/`。
+    270 +- `FodexFunctions.fsx`：加入四組 Definitions.builtins；保留舊定義。不能依賴 AutoOpen alone 執行副作用；維持既有首次使用觸發。
+    271 +- test fsproj／ProgramV300：加入四份新版 tests，確保 entrypoint 不重複、原 tests 不消失。新增 exception behavior 案例併在 Wrapper103／Supervisor102 t
+         est file。
+    272 +- 本輪不改 NuGet package version `0.0.1`，也不變更 Fodex 的 FAkka.Proc.Supervisor `[1.572.12]`、Core 設定或 ModelContextProtocol 版本。這不是產品套件
+         發布工作。
+    273 +
+    274 +## A4. Fodex 測試規格（不是只測 helper）
+    275 +
+    276 +每份新 FodexFun test `.fsx` 使用既有 `ImplementationTestSupportV301.fsx`，`#if INTERACTIVE` 補參考；編入原 Expecto 專案，既有 VS Test Explorer adapte
+         r 發現。不得新建 demo/test project。
+    277 +
+    278 +必須使用實際 typed registry 的 quotation：
+    279 +
+    280 +```fsharp
+    281 +let fn = FodexFun<'I,'O,exn>(node,target)
+    282 +         |> FodexFun.pin (Some version)
+    283 +         |> Option.defaultWith (fun () -> failtest "missing quotation")
+    284 +fn.f.Value |> ignore
+    285 +let invoke input = FeasibleFun.invoke input fn
+    286 +```
+    287 +
+    288 +| ID | 測試檔 | Arrange／觸發 | 必須驗證 |
+    289 +|---|---|---|---|
+    290 +| A-F01 | FodexAgentFodexFunV408Tests | eval 新 target 建 factory | loop403、wrapper407、manager403；沒有 native 生成 |
+    291 +| A-F02 | 同上 | 同 node 查原 target None | 仍走原 factory／loop402，不被 service4.0.8 劫持 |
+    292 +| A-F03 | 同上 | async Stop quotation 首次回 Error、第二次成功 | 第一次保留 loop/binding/hub；重試同資源，無重建 sid |
+    293 +| A-F04 | 同上 | 收到 Stop ACK 但故意延後 actor termination | Close Task 不提前完成；Terminated 後才成功 |
+    294 +| A-W01 | ServiceWrapperFodexFunV103Tests | 透過 quotation 建實際 wrapper | 選到新 target，不僅測回傳非 null |
+    295 +| A-W02 | 同上 | SQL row/table lock 阻塞 Collect，另送 probe actor | Collect 尚 pending、probe 能完成；釋鎖後讀到正確 history |
+    296 +| A-W03 | 同上 | prune in-memory graph 後 collect | SQL 歷史仍完整，無偷偷改讀 graph |
+    297 +| A-W04 | 同上 | caller override --database/network/output | 明確拒絕，無額外 native／錯用資料庫 |
+    298 +| A-W05 | 同上 | CreateWrapper 失敗且 Dispose 首次失敗 | 保留 cleanup callback與兩個錯誤；不把 resource 丟失 |
+    299 +| A-S01 | ServiceSupervisorFodexFunV102Tests | history reader 由 TCS gate 控制 | bridge/root/default dispatcher probe 仍回應，讀取不是同步阻塞 |
+    300 +| A-S02 | 同上 | 兩個 caller 並發 send | admission 按順序、before/after/cause 各自正確，不互吃結果 |
+    301 +| A-S03 | 同上 | send accepted、AgentEnd 尚未來 | send 回 accepted，send_wait 繼續等；不能把 MessageCompleted 當 turn end |
+    302 +| A-S04 | 同上 | detach caller，再用 SID/cursor attach/receive | 工作保留、結果可讀，沒有第二次生成 |
+    303 +| A-S05 | 同上 | close 失敗／成功與 shutdown race | 失敗保持 bridge；重試成功；shutdown 等 Terminated，沿用 V101 regression |
+    304 +| A-S06 | 同上 | create cleanup exception | 同 SID 新 create 不重建；close 重試 callback 成功後才移除 |
+    305 +| A-S07 | 同上 | typed Registry 查兩個 Service.CreateWrapper | 外層1.0.3與內層4.0.7互不串型別 |
+    306 +| A-H01 | ServiceHostFodexFunV104Tests | 起 service、不 create wrapper | 指定 name/port/address，無 native child，無多餘 model/list |
+    307 +| A-H02 | 同上 | 實際 service create/send/receive/close/shutdown | pin 全鏈符合 A1，JSON/plain 和 actor address 保持 wire v1 |
+    308 +| A-H03 | 同上 | 延後同步 provision／factory gate | default dispatcher probe 可執行；create 在 LongRunning 邊界 |
+    309 +| A-H04 | 同上 | --mode mcp 含 MCP create/request/receive | 仍經相同 supervisor，新接線不只支援 akka mode |
+    310 +| A-P01 | 既有 CLI/入口測試 | Program410 console/service selector | console target不變；service pin1.0.4；沒有雙 EntryPoint |
+    311 +
+    312 +測試不能只 assert dispatcher 名字。使用限制 worker 的測試 ActorSystem及可控 gate，直接證明被阻塞的 I/O 不占用 default actor worker。SQL 測試使用獨立
+         test DB，不能動 FodexM018 正式資料。常規案例使用現有 NativeAppServerFixtureV302／fake service fixture，不耗真模型 token；live 驗收另外做。
+    313 +
+    314 +## A5. A 章執行順序與完成標準
+    315 +
+    316 +1. 保留 dirty；完成 V408 草稿及其四個測試。
+    317 +2. 新增 Wrapper103 + async型別 + ownership failure closure；新增測試。
+    318 +3. 新增 Supervisor102，完成 await/correlation/cleanup regression。
+    319 +4. 新增 Host104，Program410及project wiring。
+    320 +5. Debug／Release build、目標 Expecto、獨立 FSI、同 adapter 的 dotnet test。先單元後整體；通過後沒有新變更就不重跑同一批三次。
+    321 +6. 記錄 discovered/executed/passed/failed/skipped；0 tests不是 PASS。新 tests 配對 source，不因 `.fsx` 命名就漏編譯。
+    322 +7. 確定候選 HEAD、service mode的實際pins、publish DLL hash；尚未部署前不可稱「LINE已修好」。
+    323 +8. 用既有 build/publish 正式入口產出 CLI；不往被 live process 鎖定的目錄強寫，不自行 kill unrelated PID。
+    324 +
+    325 +---
+    326 +
+    327 +# B. LINE 端剩餘阻塞路徑、v3 專用副本與套件
+    328 +
+    329 +## B1. 固定設計：複製 almighty，不再依賴原檔
+    330 +
+    331 +**使用者已明確允許複製並改名。不要把這題擴大成抽取十幾個新 library／新 NuGet project。**
+    332 +
+    333 +固定新檔名與來源：
+    334 +
+    335 +| 原始檔，只讀保留 | 新檔，v3 正式使用 |
+    336 +|---|---|
+    337 +| `misc/line_bot_rn_nuget.multimedia.multisession.almighty.fsx` | `misc/line_provider_fodex_v3_shared.fsx` |
+    338 +| `misc/line_provider_almighty_core.fsx` | `misc/line_provider_fodex_v3_shared_core.fsx` |
+    339 +
+    340 +第二個副本是為了讓 v3 的 source closure 不再被舊 core 編輯牽動。它目前沒有 #r/#load，直接保留純邏輯並更新 module引用。不是重新實作 core。
+    341 +
+    342 +新 shared 檔：
+    343 +
+    344 +- 原有 `#load line_provider_almighty_core.fsx` 改成 `line_provider_fodex_v3_shared_core.fsx`。
+    345 +- `open Line_provider_almighty_core` 改為新 core module；包含副本內與 v3 tests 的引用。
+    346 +- 所有 `#r` 按 B2 固定矩陣；不是 blindly replace version。
+    347 +- 保留 ConversationKey/ParsedLineEvent/NormalizedLineInbound、ConversationStorage、ImageProviderStore、RouteEventReader、LineBatchCoordinator、圖片 a
+         uthority、cluster bootstrap 等所需功能。
+    348 +- 副本作為 library-only：移除原檔最尾端自動 run／服務啟動分支的執行呼叫。保留被 v3呼叫的 host/helper定義；載入副本本身不得起 COMM responder、Codex／a
+         gy、第二個 RN host或blocking wait。
+    349 +- 不為了移除舊字樣就大量改名所有純函數；module alias 足夠。副本可以保留來源說明，不能又 #load 原 almighty。
+    350 +- `LibraryMode`／defaultArguments 注入仍保留在 bootstrap/restore，避免擴大解析重構；因副本已 library-only，不靠外部未設定旗標來防止誤啟動。兩者沒有互
+         相取代。
+    351 +
+    352 +`line_provider_fodex_v3_line.fsx` 檔頭固定：
+    353 +
+    354 +```fsharp
+    355 +#load "line_provider_fodex_v3_shared_bootstrap.fsx"
+    356 +#load "line_provider_fodex_v3_shared.fsx"
+    357 +#load "line_provider_fodex_v3_shared_restore.fsx"
+    358 +#load "line_provider_fodex_v3_service.fsx"
+    359 +#load "line_provider_fodex_v3_images.fsx"
+    360 +#load "line_provider_fodex_v3_lifecycle.fsx"
+    361 +
+    362 +open Line_provider_fodex_v3_shared_core
+    363 +module Provider = Line_provider_fodex_v3_shared
+    364 +```
+    365 +
+    366 +tests、fixture、文件裡引用舊 module 的地方都更新到副本；**不修改原 almighty的tests來讓v3通過**。
+    367 +
+    368 +## B2. Package 決策與固定矩陣
+    369 +
+    370 +### B2.1 優先順序（定案）
+    371 +
+    372 +1. 先保護 FSharp、FAkka、PulseTrade既有配套及其依賴閉包。
+    373 +2. 再對不受該閉包約束的套件取最新 stable。
+    374 +3. 不使用 floating version。所有直接 #r 保存確切 `[x.y.z]`。
+    375 +4. NuGet minimum dependency `Y` 不等於我們獲准額外 override 到 `Z`。保留現有已選配套；不要把 minimum、exact range混為一談，也不要為符合較舊minimum把
+         已存在且符合其他exact依賴的版本降回去。
+    376 +5. 現有來源已同時包含例如 Proc最低Akka1.5.73與PTC exact Akka1.5.74，保持現有解析到1.5.74；這不是本次新增的升級。exact矛盾若無法滿足就是 blocker，不自
+         行重發producer。
+    377 +6. 不升 SDK，不改 G repo global.json。launcher 的 FSI Core維持10.1.403；FCS維持43.12.403。Fodex專案自身Core既有設定不與RN強行統一。
+    378 +
+    379 +### B2.2 已查核的相依例子
+    380 +
+    381 +本次直接讀 `.nuspec`，不是憑套件名稱推測：
+    382 +
+    383 +- `FAkka.FSharp.Quotations.Evaluator 2.2.2` → FSharp.Core `[10.1.403]`。
+    384 +- `PulseTrade.Comm.ResourceNode.Line 0.1.8` → Core `[10.1.403]`、SqlClient `[7.1.1]`、Collections.Immutable `[10.0.14]`。
+    385 +- `PulseTrade.Comm.ResourceNode.Dynamic 0.1.7` → Akka/Cluster/Persistence/Remote `[1.5.74]`、ObjectPool `[10.0.14]`、Logging `[10.0.14]`。
+    386 +- `FAkka.Proc.Supervisor 1.572.13` → FCS43.12.402/Core10.1.402等最低依賴，以及Hosting/WindowsServices/Pkcs10.0.13；不能據此強升11。
+    387 +- FCS43.13.404雖已存在且listed，其Core精確要求10.1.404；**本次不採用**。
+    388 +
+    389 +### B2.3 v3 直接引用定案
+    390 +
+    391 +以下版本是v3副本／options／transport／lifecycle／tests的固定基線。由於保護固定producer的依賴，這次不把Microsoft家族統一改11.0.0。
+    392 +
+    393 +| 套件 | 本次直接引用 | 理由 |
+    394 +|---|---|---|
+    395 +| FSharp.Core | FSI process設定10.1.403；不額外 #r | 系統套件及既有producer配套 |
+    396 +| FSharp.Compiler.Service | 43.12.403 | 使用者明定例外 |
+    397 +| FAkka.Argu | 10.2.1 | 固定 |
+    398 +| FAkka.FCell2 | 10.2.3 | 固定 |
+    399 +| FAkka.Proc.Supervisor（RN副本） | 1.572.13 | 固定；不是Fodexexe的1.572.12 |
+    400 +| FAkka.WebSocket | 1.572.1 | 固定 |
+    401 +| FAkka.FSharp.Quotations.Evaluator | 2.2.2 | 固定 |
+    402 +| PulseTrade.Comm.Security | 0.1.2 | 固定 |
+    403 +| PulseTrade.Comm.Actor.Registry | 0.1.8 | 固定 |
+    404 +| PulseTrade.Infra.Logging | 1.572.0 | 固定 |
+    405 +| PulseTrade.Comm.ResourceNode | 0.1.1 | 固定 |
+    406 +| PulseTrade.Comm.ResourceNode.Aoe | 0.1.1 | 固定 |
+    407 +| PulseTrade.Comm.ResourceNode.Decisions | 0.1.2 | 固定 |
+    408 +| PulseTrade.Comm.ResourceNode.DurableProxy | 0.2.14 | 固定；不升0.2.15 |
+    409 +| PulseTrade.Comm.ResourceNode.Dynamic | 0.1.7 | 固定；不因公開索引較低而降版 |
+    410 +| PulseTrade.Comm.ResourceNode.Es1KQuotation | 0.1.1 | 固定既有來源 |
+    411 +| PulseTrade.Comm.ResourceNode.GitHub | 0.1.2 | 固定 |
+    412 +| PulseTrade.Comm.ResourceNode.Line | 0.1.8 | 固定 |
+    413 +| PulseTrade.Comm.ResourceNode.Marvel | 0.1.1 | 固定 |
+    414 +| PulseTrade.Comm.ResourceNode.Pcsl | 0.2.15 | 固定；不升0.2.18 |
+    415 +| PulseTrade.Comm.ResourceNode.SqlServer | 0.2.14 | 固定；不升0.2.15 |
+    416 +| PulseTrade.Comm.ResourceNode.TAResearch | 0.1.2 | 固定既有來源 |
+    417 +| Akka/Remote/Cluster/Cluster.Hosting/Serialization.Hyperion | 1.5.74 | 保持既有相容閉包 |
+    418 +| Akka.Logger.NLog | 1.5.69 | 套件自己的版本，不猜1.5.74 |
+    419 +| Microsoft.Data.SqlClient | 7.1.1 | PTC exact依賴，固定 |
+    420 +| Microsoft.Extensions.ObjectPool | 10.0.14 | PTC exact依賴，固定 |
+    421 +| Microsoft.Extensions.Hosting.WindowsServices | 10.0.14 | 保持既有producer配套，不升11 |
+    422 +| Microsoft.Extensions.Diagnostics.HealthChecks | 10.0.14 | 保持既有hosting配套 |
+    423 +| System.Diagnostics.DiagnosticSource | 10.0.14 | FCS／既有依賴閉包，保留 |
+    424 +| System.Reflection.Metadata | 10.0.14 | FCS／既有依賴閉包，保留 |
+    425 +| System.Security.Cryptography.Pkcs | 10.0.14 | 既有固定producer配套；不退9.0.13、不硬升11 |
+    426 +| NLog / NLog.Database | 6.2.2 | 既有logging配套 |
+    427 +| Ceen.Httpd | 0.9.10 | 現有配套／查得最新stable相同 |
+    428 +| NodaTime | 3.3.7 | 現有配套／最新stable相同 |
+    429 +| Quartz | 4.7.3 | 現有FAkka配套／最新stable相同 |
+    430 +| SharpCompress | 1.0.0 | 現有Proc配套／最新stable相同 |
+    431 +| ModelContextProtocol | 2.4.0 | 公開最新stable與現有相同 |
+    432 +| SixLabors.ImageSharp | 4.1.3 | 公開最新stable與現有相同 |
+    433 +| Expecto（tests） | 11.1.1 | 公開最新stable與現有相同 |
+    434 +| EsOptionGamma.Data | 0.2.7 | 本機既有來源；不得假稱已公開 |
+    435 +| System.IO.Hashing | 11.0.0候選，見下方阻擋規則 | 公開最新stable，舊直接引用10.0.14 |
+    436 +| System.Management | 11.0.0候選，見下方阻擋規則 | 公開最新stable，shared及lifecycle需一致 |
+    437 +
+    438 +最後兩項的**設計決策不是「實作時自己選」**：使用11.0.0的唯一前提是正式resolved closure能證明不改動受保護producer的依賴。若closure顯示它們或帶入的depe
+         ndencies屬於受保護集合，輸出明確衝突，保留現有10.0.14並以「使用者固定依賴例外」記錄；不得繼續試一堆其他版本、不修改producer。這是固定的約束檢查，不是
+         授權自由降升版。本文不把未完成的closure audit宣告為通過。
+    439 +
+    440 +**資料來源與可重現性**：2026-11-13讀NuGet v3 flatcontainer索引。索引包含unlisted，不能只看最大數字；新採用版本需另查registration listed與nuspec。參考
+          [NuGet package content API](https://learn.microsoft.com/en-us/nuget/api/package-base-address-resource)、[NuGet service index](https://api.nuget.org/
+         v3/index.json)。本次確認Proc1.572.16、FCS43.13.404、Pcsl0.2.18等存在，不代表批准使用它們。
+    441 +
+    442 +目前Dynamic0.1.7／TAResearch0.1.2高於公開索引；EsOptionGamma.Data0.2.7／Es1KQuotation0.1.1未取得公開索引。其既有cache metadata來源為`C:/Program Files         /dotnet/sdk/10.0.402/FSharp/library-packs`。保留正式已配置來源，檢查nupkg hash；不可換舊公開版、不可因缺下載偷偷重建producer、不可新增nuget.config。
+         現有另一來源是`G:/PulseTrade.fs/Libs/PulseTrade.Comm/artifacts/packages`。
+    443 +
+    444 +### B2.4 升級落點與相容性檢查
+    445 +
+    446 +- 新`shared.fsx`為原almighty的#r副本；options/transport/store/lifecycle/test直接#r同步矩陣。
+    447 +- 不把每一個transitive package都加為direct #r。只保留原本直接引用與確有必要的明確修正。
+    448 +- 受保護closure以固定producer nupkg/nuspec及實際FSI resolved assets為準；不以machine cache中最大版本當authority。
+    449 +- 不清整個NuGet cache；用隔離automation驗證解析，正式本機來源仍可讀。原始restore輸出保持bounded。
+    450 +- 紀錄package ID／requested／resolved／producer constraint／source／nupkg hash。沒有出現在runtime manifest的edge不能當已驗證。
+    451 +- 單獨test mode載入新副本；不能順帶啟動live RN。若有MissingMethod、FileLoad或constraint violation，明確block B2，不動fixed producers。
+    452 +- `Start-LineFodexV3.ps1`保留process-scoped `FSharpCoreImplicitPackageVersion=10.1.403`及finally原值還原；原本未設定時用`[NullString]::Value`。不持久
+         修改user/machine env。
+    453 +- 本輪不需要SDK10.0.404。不要因本次查到此SDK存在就下載／安裝。
+    454 +
+    455 +## B3. `line_provider_fodex_v3_store.fsx`：真正 async SQL
+    456 +
+    457 +此檔屬LINE metadata，不搬進Fodex。table schema、payload hash、Generation/Owner/RuntimeOwner、applock命名、transaction fence、OutputCursor/Delivered語
+         意都維持。
+    458 +
+    459 +### B3.1 API定案
+    460 +
+    461 +- Store constructor只保存設定，不執行schema SQL。
+    462 +- 新增`InitializeAsync(ct): Task<unit>`，在runHost建立Service前await一次；與現有Schema transaction/applock一致。失敗不能留下「已初始化」flag，下次可
+         重試。
+    463 +- `connectAsync(ct): Task<SqlConnection>` 使用OpenAsync；Pooling=false、ConnectRetryCount=0保留。失敗必Dispose。
+    464 +- 原Store各方法改成同名加Async、末尾ct參數，原result外包Task：AcquireLaneAsync、FenceLaneAsync、LookupAsync、MappingAsync、AcquireAsync、RuntimeMappi
+         ngsAsync、AcquireRuntimeCleanupAsync、CompleteRuntimeCloseAsync、FenceAsync、ClaimAsync、WorkingAsync、CompleteAsync、OutputPositionAsync、Indetermin
+         ateAsync、ReleaseAsync、ResetAsync、ProvenanceAsync、MappingsAsync、SelectedAsync、RouteIdentityAsync、SelectAsync、CompleteResetAsync、RecoverAsync
+         。
+    465 +- 所有production callsites／tests改用Async方法；不留下原同步方法以GetResult轉接的新actor路徑。
+    466 +- 執行器：OpenAsync、ExecuteReaderAsync、ReadAsync、ExecuteScalarAsync、ExecuteNonQueryAsync、BeginTransactionAsync、CommitAsync／RollbackAsync。para
+         meterized SQL不變。
+    467 +- transaction包住的多句SQL仍同一transaction；不得拆成幾次獨立await破壞atomicity。
+    468 +- cancellation在已送出寫入後可能是unknown commit，不自動重送SQL或native；透過既有route/fence查核，無法確認則保持indeterminate。
+    469 +
+    470 +### B3.2 Connection併發與釋放
+    471 +
+    472 +現有`lock connection`不能包await，也不能刪掉後讓兩個command共用同一SqlConnection。
+    473 +
+    474 +- 新增LINE實作內的`OwnedSqlConnection`小型資源型別：持有`SqlConnection`與`SemaphoreSlim(1,1)`，提供`UseAsync`及`DisposeAsync`。用途只保護session-owne
+         d applock connection，不成為通用DB framework。
+    475 +- `Lease.Connection`及conversation lane改持有這個資源。`UseAsync`取得gate後await command，finally Release；DisposeAsync同樣取得gate，標記closed並關閉
+         physicalconnection，之後UseAsync明確ObjectDisposed。
+    476 +- 不在operation進行中Dispose semaphore；不讓waiter因Dispose gate變成無法釋放。closed state與connection生命週期受同一gate保護。
+    477 +- reader在釋放connection gate前Dispose；不能將live SqlDataReader傳出給caller。
+    478 +- 一般短連線以use/use!持有，不加入全域cache。
+    479 +- release失敗保留可診斷owner/fence狀態，但仍確保已不再使用的physical connection被清理；不能把session applock連線送回pool。
+    480 +
+    481 +## B4. `line_provider_fodex_v3_service.fsx`：admission與執行分開
+    482 +
+    483 +### B4.1 新API與次序（固定）
+    484 +
+    485 +```fsharp
+    486 +member _.SubmitWithAsync(
+    487 +    input: Ingress,
+    488 +    work: RemoteWrapper -> Task<TurnReply>,
+    489 +    ct: CancellationToken,
+    490 +    ?reset: bool
+    491 +) : Task<Task<string>>
+    492 +```
+    493 +
+    494 +外層Task代表「取得或完成durable admission／inFlight reservation」；內層Task是已接受工作的最終結果。它不是兩次生成，也不是給人操作的兩層API；這個分離
+         讓IngressActor只await admission、不await模型。
+    495 +
+    496 +- 使用一個`SemaphoreSlim(1,1)`作service admission gate，保留原本全域`lock gate`的admission順序，但不占actor/threadpool worker。
+    497 +- admission gate只涵蓋metadata／claim／reservation，不涵蓋native generation或等待上一個turn完成。這次不新增per-conversation actor或第二套queue。
+    498 +- 原`lock gate`仍可用於極短dictionary/counter快照，不做SQL、不await、不呼叫可能同步執行外部IO的factory。
+    499 +- 全域admission gate會讓一筆SQL metadata暫慢時後續admission排隊；這是保留原序列邊界的明確取捨，不承諾不同conversation的admission可越過它。不同convers
+         ation已接單的生成仍並行。
+    500 +
+    501 +**新route精確順序**：
+    502 +
+    503 +1. await admission gate；檢查stopping/reset/capacity；算payloadHash。
+    504 +2. 同route inFlight：驗hash，回同一inner Task，不claim、不再次prepare native。
+    505 +3. await LookupAsync：completed則回原Reply；queued/working無本機inFlight則fail-closed，不能當新工作。
+    506 +4. await MappingAsync、AcquireLaneAsync、AcquireAsync；保存取得的ownership以供失敗清理。
+    507 +5. await Fence／FenceLane／Claim；此時SQL sequence已確定。
+    508 +6. 在短lock中建立inFlight、tail、entry.Pending/pending以及runtime launch reservation；原子的memory publication不得被另一個admission越過。
+    509 +7. 啟動entry runtime factory與該route work continuation；釋放admission gate；回inner Task。
+    510 +8. work await previous same-conversation tail（前次失敗不永久毒化後續）；await fence/Working/runtime/work/Complete；不同conversation tail互不等候。
+    511 +9. completion寫入durable SQL成功後才Complete innerTask；finally在短lock減counter／移inFlight／只刪仍指向本Task的tail。
+    512 +
+    513 +**禁止原本的缺陷**：在Claim成功前先啟動factory/native。如果claim失敗卻留下正在初始化的remote wrapper，必須清理或保留明確ownership，不能稱未接受而無人
+         負責。
+    514 +
+    515 +在claim前的失敗：釋放本次新取得且未共用的lease/lane、還原reservation；不啟動native。
+    516 +Claim後的失敗：不把route刪成可重送；標記indeterminate或保留可確認狀態，completion失敗；只有證明相同route已completed才能取原答覆。
+    517 +
+    518 +### B4.2 cancellation、sweep、reset、stop
+    519 +
+    520 +- `ct`只影響尚未取得admission gate的waiter及明確未接受階段。已開始可能寫入的admission不隨RN Ask timeout取消；先完成／確認durable結果，再回報。已接受i
+         nnerTask不因caller停止等候而被取消。
+    521 +- native turn使用既有TurnTimeout／wrapper cancel政策，不能把LINE十秒觀察時間變成native timeout。
+    522 +- 一次只有一個sweep。保留Interlocked防重入，但用`currentSweep: Task`保存當次completion，DisposeAsync直接await；移除`while sweeping ... Task.Delay 10`
+         。
+    523 +- sweep選取entry只做短lock，實際await ReleaseAsync在lock外；新admission見Retiring仍遵原backpressure。
+    524 +- ResetAsync／RecoverAsync／SelectAsync改為真正async Store API；與admission gate協調互斥，不能與新claim交錯覆蓋generation。reset標記後釋放gate再做rem
+         ote close；其他admission依reset標記拒絕，不在gate內等模型。
+    525 +- `DisposeAsync`是停止本地等待、清lease／lane，不等於關遠端native；`StopOwnedAsync`才對SQL記錄的owned WSID逐一close並確認。保留這個區分。
+    526 +- Stop順序：BeginStop拒絕新admission→等待已進入的admission完成／固定inFlight集合→await本地tasks/sweep→關閉owned wrapper→完成runtime-close SQL記錄。錯
+         誤不清RuntimeOwner、不發布closed receipt。
+    527 +- close/reset失敗保留原WSID/Generation供重試；不以建立新WSID消除錯誤。
+    528 +- SQL synchronous constructor移除後，Service接收已InitializeAsync的Store（新增constructor必要參數），不要每個Service重做DDL。tests同樣先初始化。
+    529 +
+    530 +## B5. `line_provider_fodex_v3_line.fsx`：不阻塞actor、不等整輪
+    531 +
+    532 +### B5.1 prepare API
+    533 +
+    534 +- `productionAdmission`改名`productionAdmissionAsync`，回Task，移除約197行的GetAwaiter().GetResult。
+    535 +- `businessIdentity`改`businessIdentityAsync`：RouteIdentityAsync／SelectedAsync；不能只把reader await之後又同步查DB。
+    536 +- `Adapter.PrepareAsync`仍同一次normalized read／parse，生成input與延後執行work；讀取raw的buffer在既有finally ZeroMemory。不引入會遮蔽變更payload的全
+         域route cache。
+    537 +- `responder`、lifecycle callback中的Store.Selected、Select、Mappings等全部await對應Async方法；不要只修入口兩行。
+    538 +
+    539 +### B5.2 IngressActor精確receive模型
+    540 +
+    541 +constructor的prepare參數固定改為：
+    542 +
+    543 +```fsharp
+    544 +fCell2<string> -> CancellationToken ->
+    545 +    Task<Ingress * (RemoteWrapper -> Task<TurnReply>)>
+    546 +```
+    547 +
+    548 +使用ReceiveAsync。**只await prepare和durable admission，不在ReceiveAsync等待native turn**：
+    549 +
+    550 +1. receive內立刻擷取sender/self以及該actor的logger。
+    551 +2. 建立`TaskCompletionSource<string>(RunContinuationsAsynchronously)`作此次Ask的work觀察來源；立即啟動一次observer，以總觀察時間10秒計時（不是prepare
+         後才開始計時）。
+    552 +3. 在receive async task內await prepare；await service.SubmitWithAsync取得innerTask。
+    553 +4. 另啟動輕量async continuation，將innerTask結果／錯誤轉給TCS；receive返回，下一個cell可開始prepare/admission。
+    554 +5. prepare/admission失敗也傳到同一TCS；不用另一條reply邏輯。
+    555 +6. observer使用WhenAny(TCS.Task, observation delay)：完成則回fCell2.S／Status.Failure；未完成則只回一次`v3-route-pending`。之後即使work完成也不再tell
+         舊Ask actor。
+    556 +
+    557 +因此十秒內即使metadata暫卡住，RN也可收到pending；accepted work繼續，redelivery仍經route dedup。不要用catch TimeoutException判斷pending，因native真正t
+         imeout也可能是此型別。
+    558 +
+    559 +ReceiveAsync在prepare/admission期間會暫停該actor處理下一筆mailbox，**但會釋放dispatcher worker**。這是為保持目前入口接收順序；不新增ticket-reorder ac
+         tor。當admission完成就解除，不把整個生成串行化。
+    560 +
+    561 +actor內使用IInternalActor.ActorContext取得logger/context，避免FS0491；所有context存取在receive起始段，不於任意background continuation取Sender。
+    562 +
+    563 +### B5.3 host與副本
+    564 +
+    565 +- runHost先await Store.InitializeAsync再建立service／IngressActor，準備完成才宣告registration ready。
+    566 +- 現有同步runHost入口可以在最外層main thread等待其async host task；不是actor內GetResult，不能把所有GetResult一律機械刪掉。
+    567 +- 原RN cluster bootstrap、provider readiness、domain/image endpoints維持；Fodex service是另一個程序的ActorSystem，不join RN cluster。
+    568 +- library-only副本必須不自動啟動額外node。正式runHost只建立原有RN node一次。
+    569 +- lifecycle/test_mode/shared_bootstrap/shared_restore的argv/defaults注入與還原保持成對；測試新副本載入後原argv bytes/value未變。
+    570 +- `line_provider_fodex_v3_transport.fsx`保持只對既有service送JSON；receive結果以AgentEnd與原request/cursor關聯判斷完成，不以第一個MessageCompleted判
+         整輪完成。
+    571 +
+    572 +## B6. 檔案修改清單（不得漏callsite）
+    573 +
+    574 +| 檔案（皆在 G:/PulseTrade.fs/misc） | 固定變更 |
+    575 +|---|---|
+    576 +| line_provider_fodex_v3_shared.fsx（新） | B1副本、#r矩陣、library-only、core module新引用 |
+    577 +| line_provider_fodex_v3_shared_core.fsx（新） | 原core副本，保持純邏輯 |
+    578 +| line_provider_fodex_v3_line.fsx | #load/alias、async identity/prepare、ReceiveAsync admission、host Store初始化 |
+    579 +| line_provider_fodex_v3_store.fsx | B3所有SQL方法、owned connection gate、InitializeAsync |
+    580 +| line_provider_fodex_v3_service.fsx | B4雙Task接單API、claim-before-launch、gate/counter/finally、async cleanup |
+    581 +| line_provider_fodex_v3_shared_bootstrap.fsx | 註解與副本名稱；保留defaults/argv語意 |
+    582 +| line_provider_fodex_v3_shared_restore.fsx | 還原仍匹配bootstrap，不新增全域永久設定 |
+    583 +| line_provider_fodex_v3_options.fsx | #r固定矩陣；初始化／recover命令呼叫async接點 |
+    584 +| line_provider_fodex_v3_lifecycle.fsx | async Store／closeOwnedMappings呼叫，Stop receipt保持failure語意；套件一致 |
+    585 +| line_provider_fodex_v3_transport.fsx | 套件矩陣；不重寫既有wire、不搬native state進來 |
+    586 +| line_provider_fodex_v3_images.fsx | 只在有舊module引用／package dependency時調整；媒體權限流程保留 |
+    587 +| line_bot_rn_nuget.multimedia.multisession.fodex.v3.fsx | 預設仍runHost、Argu/defaultArgumentsText保持；async Store命令入口接線 |
+    588 +| Start-LineFodexV3.ps1 | 原service+RN啟動模式、Core設定保留；驗證檔名不再指向舊shared closure |
+    589 +| Stop-LineFodexV3.ps1 | 只修因async API變更必須調整的正式stop呼叫；不增加Force成功fallback |
+    590 +| line_provider_fodex_v3.tests.fsx / .integration.tests.fsx / .vision.tests.fsx / .remote.tests.fsx | B7案例與新module/API；保留現有assertion |
+    591 +| line_provider_fodex_v3.service.fixture.fsx | 沿用既有fixture框架；如需新service接線，明確pin新signature，不冒充live |
+    592 +| line_bot_rn_nuget.multimedia.multisession.fodex.v3.fsx.md | 更新依賴副本、固定套件例外、啟動/停止/測試證據邊界 |
+    593 +
+    594 +原almighty與原core不修改、不刪除。若有其他active v3 test引用原module，用exact filename/symbol搜尋找到後一併改alias；不掃整個G槽做無關重構。
+    595 +
+    596 +## B7. LINE測試規格
+    597 +
+    598 +沿用既有Expecto `.fsx` suites與automation入口，不另建測試框架。既有兩個nonblocking RED案例在integration tests約143行起，先核對asteer dirty版本再繼續
+         。
+    599 +
+    600 +| ID | 案例 | Arrange／操作 | 驗收預期 |
+    601 +|---|---|---|---|
+    602 +| B-R01 | prepare釋放worker | normalized reader由TCS hold；default dispatcher限制1 worker | reader pending時probe actor回應；釋放後原cell結果正確 |
+    603 +| B-R02 | SQL admission釋放worker | 鎖住Mapping/Claim所需row，呼叫真IngressActor | default worker probe回應；無native啟動直到claim成功 |
+    604 +| B-R03 | 不等生成才接下一筆 | 第一個native work hold，後送另一conversation | 第二筆admission完成且可開始生成；同conversation下一筆不越過tail |
+    605 +| B-R04 | observer從入口開始計時 | prepare/SQL gate超過短test observationWindow | 只回一次pending；原工作續行；redelivery取同結果、不重send |
+    606 +| B-R05 | native timeout不是pending | work直接丟TimeoutException | 真錯誤傳回，不能改判v3-route-pending |
+    607 +| B-D01 | schema非同步／retry | hold schema applock、取消／失敗後再Initialize | 沒有blocked actor worker；failure不cache成成功；之後成功 |
+    608 +| B-D02 | route/hash | 相同route相同payload重送；改payload再送 | 原結果與單一attempt；不同payload拒絕 |
+    609 +| B-D03 | crash/unknown | SQL queued/working但無inFlight | fail-closed，不重新生成 |
+    610 +| B-D04 | claim-before-launch | Claim fault／SQL timeout | factory/native invocation count為0；新取得lease/lane可清理 |
+    611 +| B-D05 | claim後fail | Claim成功後work失敗 | route不恢復為新工作；owner/indeterminate可追查 |
+    612 +| B-D06 | connection gate | 同lease併發Fence/Complete/Release | command不共用同connection並行；Dispose後operation拒絕，無applock洩漏 |
+    613 +| B-D07 | generation/fence | 另一owner/generation搶占後Complete | 不消耗他人output、不寫錯Reply／cursor |
+    614 +| B-D08 | counters/backpressure | admission各階段故障、stop/reset交錯 | pending/entries/tails回到合法狀態，無負數、無無界reservation |
+    615 +| B-C01 | single sweep | timer與manual sweep同時觸發 | retire只一次；Dispose await currentSweep，無10ms polling |
+    616 +| B-C02 | remote close拒絕 | owned wrapper close回Error | 保留RuntimeOwner、WSID、可重試；無closed receipt |
+    617 +| B-C03 | 普通Dispose與StopOwned | IdleTtl/Dispose後native仍工作；explicit Stop再關 | disconnect不誤殺；明確stop才要求remote close |
+    618 +| B-L01 | 單次read/parse | prepare後移除原route SQL row再process | 使用已準備資料，不重讀造成失敗／重生成 |
+    619 +| B-L02 | `/next` | 第一輪後有sub回灌event | 用LINE本次reply token交付後續；不Push、不新生成；cursor與Delivered原子更新 |
+    620 +| B-L03 | 圖片 | 兩個不同MediaId與bytes；部分下載失敗 | 每筆native圖片對應正確；保留權限/上限；清自己的partialtemp不覆寫別人的檔 |
+    621 +| B-L04 | 權限/target | restricted sender、不同conversation、stale WSID | 顯式拒絕，不建立新agent、不串話 |
+    622 +| B-P01 | 副本獨立 | 原almighty路徑不參與test load closure | v3仍load成功；沒有舊module隱性依賴 |
+    623 +| B-P02 | 載入無副作用 | test mode #load新shared | 沒有native、COMM watcher、額外RN node；argv/defaults還原 |
+    624 +| B-P03 | package closure | 比對nuspec constraints/FSI assets/runtime manifests | fixed producers與依賴未硬升；無MissingMethod/NU1605/不合理range |
+    625 +| B-P04 | Core環境還原 | 原env不存在／有值兩種launch | 子程序10.1.403，父process原值精確還原，不留下空字串 |
+    626 +| B-X01 | transport regression | existing fixture send/receive/reconnect | cursor單調、相同request不重送、AgentEnd才完成；wire v1沒改 |
+    627 +
+    628 +預期RED→GREEN證據只針對新bug案例，不重造所有舊測試。保留原有pure/transport/integration/vision全部結果；不能因本輪只修async就省掉圖片及`/next`。
+    629 +
+    630 +## B8. B章執行順序
+    631 +
+    632 +1. asteer確認自己的dirty integration tests；凍結測試名稱與source baseline。
+    633 +2. 複製shared/core，更新#load/alias；先在test mode驗證純載入與原既有suite，建立可比較baseline。
+    634 +3. 套件矩陣／protected closure先確認；fixed producer不動。沒有實際版本差異的#r不為「看起來有改」而改。
+    635 +4. 寫／保留B-R01/B-R02等重現測試；記錄預期失敗的斷言，不把timeout沒跑完當成功重現。
+    636 +5. Store async與connection ownership → Service admission → Adapter/IngressActor → lifecycle/entrypoint，一條呼叫鏈完整改完再跑focused tests。
+    637 +6. 跑全部既有v3 suites；記錄case counts、修改前後source hash／依賴矩陣。
+    638 +7. 交basder固定commit/hash與明確尚未live的說明。不得自行啟停正式RN/GW/Fodex。
+    639 +
+    640 +---
+    641 +
+    642 +# C. 兩章整合、部署與驗收（單次固定候選）
+    643 +
+    644 +## C1. 不可省略的門檻
+    645 +
+    646 +- A、B各自build／test完成，baseline與新candidate清楚分開。
+    647 +- 新Fodex入口確實選到新registry typed versions；不能只看DLLtimestamp。
+    648 +- v3副本不再load原almighty；fixed producer dependency policy通過。
+    649 +- 已有的正常Stop regression、cleanup retry、remote close failure都通過。
+    650 +- basder完成source/test review後，再由fodex單一操作者執行正式服務替換。
+    651 +- 不做額外「舊runtime再跑一輪baseline」；此前曾有此指令，後來已撤回。新範圍是完成修復再驗新候選。
+    652 +
+    653 +## C2. 正式操作與證據
+    654 +
+    655 +1. 當下重新查service/RN/native PID、birth time、port、exe path、載入／部署DLL hash。文件中的舊PID不當現況。
+    656 +2. 使用既有`Stop-LineFodexV3.ps1`正常Stop，確認owner/native實際exit及port釋放；不以Force/kill當正常shutdown通過。
+    657 +3. 使用原正式Task Start／launcher啟動；維持原WSID及應保留的native SID，禁止測試方便重置人類對話。
+    658 +4. 實際LINE連發5筆混合文字／圖片，後4筆要在第1筆生成中進站；每筆獨立marker/MediaId，不只是5次等上一筆完成的ECHO。
+    659 +5. 每筆對照ingress route → admission/sequence → Fodex request/cause → native輸入/實際圖片使用 → LINE可見reply。記錄5進5出，無重複、漏件、串對話。
+    660 +6. 做一次正常Stop→原Task Start→同SID恢復，第二輪5筆混合burst重驗。
+    661 +7. 真模型／LINE試驗不得冒充unit fixture；unit通過也不冒充手機可見驗收。圖只傳路徑不算native真正讀到圖片。
+    662 +8. CPU/ThreadPool/GC/heartbeat取樣只對齊這兩輪實際load；避免無限idle soak或不停再跑ECHO。沒有trace因果就只報觀察，不猜warning根因。
+    663 +9. Native stdout保留獨立trace；ReActEvent與LINE回覆不得被診斷字串污染。
+    664 +
+    665 +## C3. 交付完成定義
+    666 +
+    667 +- 每個新FodexFun都有配對Expecto `.fsx`，可FSI獨立跑、原test project與VS adapter可發現。
+    668 +- Release/Debug、focused/full relevant suites、wire兼容、正式停止／重啟／兩輪LINE證據分開報告。
+    669 +- 所有需保留舊版仍在fsproj以Compile或None+Link管理，無不明新專案／手動register入口。
+    670 +- LINE副本、package matrix與source hash明確，沒有動原almighty，也沒有硬升FAkka/PTC及其依賴。
+    671 +- failure/cancellation/cleanup paths均有測試；失敗不刪證據、不假成功、不自動重送未知native工作。
+    672 +- 提交僅包含已授權相關檔案，遵各repo既有敏感掃描／commit/push流程，不納入他人dirty。停止指令隨時優先，不因「快完成」繼續部署。
+    673 +
+    674 +## C4. 接手者開始時只需做的最小確認
+    675 +
+    676 +1. 確認使用者已恢復實作；目前只有寫spec的授權不能自行當作go。
+    677 +2. git status與上述HEAD/WIP比對；閱讀被他人改過的exact diff，不重讀整repo／歷史notes。
+    678 +3. 若需協作，batch讀basder最新訊息；先判斷timestamp及scope，不因讀到舊d39d2764指令就回改候選。
+    679 +4. 依A5／B8分工進行，不能做一半跨去重構GW／RN framework／Proc Supervisor。
+    680 +5. 遇到本規格已定案的選擇，照規格做；遇到真實constraint conflict，報exact evidence與影響，不偷偷用另一個設計。缺證據的項目不可改寫成已完成。
+
+• Ran Read-CodexStdout { rg -n 'ownedActors|watcher|owner|disposed|dispose|StartNew' Fodex.Supervisor/FodexAgentFodexFunV408.fsx | Select-Object -Last 28; rg
+  │ -n 'GetAwaiter|Initialize|Run|Hashing|Management|quotation|LongRunning|cleanup|候選|前提|決策' notes/202611/20261113/00025.Fodex.Refine.Instruction.md |
+  │ Select-Object -First 45; rg -n '^#|^##' notes/202611/20261113/00025.Fodex.Refine.Instruction.md | Select-Object -Last 20; Get-Item
+  │ … +1 line
+  └ 39:        let ownedActors = ResizeArray<IActorRef>()
+    41:        let mutable disposed = false
+    45:            if disposed then raise(ObjectDisposedException "FodexAgent")
+    +87 lines (ctrl+t to view transcript)
+
+• Edited notes\202611\20261113\00025.Fodex.Refine.Instruction.md (+9 -9)
+    156
+    157 -**草稿要特別驗證的點**：最後的 `node.Stop`／PoisonPill 只是發出停止請求，不能讓外層 close/termination 測試誤以為全部已 Terminated。若現有 factory Tas
+         k 在 actor 真正終止前完成，V408 在 Stop 成功後加入逐一 `GracefulStop`／既有 death-watch completion，等待已持有的 actor refs；先註冊／發起 termination
+          observation，再收尾。使用一次有界 shutdown budget，不為每個 actor 重置完整 timeout。失敗回傳原錯誤與 cleanup 錯誤，不提前宣告完成。這是本檔既有 disp
+         osal 的完善，不另建 runtime。
+    157 +**必改的停止完成邊界**：草稿最後的 `node.Stop`／PoisonPill 只是發出停止請求，不能讓外層 close/termination 測試誤以為全部已 Terminated。V408 在 native
+          Stop、participant disposal、hub disposal 成功後，對 wrapper actor 及 ownedActors 的 distinct refs 使用 Akka `GracefulStop` 等待 Terminated（已終止的
+          ref 亦接受為完成）。先開始 termination observation 再等待結果，不先 node.Stop 後才嘗試建 watcher。全部共用一次有界 shutdown budget，不為每個 actor
+         重置完整 timeout。`disposed <- true` 移到所有 termination 完成之後；清理中拒絕新的 Create，不重新建資源。owner watcher 收到 Terminated 只啟動／重用 d
+         ispose Task並返回mailbox，不同步等待自己結束；避免自等 deadlock。停止任何一步失敗都保留已持有的 refs 與清理進度，後續Close只重試尚未完成的階段。這是
+         本檔既有 disposal 的完善，不另建 runtime。
+    158
+        ⋮
+    185  3. pin `Service.CreateFodexAgent 4.0.8`，建立 factory，立刻保存 ownership reference。
+    186 -4. 在本章限定的 LongRunning 建立邊界呼叫 `factory.CreateReActLoop`、`factory.CreateWrapper`。
+    186 +4. 呼叫 `factory.CreateReActLoop`、`factory.CreateWrapper`。production caller 是 A3.4 的 Host make，其 LongRunning delegate 負責這段同步工作；Wrapper
+         103 不另開第二條 thread。
+    187  5. `let! started = wrapper.PinStartAsync(node, Some "3.0.1")()`；檢查 Result。
+        ⋮
+    240  - `connection.Value` 若涉及同步 SQL provisioning，不在收到 create 的 actor worker 前綴求值；放在 A2 的一次性 LongRunning 初始化中。禁止根本沒建立 wra
+         pper 就連 DB、起 native。
+    241 -- 避免巢狀兩次 LongRunning：Host 的 make 是唯一同步 bootstrap 邊界，Wrapper103 的 create core 在這個 delegate 中執行同步建立段，後續 Start／cleanup
+         是 task await。Wrapper103 的公開 quotation 單獨使用時也必須有同樣安全的邊界；以一個共用具名 helper 提供 scheduling，Host 只延後 connection resolver
+         到該 helper，不再包第二層 thread。具體 input 使用既有 tuple中的 cs：Host 先在自己的 LongRunning 取得 cs，再呼叫 Wrapper103 的同一 async create core，
+         不可直接 module call；因此為此情況採用以下唯一規則：**LongRunning 設在 Host make，Wrapper103 本身不再 LongRunning；獨立 Wrapper103 測試由測試 driver
+         在一般 test thread 呼叫，不能從 actor mailbox 直接呼叫。**
+    242 -- 上一條是明確呼叫契約，不是允許任意 direct call：Host 仍透過 registry invoke Wrapper103。同步建立在 Host 的 LongRunning delegate 起始段，await 後的
+         continuation 不再執行同步 factory 建立。
+    241 +- **LongRunning 只設在 Host make；Wrapper103 本身不再 LongRunning。** Host delegate 先同步取得connection setting，再透過registry invoke Wrapper103；W
+         rapper103的同步factory建立段必須位於它的first await之前。後續Start／cleanup是task await，不能在continuation又執行同步Create。獨立Wrapper103單元測試由
+         一般test driver呼叫，不能直接從actor mailbox呼叫。這是該內部factory的明確呼叫契約，不另增helper框架。
+    242  - supervisee create/attach 的 wire 語意不變。ServiceMcp V100 只消費既有 wire，不因 host 升版跟著重寫。
+        ⋮
+    433  | EsOptionGamma.Data | 0.2.7 | 本機既有來源；不得假稱已公開 |
+    435 -| System.IO.Hashing | 11.0.0候選，見下方阻擋規則 | 公開最新stable，舊直接引用10.0.14 |
+    436 -| System.Management | 11.0.0候選，見下方阻擋規則 | 公開最新stable，shared及lifecycle需一致 |
+    434 +| System.IO.Hashing | 11.0.0，受下方closure gate保護 | 公開最新stable，舊直接引用10.0.14 |
+    435 +| System.Management | 11.0.0，受下方closure gate保護 | 公開最新stable，shared及lifecycle需一致 |
+    436
+    438 -最後兩項的**設計決策不是「實作時自己選」**：使用11.0.0的唯一前提是正式resolved closure能證明不改動受保護producer的依賴。若closure顯示它們或帶入的depe
+         ndencies屬於受保護集合，輸出明確衝突，保留現有10.0.14並以「使用者固定依賴例外」記錄；不得繼續試一堆其他版本、不修改producer。這是固定的約束檢查，不是
+         授權自由降升版。本文不把未完成的closure audit宣告為通過。
+    437 +最後兩項的目標版本固定11.0.0，不把「挑哪一版」交給實作者。**但這不是越過受保護closure的許可**：在任何live替換前，必須證明不改動受保護producer的依賴。
+         若正式assets/nuspec顯示其中任一項直接或間接覆蓋了受保護的X/Y，則B2驗收失敗、停止套用該升級並回報具體dependency edge；正式環境保持原10.0.14。不得自行
+         改producer、換其他版本或把保留舊版標成「全部最新已完成」。這是預先定義的失敗邊界，不是留給實作時自由決策。本文已做direct index與部分nuspec查驗，未完
+         成整個resolved closure測試，沒有宣稱這兩項已具備部署資格。
+    438
+        ⋮
+    524  - `DisposeAsync`是停止本地等待、清lease／lane，不等於關遠端native；`StopOwnedAsync`才對SQL記錄的owned WSID逐一close並確認。保留這個區分。
+    526 -- Stop順序：BeginStop拒絕新admission→等待已進入的admission完成／固定inFlight集合→await本地tasks/sweep→關閉owned wrapper→完成runtime-close SQL記錄。錯
+         誤不清RuntimeOwner、不發布closed receipt。
+    525 +- explicit Stop順序固定為：BeginStop拒絕新admission→取得並釋放admission gate，確定先前進入者已完成reservation→快照SQL owned WSID與inFlight→向Fodex cl
+         ose所有owned wrapper，讓Fodex中斷native並確認清理→await本地工作settle及currentSweep→釋放本地lease/lane→完成runtime-close SQL記錄。**不能先等整輪模型
+         自然結束才發close**，否則Stop又變成長時間等待。所有步驟共享caller提供的stop budget；任一close失敗則保留SQL RuntimeOwner/WSID與可重試控制路徑，不發布c         losed receipt。部分成功的wrapper可記錄完成，但不能把整批標成功。
+    526  - close/reset失敗保留原WSID/Generation供重試；不以建立新WSID消除錯誤。
+        ⋮
+    585  | line_provider_fodex_v3_images.fsx | 只在有舊module引用／package dependency時調整；媒體權限流程保留 |
+    587 -| line_bot_rn_nuget.multimedia.multisession.fodex.v3.fsx | 預設仍runHost、Argu/defaultArgumentsText保持；async Store命令入口接線 |
+    586 +| line_bot_rn_nuget.multimedia.multisession.fodex.v3.fsx | 預設仍runHost、Argu/defaultArgumentsText保持；async Store命令入口接線 |
+    587  | Start-LineFodexV3.ps1 | 原service+RN啟動模式、Core設定保留；驗證檔名不再指向舊shared closure |
+        ⋮
+    616  | B-C03 | 普通Dispose與StopOwned | IdleTtl/Dispose後native仍工作；explicit Stop再關 | disconnect不誤殺；明確stop才要求remote close |
+    617 +| B-C04 | Stop打斷長生成 | work Task保持pending，只在fake remote Close時settle | close必須在等待work完成之前發生；整體Stop有界完成，不能先等模型自然
+         結束 |
+    618  | B-L01 | 單次read/parse | prepare後移除原route SQL row再process | 使用已準備資料，不重讀造成失敗／重生成 |
+
+• 文件已寫入逐檔修改、型別簽章、版本接線、接單與清理順序，以及對應的回歸測試。我也明確補了兩個容易漏掉的失敗路徑：建立 wrapper 失敗且清理也失敗時，必須保留可
+  重試的 ownership；LINE 明確 Stop 時，要先請 Fodex 中斷工作，不能先等模型自然生成完才關閉。
+
+  現在做文件一致性與編碼檢查；實作仍未改動。
+
+• Ran Read-CodexStdout { $path='F:/fodex/notes/202611/20261113/00025.Fodex.Refine.Instruction.md'; $bytes=[IO.File]::ReadAllBytes($path);
+  │ $utf8=[Text.UTF8Encoding]::new($false,$true); $body=$utf8.GetString($bytes);
+  │ [pscustomobject]@{Bytes=$bytes.Length;Lines=($body.Split([char]10)).Count;Utf8Bom=($bytes.Length -ge 3 -and $bytes[0] -eq 239 -and $bytes[1] -eq 187
+  │ … +6 lines
+  └ {"Bytes":58209,"Lines":681,"Utf8Bom":false,"Nul":false,"Replacement":false,"FenceCount":20,"Cases":47}
+    ?? Fodex.Supervisor.Tests/FodexAgentFodexFunV408Tests.fsx
+    ?? Fodex.Supervisor/FodexAgentFodexFunV408.fsx
+    +20 lines (ctrl+t to view transcript)
+
+• Edited notes\202611\20261113\00025.Fodex.Refine.Instruction.md (+3 -0)
+    158
+    159 +factory每次explicit Close的本地budget固定30秒，Stop開始即啟動Stopwatch，各階段只使用remaining。外層Host已有更短remaining時先回其timeout，但不能因此丟
+         掉仍持有的factory／清理Task。逾時並不代表底層操作取消成功；重試先檢查同一pending Task，不並行發第二份Stop。
+    160 +
+    161  ### A3.2 `ServiceWrapperFodexFunV103.fsx`：新的 async history seam
+        ⋮
+    228  - 若 A3.2 回傳 create-cleanup exception：設置 failed-create 狀態及 cleanup callback；同 SID create/attach/send 回原失敗，不再建立第二份資源。close aw
+         ait retry callback，成功後結束 bridge；失敗保留 callback。
+    229 +- `handle`分支順序固定：先處理failed-create的close／拒絕其他操作，再處理一般stopping，最後才進入resource.IsNone的lazy create。不能讓close因resource=N
+         one而重新觸發create。新AsyncServiceCreatedV102(Error cleanupException)回覆並清空本次deferred callers，但不self-stop；只有沒有殘留ownership的一般creat
+         e failure才沿原失敗回覆與bridge清理行為。
+    230  - client disconnect 只解除 subscription，不 Stop wrapper。
+
+• Ran Read-CodexStdout { $path='F:/fodex/notes/202611/20261113/00025.Fodex.Refine.Instruction.md'; $b=[IO.File]::ReadAllBytes($path);
+  │ $s=[Text.UTF8Encoding]::new($false,$true).GetString($b); if($s.Contains([char]0) -or $s.Contains([char]65533)){throw 'Invalid text'};
+  │ [pscustomobject]@{Bytes=$b.Length;Lines=$s.Split([char]10).Count;Utf8NoBom= -not($b[0] -eq 239 -and $b[1] -eq 187 -and $b[2] -eq
+  │ … +2 lines
+  └ {"Bytes":58962,"Lines":684,"Utf8NoBom":true,"CodeFences":20,"TestSpecifications":47}
+
+
+• 已完成：00025.Fodex.Refine.Instruction.md (notes/202611/20261113/00025.Fodex.Refine.Instruction.md)
+
+  包含：
+
+  • 檔頭摘要，以及服務接線／LINE 阻塞修正的獨立章節。
+  • 逐檔修改、型別簽章、版本 pin、生命週期與失敗處理。
+  • 47 項測試規格及驗收預期。
+  • almighty 複製改名方案。
+  • 固定 FAkka／PulseTrade 及其依賴版本、FSharp 配套的保護規則。
+  • Fodex 與 v3 的責任邊界、部署與 LINE 驗收順序。
+
+  本輪只新增文件，沒有修改實作、建置或部署。
+
+  Worked for 18m 32s • 5:50 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra high · F:\fodex · fodex · ← for agents                                                  Goal paused (/goal resume)    ⚠ 2 warnings · f2 to view
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 進度?
+
+
+• 實作已完成，正在最後回歸，正式服務尚未更新。
+
+  • LINE：transport 20/20、integration 37/37、跨程序測試 1/1 通過。
+  • Fodex：完整 Release 回歸 547 通過、2 skipped、0 失敗；四份新版 FSI 測試通過。
+  • 最後新增的 SQL quotation 接線測試，已確認舊 Host 失敗、新 Host 3/3 通過。
+  • 固定的 FAkka／PulseTrade、FSharp 配套沒有升版。
+
+  剩下最終測試組裝、commit/push、服務更新，以及真實 LINE 兩輪混合訊息驗收。
+
+
+› 你每次都說得很簡單，最後一點都沒完成，不要鬼扯我要你完成的精確明細
+
+
+
+› 你到底做了什麼事情
+
+
+
+› 怎麼我感覺你根本沒有寫程式嗎? 都在混?
+
+
+• 有寫程式，但還沒有完成交付。我前面用測試數字回答進度，沒有把實際改動與未完成項目講清楚。
+
+  你可以直接開這些檔案檢查：
+
+   程式檔                實際寫入的內容
+  ━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   FodexAgentFodexFun    建立新版 loop／manager／wrapper；Stop 失敗保留資源供重試；Close 等待 actor 真正終止；避免持鎖等待清理造成死鎖。
+   V408.fsx
+   (Fodex.Supervisor/
+   FodexAgentFodexFun
+   V408.fsx)
+  ────────────────────  ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   ServiceWrapperFode    改用 factory 4.0.8、async Start／Collect；建立失敗且清理失敗時，保留同一 factory 的清理 callback。
+   xFunV103.fsx
+   (Fodex.Supervisor/
+   ServiceWrapperFode
+   xFunV103.fsx)
+  ────────────────────  ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   ServiceSupervisorF    歷史查詢改為 await；保留接單與 cause 配對順序；失敗的建立資源可透過 Close 重試。
+   odexFunV102.fsx
+   (Fodex.Supervisor/
+   ServiceSupervisorF
+   odexFunV102.fsx)
+  ────────────────────  ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   ServiceHostFodexFu    接上上述新版；同步初始化放到 LongRunning 邊界；先安裝 SQL quotation 設定，再查 registry。
+   nV104.fsx
+   (Fodex.Supervisor/
+   ServiceHostFodexFu
+   nV104.fsx)
+  ────────────────────  ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   ProgramV410.fs        service 分支切到 Host 1.0.4，並已修改 fsproj 與自動註冊清單。
+   (Fodex.Supervisor/
+   ProgramV410.fs)
+  ────────────────────  ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   v3_store_async.fsx    實作真正的 async SQL、transaction、reader、lease 與 connection gate。
+   (G:/PulseTrade.fs/
+   misc/
+   line_provider_fode
+   x_v3_store_async.f
+   sx)
+  ────────────────────  ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   v3_service.fsx        admission 與生成分開；Claim 成功才啟動工作；同對話 FIFO；Stop 先 Close native，再等待工作結束；處理 preparation、sweep、reset 清理。
+   (G:/PulseTrade.fs/
+   misc/
+   line_provider_fode
+   x_v3_service.fsx)
+  ────────────────────  ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   v3_line.fsx (G:/      移除入口同步 GetResult；改為 ReceiveAsync，只等 preparation／admission；明確回傳 fCell2<string>；selection 查詢改 async。
+   PulseTrade.fs/
+   misc/
+   line_provider_fode
+   x_v3_line.fsx)
+  ────────────────────  ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   v3_shared.fsx (G:/    建立 v3 專用 almighty 副本、改載入自己的 core、移除自動啟動、更新允許更新的套件；原 almighty 保留。
+   PulseTrade.fs/
+   misc/
+   line_provider_fode
+   x_v3_shared.fsx)
+
+  也有寫測試，例如 ServiceHostFodexFunV104Tests.fsx (Fodex.Supervisor.Tests/ServiceHostFodexFunV104Tests.fsx) 的 SQL quotation 測試，實際把函數存進
+  SQL，再確認新 Host 首次建立時選到它。舊 Host 跑同一要求會失敗，新 Host 通過。
+
+  現在精確未完成的是：
+
+  1. 最後一版測試組裝的完整回歸正在跑。
+  2. 尚未 commit／push。
+  3. 尚未發布及替換正式 CLI，現有 LINE 服務仍跑舊版。
+  4. 尚未完成新版本的真實 LINE 兩輪混合訊息、正常停止／重啟及同 SID 恢復驗收。
+
+  所以目前是「程式已寫入、主要測試已通過，部署與最終驗收未完成」，不能稱為已完成 v3。我會繼續完成這四項。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+• 已使用你提供的腳本測試，並已直接替換現有 CLI；LINE v3 現正運行新版。
+
+  • 實際 LINE：五筆混合文字／圖片 → 正常停止、重啟 → 再五筆，全部收到回覆。
+  • WSID、Codex SID 保持不變，目前沒有待處理 route。
+  • Release 測試：548 通過、2 跳過、0 失敗。
+  • 已 commit＋push：Fodex 58ecf13、PulseTrade 0c90838ba。
+
+  詳細修改與實機證據：交付紀錄 (doc/LineV3.Refine.20261113.md)。本輪實機使用 Codex app-server，未宣稱 AGY 全組合重測通過。
+
+  Worked for 2h 25m 8s • 8:23 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6.1-Sol xhigh · F:\fodex · fodex · ← for agents                                                 Goal paused (/goal resume)    ⚠ 2 warnings · f2 to view  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+› 1. fodex 專案預設 argstring 請改 main native 為 agy ，subagent native 為 codex ，並 show 一下改動內容
+  2. v3 同 1. 並  show 一下改動內容
+
+
+• 我先確認 Fodex 與 LINE v3 的預設參數位置，再將 main native 改為 agy、subagent native 改為 codex，並列出實際 diff。
+
+• Ran Read-CodexStdout { rg -n 'mainagent-type|subagent-type|defaults|MainAgent|Subagent' C:/Users/Administrator/.codex/memories/MEMORY.md | head -12; git
+  │ status --short -- Fodex.Supervisor Fodex.Supervisor.Tests; git -C G:/PulseTrade.fs status --short -- misc/Start-LineFodexV3.ps1
+  │ misc/line_provider_fodex_v3_options.fsx misc/line_bot_rn_nuget.multimedia.multisession.fodex.v3.fsx; rg -n
+  │ … +3 lines
+  └ WARNING: Command wrote 268 bytes to C:\Users\Administrator\.codex\temp\output-guard\01a16f6c-722c-7da3-816c-caae933504f8\stderr.raw
+    475:- Handover covers pipelines, importers, BBO queue, SQL schemas, artifacts and defects; distinguish live observations, durable facts, historical
+    context and future work. Active request slots, historical `Planned` ledger rows, tracking work and instrument progress are separate granularities. Inspect
+    +12 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg -n 'let defaults|let defaultArgumentsText|mainagent-type|subagent-type|Mainagent_Type|MainAgentType|--model' Fodex.Supervisor -g
+  │ 'ConsolePolicyFodexFunV40*.fsx' -g 'ConsoleArgument*.fsx' -g 'ProgramV410.fs' -g 'ServiceWrapperFodexFunV103.fsx' | head -55; sed -n '1,125p'
+  │ G:/PulseTrade.fs/misc/line_provider_fodex_v3_options.fsx; sed -n '1,125p' G:/PulseTrade.fs/misc/Start-LineFodexV3.ps1; rg -n
+  │ … +1 line
+  └ Fodex.Supervisor\ConsolePolicyFodexFunV407.fsx:72:            let defaults,defaultName=normalize false "http://127.0.0.1:18824" initial
+    Fodex.Supervisor\ConsolePolicyFodexFunV407.fsx:73:            let defaults=parser.ParseCommandLine(defaults,raiseOnUsage=false)
+    Fodex.Supervisor\ConsolePolicyFodexFunV405.fsx:15:/// main 始終是 wrapper；Mainagent_Type 選擇它底下的 native，不把 root 變成 raw。
+    +233 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { sed -n '54,81p' Fodex.Supervisor/ConsolePolicyFodexFunV405.fsx; sed -n '35,80p' Fodex.Supervisor/ServiceWrapperFodexFunV103.fsx; rg
+  │ -n 'type Settings|nativeArgs|arguments|MainAgentType|NativeAdapter|settings.Model|Arguments=' G:/PulseTrade.fs/misc/line_provider_fodex_v3_transport.fsx
+  │ G:/PulseTrade.fs/misc/line_provider_fodex_v3_protocol.fsx | head -45; sed -n '12,92p' G:/PulseTrade.fs/misc/line_provider_fodex_v3_transport.fsx; sed -n
+  │ … +1 line
+  └     let targetArguments = "Console.NativeArguments"
+        let parser = ArgumentParser.Create<ConsoleArgumentV405>(programName="Fodex.Supervisor")
+
+    +243 lines (ctrl+t to view transcript)
+
+• Fodex 的預設已經是 main=agy、subagent=codex，不用改。LINE v3 仍明確指定 codex/app-server/gpt-6.1-sol，我會將這三項改為 agy/agy/gemini-3.8-flash-high；
+  subagent 沿用 Fodex 的 codex 預設。
+
+• Edited G:\PulseTrade.fs\misc\line_provider_fodex_v3_options.fsx (+3 -3)
+    30  --working-directory G:/PulseTrade.fs
+    31 ---mainagent-type codex
+    32 ---native-adapter app-server
+    33 ---model gpt-6.1-sol
+    31 +--mainagent-type agy
+    32 +--native-adapter agy
+    33 +--model gemini-3.8-flash-high
+    34  --effort low
+
+• Ran Read-CodexStdout { rg -n 'mainagent-type|native-adapter|model |codex|agy' G:/PulseTrade.fs/misc/
+  │ line_bot_rn_nuget.multimedia.multisession.fodex.v3.fsx.md | head -25; sed -n '10,31p' G:/PulseTrade.fs/misc/line_provider_fodex_v3_transport.fsx; sed -n
+  │ '103,117p' G:/PulseTrade.fs/misc/line_provider_fodex_v3_transport.fsx; git -C G:/PulseTrade.fs diff -- misc/line_provider_fodex_v3_options.fsx; Get-Item
+  │ … +1 line
+  └ WARNING: Command wrote 133 bytes to C:\Users\Administrator\.codex\temp\output-guard\01a16f6c-722c-7da3-816c-caae933504f8\stderr.raw
+    113:| `--mainagent-type codex --native-adapter app-server --model gpt-6.1-sol --effort low` | 建立此 LINE wrapper 時傳給 service 的 native 設定；agy 可改
+    為 agy／agy 與可用模型 |
+    +60 lines (ctrl+t to view transcript)
+
+• Edited 2 files (+6 -1)
+  └ E:\deletable\fodex\refine-20261113\options-defaults-probe.fsx (+5 -0)
+    1 +#load "G:/PulseTrade.fs/misc/line_provider_fodex_v3_options.fsx"
+    2 +open Line_provider_fodex_v3_options
+    3 +if settings.MainAgentType <> "agy" || settings.NativeAdapter <> "agy" || settings.Model <> "gemini-3.8-flash-high" then
+    4 +    failwith "Unexpected LINE v3 default main native settings"
+    5 +printfn "V3_DEFAULTS main=%s adapter=%s model=%s" settings.MainAgentType settings.NativeAdapter settings.Model
+
+  └ G:\PulseTrade.fs\misc\line_bot_rn_nuget.multimedia.multisession.fodex.v3.fsx.md (+1 -1)
+    112  | `--sql-server localhost --database FodexM018` | provider 的 v3 mapping／route 去重表；DB 必須已存在，不會建立或清空 database |
+    113 -| `--mainagent-type codex --native-adapter app-server --model gpt-6.1-sol --effort low` | 建立此 LINE wrapper 時傳給 service 的 native 設定；agy 可改
+         為 agy／agy 與可用模型 |
+    113 +| `--mainagent-type agy --native-adapter agy --model gemini-3.8-flash-high --effort low` | 建立此 LINE wrapper 時傳給 service 的 main native 設定；su
+         bagent 沿用 Fodex 預設 `--subagent-type codex` |
+    114  | `--working-directory G:/PulseTrade.fs` | 傳給 service native 的工作目錄；必須是 service 機器可存取的位置 |
+
+• Ran Read-CodexStdout { $env:FSharpCoreImplicitPackageVersion='10.1.403'; dotnet fsi --warn:0 --parallelcompilation- E:/deletable/fodex/refine-20261113/
+  │ options-defaults-probe.fsx }
+  └ V3_DEFAULTS main=agy adapter=agy model=gemini-3.8-flash-high
+
+
+• Edited G:\PulseTrade.fs\doc\DevLog.md (+4 -0)
+    22248  補充正常Stop驗收：明確不帶Force，`V3_STOP_COMPLETE=true run=a2bd7b28-12ec-4150-8005-52411c362cfa`、receipt closed、15979釋放且21824保留。原Task重啟
+           後R3五筆22.973秒送完，105.398秒全部可見（第一筆刻意等30秒），SQL sequence45–49全部completed，WSID／generation／Codex SID再次核對不變。正式兩輪混合
+           為正常Stop前R2B的40–44與正常Stop後R3的45–49；更早強制清理不冒充graceful證據。
+    22249 +
+    22250 +## 2026-11-13 LINE v3 預設 main 改為 AGY
+    22251 +
+    22252 +依使用者指定核對 Fodex CLI：ConsolePolicyFodexFunV405.defaults 原本即 mainagent-type agy／subagent-type codex，無需改動實作。v3 options 的 defaultA
+           rgumentsText 將 mainagent-type codex、native-adapter app-server、model gpt-6.1-sol 改為 agy、agy、gemini-3.8-flash-high；subagent 沿用 service 的 c
+           odex 預設，effort low 保留。README 同步。獨立 FSI 載入 options 並 assert 三個有效設定通過，沒有啟動 host／native；既有執行中 wrapper 不因預設文字改
+           變而自動切換 provider。
+
+• Ran Read-CodexStdout { python -c 'from pathlib import Path; import subprocess; paths=["misc/line_provider_fodex_v3_options.fsx","misc/
+  │ line_bot_rn_nuget.multimedia.multisession.fodex.v3.fsx.md","doc/DevLog.md"]; root="G:/PulseTrade.fs";
+  │ for name in paths:
+  │ … +9 lines
+  └ WARNING: Command wrote 697 bytes to C:\Users\Administrator\.codex\temp\output-guard\01a16f6c-722c-7da3-816c-caae933504f8\stderr.raw
+    ENCODING_OK=3
+    Sensitive text scan: files=3 high=0 medium=0 info=636 failOn=High
+    +7 lines (ctrl+t to view transcript)
+
+• 1. Fodex 預設 (Fodex.Supervisor/ConsolePolicyFodexFunV405.fsx:59)原本已符合，無需修改：
+
+     --mainagent-type agy
+     --subagent-type codex
+
+  2. LINE v3 預設 (G:/PulseTrade.fs/misc/line_provider_fodex_v3_options.fsx:31)已修改：
+
+     ---mainagent-type codex
+     ---native-adapter app-server
+     ---model gpt-6.1-sol
+     +--mainagent-type agy
+     +--native-adapter agy
+     +--model gemini-3.8-flash-high
+
+     subagent 沿用 Fodex 的 codex 預設。
+
+  FSI 載入與設定驗證通過，已 commit＋push：5c246caa9。現有執行中的 wrapper 不會自動切換 provider。
+
+  Worked for 3m 17s • 8:32 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6.1-Sol xhigh · F:\fodex · fodex · ← for agents                                                 Goal paused (/goal resume)    ⚠ 2 warnings · f2 to view  

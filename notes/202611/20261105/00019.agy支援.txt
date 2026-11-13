@@ -1,0 +1,327 @@
+▸ Thought for 14s, 1.5k tokens
+
+  已詳細閱讀以下 6 組核心技術文件與歷史筆記，並針對 Fodex.Supervisor.Contract 與 Fodex.Supervisor 進行了深入的架構審查（Codex Review），同時完成了對本機
+  agy.exe (Antigravity CLI) 的底層通訊與 print 模式實測。
+
+  本輪操作日誌已記錄於 20261105113533_agy_support_review_and_m020_planning.md。
+  ──────
+  ## 一、歷史脈絡與技術演進重點
+
+  1. 里程碑規劃脈絡：
+  在歷史規劃筆記 00003.FGL.txt 中明確指示：
+  │ 「目前底下的 process 都是吃 codex cli，請在完成 M006~M015 之後開始進行 agy 的支援；完整等價現有 Codex cli 的 FodexFun 進行 agy 的支援。」
+  │ 這確認了 Fodex 框架的長期藍圖：Native Agent 除了支援 OpenAI Codex 體系外，下一步即是抽象出完整的 Exec Mode Wrapper 來支援 Google Antigravity CLI
+  (agy)。
+
+  2. Contract 契約約束與架構邊界：
+  concepts.fsx 確立了統一抽象：
+      • 函數化主幹：所有操作皆經由 FeasibleFun<'Input, 'Success, 'Error>（雙層輸入語意 'Input -> ('Input -> Result<'Success, 'Error>)）與 FodexFun 註冊至
+      VersionRegistry。
+      • 萬物皆 Agent：不論是上層協調的 Wrapper 還是下層執行的 Native，對外統一為 IAgent<'T>。
+      • 狀態與數據分離：執行狀態在 Actor，數據流在 ReActLoop 與持久化 SQL。契約本身完全沒有硬編碼 Codex，支援 agy 完全不需異動任何 Contract
+      專案內容（滿足約束 i）。
+  3. M017～M019.R002 之演化：
+      • M017：確立了 Participant 唯一編號 N、子樹生命週期管理（/subagent、/stop、/list_participant）、多輪設定動態切換（/model、/effort、/fast、/memory）。
+      • M018：釐清 Console 邊界，導入單一 reader 與 Shift+Enter 緩衝區，並在 LINE Provider E2E 中驗證了 IAgent.Send 與非阻塞回呼架構。
+      • M019.R001 / R002：解決了 Console 阻塞中樞 Mailbox 的問題（獨立 ConsolePrinter Actor），並在 R002 實現了 Wrapper 自動收件（OrderHub
+      封批與續行排程），統一透過 FodexEntry.createWrapper 啟動。
+
+  ──────
+  ## 二、Code Review 分析：如何讓 Fodex.Supervisor 支援 agy
+
+  ### 1. 現況盤點：目前的 Native Agent 綁定
+
+  在 NativeAgentV300.fsx 中，目前的派工邏輯為：
+
+    match options.GetResult(Native_Adapter, defaultValue="app-server") with
+    | "app-server" -> NativeAppServerV300.create models configuration node loop cs participant arguments ctx
+    | "exec"       -> NativeExecV300.create models configuration node loop cs participant arguments ctx
+    | value        -> Error(ArgumentException("Unknown native adapter: " + value) :> exn)
+
+  • NativeExecV300 專門針對 codex exec --json - 實作：
+      • 啟動程序：使用 ProcSupervisorV201.launch 啟動 codex.exe，並將 prompt 透過 stdin 注入。
+      • 狀態解析：即時解析 stdout JSONL，攔截 thread.started 取得 thread_id（作為 Codex Session ID 保存於 SQL），並以 item.completed（agent_message /
+      reasoning）轉譯為 AgentWork 發送回 ReActLoop。
+      • 會話延續：下一次 turn 時，參數帶入 resume <session_id> --json -。
+  • 模型與設定驗證：
+      • NativeModelCatalogFodexFunV300.fsx 透過短期啟動 codex app-server 發出 model/list 查型錄。
+      • NativeSettingsFodexFunV300.fsx 驗證模型名稱與 supportedReasoningEfforts。
+
+
+  ### 2. 支援 agy 的技術特徵與實測結果
+
+  本機實體命令為 C:\Users\Administrator\AppData\Local\agy\bin\agy.exe，經即時指令測試驗證其底層通訊特徵：
+
+  1. 單輪非互動模式（Print Mode）：
+      • 語法：agy -p "<prompt>" --output-format json（或搭配 --dangerously-skip-permissions --disable-slash-commands）。
+      • 輸出為單一確定性 JSON：
+        {
+          "conversation_id": "91ad6b2a-1642-4c3d-a3d3-da6a41951f42",
+          "status": "SUCCESS",
+          "response": "HELLO_AGY\n",
+          "duration_seconds": 19.47,
+          "num_turns": 1,
+          "usage": { "input_tokens": 46427, "output_tokens": 1328, "total_tokens": 47755 }
+        }
+
+  2. 多輪會話延續（Session Resume）：
+      • 實測指令：agy -p "what did I ask you before?" --conversation 91ad6b2a-1642-4c3d-a3d3-da6a41951f42 --output-format json。
+      • 實測結果完美成功：agy 正確讀取先前歷史並精確回答，且回傳維持相同的 conversation_id。這表示 conversation_id 即可直接等價於 Fodex 的
+      NativeSessionId！
+  3. 模型與強度型錄（Model Catalog）：
+      • 實測指令：agy models
+      • 支援模型：gemini-3.8-flash-high, gemini-3.8-flash-medium, gemini-3.8-flash-low, claude-sonnet-4-6, claude-opus-4-6-thinking, gpt-oss-120b-medium。
+      • 推理深度：--effort（low|medium|high|xhigh|max）。
+
+
+  ### 3. 符合約束的架構落地切點
+
+  • 約束 i（不異動 Contract）：契約已提供完整抽象，完全不碰 Fodex.Supervisor.Contract。
+  • 約束 ii（僅微幅異動 Supervisor 非 FodexFun）：
+      • 僅需在 SupervisorArgs.fsx 加入 Agy_Exe of string（或讓 Codex_Exe / 通用 Cli_Exe 兼容），並在 NativeAgentV300.fsx（或透過新增的 V302 / V400
+      factory）增加 "agy" 分支。
+  • 約束 iii（新增 FodexFun）：
+      • 新增 NativeAgyFodexFunV300.fsx：封裝 agy -p 的 argv 組裝、程序呼叫與輸出解析（類似 NativeExecV300，但適配 agy 的參數模式與 JSON 結構）。
+      • 新增 NativeAgyModelCatalogFodexFunV300.fsx：透過執行 agy models 解析出模型清單，取代原本的 codex app-server WebSocket 查詢。
+
+  ──────
+  ## 三、關鍵設計討論（請與我討論下列事項）
+
+  在開始實作 M020 之前，為確保設計完全符合您的使用情境，請協助確認以下 4 個關鍵問題：
+
+  ### 問題 1：M020 的調度雙向定位（誰是主控、誰是被控？）
+
+  提示詞中提及：「讓 Fodex.Supervisor 能夠支援 agy，請給出 M020 腳本達成可穩定使用 agy -p 操作的 fodex wrapper」。
+  請問您的核心預期為哪一種（或兩者兼具）？
+
+  • 選項 A（Fodex 封裝 agy 為工作引擎）：
+  在 Fodex 內部新增 Native_Adapter "agy"，使得 Fodex 的 main 或 subagent(N) 底層是由 agy -p（帶 --conversation <id>）執行的原生代理。
+  • 選項 B（外部 agy -p 驅動 Fodex Wrapper）：
+  使用者或外部腳本在命令列使用 agy -p 來驅動 Fodex（例如外部發送任務給 Fodex Wrapper 執行）。此時 M020 必須提供一個無頭、非阻塞的批次/單次呼叫入口（例如
+  Start-M020.ps1 --prompt "..."），使外部 agy -p 呼叫時不會卡在 M019 原本的 Console.ReadLine() 與 ;; 提交等待中。
+  • 選項 C（兩者兼備，推薦）：
+  底層實作 Native_Adapter "agy" 支援 agy -p 作為 Native Agent；同時 M020 腳本提供兩用模式（有頭互動模式 + 接受 --prompt 的非互動模式），讓外部自動化腳本或
+  agy -p 也能穩定調度 Fodex Wrapper。
+
+  ### 問題 2：agy 通訊協定選擇（單輪 JSON vs 串流 stream-json）
+
+  • 選項 A（單輪 JSON，--output-format json，推薦）：
+  agy -p "<prompt>" --conversation <id> --output-format json 每次執行完畢回傳完整 JSON。
+      • 優點：極致穩定、格式確定、錯誤與 usage 清晰、無需維護長時間存活的 stdio 雙向串流通訊狀態機。
+      • 行為：單輪執行結束時一次性發出 MessageCompleted 與 AgentEnd。
+  • 選項 B（串流 NDJSON，--output-format stream-json）：
+  解析每一行 step_update 事件，將中間的 tool 或 message 即時以 MessageDelta 推送到 ReActLoop。
+      • 優點：可看見中間即時進度。
+      • 代價：解析狀態機較複雜，且需防範非預期工具執行。
+
+
+  ### 問題 3：模型與推理設定政策（Settings Policy）
+
+  Agy 支援的模型名稱（如 gemini-3.8-flash-high, claude-sonnet-4-6）與推理強度（low|medium|high|xhigh|max）與 Codex（gpt-6.1-sol, low|medium|high）不同。
+
+  • 是否同意新增獨立的 NativeAgySettingsFodexFunV300（或擴充 check），使其依據 agy models 的清單驗證，並在預設 --native-adapter agy 時將預設模型設為
+  gemini-3.8-flash-high、effort 設為 high？
+
+  ### 問題 4：沙箱與權限控制政策
+
+  實測發現若在本地工作目錄直接跑 agy -p，agy 會讀取本機 global rules 並預設嘗試使用工具（例如檢查 op_log 或執行指令）。
+
+  • 在 Fodex 封裝 agy -p 時，是否應預設帶上 --dangerously-skip-permissions、--disable-slash-commands，並可選配置 --mode plan 或 --sandbox
+  以確保執行不因等待權限確認而卡死？
+  ──────
+  請就上述問題給予指導與確認。確認後，我將立即按照規範執行 SOP 流程，為您產出高穩定度、符合契約精神的 M020 實作方案！
+
+> /model
+  ⎿  Exited /model command
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1. 問題 1:
+  a. 請參考 F:\fodex\notes\202611\20261105\00020.關於 subagent.txt
+  b. 請走選項 C
+  c. 如果 wrapper 起動 subagent，且該 subagent 為 wrapper 請還是維持 in-process 建立 wrapper 並透過 IAgent 溝通
+  d. /subagent 規格要改成 預設起動為 codex (defaultArgumentsText 請加入 --agentType 之類的，不確定現在是否有)，可以透過參數指定預設是 codex 還是 agy
+
+    /subagent(N) -> 預設 subagent-type 預設 subagent-mode
+    /subagent(N, wrapper) -> 預設 subagent-type 指定 wrapper subagent-mode
+    /subagent(N, raw) -> 預設 subagent-type 指定 raw subagent-mode
+    /subagent(N, <subagent-type>, codex) -> 指定 subagent-mode 指定 codex subagent-type
+    /subagent(N, <subagent-type>, agy) -> 指定 subagent-mode 指定 agy subagent-type
+
+2. 問題 2: agy 通訊協定選擇: 單輪 JSON
+3. 問題 3: 同意新增
+4. 問題 4: 同意預設帶上 --dangerously-skip-permissions、--disable-slash-commands
+   可選配置 --mode plan 或 --sandbox -> 先不要
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+▸ Thought for 21s, 306 tokens
+
+  ### M020 交付完成報告：Google Antigravity (agy) CLI 整合與 Subagent 路由
+
+  我們已完成 M020 的全部設計、實作、測試與端到端驗證，並遵循所有架構約束與使用者規範。
+  ──────
+  ### 一、 核心需求與架構規範遵循檢核
+
+  1. Fodex.Supervisor.Contract 零異動：
+      • 保持契約專案純淨，未變更任何型別簽名與程式碼。
+  2. Fodex.Supervisor 非 FodexFun 僅微幅異動：
+      • 僅於 SupervisorArgs.fsx 補充必要 DU case（Agy_Exe、Subagent_Type）。
+      • 舊有邏輯保留為註解，未任意刪除既有代碼。
+  3. 新增專屬 FodexFun：
+      • NativeAgyModelCatalogFodexFunV300.fsx：透過 agy models 動態查詢模型清單並提供 fallback。
+      • NativeAgySettingsFodexFunV300.fsx：負責 CLI 參數組裝，確保 -p <prompt> 順序及安全旗標。
+      • NativeAgyFodexFunV300.fsx：實作 NativeAgyV300.create 與 createRaw，調度 agy.exe -p，解析單輪 JSON 輸出（conversation_id、response、usage）。
+  4. Subagent 選項 C 與規格升級：
+      • 選項 C：Subagent Wrapper 維持在同一個 .NET Process / 同一個 ActorSystem 內 in-process 建立，透過 IAgent.Send 進行非同步溝通。
+      • 預設啟動：預設 subagent-type 為 codex，可透過 --subagent-type codex|agy 於啟動時指定預設值。
+      • 完整 /subagent 語法支援：
+          • /subagent(N)：預設 subagent-type (codex)，預設 subagent-mode (wrapper)
+          • /subagent(N, wrapper)：預設 subagent-type，指定 wrapper mode
+          • /subagent(N, raw)：預設 subagent-type，指定 raw mode
+          • /subagent(N, <mode>, codex)：指定 subagent-mode，指定 codex subagent-type
+          • /subagent(N, <mode>, agy)：指定 subagent-mode，指定 agy subagent-type
+
+  5. Agy 通訊協定與旗標：
+      • 採用單輪 JSON 協定（--output-format json）。
+      • 預設模型：gemini-3.8-flash-high，推理強度：high。
+      • 預設帶上必要旗標：--dangerously-skip-permissions 與 --disable-slash-commands。
+      • 會話保持：解析輸出的 conversation_id，下一輪帶上 --conversation <id> 保持上下文接續。
+
+  ──────
+  ### 二、 驗證與測試結果
+
+  1. 單元測試全數通過：
+      • 執行 dotnet test F:\fodex\Fodex.Supervisor.Tests\Fodex.Supervisor.Tests.fsproj
+      • 結果：Passed! - Failed: 0, Passed: 275, Skipped: 0, Total: 275。
+  2. Help 指令 Smoke Test：
+      • 執行：powershell -File F:\fodex\Fodex.Supervisor\Start-M020.ps1 --interactive false --prompt "/help"
+      • 成功印出包含最新 /subagent(N[,raw|wrapper][,codex|agy]) 之 usage 說明。
+  3. 真實 agy.exe Smoke Test：
+      • 執行：powershell -File F:\fodex\Fodex.Supervisor\Start-M020.ps1 --interactive false --prompt "請只回覆五個英文字母：HELLO"
+      • 輸出與日誌：
+        {"conversation_id":"98f0459c-c1c1-4019-a052-a803ae2d2b04","status":"SUCCESS","response":"HELLO\n","duration_seconds":18.5556036,"num_turns":1,"usag
+        e":{"input_tokens":34533,"output_tokens":1190,"thinking_tokens":932,"cache_read_tokens":0,"total_tokens":35723}}
+      Agent 順利完成回合並於 Console 交付回覆 HELLO，隨後正常關閉。
+
+  ──────
+  ### 三、 交付成果與檔案清單
+
+  • 🚀 啟動器與展示腳本：
+      • Start-M020.ps1：M020 PowerShell 快速啟動腳本。
+      • WrapperIAgentDemo.M020.fsx：M020 主展示程式，支援互動模式（獨立一行 ;; 提交）與無頭單次執行模式（--interactive false --prompt "..."）。
+      • README.M020.md：M020 完整規格、架構、語法與操作說明。
+  • ⚙ 核心實作：
+      • NativeAgyFodexFunV300.fsx
+      • NativeAgyModelCatalogFodexFunV300.fsx
+      • NativeAgySettingsFodexFunV300.fsx
+      • SubagentCoordinatorFodexFunV301.fsx
+      • WrapperCommandFodexFunV300.fsx
+  • 📝 操作記錄與 Git 狀態：
+      • 操作記錄已依規範寫入：20261105174610_m020_agy_verification_and_smoke_test.md。
+      • 已完成 Git Commit (5917bd8) 並成功 Push 至遠端儲存庫 origin/master。
+
+
+  ### 快速開始體驗 M020
+
+    # 1. 互動模式（預設 agy，以獨立一行 ;; 提交）：
+    .\Start-M020.ps1
+
+    # 2. 無頭單次 Prompt 執行：
+    .\Start-M020.ps1 --interactive false --prompt "請幫我分析當前專案架構"
+
+    # 3. 指定 Subagent 類型預設值為 agy：
+    .\Start-M020.ps1 --subagent-type agy   
+
+
+
+
+
+
+
+
+
+
+
+● Ran 5 commands (+3 · git commit -m "feat(M020): Add --mainagent-type support for symmetrical main/sub agent selection" · git push) (ctrl+o to expand)
+  ### 已新增並支援 --mainagent-type 參數！
+
+  我們已完成 --mainagent-type 的設計與實作，讓 Main Wrapper 與 Subagent 具備完全對稱的指定語法。
+  ──────
+  ### 一、 如何指定 Main Wrapper 為 Codex？
+
+  您現在可以透過以下兩種直覺的方式指定 Main Wrapper 為 Codex：
+
+  #### 1. 透過命令列參數（最推薦、最簡單）
+
+  直接在執行 Start-M020.ps1 時帶入 --mainagent-type codex：
+
+    # A. Main 為 Codex（預設使用 app-server，模型自動預設為 gpt-6.1-sol）
+    .\Start-M020.ps1 --mainagent-type codex
+
+    # B. Main 為 Codex，但想使用 CLI exec 模式
+    .\Start-M020.ps1 --mainagent-type codex --native-adapter exec
+
+    # C. Main 為 Codex，並手動指定特定模型（例如 o3-mini 或 gpt-5.3-codex）
+    .\Start-M020.ps1 --mainagent-type codex --model o3-mini
+
+  #### 2. 直接修改腳本預設值
+
+  若您希望之後每次啟動預設都是 Codex，可直接在 WrapperIAgentDemo.M020.fsx 的 defaultArgumentsText 中調整：
+
+    --mainagent-type codex
+    --subagent-type codex
+  ──────
+  ### 二、 對稱架構設計（--mainagent-type 與 --subagent-type）
+
+   參數                │ 可選值              │ 預設值             │ 預設 Adapter                     │ 預設 Model
+  ─────────────────────┼─────────────────────┼────────────────────┼──────────────────────────────────┼─────────────────────────────────────────────────────
+   --mainagent-type    │ agy | codex         │ agy                │ agy (若選 codex 則為 app-server) │ gemini-3.8-flash-high (若選 codex 則為 gpt-6.1-sol)
+   --subagent-type     │ codex | agy         │ codex              │ exec (若選 agy 則為 agy)         │ 繼承相應 agent 的預設型態
+
+  #### 智慧推導與優先權規則：
+
+  1. 型態自動綁定預設值：
+      • --mainagent-type codex：自動推導 adapter 為 app-server、model 為 gpt-6.1-sol。
+      • --mainagent-type agy：自動推導 adapter 為 agy、model 為 gemini-3.8-flash-high。
+  2. 顯式指定優先：
+      • 若您顯式帶入 --native-adapter exec，則優先採用 exec。
+      • 若您顯式帶入 --model <name>，則優先採用您指定的模型。
+
+  ──────
+  ### 三、 驗證與測試結果
+
+  1. 單元測試全數通過：
+      • 執行 dotnet test，275 個測試全數 Passed!（0 Failed）。
+  2. Smoke Test 驗證：
+      • .\Start-M020.ps1 --mainagent-type codex --interactive false --prompt "/help"
+          • 輸出驗證：Main=codex (adapter=app-server, model=gpt-6.1-sol); subagents=wrappers (type=codex)
+      • .\Start-M020.ps1 --mainagent-type codex --native-adapter exec --interactive false --prompt "/help"
+          • 輸出驗證：Main=codex (adapter=exec, model=gpt-6.1-sol); subagents=wrappers (type=codex)
+
+  3. 文件與日誌更新：
+      • 詳細說明已同步更新至 README.M020.md。
+      • 操作日誌已記錄於 20261106031327_mainagent_type_support.md。
+      • 已完成 Git Commit (9f7a48b) 並成功 Push 至 origin/master。
