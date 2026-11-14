@@ -82,6 +82,7 @@ module FodexFunctions =
             NativePreflightFodexFunV100.Definitions.builtins
             NativeModelChangeFodexFunV100.Definitions.builtins
             SharedAssetFodexFunV100.Definitions.builtins
+            ServiceProtocolFodexFunV101.Definitions.builtins
             ParticipantHandoverFodexFunV402.Definitions.builtins
             NativeAgyV304.Definitions.builtins
             NativeAppServerV304.Definitions.builtins
