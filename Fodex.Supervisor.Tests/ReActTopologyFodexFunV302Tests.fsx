@@ -23,6 +23,13 @@ let tests=testSequenced <| testList "Shared cache topology V302" [
         Expect.isEmpty (ReActTopologyFodexFunV302.participants projected) "cache has no participant number"
         Expect.equal ((apply(projected,cache,[|mutations[4]|]) |> required).GetEdges().Length) 5 "exact stream retry is a no-op")
 
+    testCase "trailing whitespace is rejected instead of trimmed or compared as another key" <| fun () -> withNode(fun node ->
+        let apply=evaluated<WrappedReActDataFlow<string>*ReActEndpoint*ReActDataStream<string> array,WrappedReActDataFlow<string>> "3.0.2" node "ReActTopology.Apply"
+        for mutation in [Created("key ","v");Updated("key\t","v");Deleted "key\u3000"] do
+            match apply(emptyGraph(),cache,[|edge 1L (Guid.NewGuid()) mutation|]) with
+            | Error (:? ArgumentException) -> ()
+            | other -> failtestf "Expected key argument rejection, got %A" other)
+
     testCase "invalid direction scope duplicate operation and failed preconditions are rejected" <| fun () -> withNode(fun node ->
         let apply=evaluated<WrappedReActDataFlow<string>*ReActEndpoint*ReActDataStream<string> array,WrappedReActDataFlow<string>> "3.0.2" node "ReActTopology.Apply"
         let graph=apply(emptyGraph(),cache,[|mutations[0]|]) |> required

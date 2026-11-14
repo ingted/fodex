@@ -1,5 +1,6 @@
 namespace Fodex.Supervisor
 
+open System.Threading.Tasks
 open Fodex.Supervisor.Contracts.CommandMod
 open Fodex.Supervisor.Contracts.Concepts
 
@@ -12,3 +13,13 @@ module FodexFunBinding =
             FodexFun<'Input,'Output,exn>(node,target) |> FodexFun.pin versionText
             |> Option.defaultWith(fun () -> invalidOp(sprintf "Missing FodexFun %s (%s)" target (defaultArg versionText "max-at-startup")))
         fun input -> FeasibleFun.invoke input operation
+
+    /// 連接已pin的兩階段函數與Task ROP；同步／非同步失敗均保留原Error。
+    /// 例：let! result = invokeAsync commit input。此helper不選版本、不擁有actor/SQL/process。
+    let invokeAsync (operation:FeasibleT<'Input,Task<Result<'Output,exn>>,exn>) input : Task<Result<'Output,exn>> = task {
+        try
+            match operation input with
+            | Error error -> return Error error
+            | Ok work -> return! work
+        with error -> return Error error
+    }

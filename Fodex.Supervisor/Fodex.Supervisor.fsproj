@@ -55,6 +55,7 @@
     <Compile Include="ReActTraceV203.fsx"><Link>fodexFun/ReActTrace/ReActTraceV203.fsx</Link></Compile>
     <Compile Include="ReActTraceV300.fsx"><Link>fodexFun/ReActTrace/ReActTraceV300.fsx</Link></Compile>
     <Compile Include="ReActTraceV301.fsx"><Link>fodexFun/ReActTrace/ReActTraceV301.fsx</Link></Compile>
+    <Compile Include="ReActTraceV302.fsx"><Link>fodexFun/ReActTrace/ReActTraceV302.fsx</Link></Compile>
     <Compile Include="WrapperContextFodexFunV300.fsx"><Link>fodexFun/WrapperContext/WrapperContextFodexFunV300.fsx</Link></Compile>
     <Compile Include="SubagentFodexFunV204.fsx"><Link>fodexFun/Subagent/SubagentFodexFunV204.fsx</Link></Compile>
     <Compile Include="SubagentFodexFunV206.fsx"><Link>fodexFun/Subagent/SubagentFodexFunV206.fsx</Link></Compile>
@@ -70,6 +71,7 @@
     <Compile Include="ProcSupervisorV201.fsx"><Link>fodexFun/ProcSupervisor/ProcSupervisorV201.fsx</Link></Compile>
     <Compile Include="NativeProcessFodexFunV301.fsx"><Link>fodexFun/NativeProcess/NativeProcessFodexFunV301.fsx</Link></Compile>
     <Compile Include="NativeProcessFodexFunV302.fsx"><Link>fodexFun/NativeProcess/NativeProcessFodexFunV302.fsx</Link></Compile>
+    <Compile Include="NativeCommandFodexFunV100.fsx"><Link>fodexFun/NativeCommand/NativeCommandFodexFunV100.fsx</Link></Compile>
     <Compile Include="NativeOwnershipLeaseFodexFunV302.fsx"><Link>fodexFun/NativeOwnership/NativeOwnershipLeaseFodexFunV302.fsx</Link></Compile>
     <Compile Include="CodexAppServerV100.fsx"><Link>fodexFun/CodexAppServer/CodexAppServerV100.fsx</Link></Compile>
     <Compile Include="CodexAppServerV101.fsx"><Link>fodexFun/CodexAppServer/CodexAppServerV101.fsx</Link></Compile>
@@ -173,6 +175,9 @@
     <Compile Include="ParticipantConfigurationFodexFunV402.fsx"><Link>fodexFun/ParticipantConfiguration/ParticipantConfigurationFodexFunV402.fsx</Link></Compile>
     <Compile Include="ParticipantConfigurationFodexFunV403.fsx"><Link>fodexFun/ParticipantConfiguration/ParticipantConfigurationFodexFunV403.fsx</Link></Compile>
     <Compile Include="ReActDataStoreV402.fsx"><Link>fodexFun/ReActDataStore/ReActDataStoreV402.fsx</Link></Compile>
+    <Compile Include="ReActDataStoreV403.fsx"><Link>fodexFun/ReActDataStore/ReActDataStoreV403.fsx</Link></Compile>
+    <Compile Include="SharedCacheFodexFunV100.fsx"><Link>fodexFun/SharedCache/SharedCacheFodexFunV100.fsx</Link></Compile>
+    <Compile Include="ParticipantOperationsFodexFunV405.fsx"><Link>fodexFun/ParticipantOperations/ParticipantOperationsFodexFunV405.fsx</Link></Compile>
     <Compile Include="ParticipantHandoverFodexFunV400.fsx"><Link>fodexFun/ParticipantHandover/ParticipantHandoverFodexFunV400.fsx</Link></Compile>
     <Compile Include="ParticipantHandoverFodexFunV401.fsx"><Link>fodexFun/ParticipantHandover/ParticipantHandoverFodexFunV401.fsx</Link></Compile>
     <Compile Include="WrapperAgentV402.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV402.fsx</Link></Compile>
@@ -186,6 +191,7 @@
     <Compile Include="ReActLoopHandlerV402.fsx"><Link>fodexFun/ReActLoopHandler/ReActLoopHandlerV402.fsx</Link></Compile>
     <Compile Include="ReActLoopHandlerV403.fsx"><Link>fodexFun/ReActLoopHandler/ReActLoopHandlerV403.fsx</Link></Compile>
     <Compile Include="ReActLoopHandlerV404.fsx"><Link>fodexFun/ReActLoopHandler/ReActLoopHandlerV404.fsx</Link></Compile>
+    <Compile Include="ReActLoopHandlerV405.fsx"><Link>fodexFun/ReActLoopHandler/ReActLoopHandlerV405.fsx</Link></Compile>
     <Compile Include="HubHostingFodexFunV402.fsx"><Link>fodexFun/HubHosting/HubHostingFodexFunV402.fsx</Link></Compile>
     <Compile Include="HubHostingFodexFunV405.fsx"><Link>fodexFun/HubHosting/HubHostingFodexFunV405.fsx</Link></Compile>
     <Compile Include="FodexAgentFodexFunV402.fsx"><Link>fodexFun/FodexAgent/FodexAgentFodexFunV402.fsx</Link></Compile>

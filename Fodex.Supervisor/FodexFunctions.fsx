@@ -14,6 +14,7 @@ module FodexFunctions =
         [|
             ReActJsonV301.Definitions.builtins
             ReActJsonV302.Definitions.builtins
+            ReActTraceV302.Definitions.builtins
             ReActTopologyFodexFunV302.Definitions.builtins
             ReActCheckpointFodexFunV302.Definitions.builtins
             ReActTopologyFodexFunV301.Definitions.builtins
@@ -24,6 +25,7 @@ module FodexFunctions =
             NativeOutputFodexFunV301.Definitions.builtins
             NativeProcessFodexFunV301.Definitions.builtins
             NativeProcessFodexFunV302.Definitions.builtins
+            NativeCommandFodexFunV100.Definitions.builtins
             NativeOwnershipLeaseFodexFunV302.Definitions.builtins
             WrapperCommandFodexFunV300.Definitions.builtins
             ParticipantControlFodexFunV300.Definitions.builtins
@@ -68,11 +70,15 @@ module FodexFunctions =
             ReActDataStoreV400.Definitions.builtins
             ReActDataStoreV401.Definitions.builtins
             ReActDataStoreV402.Definitions.builtins
+            ReActDataStoreV403.Definitions.builtins
+            SharedCacheFodexFunV100.Definitions.builtins
+            ParticipantOperationsFodexFunV405.Definitions.builtins
             ParticipantHandoverFodexFunV400.Definitions.builtins
             ParticipantHandoverFodexFunV401.Definitions.builtins
             ParticipantOperationsFodexFunV403.Definitions.builtins
             ParticipantOperationsFodexFunV404.Definitions.builtins
             ReActLoopHandlerV404.Definitions.builtins
+            ReActLoopHandlerV405.Definitions.builtins
             FodexFunRegistrationV408.Definitions.builtins
             ParticipantManagerFodexFunV404.Definitions.builtins
             WrapperAgentV408.Definitions.builtins

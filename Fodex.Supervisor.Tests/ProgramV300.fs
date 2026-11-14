@@ -29,9 +29,15 @@ let main argv =
                 ParticipantHandoverFodexFunV400Tests.tests
                 ParticipantHandoverFodexFunV401Tests.tests
                 ReActDataStoreV402Tests.tests
+                ReActDataStoreV403Tests.tests
+                SharedCacheFodexFunV100Tests.tests
+                ParticipantOperationsFodexFunV405Tests.tests
+                ReActTraceV302Tests.tests
+                ReActLoopHandlerV405Tests.tests
                 ReActCheckpointFodexFunV301Tests.tests
                 ReActJsonV301Tests.tests; ReActTopologyFodexFunV301Tests.tests
                 ReActJsonV302Tests.tests; ReActTopologyFodexFunV302Tests.tests
+                NativeCommandFodexFunV100Tests.tests
                 ReActCheckpointFodexFunV302Tests.tests
                 ReActJsonV200Tests.tests; ReActDataStoreV200Tests.tests; ReActDataStoreV300Tests.tests
                 ProcSupervisorV201Tests.tests; NLogLoggingTests.tests

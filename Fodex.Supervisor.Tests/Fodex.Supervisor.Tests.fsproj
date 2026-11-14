@@ -130,6 +130,12 @@
     <Compile Include="ImplementationTestSupportV301.fsx" />
     <Compile Include="ParticipantRestartTestSupport.fsx"><Link>fodexFun/ParticipantRestart/ParticipantRestartTestSupport.fsx</Link></Compile>
     <Compile Include="SharedCacheTestSupport.fsx"><Link>fodexFun/SharedCache/SharedCacheTestSupport.fsx</Link></Compile>
+    <Compile Include="NativeCommandFodexFunV100Tests.fsx"><Link>fodexFun/NativeCommand/NativeCommandFodexFunV100Tests.fsx</Link></Compile>
+    <Compile Include="SharedCacheFodexFunV100Tests.fsx"><Link>fodexFun/SharedCache/SharedCacheFodexFunV100Tests.fsx</Link></Compile>
+    <Compile Include="ParticipantOperationsFodexFunV405Tests.fsx"><Link>fodexFun/SharedCache/ParticipantOperationsFodexFunV405Tests.fsx</Link></Compile>
+    <Compile Include="ReActTraceV302Tests.fsx"><Link>fodexFun/SharedCache/ReActTraceV302Tests.fsx</Link></Compile>
+    <Compile Include="ReActLoopHandlerV405Tests.fsx"><Link>fodexFun/SharedCache/ReActLoopHandlerV405Tests.fsx</Link></Compile>
+    <Compile Include="ReActDataStoreV403Tests.fsx"><Link>fodexFun/SharedCache/ReActDataStoreV403Tests.fsx</Link></Compile>
     <Compile Include="ReActJsonV302Tests.fsx"><Link>fodexFun/SharedCache/ReActJsonV302Tests.fsx</Link></Compile>
     <Compile Include="ReActTopologyFodexFunV302Tests.fsx"><Link>fodexFun/SharedCache/ReActTopologyFodexFunV302Tests.fsx</Link></Compile>
     <Compile Include="ReActCheckpointFodexFunV302Tests.fsx"><Link>fodexFun/SharedCache/ReActCheckpointFodexFunV302Tests.fsx</Link></Compile>

@@ -98,6 +98,8 @@ module ReActTopologyFodexFunV302 =
         let key = match mutation with Created(k,_) | Updated(k,_) | Deleted k -> k
         if isNull key || key.Length<1 || key.Length>256 || key.Contains '\000' then
             invalidArg "key" "Cache key requires 1..256 characters and no NUL"
+        // SQL BIN2 仍忽略尾端空白；依使用者確認直接拒絕，不能 Trim 後碰到另一個 key。
+        if Char.IsWhiteSpace key[key.Length-1] then invalidArg "key" "Cache key cannot end in whitespace"
         let value (text:string) =
             if isNull text || System.Text.Encoding.UTF8.GetByteCount(text)>1024*1024 then
                 invalidArg "value" "Cache value requires text of at most 1 MiB UTF-8"

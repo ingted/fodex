@@ -5,8 +5,12 @@ module SharedCacheTestSupport
 #endif
 
 open System
+open System.Threading.Tasks
+open Microsoft.Data.SqlClient
 open Fodex.Supervisor
 open Fodex.Supervisor.Contracts.CoreMod
+open ImplementationTestSupportV300
+open ImplementationTestSupportV301
 
 /// 固定 scope 與產品規格一致，但所有 SQL 仍必須用 QuotationTestScope 的每案隔離資料庫。
 /// 這裡只組資料，不自己實作 KV、journal 或 owner lease。
@@ -30,3 +34,25 @@ let mutations:ReActDataStream<string> array=[|
     edge 3L (Guid.NewGuid()) (SharedCacheMutation.Updated("Key","更新"))
     edge 4L (Guid.NewGuid()) (SharedCacheMutation.Deleted "Key")
     edge 5L (Guid.NewGuid()) (SharedCacheMutation.Created("Key","重建"))|]
+
+let execute cs text =
+    use connection=new SqlConnection(cs)
+    connection.Open()
+    use command=connection.CreateCommand()
+    command.CommandText<-text
+    command.ExecuteNonQuery() |> ignore
+let scalar cs text =
+    use connection=new SqlConnection(cs)
+    connection.Open()
+    use command=connection.CreateCommand()
+    command.CommandText<-text
+    Convert.ToInt32(command.ExecuteScalar())
+
+/// 真SQL／每案DB。產品操作一律由node registry eval後invoke；fixture不保存自己的KV。
+let withCache action=withDatabase(fun cs -> withNode(fun node ->
+    let acquire=evaluated<SharedCacheLeaseInputV403,Task<Result<SqlConnection,exn>>> "4.0.3" node "SharedCache.AcquireLease"
+    let restore=evaluated<SharedCacheRestoreInputV403,Task<Result<WrappedReActDataFlow<string>,exn>>> "4.0.3" node "SharedCache.Restore"
+    let commit=evaluated<SharedCacheCommitInputV403,Task<Result<SharedCacheCommitResultV403,exn>>> "4.0.3" node "SharedCache.Commit"
+    use lease=acquire(node,cs,storageId) |> required |> wait |> required
+    let graph=restore(node,lease,storageId) |> required |> wait |> required
+    action node cs lease graph acquire restore commit))
