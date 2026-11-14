@@ -6,6 +6,8 @@ open System
 open System.Collections.Generic
 open System.IO
 open System.Runtime.CompilerServices
+open System.Security.Cryptography
+open System.Text
 open System.Text.Json
 open System.Threading
 open System.Threading.Tasks
@@ -23,6 +25,7 @@ type NativeModelCatalogSnapshotV100=
     | Stale of fetchedAt:DateTimeOffset * models:JsonElement array * refreshFailure:exn
 type NativeModelDirectoryReadInputV100=FodexNode*NativeModelDirectoryScopeV100*bool*(unit -> Task<Result<JsonElement array,exn>>)
 type NativeModelDirectoryInputV100=FodexNode*UniContext*NativeModelDirectoryScopeV100*bool
+type NativeModelScopeInputV100=FodexNode*string*string*string
 
 /// 只在本 node 傳送；外部 service 回 metadata JSON，不傳 TCS 或這個管理協定。
 type NativeModelDirectoryCallV100=
@@ -33,7 +36,29 @@ module NativeModelDirectoryFodexFunV100 =
     let version=System.Version(1,0,0)
     let target="NativeModels.List"
     let targetRead="NativeModelDirectory.Read"
+    let targetScope="NativeModelDirectory.Scope"
     let lifetime=TimeSpan.FromMinutes 5.
+    /// 身分是CLI profile/設定容器的非秘密hash，不以native SID或模型名稱猜登入帳戶。
+    /// 專用profile可在node設定 fodex.models.<provider>.account-scope/settings-scope。
+    /// Codex採effective home/auth/config metadata；AGY未明示帳戶scope時只識別OS容器，List必刷新。
+    /// 不假設AGY使用Codex同型的登入檔，也不讀或記錄憑證值。
+    let scope ((node,provider,executable,directory):NativeModelScopeInputV100)=
+        try
+            if not(List.contains provider ["agy";"codex"]) then invalidArg "provider" "Expected agy or codex"
+            let userHome=Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
+            let configured=if provider="codex" then Environment.GetEnvironmentVariable "CODEX_HOME" else null
+            let home=if provider="agy" then userHome elif String.IsNullOrWhiteSpace configured then Path.Combine(userHome,".codex") else Path.GetFullPath configured
+            let metadata path=
+                let file=FileInfo path
+                if file.Exists then sprintf "%s|%d|%d" file.FullName file.Length file.LastWriteTimeUtc.Ticks else file.FullName+"|missing"
+            let hash text=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text:string)))
+            let auth=if provider="codex" then metadata(Path.Combine(home,"auth.json"))+"|"+hash(defaultArg (Option.ofObj(Environment.GetEnvironmentVariable "OPENAI_API_KEY")) "") else "unspecified-agy-login"
+            let identityDefault=Environment.UserDomainName+"/"+Environment.UserName+"|"+home+"|"+auth
+            let settingsDefault=String.concat "|" [metadata(Path.Combine(home,"config.toml"));metadata(Path.Combine(home,"config.json"));metadata(Path.Combine(home,"settings.json"));metadata(Path.Combine(directory,"."+provider,"config.toml"))]
+            Ok {Provider=provider;Executable=Path.GetFullPath executable;Directory=Path.GetFullPath directory;
+                AccountScope=hash(node.Settings.Config.GetString("fodex.models."+provider+".account-scope",identityDefault));
+                SettingsScope=hash(node.Settings.Config.GetString("fodex.models."+provider+".settings-scope",settingsDefault))}
+        with error -> Error error
     let clone=function
         | Fresh(at,models) -> Fresh(at,models |> Array.map(fun item -> item.Clone()))
         | Stale(at,models,error) -> Stale(at,models |> Array.map(fun item -> item.Clone()),error)
@@ -108,12 +133,18 @@ module NativeModelDirectoryFodexFunV100 =
             let target,version=if scope.Provider="agy" then NativeAgyModelCatalogFodexFunV301.target,"3.0.1" else NativeModelCatalogFodexFunV302.targetLoad,"3.0.2"
             let query=FodexFunBinding.pin<NativeCatalogQueryInputV301,Task<Result<JsonElement array,exn>>> node (Some version) target
             let read=FodexFunBinding.pin<NativeModelDirectoryReadInputV100,Task<Result<NativeModelCatalogSnapshotV100,exn>>> node (Some "1.0.0") targetRead
-            return! FodexFunBinding.invokeAsync read (node,scope,force,fun () -> FodexFunBinding.invokeAsync query (node,ctx,scope.Executable,scope.Directory,CancellationToken.None))
+            // AGY CLI目前沒有已驗證的account identity輸出；未提供明確scope就不批准舊帳戶快照。
+            // 仍合併當下同scope的in-flight，但每次新validation都查目前CLI。顯式profile可用五分鐘cache。
+            let explicitAccount=node.Settings.Config.GetString("fodex.models.agy.account-scope","")
+            let refresh=force || (scope.Provider="agy" && String.IsNullOrWhiteSpace explicitAccount)
+            return! FodexFunBinding.invokeAsync read (node,scope,refresh,fun () -> FodexFunBinding.invokeAsync query (node,ctx,scope.Executable,scope.Directory,CancellationToken.None))
         with error -> return Error error }
 
     let quotation:Expr<NativeModelDirectoryInputV100 -> FeasibleT<_,Task<Result<NativeModelCatalogSnapshotV100,exn>>,exn>> = <@ fun _ -> fun input -> Ok(list input) @>
     let readQuotation:Expr<NativeModelDirectoryReadInputV100 -> FeasibleT<_,Task<Result<NativeModelCatalogSnapshotV100,exn>>,exn>> = <@ fun _ -> fun input -> Ok(read input) @>
+    let scopeQuotation:Expr<NativeModelScopeInputV100 -> FeasibleT<_,NativeModelDirectoryScopeV100,exn>> = <@ fun _ -> fun input -> scope input @>
     [<AutoOpen>]
     module Definitions =
         let builtins=[|FodexFunRegistry.declare target version quotation
-                       FodexFunRegistry.declare targetRead version readQuotation|]
+                       FodexFunRegistry.declare targetRead version readQuotation
+                       FodexFunRegistry.declare targetScope version scopeQuotation|]
