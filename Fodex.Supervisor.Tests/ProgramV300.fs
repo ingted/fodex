@@ -47,6 +47,8 @@ let main argv =
                 NativeAppServerV304Tests.tests
                 NativeExecV304Tests.tests
                 FodexFunRegistrationV409Tests.tests
+                WrapperAgentV409Tests.tests
+                ParticipantManagerFodexFunV405Tests.tests
                 ReActCheckpointFodexFunV301Tests.tests
                 ReActJsonV301Tests.tests; ReActTopologyFodexFunV301Tests.tests
                 ReActJsonV302Tests.tests; ReActTopologyFodexFunV302Tests.tests

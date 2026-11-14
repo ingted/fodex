@@ -85,6 +85,8 @@ module FodexFunctions =
             NativeAppServerV304.Definitions.builtins
             NativeExecV304.Definitions.builtins
             FodexFunRegistrationV409.Definitions.builtins
+            WrapperAgentV409.Definitions.builtins
+            ParticipantManagerFodexFunV405.Definitions.builtins
             ParticipantOperationsFodexFunV405.Definitions.builtins
             ParticipantHandoverFodexFunV400.Definitions.builtins
             ParticipantHandoverFodexFunV401.Definitions.builtins

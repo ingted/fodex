@@ -236,6 +236,8 @@
     <Compile Include="NativeAppServerV304.fsx"><Link>fodexFun/NativeAppServer/NativeAppServerV304.fsx</Link></Compile>
     <Compile Include="NativeAgentV304.fsx"><Link>fodexFun/NativeExec/NativeAgentV304.fsx</Link></Compile>
     <Compile Include="FodexFunRegistrationV409.fsx"><Link>fodexFun/FodexFunRegistration/FodexFunRegistrationV409.fsx</Link></Compile>
+    <Compile Include="WrapperAgentV409.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV409.fsx</Link></Compile>
+    <Compile Include="ParticipantManagerFodexFunV405.fsx"><Link>fodexFun/ParticipantManager/ParticipantManagerFodexFunV405.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV100.fsx"><Link>fodexFun/Service/ServiceHostFodexFunV100.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV101.fsx"><Link>fodexFun/Service/ServiceHostFodexFunV101.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV102.fsx"><Link>fodexFun/ServiceHost/ServiceHostFodexFunV102.fsx</Link></Compile>

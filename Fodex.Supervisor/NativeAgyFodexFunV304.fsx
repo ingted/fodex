@@ -220,9 +220,8 @@ module NativeAgyV304 =
                 let rec receive () = actor {
                     let! message = mailbox.Receive()
                     let reply (result: Result<_,exn>) =
-                        match result with
-                        | Ok value -> mailbox.Sender().Tell value
-                        | Error ex -> mailbox.Sender().Tell(Akka.Actor.Status.Failure ex)
+                        // IAgent的sync/async Ask都期待Result<'T,exn>；不可拆成裸SID或Status.Failure。
+                        mailbox.Sender().Tell(result,mailbox.Self)
 
                     match message with
                     | :? NativePreflightCompletedV100 as notice ->
@@ -310,8 +309,8 @@ module NativeAgyV304 =
 
                     | :? AgentCall as call ->
                         match call with
-                        | StartAgent -> reply (try start () with ex -> Error ex)
-                        | StopAgent -> reply (try stop () with ex -> Error ex)
+                        | StartAgent -> reply (try start () |> Result.map(fun () -> 1) with ex -> Error ex)
+                        | StopAgent -> reply (try stop () |> Result.map(fun () -> 1) with ex -> Error ex)
                         | ReadSessionId ->
                             reply (match session with
                                    | Some id -> Ok((fun sid -> NativeAgentSessionId("agy",sid)) id)

@@ -135,6 +135,21 @@ let tests=testSequenced <| testList "Agy actor V304" [
         match identityAtEndBarrier "3.0.4" with
         | Some(NativeAgentSessionId("agy",sid)) -> Expect.isFalse (String.IsNullOrWhiteSpace sid) "same journal can immediately restore native identity"
         | actual -> failtestf "Missing committed identity at End: %A" actual
+    testCase "root cause V303 public session Ask returned a bare SID instead of Result" <| fun () -> withFixture ReActParticipantKind.Native (fun node cs loop _ participant args _ events ->
+        let create=evaluated<NativeCreationV400,IAgent<string,obj>> "4.0.8" node FodexFunRegistrationV408.targetServiceNative
+        let agent=create(node,loop,cs,ctx,[||],(participant,args,dict [])) |> required
+        loop.UpsertParticipant(participant,agent) |> required
+        agent.Send(box(RunTurn(StartTurn,box "ECHO",0L,None))) |> required |> ignore
+        let terminal=task {
+            let mutable found=None
+            while found.IsNone do
+                let! _,_,event=events.Reader.ReadAsync().AsTask().WaitAsync(TimeSpan.FromSeconds 10.)
+                match event with AgentEnd(_,_,Message text) -> found<-Some text | _ -> ()
+            return found.Value } |> wait
+        Expect.equal terminal "FIXTURE_OK" "not an uninitialized session failure"
+        match agent.GetSessionId() with
+        | Error error -> Expect.stringContains error.Message "Ask expected message of type" "old reply unwrapped the successful native SID"
+        | Ok _ -> failtest "V303 protocol mismatch reproduction unexpectedly passed")
     testCase "pending preflight reports busy and Stop cancels it before any CLI generation" <| fun () -> withFixture ReActParticipantKind.Native (fun node cs loop _ participant args folder _ ->
         let pending:Expr<NativePreflightInputV100 -> FeasibleT<_,Task<Result<JsonElement array,exn>>,exn>> =
             <@ fun _ -> fun (_,_,_,_,_,ct) -> Ok(task {
@@ -180,6 +195,9 @@ let tests=testSequenced <| testList "Agy actor V304" [
             return ended.Value }
         let terminal=finished |> wait
         Expect.equal terminal "FIXTURE_OK" "successful native terminal, not merely an AgentEnd carrying an error"
+        match agent.GetSessionId() |> required with
+        | NativeAgentSessionId("agy",sid) -> Expect.isFalse (String.IsNullOrWhiteSpace sid) "public IAgent Ask returns typed Result SID, not a bare DU"
+        | actual -> failtestf "Invalid public AGY session result: %A" actual
         let after=loop.PinReadDataFlowAsync(Some "3.0.1") session |> wait |> required
         match after.GetLabel(ReActEndpoint.Participant participant) with
         | ReActNode.Participant {SessionId=Some(NativeAgentSessionId("agy",sid))} -> Expect.isFalse (String.IsNullOrWhiteSpace sid) "actual terminal SID persisted"

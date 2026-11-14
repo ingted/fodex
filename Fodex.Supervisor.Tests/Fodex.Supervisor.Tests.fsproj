@@ -251,6 +251,9 @@
     <Compile Include="NativeAppServerFixtureV302.fsx"><Link>fodexFun/NativeAppServer/NativeAppServerFixtureV302.fsx</Link></Compile>
     <Compile Include="NativeAppServerV304Tests.fsx"><Link>fodexFun/NativeAppServer/NativeAppServerV304Tests.fsx</Link></Compile>
     <Compile Include="FodexFunRegistrationV409Tests.fsx"><Link>fodexFun/FodexFunRegistration/FodexFunRegistrationV409Tests.fsx</Link></Compile>
+    <Compile Include="NativeOwnerTestSupportV409.fsx"><Link>Fixtures/NativeOwnerTestSupportV409.fsx</Link></Compile>
+    <Compile Include="WrapperAgentV409Tests.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV409Tests.fsx</Link></Compile>
+    <Compile Include="ParticipantManagerFodexFunV405Tests.fsx"><Link>fodexFun/ParticipantManager/ParticipantManagerFodexFunV405Tests.fsx</Link></Compile>
     <Compile Include="FodexFunRegistrationV407Tests.fsx"><Link>fodexFun/FodexFunRegistration/FodexFunRegistrationV407Tests.fsx</Link></Compile>
     <Compile Include="NativeCompactFodexFunV302Tests.fsx"><Link>fodexFun/NativeCompact/NativeCompactFodexFunV302Tests.fsx</Link></Compile>
     <Compile Include="WrapperAgentV407Tests.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV407Tests.fsx</Link></Compile>

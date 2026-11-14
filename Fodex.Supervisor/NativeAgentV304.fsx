@@ -427,6 +427,9 @@ module NativeExecV304 =
                             let (SetValidatedNativePair(catalog,proposed,respond))=command
                             let result=
                                 try
+                                    let sid=session |> Option.map(fun value -> NativeAgentSessionId("codex",value))
+                                    let sessionCheck=FodexFunBinding.pin<NativeModelSessionCheckInputV100,unit> node (Some "1.0.0") NativePreflightFodexFunV100.targetSession
+                                    sessionCheck("codex",sid,active || preparing.IsSome) |> ReActLoopHandlerV300.required
                                     if preparing.IsSome || compacting.IsSome || (active && rawOrder.IsNone) then invalidOp "Cancel active native before applying settings"
                                     let next=check(catalog,proposed,SettingChangeV300.Model proposed.Model) |> ReActLoopHandlerV300.required
                                     let continuing=rawOrder
