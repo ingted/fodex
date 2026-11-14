@@ -47,6 +47,11 @@ module ServiceSupervisorFodexFunV104 =
             let globalOperation request = task {
                 try
                     match request.op with
+                    | "native_info" ->
+                        let cs=ConsoleHostFodexFunV405.connectionString defaults
+                        let session=request.sid,Some(System.Net.IPAddress.Parse(defaults.GetResult ConsoleArgumentV405.Bind_Ip))
+                        let read=FodexFunBinding.pin<NativeInfoInputV100,Task<Result<JsonElement,exn>>> node (Some "1.0.0") NativeInfoFodexFunV100.target
+                        return! FodexFunBinding.invokeAsync read (node,parent,cs,session)
                     | "cache" ->
                         let! result=cacheLoop.SharedCache(ServiceProtocolFodexFunV101.cache request.id request.text) |> required
                         let value,revision=result |> required
@@ -341,7 +346,7 @@ module ServiceSupervisorFodexFunV104 =
                         | Ok request when stopping -> fail recipient mailbox.Self request (ObjectDisposedException "Supervisor is stopping")
                         | Ok request ->
                             match request.op with
-                            | "cache" | "models" ->
+                            | "cache" | "models" | "native_info" ->
                                 let self=mailbox.Self
                                 Task.Run(fun () -> task {
                                     let! result=globalOperation request

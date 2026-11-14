@@ -63,6 +63,13 @@ module ServiceHostFodexFunV106 =
             let startCache=FodexFunBinding.pin<SharedCacheMcpStartInputV100,Task<Result<IAsyncDisposable,exn>>> node (Some "1.0.0") SharedCacheMcpFodexFunV100.target
             let! cache=startCache(node,ctx,cacheEndpoint.GetLeftPart(UriPartial.Authority),shared) |> required
             cacheHost<-Some(cache |> required)
+            // AGY uses a global named MCP registration. Establish it once per service
+            // lifetime after the dedicated endpoint is healthy; never mix root hub tools
+            // into that endpoint. Native preflight still verifies it on later launches.
+            let ensure=FodexFunBinding.pin<NativeAgyCacheInputV100,Task<Result<unit,exn>>> node (Some "1.0.0") NativeMcpConfigurationFodexFunV100.targetAgy
+            let executable=options.GetResult(ConsoleArgumentV405.Agy_Exe,defaultValue=NativeAgyModelCatalogFodexFunV300.defaultExecutable())
+            let! registered=FodexFunBinding.invokeAsync ensure (node,ctx,executable,options.GetResult ConsoleArgumentV405.Working_Directory,cacheEndpoint.AbsoluteUri,ct)
+            required registered
             let make:ServiceCreateV105=fun input ->
                 Ok(Task.Run(fun () -> task {
                     try

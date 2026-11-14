@@ -262,6 +262,7 @@
     <Compile Include="ParticipantHandoverFodexFunV402Tests.fsx"><Link>fodexFun/ParticipantHandover/ParticipantHandoverFodexFunV402Tests.fsx</Link></Compile>
     <Compile Include="ServiceProtocolFodexFunV101Tests.fsx"><Link>fodexFun/ServiceProtocol/ServiceProtocolFodexFunV101Tests.fsx</Link></Compile>
     <Compile Include="ServiceWrapperFodexFunV105Tests.fsx"><Link>fodexFun/ServiceWrapper/ServiceWrapperFodexFunV105Tests.fsx</Link></Compile>
+    <Compile Include="NativeInfoFodexFunV100Tests.fsx"><Link>fodexFun/NativeInfo/NativeInfoFodexFunV100Tests.fsx</Link></Compile>
     <Compile Include="ServiceTestSupportV104.fsx" />
     <Compile Include="ServiceSupervisorFodexFunV104Tests.fsx"><Link>fodexFun/ServiceSupervisor/ServiceSupervisorFodexFunV104Tests.fsx</Link></Compile>
     <Compile Include="ServiceMcpFodexFunV101Tests.fsx"><Link>fodexFun/Service/ServiceMcpFodexFunV101Tests.fsx</Link></Compile>

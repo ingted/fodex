@@ -4,6 +4,12 @@
 
 ## Console 與 JSONL
 
+2026-11-14 service 接線：Program412 → ServiceHost1.0.6／ServiceWrapper1.0.5／Factory4.1.0。啟動先恢復 SQL 共用 cache、確認獨立 MCP endpoint，並完成一次 AGY cache 註冊；create 只保留可操作的 logical Main，第一次 send 才啟 native。主 native 預設 AGY、sub native 預設 Codex。
+
+兩種 service mode 均提供獨立 cache MCP：`--cacheport 18825` 或 `--cache-url http://127.0.0.1:18825/mcp`。它與 `--mcpport` 的 root service MCP、wrapper 的 order hub 各自獨立；cache 只有 create/read/update/delete 四工具，root service MCP 維持原七工具加 `list_models`／`set_native_model`，共九工具。cache endpoint `/health` 在 SQL owner／恢復完成後才成功，關閉任一普通 wrapper 不清 cache。
+
+Akka v1 新控制 op：`cache`、`models`（不需 WSID）；`set_model`（完整 model+effort）；`asset_import`（只接受本機服務端允許的下載 root、驗 hash/大小、保存 durable copy）；`native_info`（先從 graph Main 與 typed binding 查證舊 root，缺證據拒絕，不啟 native）。沒有新增 LINE 對 Fodex SQL 內部表的依賴。
+
 ```powershell
 .\bin\CLI\Fodex.Supervisor.exe --mainagent-type agy
 .\bin\CLI\Fodex.Supervisor.exe --mainagent-type codex --json
@@ -16,7 +22,7 @@
 - console 仍用獨立一行 `;;` 提交多行輸入，`/exit` 後也需提交。
 - `--json` 的 stdout 只輸出 root wrapper 對外的 Fodex event JSONL。提示、啟動資訊、logger 與 `/show` 的 raw I/O 去 stderr；redirected stdin/stdout 採 UTF-8。
 
-JSON 重用現有 **`Fodex.ReActEdge`, schemaVersion 3**，完整保留 source、target、ReActEvent DU、streamId、causedBy 與 payload，不另做 provider 格式。事件位於 `edge.value.Item3`，source／target 分別是 `Item1`／`Item2`；F# 可用 `ReActJsonV300.deserialize<string>` 還原 typed edge。多行內容在單行 JSON 中使用 escape；每個 JSONL line 是完整 JSON object。
+JSON 使用 **`Fodex.ReActEdge`, schemaVersion 5**（新版 decoder 亦接受 schema 3／4），完整保留 source、target、ReActEvent DU、streamId、causedBy 與 payload，不另做 provider 格式。事件位於 `edge.value.Item3`，source／target 分別是 `Item1`／`Item2`；F# 可用 `ReActJsonV300.deserialize<string>` 還原 typed edge。多行內容在單行 JSON 中使用 escape；每個 JSONL line 是完整 JSON object。
 
 `/labels off` 不會刪除 JSON 的事件欄位。原生 Codex／agy stdout 並不是這個 JSONL 通道。
 

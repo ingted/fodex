@@ -245,6 +245,7 @@
     <Compile Include="ConsolePolicyFodexFunV410.fsx"><Link>fodexFun/ConsolePolicy/ConsolePolicyFodexFunV410.fsx</Link></Compile>
     <Compile Include="ConsoleHostFodexFunV410.fsx"><Link>fodexFun/ConsoleHost/ConsoleHostFodexFunV410.fsx</Link></Compile>
     <Compile Include="ServiceWrapperFodexFunV105.fsx"><Link>fodexFun/ServiceWrapper/ServiceWrapperFodexFunV105.fsx</Link></Compile>
+    <Compile Include="NativeInfoFodexFunV100.fsx"><Link>fodexFun/NativeInfo/NativeInfoFodexFunV100.fsx</Link></Compile>
     <Compile Include="ServiceSupervisorFodexFunV104.fsx"><Link>fodexFun/ServiceSupervisor/ServiceSupervisorFodexFunV104.fsx</Link></Compile>
     <Compile Include="ServiceMcpFodexFunV101.fsx"><Link>fodexFun/Service/ServiceMcpFodexFunV101.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV100.fsx"><Link>fodexFun/Service/ServiceHostFodexFunV100.fsx</Link></Compile>

@@ -9,7 +9,7 @@ description: Connect to a running Fodex wrapper MCP service to create or reconne
 
 若使用者明確要求啟動，服務語法為 `Fodex.Supervisor.exe --mode mcp --mcpport <HTTP-port> --akkaport <Akka-port> --akkaname <ActorSystem-name> --json`；省略設定時沿用預設。`--mode supervisor --akkaport <Akka-port> --akkaname <ActorSystem-name>` 只有 Akka service，沒有 MCP endpoint。不要使用先前 V406 的 `--mode <mode> <port>` 語法。舊 `--port`／`--service-url` 仍可用，但與新旗標明確指定的同一個 port 不能衝突。
 
-先確認 client 已連到正確 server，查看 `tools/list`。本 service 應提供 `create_wrapper`、`list_wrappers`、`attach_wrapper`、`send_prompt`、`send_prompt_and_wait`、`receive_result`、`close_wrapper`。若看到的是 `hub_order`／`hub_receive`，那是 wrapper native 的 subagent hub，不能拿來建立 root wrapper。
+先確認 client 已連到正確 server，查看 `tools/list`。本 service 應提供 `create_wrapper`、`list_wrappers`、`attach_wrapper`、`send_prompt`、`send_prompt_and_wait`、`receive_result`、`close_wrapper`、`list_models`、`set_native_model` 共九項。若看到的是 `hub_order`／`hub_receive`，那是 wrapper native 的 subagent hub，不能拿來建立 root wrapper。
 
 ## 建立或重連
 
@@ -32,7 +32,11 @@ description: Connect to a running Fodex wrapper MCP service to create or reconne
 
 ## 輸出與控制
 
-`data.events[].text` 是 wrapper 的輸出：plain text，或 `--json` 所選的 Fodex event JSON。JSON 採 `Fodex.ReActEdge` schema 3，事件在 `edge.value.Item3`；不要把原始 Codex／agy stdout 混成 agent 回覆。
+`data.events[].text` 是 wrapper 的輸出：plain text，或 `--json` 所選的 Fodex event JSON。JSON 採 `Fodex.ReActEdge` schema 5，新 decoder 亦讀 schema 3／4，事件在 `edge.value.Item3`；不要把原始 Codex／agy stdout 混成 agent 回覆。
+
+`list_models` 查 provider 的動態目錄。`set_native_model` 一次傳完整 model／effort；驗證失敗不動原工作。AGY 首次生成仍未回 SID 時拒絕變更，待 SID 出現後由使用者重試，不暗中排隊套用。
+
+共用 cache 使用另一個 endpoint（預設 `http://127.0.0.1:18825/mcp`），不挪用 service 或 root hub。該 endpoint 只有 `cache_create`、`cache_read`、`cache_update`、`cache_delete`，沒有 root lifecycle 權限。key 大小寫有別，尾端空白拒絕；value 為原樣文字。C/U/D 使用穩定 GUID operationId 重試，R 不建立不存在的值。不同 wrapper 共用同一 authority，關閉個別 wrapper 不清 cache。
 
 wrapper 命令可透過 `send_prompt` 送入，例如 `/list_participant`、`/subagent(2,raw,codex)`、`/cancel(ALL)`。這些動作仍需符合使用者授權的工作範圍；列出狀態不代表可以建立／停止別人的 participant。
 

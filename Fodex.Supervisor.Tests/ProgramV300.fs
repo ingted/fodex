@@ -56,6 +56,7 @@ let main argv =
                 ParticipantHandoverFodexFunV402Tests.tests
                 ServiceProtocolFodexFunV101Tests.tests
                 ServiceWrapperFodexFunV105Tests.tests
+                NativeInfoFodexFunV100Tests.tests
                 ServiceSupervisorFodexFunV104Tests.tests
                 ServiceMcpFodexFunV101Tests.tests
                 ServiceHostFodexFunV106Tests.tests

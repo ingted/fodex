@@ -17,10 +17,24 @@ open Fodex.Supervisor.Contracts.Concepts
 open ImplementationTestSupportV300
 open ImplementationTestSupportV301
 open SharedCacheTestSupport
+open Fodex.Supervisor.Contracts.CommandMod
+open Microsoft.FSharp.Quotations
+
+let mutable registrationCalls=0
+/// Only global AGY configuration is substituted; cache endpoint verification remains real HTTP.
+let isolatedRegistration ((node,_,_,_,url,_):NativeAgyCacheInputV100)=task {
+    System.Threading.Interlocked.Increment(&registrationCalls) |> ignore
+    let check=FodexFunBinding.pin<string,Task<Result<unit,exn>>> node (Some "1.0.0") "SharedCache.CheckEndpoint"
+    return! FodexFunBinding.invokeAsync check url }
+let isolatedQuotation:Expr<NativeAgyCacheInputV100 -> FeasibleT<_,Task<Result<unit,exn>>,exn>> = <@ fun _ -> fun input -> Ok(isolatedRegistration input) @>
 
 /// 呼叫實際Host quotation，使用獨立SQL資料庫與隨機port；不啟native/LLM。
 let checkHost mode=withDatabase(fun cs ->
     FodexFunctions.initialize()
+    let registry=FodexFun<NativeAgyCacheInputV100,Task<Result<unit,exn>>,exn>(VersionRegistry<FeasibleFun<NativeAgyCacheInputV100,Task<Result<unit,exn>>,exn>>.BaseCD,NativeMcpConfigurationFodexFunV100.targetAgy)
+    let original=registry[System.Version(1,0,0)] |> Option.get
+    registry.Register(System.Version(1,0,0),FeasibleFun<_,_,_>(isolatedQuotation))
+    let before=registrationCalls
     let db=Microsoft.Data.SqlClient.SqlConnectionStringBuilder cs
     let name="fdx-host106-"+Guid.NewGuid().ToString("N")
     let cacheUrl=ServiceWrapperFodexFunV100.freeUrl()+"/mcp"
@@ -46,6 +60,7 @@ let checkHost mode=withDatabase(fun cs ->
         let ask request=actor.Ask<string>(ServiceProtocolFodexFunV101.encode request,TimeSpan.FromSeconds 10.) |> wait
         use health=JsonDocument.Parse(http.GetStringAsync(Uri(endpoint,"/health")) |> wait)
         Expect.isTrue (health.RootElement.GetProperty("ok").GetBoolean()) "SQL lease, restore and cache MCP ready before service address"
+        Expect.equal registrationCalls (before+1) "one AGY cache registration per service lifetime"
         Expect.equal (health.RootElement.GetProperty("scope").GetGuid()) storageId "fixed cache scope"
         use roots=JsonDocument.Parse(ask(ServiceProtocolFodexFunV101.request "list" Guid.Empty))
         Expect.equal (roots.RootElement.GetProperty("data").GetArrayLength()) 0 "service boot does not create wrappers/native"
@@ -56,6 +71,7 @@ let checkHost mode=withDatabase(fun cs ->
             use service=JsonDocument.Parse(http.GetStringAsync(serviceUrl+"/health") |> wait)
             Expect.isTrue (service.RootElement.GetProperty("ok").GetBoolean()) "second HTTP endpoint belongs to the root service"
     finally
+        registry.Register(System.Version(1,0,0),original)
         cancel.Cancel()
         let result=work.WaitAsync(TimeSpan.FromSeconds 20.) |> wait
         client.Terminate().WaitAsync(TimeSpan.FromSeconds 10.) |> waitUnit

@@ -72,7 +72,7 @@ module ServiceProtocolFodexFunV101 =
             let value=JsonSerializer.Deserialize<ServiceRequestV100>(text,options)
             if isNull(box value) || value.v<>1 then invalidArg "v" "Expected service protocol v=1"
             if String.IsNullOrWhiteSpace value.id || value.id.Length>128 then invalidArg "id" "A nonempty request id of at most 128 characters is required"
-            let known=["create";"attach";"send";"send_wait";"receive";"close";"list";"shutdown";"cache";"models";"set_model";"asset_import"]
+            let known=["create";"attach";"send";"send_wait";"receive";"close";"list";"shutdown";"cache";"models";"set_model";"asset_import";"native_info"]
             if not(List.contains value.op known) then invalidArg "op" "Unsupported service operation"
             let globalOperation=List.contains value.op ["create";"list";"shutdown";"cache";"models"]
             if not globalOperation && value.sid=Guid.Empty then invalidArg "sid" "Wrapper SID is required"
