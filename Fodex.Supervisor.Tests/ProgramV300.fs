@@ -56,6 +56,9 @@ let main argv =
                 ParticipantHandoverFodexFunV402Tests.tests
                 ServiceProtocolFodexFunV101Tests.tests
                 ServiceWrapperFodexFunV105Tests.tests
+                ServiceSupervisorFodexFunV104Tests.tests
+                ServiceMcpFodexFunV101Tests.tests
+                ServiceHostFodexFunV106Tests.tests
                 ReActCheckpointFodexFunV301Tests.tests
                 ReActJsonV301Tests.tests; ReActTopologyFodexFunV301Tests.tests
                 ReActJsonV302Tests.tests; ReActTopologyFodexFunV302Tests.tests

@@ -151,18 +151,21 @@ module FodexFunctions =
             ServiceSupervisorFodexFunV101.Definitions.builtins
             ServiceSupervisorFodexFunV102.Definitions.builtins
             ServiceSupervisorFodexFunV103.Definitions.builtins
+            ServiceSupervisorFodexFunV104.Definitions.builtins
             ServiceWrapperFodexFunV100.Definitions.builtins
             ServiceWrapperFodexFunV101.Definitions.builtins
             ServiceWrapperFodexFunV102.Definitions.builtins
             ServiceWrapperFodexFunV103.Definitions.builtins
             ServiceWrapperFodexFunV104.Definitions.builtins
             ServiceMcpFodexFunV100.Definitions.builtins
+            ServiceMcpFodexFunV101.Definitions.builtins
             ServiceHostFodexFunV100.Definitions.builtins
             ServiceHostFodexFunV101.Definitions.builtins
             ServiceHostFodexFunV102.Definitions.builtins
             ServiceHostFodexFunV103.Definitions.builtins
             ServiceHostFodexFunV104.Definitions.builtins
             ServiceHostFodexFunV105.Definitions.builtins
+            ServiceHostFodexFunV106.Definitions.builtins
         |]
         |> Array.concat
 

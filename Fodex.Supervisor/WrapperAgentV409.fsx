@@ -475,7 +475,13 @@ module WrapperAgentV409 =
                     elif beginControl target cause callback then
                         let cancellation=new CancellationTokenSource()
                         modelCancellation[target]<-cancellation
-                        requestSettings target (function
+                        // 冷service只有graph Main metadata，不Resolve一個尚不存在的IAgent。
+                        // 有live actor時設定由actor回報；無live actor時由已保存argv提供舊設定。
+                        let live=match view.GetLabel(endpoint target) with ReActNode.Participant info -> info.ActorAddress.IsSome | _ -> false
+                        let readCurrent continuation=
+                            if live then requestSettings target continuation
+                            else continuation(NativeSettingsFodexFunV300.fromArguments ctx currentArguments |> Result.map(fun settings -> settings,false))
+                        readCurrent (function
                             | Error error -> controlReply target cause callback (Error error)
                             | Ok(current,isActive) ->
                                 let fallback=match nativeArgumentsByParticipant.TryGetValue target with true,value -> value | _ -> currentArguments
@@ -484,6 +490,7 @@ module WrapperAgentV409 =
                                 let work=Task.Run(fun () -> task {
                                     try
                                         let previous=loadNativeArguments(cs,session,target) |> required |> Option.defaultValue fallback
+                                        let current=if live then current else NativeSettingsFodexFunV300.fromArguments ctx previous |> required
                                         let! prepared=FodexFunBinding.invokeAsync prepareModel (node,ctx,previous,sid,isActive,current,model,effort,cancellation.Token)
                                         return prepared |> Result.map(fun (catalog,proposed,updated) -> catalog,proposed,previous,updated)
                                     with error -> return Error error })
@@ -501,12 +508,15 @@ module WrapperAgentV409 =
                                                             nativeArgumentsByParticipant[target]<-updated
                                                             // 與provider adoption相同：此欄保存有效main native參數。
                                                             // wrapper的hub/subagent選項仍由建構時options/manager持有。
-                                                            if currentMain=Some target then currentArguments<-updated
+                                                            if currentMain=Some target || ReActTopologyFodexFunV301.main(view,owner)=Ok target then
+                                                                currentMain<-Some target
+                                                                currentArguments<-updated
                                                             respond(Ok())
                                                         | Error error ->
                                                             asyncResult (Task.Run(fun () -> saveNativeArguments(cs,session,target,previous))) (function
                                                                 | Ok() -> respond(Error error)
                                                                 | Error rollback -> respond(Error(AggregateException(error,rollback) :> exn)))
+                                                    if not live then accepted(Ok()) else
                                                     match (agent target).Send(box(SetValidatedNativePair(catalog,proposed,fun result -> post(fun () -> accepted result)))) with
                                                     | Ok _ -> ()
                                                     | Error error -> accepted(Error error))
@@ -1020,6 +1030,7 @@ module WrapperAgentV409 =
                                 let sender=mailbox.Sender()
                                 let answer result=sender.Tell(result:Result<int,exn>)
                                 if started || starting then answer(Ok 0) else
+                                if controls.Count>0 then answer(Error(InvalidOperationException "Main configuration/control is busy; retry Start after acknowledgement")) else
                                 let existing=ReActTopologyFodexFunV301.relations(graph()) |> Array.tryPick(function
                                     | source,ReActEndpoint.Participant p,ReActRelation.Main when source=endpoint owner -> Some p
                                     | _ -> None)

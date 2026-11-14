@@ -78,6 +78,17 @@ module ServiceWrapperFodexFunV105 =
                 owned<-Some factory
                 let loop=factory.CreateReActLoop(node,arguments,ctx) |> required
                 let wrapper=factory.CreateWrapper(node,arguments,ctx) |> required
+                // 冷建立也保留Main的邏輯編號，讓set_model有唯一目標；不是建立native資源。
+                // 已恢復的Main及其參數不可被新預設值覆蓋；首次send才由wrapper建立IAgent/process。
+                let graph=loop.ReadDataFlow session |> required
+                let main=ReActTopologyFodexFunV301.relations graph |> Array.tryPick(function
+                    | ReActEndpoint.Participant parent,ReActEndpoint.Participant child,ReActRelation.Main when parent=(1L,session) -> Some child
+                    | _ -> None)
+                if main.IsNone then
+                    let participant=loop.PinParticipantReservation(Some "3.0.0")((1L,session),"main",ReActParticipantKind.Native,Some ReActRelation.Main,None) |> required
+                    let nativeText=WrapperAgentV409.nativeArguments ctx arguments "main" None None
+                    FodexFunBinding.pin<string*ReActParticipantSessionId*ReActParticipant*string,unit>
+                        node (Some "4.0.2") ParticipantConfigurationFodexFunV402.targetSave (cs,session,participant,nativeText) |> required
                 // Resolve the typed registry partition inside the LongRunning bootstrap.
                 // A first receive must not synchronously load quotation SQL in the actor worker.
                 let collectHistory=loop.PinCollectAsync(Some "3.0.1")
