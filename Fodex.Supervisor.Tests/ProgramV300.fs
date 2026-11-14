@@ -31,6 +31,8 @@ let main argv =
                 ReActDataStoreV402Tests.tests
                 ReActCheckpointFodexFunV301Tests.tests
                 ReActJsonV301Tests.tests; ReActTopologyFodexFunV301Tests.tests
+                ReActJsonV302Tests.tests; ReActTopologyFodexFunV302Tests.tests
+                ReActCheckpointFodexFunV302Tests.tests
                 ReActJsonV200Tests.tests; ReActDataStoreV200Tests.tests; ReActDataStoreV300Tests.tests
                 ProcSupervisorV201Tests.tests; NLogLoggingTests.tests
                 NativeProcessFodexFunV301Tests.tests

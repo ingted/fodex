@@ -28,13 +28,16 @@
     <Compile Include="ReActJsonV200.fsx"><Link>fodexFun/ReActJson/ReActJsonV200.fsx</Link></Compile>
     <Compile Include="ReActJsonV300.fsx"><Link>fodexFun/ReActJson/ReActJsonV300.fsx</Link></Compile>
     <Compile Include="ReActJsonV301.fsx"><Link>fodexFun/ReActJson/ReActJsonV301.fsx</Link></Compile>
+    <Compile Include="ReActJsonV302.fsx"><Link>fodexFun/ReActJson/ReActJsonV302.fsx</Link></Compile>
     <Compile Include="ReActDataStoreV200.fsx"><Link>fodexFun/ReActDataStore/ReActDataStoreV200.fsx</Link></Compile>
     <Compile Include="ReActDataStoreV205.fsx"><Link>fodexFun/ReActDataStore/ReActDataStoreV205.fsx</Link></Compile>
     <Compile Include="ReActDataStoreV300.fsx"><Link>fodexFun/ReActDataStore/ReActDataStoreV300.fsx</Link></Compile>
     <Compile Include="ReActTopologyFodexFunV300.fsx"><Link>fodexFun/ReActTopology/ReActTopologyFodexFunV300.fsx</Link></Compile>
     <Compile Include="ReActTopologyFodexFunV301.fsx"><Link>fodexFun/ReActTopology/ReActTopologyFodexFunV301.fsx</Link></Compile>
+    <Compile Include="ReActTopologyFodexFunV302.fsx"><Link>fodexFun/ReActTopology/ReActTopologyFodexFunV302.fsx</Link></Compile>
     <Compile Include="ReActCheckpointFodexFunV300.fsx"><Link>fodexFun/ReActCheckpoint/ReActCheckpointFodexFunV300.fsx</Link></Compile>
     <Compile Include="ReActCheckpointFodexFunV301.fsx"><Link>fodexFun/ReActCheckpoint/ReActCheckpointFodexFunV301.fsx</Link></Compile>
+    <Compile Include="ReActCheckpointFodexFunV302.fsx"><Link>fodexFun/ReActCheckpoint/ReActCheckpointFodexFunV302.fsx</Link></Compile>
     <Compile Include="SupervisorArgs.fsx" />
     <Compile Include="ActorLogging.fsx" />
     <Compile Include="NativeOutputFodexFunV300.fsx"><Link>fodexFun/NativeOutput/NativeOutputFodexFunV300.fsx</Link></Compile>

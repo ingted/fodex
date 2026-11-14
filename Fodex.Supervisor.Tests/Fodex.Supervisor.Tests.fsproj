@@ -129,6 +129,10 @@
     <None Include="M018ConsoleInputSmoke.fsx" />
     <Compile Include="ImplementationTestSupportV301.fsx" />
     <Compile Include="ParticipantRestartTestSupport.fsx"><Link>fodexFun/ParticipantRestart/ParticipantRestartTestSupport.fsx</Link></Compile>
+    <Compile Include="SharedCacheTestSupport.fsx"><Link>fodexFun/SharedCache/SharedCacheTestSupport.fsx</Link></Compile>
+    <Compile Include="ReActJsonV302Tests.fsx"><Link>fodexFun/SharedCache/ReActJsonV302Tests.fsx</Link></Compile>
+    <Compile Include="ReActTopologyFodexFunV302Tests.fsx"><Link>fodexFun/SharedCache/ReActTopologyFodexFunV302Tests.fsx</Link></Compile>
+    <Compile Include="ReActCheckpointFodexFunV302Tests.fsx"><Link>fodexFun/SharedCache/ReActCheckpointFodexFunV302Tests.fsx</Link></Compile>
     <Compile Include="ReActJsonV301Tests.fsx"><Link>fodexFun/ParticipantRestart/ReActJsonV301Tests.fsx</Link></Compile>
     <Compile Include="ReActTopologyFodexFunV301Tests.fsx"><Link>fodexFun/ParticipantRestart/ReActTopologyFodexFunV301Tests.fsx</Link></Compile>
     <Compile Include="ReActCheckpointFodexFunV301Tests.fsx"><Link>fodexFun/ReActCheckpoint/ReActCheckpointFodexFunV301Tests.fsx</Link></Compile>

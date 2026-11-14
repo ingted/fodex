@@ -13,6 +13,9 @@ module FodexFunctions =
     let builtins =
         [|
             ReActJsonV301.Definitions.builtins
+            ReActJsonV302.Definitions.builtins
+            ReActTopologyFodexFunV302.Definitions.builtins
+            ReActCheckpointFodexFunV302.Definitions.builtins
             ReActTopologyFodexFunV301.Definitions.builtins
             ReActTopologyFodexFunV300.Definitions.builtins
             ReActCheckpointFodexFunV301.Definitions.builtins
