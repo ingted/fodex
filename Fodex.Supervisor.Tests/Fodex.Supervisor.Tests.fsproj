@@ -144,6 +144,8 @@
     <Compile Include="NativeMcpConfigurationFodexFunV100Tests.fsx"><Link>fodexFun/NativeMcpConfiguration/NativeMcpConfigurationFodexFunV100Tests.fsx</Link></Compile>
     <Compile Include="NativePreflightFodexFunV100Tests.fsx"><Link>fodexFun/NativePreflight/NativePreflightFodexFunV100Tests.fsx</Link></Compile>
     <Compile Include="NativeAgyFixtureV304.fsx"><Link>Fixtures/NativeAgyFixtureV304.fsx</Link></Compile>
+    <Compile Include="NativeExecFixtureV304.fsx"><Link>Fixtures/NativeExecFixtureV304.fsx</Link></Compile>
+    <Compile Include="NativeExecV304Tests.fsx"><Link>fodexFun/NativeExec/NativeExecV304Tests.fsx</Link></Compile>
     <Compile Include="NativeAgyFodexFunV304Tests.fsx"><Link>fodexFun/NativeAgy/NativeAgyFodexFunV304Tests.fsx</Link></Compile>
     <Compile Include="ReActDataStoreV403Tests.fsx"><Link>fodexFun/SharedCache/ReActDataStoreV403Tests.fsx</Link></Compile>
     <Compile Include="ReActJsonV302Tests.fsx"><Link>fodexFun/SharedCache/ReActJsonV302Tests.fsx</Link></Compile>

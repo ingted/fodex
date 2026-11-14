@@ -233,6 +233,7 @@
     <Compile Include="NativePreflightFodexFunV100.fsx"><Link>fodexFun/NativePreflight/NativePreflightFodexFunV100.fsx</Link></Compile>
     <Compile Include="NativeAgyFodexFunV304.fsx"><Link>fodexFun/NativeAgy/NativeAgyFodexFunV304.fsx</Link></Compile>
     <Compile Include="NativeAppServerV304.fsx"><Link>fodexFun/NativeAppServer/NativeAppServerV304.fsx</Link></Compile>
+    <Compile Include="NativeAgentV304.fsx"><Link>fodexFun/NativeExec/NativeAgentV304.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV100.fsx"><Link>fodexFun/Service/ServiceHostFodexFunV100.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV101.fsx"><Link>fodexFun/Service/ServiceHostFodexFunV101.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV102.fsx"><Link>fodexFun/ServiceHost/ServiceHostFodexFunV102.fsx</Link></Compile>

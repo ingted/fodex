@@ -8,7 +8,7 @@ open Expecto
 /// 需求、root-cause 重現與仍缺少的整合驗收見 TestCases.BeforeRefactor.md。
 [<EntryPoint>]
 let main argv =
-    match NativeAgyFixtureV304.tryRun argv |> Option.orElseWith(fun () -> NativeAppServerFixtureV302.tryRun argv) with
+    match NativeExecFixtureV304.tryRun argv |> Option.orElseWith(fun () -> NativeAgyFixtureV304.tryRun argv) |> Option.orElseWith(fun () -> NativeAppServerFixtureV302.tryRun argv) with
     | Some serving -> serving.GetAwaiter().GetResult()
     | None ->
         testList "Supervisor" [
@@ -44,6 +44,7 @@ let main argv =
                 NativePreflightFodexFunV100Tests.tests
                 NativeAgyFodexFunV304Tests.tests
                 NativeAppServerV304Tests.tests
+                NativeExecV304Tests.tests
                 ReActCheckpointFodexFunV301Tests.tests
                 ReActJsonV301Tests.tests; ReActTopologyFodexFunV301Tests.tests
                 ReActJsonV302Tests.tests; ReActTopologyFodexFunV302Tests.tests
