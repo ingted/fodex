@@ -88,6 +88,8 @@ module FodexFunctions =
             WrapperAgentV409.Definitions.builtins
             ParticipantManagerFodexFunV405.Definitions.builtins
             FodexAgentFodexFunV410.Definitions.builtins
+            ConsolePolicyFodexFunV410.Definitions.builtins
+            ConsoleHostFodexFunV410.Definitions.builtins
             ParticipantOperationsFodexFunV405.Definitions.builtins
             ParticipantHandoverFodexFunV400.Definitions.builtins
             ParticipantHandoverFodexFunV401.Definitions.builtins

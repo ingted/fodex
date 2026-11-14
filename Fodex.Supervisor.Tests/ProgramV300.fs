@@ -50,6 +50,8 @@ let main argv =
                 WrapperAgentV409Tests.tests
                 ParticipantManagerFodexFunV405Tests.tests
                 FodexAgentFodexFunV410Tests.tests
+                ConsolePolicyFodexFunV410Tests.tests
+                ConsoleHostFodexFunV410Tests.tests
                 ReActCheckpointFodexFunV301Tests.tests
                 ReActJsonV301Tests.tests; ReActTopologyFodexFunV301Tests.tests
                 ReActJsonV302Tests.tests; ReActTopologyFodexFunV302Tests.tests
