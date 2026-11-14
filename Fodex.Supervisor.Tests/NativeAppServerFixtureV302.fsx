@@ -66,6 +66,9 @@ let serve endpoint folder = task {
             | false,_ -> () // initialized notification 不需要 reply。
             | true,id ->
                 let methodName = request.GetProperty("method").GetString()
+                // 測試receipt，不改RPC行為；供304檢查真正送入的cache設定。
+                let fileName=System.Text.RegularExpressions.Regex.Replace(methodName,"[^A-Za-z0-9_-]","-")+".request.json"
+                writeText (Path.Combine(folder,fileName)) (request.GetRawText())
                 if methodName="thread/start" then
                     writeText (Path.Combine(folder,"thread-start.pending")) "received"
                     while not(File.Exists(Path.Combine(folder,"thread-start.release"))) do
