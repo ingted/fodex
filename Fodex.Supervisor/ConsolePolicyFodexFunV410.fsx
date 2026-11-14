@@ -5,6 +5,8 @@ namespace Fodex.Supervisor
 open System
 open Argu
 open LoggerUtil
+open System.Text.Json
+open System.Text.Encodings.Web
 open Microsoft.FSharp.Quotations
 open Fodex.Supervisor.Contracts.Concepts
 
@@ -25,6 +27,9 @@ module ConsolePolicyFodexFunV410 =
     let cacheParser=ArgumentParser.Create<CacheArgumentV410>(programName="Fodex.Supervisor")
     let defaultCacheUrl="http://127.0.0.1:18825/mcp"
     let required=function Ok value -> value | Error(error:exn) -> raise error
+    let tokenOptions=JsonSerializerOptions(Encoder=JavaScriptEncoder.UnsafeRelaxedJsonEscaping)
+    /// PL接受quoted backslash/quote與字面Unicode，不接受JSON的\u escape；也不能flatten raw Windows路徑。
+    let quoteTokens (tokens:string array)=tokens |> Array.map(fun token -> JsonSerializer.Serialize(token,tokenOptions)) |> String.concat " "
     let remaining (options:ParseResults<CacheArgumentV410>)=
         Array.append (options.UnrecognizedCliParams |> List.toArray) (if options.IsUsageRequested then [|"--help"|] else [||])
 
@@ -48,11 +53,19 @@ module ConsolePolicyFodexFunV410 =
             if not(List.contains uri.Scheme ["http";"https"]) || uri.Port<1 || uri.Port>65535 || uri.UserInfo<>"" || uri.Query<>"" || uri.Fragment<>"" ||
                not(List.contains uri.AbsolutePath ["/";"/mcp"]) then invalidArg "cache-url" "Expected an HTTP(S) cache endpoint without user info, query or fragment"
             endpoint.Path<-"/mcp"
-            let previous=ConsolePolicyFodexFunV403.pinBase<_,ConsoleStartupV407> "4.0.7" targetParse
-            // 先讓舊parser合併文字defaults，再讓外部argv覆寫；Argu formatter負責帶空白/引號的值。
-            let initialOptions,defaultName=previous(ctx,ConsolePolicyFodexFunV405.defaults,remaining defaults) |> required
-            let normalized=ConsolePolicyFodexFunV405.parser.PrintCommandLineArgumentsFlat(initialOptions.GetAllResults())
-            let options,name=previous(ctx,normalized,remaining changes) |> required
+            // 沿用407的純endpoint normalize，避開其舊PrintFlat→PL不相容的字串往返。
+            // 只呼叫405的建構q一次，provider/model預設值仍由原政策決定。
+            let parser=ConsolePolicyFodexFunV405.parser
+            let seed=PL.parseLine ctx [|' '|] (Some '"') None true (ConsolePolicyFodexFunV405.defaults.ReplaceLineEndings(" ").Trim())
+            let seedArgs,_=ConsolePolicyFodexFunV407.normalize false "http://127.0.0.1:18824" seed
+            let seeded=parser.ParseCommandLine(seedArgs,raiseOnUsage=false)
+            let initialArgs,defaultName=ConsolePolicyFodexFunV407.normalize false (seeded.GetResult ConsoleArgumentV405.Service_Url) (remaining defaults)
+            let initialOptions=parser.ParseCommandLine(initialArgs,raiseOnUsage=false)
+            let combined=ParticipantArgumentsFodexFunV402.merge (seeded.GetAllResults()) (initialOptions.GetAllResults())
+            let initialOptions=parser.ParseCommandLine(parser.PrintCommandLineArguments combined,raiseOnUsage=false)
+            let changes,name=ConsolePolicyFodexFunV407.normalize true (initialOptions.GetResult ConsoleArgumentV405.Service_Url) (remaining changes)
+            let previous=ConsolePolicyFodexFunV403.pinBase<_,ParseResults<ConsoleArgumentV405>> "4.0.5" targetParse
+            let options=previous(ctx,quoteTokens(parser.PrintCommandLineArguments(initialOptions.GetAllResults())),changes) |> required
             Ok(options,Option.orElse defaultName name,endpoint.Uri)
         with error -> Error error
     let usage()="Shared cache options:\n  --cacheport <1..65535>\n  --cache-url <http[s]://host:port/mcp>\n\n"+ConsolePolicyFodexFunV407.usage()

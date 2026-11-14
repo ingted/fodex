@@ -36,6 +36,11 @@ let tests=testList "Console policy V410 cache endpoint" [
         let options,_,_=parse [|"--mainagent-type";"codex"|] |> required
         Expect.equal (options.GetResult ConsoleArgumentV405.Native_Adapter) "app-server" "provider-specific adapter"
         Expect.equal (options.GetResult ConsoleArgumentV405.Model) "gpt-6.1-sol" "provider-specific model"
+    testCase "quoted defaults preserve Windows backslashes spaces and Unicode paths" <| fun () ->
+        let folder=IO.Path.GetFullPath("E:/deletable/fodex/1114-console-defaults/folder 中文")
+        let text=ConsolePolicyFodexFunV405.defaults+"\n--working-directory \""+folder.Replace("\\","\\\\")+"\""
+        let options,_,_=parseWith text [||] |> required
+        Expect.equal (options.GetResult ConsoleArgumentV405.Working_Directory) folder "Argu token cannot be flattened with incompatible escaping"
     testCase "instruction content containing cache flag text is not interpreted as an endpoint" <| fun () ->
         let text="keep --cacheport 19999 as literal text"
         let options,_,url=parse [|"--prompt";text|] |> required

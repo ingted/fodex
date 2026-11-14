@@ -93,6 +93,7 @@ module FodexFunctions =
             FodexAgentFodexFunV410.Definitions.builtins
             ConsolePolicyFodexFunV410.Definitions.builtins
             ConsoleHostFodexFunV410.Definitions.builtins
+            ServiceWrapperFodexFunV105.Definitions.builtins
             ParticipantOperationsFodexFunV405.Definitions.builtins
             ParticipantHandoverFodexFunV400.Definitions.builtins
             ParticipantHandoverFodexFunV401.Definitions.builtins
