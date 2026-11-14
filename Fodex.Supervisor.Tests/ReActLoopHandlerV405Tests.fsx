@@ -73,6 +73,10 @@ let tests=testSequenced <| testList "Shared cache owner V405" [
         let clock=System.Diagnostics.Stopwatch.StartNew()
         loop.PinReadDataFlowAsync(Some "3.0.1") session |> fun task -> task.WaitAsync(TimeSpan.FromSeconds 1.) |> wait |> required |> ignore
         Expect.isLessThan clock.Elapsed.TotalSeconds 1. "ordinary mailbox remains available"
+        let output=ReActEndpoint.Participant(1L,session),ReActEndpoint.Human,AgentWork(0L,0L,MessageCompleted("normal-output","still progressing"))
+        clock.Restart()
+        loop.RouteReActDataStream output |> required |> ignore
+        Expect.isLessThan clock.Elapsed.TotalSeconds 1. "ordinary output SQL persist and sink remain available, not only in-memory graph reads"
         Expect.equal (work |> wait |> required) (Some "v",2L) "the original request eventually commits once"
         stop owner))
 

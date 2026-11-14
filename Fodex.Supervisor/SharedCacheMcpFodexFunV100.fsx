@@ -203,7 +203,16 @@ module SharedCacheMcpFodexFunV100 =
 
     let startQuotation:Expr<SharedCacheMcpStartInputV100 -> FeasibleT<_,Task<Result<IAsyncDisposable,exn>>,exn>> = <@ fun _ -> fun input -> Ok(start input) @>
     let clientQuotation:Expr<SharedCacheClientInputV100 -> FeasibleT<_,Task<Result<string option*int64,exn>>,exn>> = <@ fun _ -> fun input -> Ok(clientCommand input) @>
+    /// 管理CLI改全域設定前先驗health與四工具；probe完成即釋放，不持有另一份KV。
+    let checkEndpoint url=task {
+        try
+            let! client=connect url
+            do! client.DisposeAsync().AsTask()
+            return Ok()
+        with error -> return Error error }
+    let checkQuotation:Expr<string -> FeasibleT<_,Task<Result<unit,exn>>,exn>> = <@ fun _ -> fun url -> Ok(checkEndpoint url) @>
     [<AutoOpen>]
     module Definitions =
         let builtins=[|FodexFunRegistry.declare target version startQuotation
-                       FodexFunRegistry.declare targetClient version clientQuotation|]
+                       FodexFunRegistry.declare targetClient version clientQuotation
+                       FodexFunRegistry.declare "SharedCache.CheckEndpoint" version checkQuotation|]

@@ -78,6 +78,7 @@ module FodexFunctions =
             NativeSettingsFodexFunV301.Definitions.builtins
             NativeAgySettingsFodexFunV302.Definitions.builtins
             SharedCacheMcpFodexFunV100.Definitions.builtins
+            NativeMcpConfigurationFodexFunV100.Definitions.builtins
             ParticipantOperationsFodexFunV405.Definitions.builtins
             ParticipantHandoverFodexFunV400.Definitions.builtins
             ParticipantHandoverFodexFunV401.Definitions.builtins

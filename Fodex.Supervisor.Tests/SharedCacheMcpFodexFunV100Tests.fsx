@@ -37,6 +37,9 @@ let withHost action=withDatabase(fun cs -> withNode(fun node ->
 
 [<Tests>]
 let tests=testSequenced <| testList "Shared cache MCP V100" [
+    testCase "versioned endpoint check awaits health and tool discovery then releases its probe" <| fun () -> withHost(fun node _ _ url ->
+        let check=evaluated<string,Task<Result<unit,exn>>> "1.0.0" node "SharedCache.CheckEndpoint"
+        Expect.isOk (check(url+"/mcp") |> required |> wait) "real health and SDK discovery")
     testCase "real SDK tools list contains only four cache operations and CRUD is durable" <| fun () -> withHost(fun _ cs _ url ->
         use cancel=new CancellationTokenSource(TimeSpan.FromSeconds 30.)
         let client=McpClient.CreateAsync(new HttpClientTransport(HttpClientTransportOptions(Endpoint=Uri(url+"/mcp"))),cancellationToken=cancel.Token) |> wait

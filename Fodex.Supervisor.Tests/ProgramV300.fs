@@ -40,6 +40,7 @@ let main argv =
                 NativeModelDirectoryFodexFunV100Tests.tests
                 NativeSettingsFodexFunV301Tests.tests
                 NativeAgySettingsFodexFunV302Tests.tests
+                NativeMcpConfigurationFodexFunV100Tests.tests
                 ReActCheckpointFodexFunV301Tests.tests
                 ReActJsonV301Tests.tests; ReActTopologyFodexFunV301Tests.tests
                 ReActJsonV302Tests.tests; ReActTopologyFodexFunV302Tests.tests
