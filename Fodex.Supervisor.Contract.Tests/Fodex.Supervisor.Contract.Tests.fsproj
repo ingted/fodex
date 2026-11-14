@@ -27,6 +27,9 @@
     <Compile Include="ParticipantRestartDataTests.fsx" />
     <Compile Include="ReActLoopRestartParticipantTests.fsx" />
     <Compile Include="ReActLoopRouteNativeReActDataStreamTests.fsx" />
+    <Compile Include="SharedCacheDataTests.fsx" />
+    <Compile Include="ReActLoopSharedCacheTests.fsx" />
+    <Compile Include="ReActLoopSetNativeModelTests.fsx" />
     <Compile Include="Program.fs" />
     <None Include="README.md" />
   </ItemGroup>

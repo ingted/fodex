@@ -42,6 +42,10 @@ module LiteralsMod =
     [<Literal>]
     let targetReActLoopRestartParticipant = "ReActLoop.RestartParticipant"
     [<Literal>]
+    let targetReActLoopSharedCache = "ReActLoop.SharedCache"
+    [<Literal>]
+    let targetReActLoopSetNativeModel = "ReActLoop.SetNativeModel"
+    [<Literal>]
     let targetReActLoopRemoveParticipant = "ReActLoopRemoveParticipant"
     [<Literal>]
     let targetReActLoopResolveParticipant = "ReActLoopResolveParticipant"
@@ -111,6 +115,8 @@ module CommandMod =
     | ReActLoopCreateParticipants of CommandVersion
     | ReActLoopControlParticipants of CommandVersion
     | ReActLoopRestartParticipant of CommandVersion
+    | ReActLoopSharedCache of CommandVersion
+    | ReActLoopSetNativeModel of CommandVersion
     | ReActLoopRemoveParticipant of CommandVersion
     | ReActLoopResolveParticipant of CommandVersion
     | ReActLoopListParticipants of CommandVersion
@@ -407,6 +413,16 @@ module TypesMod =
     type TReActLoopRestartParticipant<'TParticipant, 'TAgentType, 'TInfo> =
         'TParticipant * 'TAgentType * string -> Task<Result<'TInfo, exn>>
 
+    /// operationId 是本次命令的冪等識別；同步 binding 錯誤與非同步 committed 結果分開。
+    /// 不在這裡定義 SQL／HTTP／owner actor；revision 是 cache journal 的 StreamId。
+    type TReActLoopSharedCache<'TCommand> =
+        FeasibleT<System.Guid * 'TCommand, Task<Result<string option * int64, exn>>, exn>
+
+    /// participant、model、effort 是一組提案；不能拆成先成功 model 再失敗 effort。
+    /// 外層 Result 用於同步參數／binding 錯誤，內層等待完整 validate/cancel/apply/persist。
+    type TReActLoopSetNativeModel<'TParticipant, 'TInfo> =
+        FeasibleT<'TParticipant * string * string, Task<Result<'TInfo, exn>>, exn>
+
     type TReActLoopUpsertParticipant<'TParticipant, 'TAgent> =
         FeasibleT<'TParticipant * 'TAgent, unit, exn>
 
@@ -566,6 +582,23 @@ module CoreMod =
     type ReActParticipantSessionId = Guid * IPAddress option
     type ReActParticipant = ReActParticipantId * ReActParticipantSessionId //actor 位置可能會變，但是 main wrapper
 
+    /// 共用文字 cache 的命令；Create 不覆寫、Update/Delete 不隱式建立，Read 不產生 mutation。
+    /// key 大小寫有別，value 保留原文字。驗證／衝突／持久化由 registry 中的版本化實作處理。
+    /// 例：Create("review.summary","第一行\n第二行")；operationId 由 SharedCache member 另行帶入。
+    /// 沒有 TTL、embedding 或模型摘要；不要把它與 VersionRegistry 的函數版本表混用。
+    type SharedCacheCommand =
+    | Create of key: string * value: string
+    | Read of key: string
+    | Update of key: string * value: string
+    | Delete of key: string
+
+    /// 只描述成功提交的變更；未接受的 Conflict／NotFound、Read 不得製造成功事件。
+    /// Deleted 保留 key 與事件 revision；tombstone／checkpoint 的儲存形狀由實作決定。
+    type SharedCacheMutation =
+    | Created of key: string * value: string
+    | Updated of key: string * value: string
+    | Deleted of key: string
+
     // Vertex key 是 logical identity；Human 由所屬 ReActLoop session 定界。
     // 即時 IAgent 留在 implementation 的 live binding；graph 保存的是可序列化的身分與關係。
     /// 例如 ReActEndpoint.Participant (participantId, wrapperSessionId)。
@@ -574,6 +607,9 @@ module CoreMod =
     type ReActEndpoint =
     | Human
     | Participant of ReActParticipant
+    /// 全服務共用 cache 的 journal namespace，不是 native／wrapper，也不分配 participant N。
+    /// StorageId 由同一 service 的持久化設定固定；不以 native SID 或動態 actor address 改 scope。
+    | SharedCache of storageId: Guid
 
     type CodexSessionId = string
 
@@ -651,13 +687,18 @@ module CoreMod =
 
     /// 舊資料只知道 endpoint 而沒有註冊 metadata 時，必須保留 unresolved，不能猜 N／parent。
     /// UnresolvedParticipant 可供讀歷史，但不能據此 /stop 或派工。
-    /// Human label 只配 Human key；Participant 與 UnresolvedParticipant 只配 Participant key。
+    /// Human label 只配 Human key；Participant 與 UnresolvedParticipant 只配 Participant key；
+    /// SharedCache label 只配 SharedCache key，不能將 cache 當作尚未綁定的 participant。
     /// label 不含 IAgent、IActorRef、Process、callback；新建尚未發話的節點也必須存在於 snapshot。
     [<RequireQualifiedAccess>]
     type ReActNode =
     | Human
     | UnresolvedParticipant
     | Participant of ReActParticipantInfo
+    /// 只配 SharedCache endpoint。Map 為 committed 有效值，tuple 為原文字及最近 mutation revision。
+    /// 它是 cache journal 的 FGL 投影，不是每個 wrapper 另一份可寫 Dictionary。
+    /// 不從 Map 消失推論完整刪除歷史；replay／tombstone 仍以該 scope 的 journal/checkpoint 為準。
+    | SharedCache of values: Map<string, string * int64>
 
     /// 同一張 FGL graph 內的 typed relation，方向固定為 owner wrapper -> participant。
     /// Owns 是生命週期親子關係；Main／Cot 是 owned participant 的角色，不從訊息方向推論。
@@ -808,6 +849,12 @@ module CoreMod =
     /// 例：(p,p,ParticipantRestartChanged(50L,40L,Activated(id,2L,Some("codex",oldSid),("agy",newSid),artifact)))。
     /// 硬性驗證、atomic persist/project、generation fence 與 physical cleanup 都由實作負責。
     | ParticipantRestartChanged of streamId: StreamId * causedBy: StreamId * phase: ParticipantRestartPhase
+    /// cache owner 專用 control self-edge：SharedCache(storageId) -> 相同 endpoint。
+    /// revision 就是此 streamId；同 operationId 同 payload 重試須回原結果，不增加第二個事件。
+    /// 一般 RouteReActDataStream 不得注入；只有 cache 命令的權威提交流程可產生此事件。
+    /// 不派送模型／LINE，不完成 turn，不列入 handover／compact 的 prompt-response context。
+    /// 例：(cache,cache,SharedCacheChanged(12L,operationId,Updated("k","value")))。
+    | SharedCacheChanged of streamId: StreamId * operationId: Guid * mutation: SharedCacheMutation
 
     // 原生 FGL labelled edge；不另包 envelope 或複製方向欄位。
     /// 例如 (ReActEndpoint.Human, wrapperEndpoint, HumanInit (1L, HumanPrompt "review"))。
@@ -1033,6 +1080,10 @@ module CoreMod =
             cmd.TryGetResult CommonCommand.ReActLoopControlParticipants
         let restartParticipantVersion =
             cmd.TryGetResult CommonCommand.ReActLoopRestartParticipant
+        let sharedCacheVersion =
+            cmd.TryGetResult CommonCommand.ReActLoopSharedCache
+        let setNativeModelVersion =
+            cmd.TryGetResult CommonCommand.ReActLoopSetNativeModel
         let upsertParticipantVersion =
             cmd.TryGetResult CommonCommand.ReActLoopUpsertParticipant
         let removeParticipantVersion =
@@ -1073,6 +1124,16 @@ module CoreMod =
                 ReActParticipant * NativeAgentType * string,
                 Task<Result<ReActParticipantInfo, exn>>
             > node targetReActLoopRestartParticipant
+        let versionedSharedCache =
+            reActLoopFodexFun<
+                Guid * SharedCacheCommand,
+                Task<Result<string option * int64, exn>>
+            > node targetReActLoopSharedCache
+        let versionedSetNativeModel =
+            reActLoopFodexFun<
+                ReActParticipant * string * string,
+                Task<Result<ReActParticipantInfo, exn>>
+            > node targetReActLoopSetNativeModel
         let versionedUpsertParticipant =
             reActLoopFodexFun<
                 ReActParticipant * IAgent<'TypedCmdToWrapper, 'TAgentCommMsg>,
@@ -1143,6 +1204,8 @@ module CoreMod =
         let createParticipants = pinAtStartup createParticipantsVersion versionedCreateParticipants
         let controlParticipants = pinAtStartup controlParticipantsVersion versionedControlParticipants
         let restartParticipant = pinAtStartup restartParticipantVersion versionedRestartParticipant
+        let sharedCache = pinAtStartup sharedCacheVersion versionedSharedCache
+        let setNativeModel = pinAtStartup setNativeModelVersion versionedSetNativeModel
         let upsertParticipant = pinAtStartup upsertParticipantVersion versionedUpsertParticipant
         let removeParticipant = pinAtStartup removeParticipantVersion versionedRemoveParticipant
         let resolveParticipant = pinAtStartup resolveParticipantVersion versionedResolveParticipant
@@ -1247,6 +1310,31 @@ module CoreMod =
         default this.RestartParticipant =
             fun input ->
                 runPinnedAsync targetReActLoopRestartParticipant restartParticipantVersion restartParticipant input
+
+        /// 共用 cache 的唯一邏輯入口；普通 wrapper loop 由實作轉送同一 service 的 cache owner。
+        /// operationId 是一次命令的冪等識別，同 id 不同 payload 必須拒絕；scope 不由 caller 任選。
+        /// Read 回 Some value + revision；成功 Create/Update 回目前值與 committed revision，Delete 回 None。
+        /// key 不存在回 Error；Conflict／NotFound 不變更已提交的值。Read 不增加 journal revision。
+        /// 成功代表 mutation 已持久化並更新 committed FGL，不是 enqueue 成功。
+        /// cache 不依 provider／Topic／root 分庫，也不因 wrapper compact/drop/restart 消失。
+        /// 例：match loop.SharedCache(id,Create("k","v")) with
+        ///     | Ok work -> let! result = work // result 是 durable 完成或非同步錯誤
+        ///     | Error error -> ...           // 同步 binding／參數錯誤，沒有啟動工作
+        /// 此 default 只 pin/eval/invoke registry operation，不建立 DB、server 或 native。
+        abstract member SharedCache: TReActLoopSharedCache<SharedCacheCommand>
+        default this.SharedCache =
+            fun input -> runPinned targetReActLoopSharedCache sharedCacheVersion sharedCache input
+
+        /// 一次調整同 provider 的 model+effort；wrapper participant 由 owner 沿 Main 找實際 leaf。
+        /// 先用該 provider 的成功 catalog 驗完整提案，失敗不得先 cancel 或套用其中一半。
+        /// active 才 cancel 並等待停止，再 apply/persist、只接續一次；idle 只改下一個 turn。
+        /// 回覆成功時仍是同一 N／provider／native SID／generation；不以 provider restart 偷換 session。
+        /// 與 stop／RestartParticipant 共用 owner 的控制邊界；不可另開互相覆蓋設定的旁路。
+        /// 例：loop.SetNativeModel(native,"provider-model","high")，外層 Result 與 Task 內結果分別檢查。
+        /// 限制、catalog 查詢、原子套用及失敗復原由版本化實作負責，不把 provider SDK 放 Contract。
+        abstract member SetNativeModel: TReActLoopSetNativeModel<ReActParticipant, ReActParticipantInfo>
+        default this.SetNativeModel =
+            fun input -> runPinned targetReActLoopSetNativeModel setNativeModelVersion setNativeModel input
 
         // 更新 logical participant 的 live IAgent binding；同一 logical identity 會覆寫目前的 IAgent。
         // 此 API 不等於 metadata／配號的 durable 註冊；raw exec 可以只有 owner worker 而沒有 IAgent。

@@ -197,6 +197,8 @@
     <Compile Include="ServiceSupervisorFodexFunV102Tests.fsx" />
     <Compile Include="ServiceSupervisorFodexFunV103Tests.fsx"><Link>fodexFun/ServiceSupervisor/ServiceSupervisorFodexFunV103Tests.fsx</Link></Compile>
     <Compile Include="ServiceProtocolFodexFunV100Tests.fsx" />
+    <!-- P0 執行式需求：獨立 FSI 刻意紅；P2 接通新 wire 後納入主 tests。 -->
+    <Compile Include="Service1114RequirementsTests.fsx" />
     <Compile Include="ServiceSupervisorFodexFunV100Tests.fsx" />
     <Compile Include="ServiceSupervisorFodexFunV101Tests.fsx"><Link>fodexFun/ServiceSupervisor/ServiceSupervisorFodexFunV101Tests.fsx</Link></Compile>
     <Compile Include="ServiceWrapperFodexFunV100Tests.fsx" />

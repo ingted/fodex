@@ -21,5 +21,8 @@ let main _ =
         ParticipantRestartDataTests.tests
         ReActLoopRestartParticipantTests.tests
         ReActLoopRouteNativeReActDataStreamTests.tests
+        SharedCacheDataTests.tests
+        ReActLoopSharedCacheTests.tests
+        ReActLoopSetNativeModelTests.tests
     ]
     |> runTestsWithCLIArgs [] [||]
