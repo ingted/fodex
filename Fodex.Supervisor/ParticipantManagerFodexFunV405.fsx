@@ -250,16 +250,16 @@ module ParticipantManagerFodexFunV405 =
                     // keyset 補讀 SQL，且不修改 live graph。preflight/capture 共用同一規則。
                     let contextView view through = task {
                         let context=ReActJsonV301.snapshot view |> required
-                        let select=FodexFunBinding.pin<WrappedReActDataFlow<string>*ReActParticipant*int64,ReActDataStream<string> array> node (Some "4.0.1") ParticipantHandoverFodexFunV401.targetSelect
-                        let render=FodexFunBinding.pin<WrappedReActDataFlow<string>*ReActParticipant*string*int64*ReActDataStream<string> array,string> node (Some "4.0.1") ParticipantHandoverFodexFunV401.targetRender
-                        let page=FodexFunBinding.pin<string*(ReActParticipantSessionId*int64*int64*int),Task<Result<ReActDataStream<string> array,exn>>> node (Some "4.0.2") ReActDataStoreV402.targetContextPage
+                        let select=FodexFunBinding.pin<WrappedReActDataFlow<string>*ReActParticipant*int64,ReActDataStream<string> array> node (Some "4.0.2") ParticipantHandoverFodexFunV402.targetSelect
+                        let render=FodexFunBinding.pin<WrappedReActDataFlow<string>*ReActParticipant*string*int64*ReActDataStream<string> array,string> node (Some "4.0.2") ParticipantHandoverFodexFunV402.targetRender
+                        let page=FodexFunBinding.pin<string*(ReActParticipantSessionId*int64*int64*int),Task<Result<ReActDataStream<string> array,exn>>> node (Some "4.0.3") ReActDataStoreV403.targetContextPage
                         let ids=HashSet<int64>(context.GetEdges() |> Array.map ReActJsonV301.streamIdOf)
                         let mutable cursor=Int64.MaxValue
                         let mutable more=true
                         while more do
                             let selected=select(context,leaf,through) |> required
                             let size=render(context,leaf,desired,through,selected) |> required |> System.Text.Encoding.UTF8.GetByteCount
-                            if size>=ParticipantHandoverFodexFunV401.budget then more<-false else
+                            if size>=ParticipantHandoverFodexFunV402.budget then more<-false else
                             let! loaded=page(cs,(session,through,cursor,64)) |> required
                             let rows=loaded |> required
                             if rows.Length=0 then more<-false else
@@ -303,14 +303,14 @@ module ParticipantManagerFodexFunV405 =
                             // route cleanup 可已刪除來源圖片；Prepared 的權威是不可變 artifact，
                             // 必須驗自己的 assets，不重新以失效原路徑建立另一份歷史。
                             let outputRoot=node.Settings.Config.GetString("fodex.artifacts.root",Path.Combine(Environment.CurrentDirectory,"artifacts"))
-                            let prepare=FodexFunBinding.pin<string*WrappedReActDataFlow<string>*ReActParticipant*NativeSessionIdentity option*string*Guid*int64,ParticipantHandoverArtifact> node (Some "4.0.1") ParticipantHandoverFodexFunV401.targetPrepare
+                            let prepare=FodexFunBinding.pin<string*WrappedReActDataFlow<string>*ReActParticipant*NativeSessionIdentity option*string*Guid*int64,ParticipantHandoverArtifact> node (Some "4.0.2") ParticipantHandoverFodexFunV402.targetPrepare
                             prepare(outputRoot,view,leaf,previous,desired,tid,h) |> required |> ignore
                         | _ ->
                             let latest=view.GetEdges() |> Array.map ReActJsonV301.streamIdOf |> Array.fold max 0L
                             let! _,preflightEdges=contextView view latest
                             if previous.IsSome && preflightEdges.Length=0 then
                                 invalidOp "ContextUnavailable: known previous native has no restorable business context"
-                            let validateAssets=FodexFunBinding.pin<ReActDataStream<string> array,unit> node (Some "4.0.1") ParticipantHandoverFodexFunV401.targetValidateAssets
+                            let validateAssets=FodexFunBinding.pin<ReActDataStream<string> array,unit> node (Some "4.0.2") ParticipantHandoverFodexFunV402.targetValidateAssets
                             validateAssets preflightEdges |> required
                         let oldResource=binding (snapshot()) leaf
                         replacementResources[leaf]<-oldResource |> Option.toList
@@ -332,7 +332,7 @@ module ParticipantManagerFodexFunV405 =
                             | Some(_,ParticipantRestartPhase.HandoverPrepared _) -> return captured
                             | _ -> let! view,_=contextView captured through in return view }
                         let outputRoot=node.Settings.Config.GetString("fodex.artifacts.root",Path.Combine(Environment.CurrentDirectory,"artifacts"))
-                        let prepare=FodexFunBinding.pin<string*WrappedReActDataFlow<string>*ReActParticipant*NativeSessionIdentity option*string*Guid*int64,ParticipantHandoverArtifact> node (Some "4.0.1") ParticipantHandoverFodexFunV401.targetPrepare
+                        let prepare=FodexFunBinding.pin<string*WrappedReActDataFlow<string>*ReActParticipant*NativeSessionIdentity option*string*Guid*int64,ParticipantHandoverArtifact> node (Some "4.0.2") ParticipantHandoverFodexFunV402.targetPrepare
                         let artifact=prepare(outputRoot,context,leaf,previous,desired,tid,through) |> required
                         let verifyArtifact () =
                             use stream=File.OpenRead artifact.Path
@@ -360,7 +360,7 @@ module ParticipantManagerFodexFunV405 =
                         started |> required
                         ct.ThrowIfCancellationRequested()
                         let cause=captured.GetEdges() |> Array.choose(fun edge -> match edge with _,_,ParticipantRestartChanged(id,_,ParticipantRestartPhase.Requested(id2,_,_,_)) when id2=tid -> Some id | _ -> None) |> Array.exactlyOne
-                        let command=box(RunTurn(StartTurn,box(ParticipantHandoverFodexFunV401.bootstrapPrompt artifact),cause,Some leaf))
+                        let command=box(RunTurn(StartTurn,box(ParticipantHandoverFodexFunV402.bootstrapPrompt artifact),cause,Some leaf))
                         match resource with IAgentResource agent -> agent.Send command |> required |> ignore | RawResource actor -> actor.Tell(command,ActorRefs.NoSender)
                         phase<-"bootstrap"
                         let! proof=ready.WaitAsync(TimeSpan.FromMinutes 10.,ct)
@@ -679,7 +679,7 @@ module ParticipantManagerFodexFunV405 =
                                 | _ ->
                                     let cancellation=new CancellationTokenSource()
                                     restartCancellation[leaf]<-cancellation
-                                    let work=restartParticipant leaf desired requested cancellation.Token
+                                    let work=Task.Run(fun () -> restartParticipant leaf desired requested cancellation.Token)
                                     restartTasks[leaf]<-desired,requested,work
                                     work
                             complete work (fun result -> reply.TrySetResult result |> ignore)

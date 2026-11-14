@@ -56,6 +56,8 @@ let withOwner action=withDatabase(fun cs -> withNode(fun node ->
     FodexFunRegistry.register node "NativeMcpConfiguration.EnsureAgy" (System.Version(1,0,0)) ensureQuotation
     let folder=Path.Combine("E:/deletable/fodex/1114-owner-409",Guid.NewGuid().ToString("N"))
     Directory.CreateDirectory folder |> ignore
+    node.Settings.InjectTopLevelFallback(Akka.Configuration.ConfigurationFactory.ParseString(
+        "fodex.artifacts.root="+JsonSerializer.Serialize(Path.Combine(folder,"service-artifacts"))))
     let previousAgy=Environment.GetEnvironmentVariable NativeAgyFixtureV304.environmentName
     let previousExec=Environment.GetEnvironmentVariable NativeExecFixtureV304.environmentName
     Environment.SetEnvironmentVariable(NativeAgyFixtureV304.environmentName,folder)

@@ -6,6 +6,7 @@ module ParticipantManagerFodexFunV405Tests
 open System
 open System.IO
 open System.Text.Json
+open System.Security.Cryptography
 open System.Threading
 open System.Threading.Tasks
 open Akka.Actor
@@ -73,6 +74,36 @@ let tests=testSequenced <| testList "Participant manager model V405" [
         use receipt=JsonDocument.Parse(File.ReadAllText(Path.Combine(folder,"started.json"),Text.Encoding.UTF8))
         Expect.equal (receipt.RootElement.GetProperty("resumeSid").GetString()) sid "actual AGY CLI resume SID"
         Expect.equal (receipt.RootElement.GetProperty("effort").GetString()) "low" "new effort used by resumed process")
+    testCase "real provider replacement keeps N and hands durable image to new exec SID after download cleanup" <| fun () -> withOwner(fun node cs loop session owner wrapper _ folder _ ->
+        let initial=TaskCompletionSource<Result<string*string,exn>>(TaskCreationOptions.RunContinuationsAsynchronously)
+        wrapper.Send(box(WrapperOrder("learn AGY SID",0L,CancellationToken.None,fun result -> initial.TrySetResult result |> ignore))) |> required |> ignore
+        let oldSid,_=initial.Task.WaitAsync(TimeSpan.FromSeconds 10.) |> wait |> required
+        wrapper.GetSessionId() |> required |> ignore
+        let leaf=main loop session
+        let incoming=Path.Combine(folder,"line-images")
+        let artifacts=Path.Combine(folder,"service-artifacts")
+        Directory.CreateDirectory incoming |> ignore
+        let source=Path.Combine(incoming,"download.jpg")
+        let picture=[|0xFFuy;0xD8uy;0xFFuy;0xE0uy;1uy;2uy|]
+        File.WriteAllBytes(source,picture)
+        let request:SharedAssetImportV100={sourcePath=source;sha256=Convert.ToHexString(SHA256.HashData picture).ToLowerInvariant();bytes=int64 picture.Length;mediaType="image/jpeg"}
+        let import=evaluated<SharedAssetInputV100,Task<Result<SharedAssetReferenceV100,exn>>> "1.0.0" node SharedAssetFodexFunV100.target
+        let reference=import(artifacts,incoming,SharedAssetFodexFunV100.defaultMaxBytes,true,request,CancellationToken.None) |> required |> wait |> required
+        let payload=JsonSerializer.Serialize {|localImagePaths=[|source|];fodexAssets=[|reference|];instruction="historical image context"|}
+        loop.PinEventRecorder(Some "3.0.0")(ReActEndpoint.Human,ReActEndpoint.Participant owner,HumanInit(0L,HumanPrompt payload)) |> required |> ignore
+        File.Delete source
+        let changed=loop.RestartParticipant(owner,"codex","--native-adapter exec --model known --effort high").WaitAsync(TimeSpan.FromSeconds 30.) |> wait |> required
+        Expect.equal changed.Number (fst leaf) "logical participant N retained"
+        match changed.SessionId with
+        | Some(NativeAgentSessionId("codex",sid)) -> Expect.notEqual sid oldSid "new provider returns its own actual CLI SID"
+        | actual -> failtestf "Expected real exec thread.started SID: %A" actual
+        let binding=ReActDataStoreV402.readBinding cs leaf |> wait |> required |> Option.get
+        Expect.equal (snd binding) 1L "activated new incarnation"
+        let copies=Directory.GetFiles(artifacts,"*.jpg",SearchOption.AllDirectories) |> Array.filter(fun path -> Path.GetFileName(Path.GetDirectoryName path)="assets")
+        let copied=Array.exactlyOne copies
+        Expect.sequenceEqual (File.ReadAllBytes copied) picture "handover reads durable asset after source cleanup"
+        let current=loop.ResolveParticipant leaf |> required
+        Expect.equal (Some(current.GetSessionId() |> required)) changed.SessionId "public IAgent now resolves new native")
     testCase "raw Stop cancels in-flight catalog validation before applying any late settings" <| fun () -> withOwner(fun node _ loop session owner _ _ folder _ ->
         let participant,actor=createRaw node loop session owner
         let held=TaskCompletionSource<Result<NativeModelCatalogSnapshotV100,exn>>(TaskCreationOptions.RunContinuationsAsynchronously)

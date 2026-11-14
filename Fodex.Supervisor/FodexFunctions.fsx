@@ -81,6 +81,8 @@ module FodexFunctions =
             NativeMcpConfigurationFodexFunV100.Definitions.builtins
             NativePreflightFodexFunV100.Definitions.builtins
             NativeModelChangeFodexFunV100.Definitions.builtins
+            SharedAssetFodexFunV100.Definitions.builtins
+            ParticipantHandoverFodexFunV402.Definitions.builtins
             NativeAgyV304.Definitions.builtins
             NativeAppServerV304.Definitions.builtins
             NativeExecV304.Definitions.builtins

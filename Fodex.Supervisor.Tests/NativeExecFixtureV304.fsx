@@ -1,4 +1,6 @@
-#if !INTERACTIVE
+#if INTERACTIVE
+#load "NativeBootstrapFixtureV100.fsx"
+#else
 module NativeExecFixtureV304
 #endif
 open System
@@ -52,7 +54,7 @@ let tryRun argv:Task<int> option=
         if prompt="WAIT" then
             use timeout=new CancellationTokenSource(TimeSpan.FromSeconds 30.)
             while not(File.Exists(Path.Combine(folder,"release"))) do do! Task.Delay(10,timeout.Token)
-        Console.Out.WriteLine(JsonSerializer.Serialize {|``type``="item.completed";item={|id="fixture-message";``type``="agent_message";text="FIXTURE_OK"|}|})
+        Console.Out.WriteLine(JsonSerializer.Serialize {|``type``="item.completed";item={|id="fixture-message";``type``="agent_message";text=NativeBootstrapFixtureV100.answer folder prompt|}|})
         Console.Out.WriteLine(JsonSerializer.Serialize {|``type``="turn.completed";usage={|input_tokens=1;output_tokens=1|}|})
         return 0 })
     | _ -> None

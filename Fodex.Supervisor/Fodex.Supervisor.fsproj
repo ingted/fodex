@@ -232,6 +232,8 @@
     <Compile Include="NativeMcpConfigurationFodexFunV100.fsx"><Link>fodexFun/NativeMcpConfiguration/NativeMcpConfigurationFodexFunV100.fsx</Link></Compile>
     <Compile Include="NativePreflightFodexFunV100.fsx"><Link>fodexFun/NativePreflight/NativePreflightFodexFunV100.fsx</Link></Compile>
     <Compile Include="NativeModelChangeFodexFunV100.fsx"><Link>fodexFun/NativeModelChange/NativeModelChangeFodexFunV100.fsx</Link></Compile>
+    <Compile Include="SharedAssetFodexFunV100.fsx"><Link>fodexFun/SharedAsset/SharedAssetFodexFunV100.fsx</Link></Compile>
+    <Compile Include="ParticipantHandoverFodexFunV402.fsx"><Link>fodexFun/ParticipantHandover/ParticipantHandoverFodexFunV402.fsx</Link></Compile>
     <Compile Include="NativeAgyFodexFunV304.fsx"><Link>fodexFun/NativeAgy/NativeAgyFodexFunV304.fsx</Link></Compile>
     <Compile Include="NativeAppServerV304.fsx"><Link>fodexFun/NativeAppServer/NativeAppServerV304.fsx</Link></Compile>
     <Compile Include="NativeAgentV304.fsx"><Link>fodexFun/NativeExec/NativeAgentV304.fsx</Link></Compile>
