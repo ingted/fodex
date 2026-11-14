@@ -124,6 +124,16 @@ let tests=testSequenced <| testList "Exec actor V304" [
             let argv=json.GetProperty("argv").EnumerateArray() |> Seq.map(fun x -> x.GetString()) |> Seq.toArray
             Expect.isTrue (argv |> Array.exists(fun value -> value.Contains "mcp_servers.fodex_cache.url=")) "cache MCP configured in the actual CLI launch"
             Expect.isFalse (argv |> Array.exists(fun value -> value.Contains "second stdin prompt")) "prompt never in argv"
+            let changed=TaskCompletionSource<Result<unit,exn>>(TaskCreationOptions.RunContinuationsAsynchronously)
+            let proposed:NativeSettingsV300={Model="next";Effort="high";Fast=false;Memory=true}
+            let catalog=[|JsonSerializer.SerializeToElement {|id="next";model="next";supportedReasoningEfforts=[|{|reasoningEffort="high"|}|]|}|]
+            agent.Send(box(SetValidatedNativePair(catalog,proposed,fun result -> changed.TrySetResult result |> ignore))) |> required |> ignore
+            changed.Task.WaitAsync(TimeSpan.FromSeconds 5.) |> wait |> required
+            send "new model same SID"
+            Expect.equal (endText events |> wait) "FIXTURE_OK" "new model invocation succeeds"
+            use updated=JsonDocument.Parse(File.ReadAllText(Path.Combine(folder,"started.json"),Text.Encoding.UTF8))
+            Expect.equal (updated.RootElement.GetProperty("model").GetString()) "next" "actual process receives the atomic model update"
+            Expect.equal (updated.RootElement.GetProperty("resumeSid").GetString()) sid "model change never forks the native session"
         | actual -> failtestf "Expected actual Codex SID: %A" actual
         agent.PinStopAsync(node,Some "3.0.1")() |> wait |> required |> ignore)
     testCase "Interrupt cancels pending preflight and prevents late generation" <| fun () -> withFixture ReActParticipantKind.Native (fun node cs loop _ participant args folder _ ->

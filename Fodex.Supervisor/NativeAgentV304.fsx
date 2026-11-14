@@ -423,6 +423,22 @@ module NativeExecV304 =
                                         | _ -> Error(NotSupportedException "Unsupported raw control")
                                     with ex -> Error ex
                                 completion.TrySetResult result |> ignore
+                        | :? NativeModelApplyV304 as command ->
+                            let (SetValidatedNativePair(catalog,proposed,respond))=command
+                            let result=
+                                try
+                                    if preparing.IsSome || compacting.IsSome || (active && rawOrder.IsNone) then invalidOp "Cancel active native before applying settings"
+                                    let next=check(catalog,proposed,SettingChangeV300.Model proposed.Model) |> ReActLoopHandlerV300.required
+                                    let continuing=rawOrder
+                                    if active then stop() |> ReActLoopHandlerV300.required |> ignore
+                                    ready<-true
+                                    models<-catalog
+                                    settings<-next
+                                    continuing |> Option.iter(fun (owner,_,original,_,_) ->
+                                        rawRun owner ("請接續尚未完成的工作；先核對已完成結果，不要重複副作用。\n原instruction：\n"+original))
+                                    Ok()
+                                with error -> Error error
+                            respond result
                         | :? NativeControlV300 as control ->
                             match control with
                             | ReadNativeSettings respond -> respond(Ok(settings,active || compacting.IsSome || preparing.IsSome))

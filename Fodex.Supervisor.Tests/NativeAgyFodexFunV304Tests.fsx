@@ -160,6 +160,13 @@ let tests=testSequenced <| testList "Agy actor V304" [
         awaitFile(Path.Combine(folder,"started.ready")) |> waitUnit
         let _,active=settings agent
         Expect.isTrue active "V303 incorrectly always returned false"
+        let refused=TaskCompletionSource<Result<unit,exn>>(TaskCreationOptions.RunContinuationsAsynchronously)
+        let proposed:NativeSettingsV300={Model="known";Effort="low";Fast=false;Memory=true}
+        agent.Send(box(SetValidatedNativePair([|JsonSerializer.SerializeToElement {|id="known";model="known"|}|],proposed,fun result -> refused.TrySetResult result |> ignore))) |> required |> ignore
+        let result=refused.Task.WaitAsync(TimeSpan.FromSeconds 5.) |> wait
+        Expect.isError result "first active AGY without SID rejects before stopping"
+        Expect.isTrue (settings agent |> snd) "original generation remains active"
+        Expect.equal ((settings agent |> fst).Effort) "high" "refused change is not silently applied"
         let before=loop.PinReadDataFlowAsync(Some "3.0.1") session |> wait |> required
         match before.GetLabel(ReActEndpoint.Participant participant) with
         | ReActNode.Participant info -> Expect.isNone info.SessionId "no fabricated SID before CLI terminal"

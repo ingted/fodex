@@ -275,6 +275,25 @@ module NativeAgyV304 =
                                 rawOrder <- None
                             | _ -> ()
 
+                    | :? NativeModelApplyV304 as command ->
+                        let (SetValidatedNativePair(catalog,proposed,respond))=command
+                        let result=
+                            try
+                                let sid=session |> Option.map(fun value -> NativeAgentSessionId("agy",value))
+                                let sessionCheck=FodexFunBinding.pin<NativeModelSessionCheckInputV100,unit> node (Some "1.0.0") NativePreflightFodexFunV100.targetSession
+                                sessionCheck("agy",sid,active || preparing.IsSome) |> ReActLoopHandlerV300.required
+                                if preparing.IsSome || (active && rawOrder.IsNone) then invalidOp "Cancel active native before applying settings"
+                                let next=check(catalog,{Model=proposed.Model;Effort=proposed.Effort},SettingChangeV300.Model proposed.Model) |> ReActLoopHandlerV300.required
+                                let continuing=rawOrder
+                                if active then stop() |> ReActLoopHandlerV300.required |> ignore
+                                models<-catalog
+                                settings<-next
+                                // raw order的caller仍等待同一completion；不把控制取消誤報成原工作的最終失敗。
+                                continuing |> Option.iter(fun (owner,_,original,_,_) ->
+                                    run StartTurn (box("請接續尚未完成的工作；先核對已完成結果，不要重複副作用。\n原instruction：\n"+original)) 0L (Some owner))
+                                Ok()
+                            with error -> Error error
+                        respond result
                     | :? NativeControlV300 as control ->
                         match control with
                         | ReadNativeSettings respond ->

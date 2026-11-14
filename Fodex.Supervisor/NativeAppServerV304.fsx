@@ -346,6 +346,15 @@ module NativeAppServerV304 =
                                     routeTo recipient (StdErr(0L,cause,error.Message))
                                     routeTo recipient (AgentEnd(0L,cause,Message("Turn failed: "+error.Message)))
                             | _ -> ()
+                        | :? NativeModelApplyV304 as command ->
+                            let (SetValidatedNativePair(catalog,proposed,respond))=command
+                            if turn.IsSome || preparing.IsSome || compacting.IsSome then respond(Error(InvalidOperationException "Cancel active native before applying settings")) else
+                            match check(catalog,proposed,SettingChangeV300.Model proposed.Model) with
+                            | Error error -> respond(Error error)
+                            | Ok _ ->
+                                models<-catalog
+                                // 回到同一mailbox的既有套用路徑，包含memory的thread/setSettings相容處理。
+                                selfSend(SetNativeSettings(proposed,respond))
                         | :? NativeControlV300 as control ->
                             match control with
                             | ReadNativeSettings respond -> respond(Ok(settings,turn.IsSome || compacting.IsSome || preparing.IsSome))

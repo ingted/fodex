@@ -73,6 +73,14 @@ let tests=testSequenced <| testList "Codex app-server actor V304" [
         Expect.equal (cache.GetProperty("url").GetString()) "http://127.0.0.1:18825/mcp" "actual RPC carries the shared endpoint"
         Expect.isTrue (cache.GetProperty("enabled").GetBoolean()) "server enabled"
         Expect.isFalse (File.Exists(Path.Combine(folder,"turn-start.request.json"))) "Start did not generate")
+    testCase "validated idle model pair accepts a refreshed catalog without generating a greeting" <| fun () -> withFixture prepared (fun _ agent folder _ ->
+        let proposed:NativeSettingsV300={Model="next";Effort="high";Fast=false;Memory=true}
+        let catalog=[|JsonSerializer.SerializeToElement {|id="next";model="next";supportedReasoningEfforts=[|{|reasoningEffort="high"|}|]|}|]
+        let changed=TaskCompletionSource<Result<unit,exn>>(TaskCreationOptions.RunContinuationsAsynchronously)
+        agent.Send(box(SetValidatedNativePair(catalog,proposed,fun result -> changed.TrySetResult result |> ignore))) |> required |> ignore
+        changed.Task.WaitAsync(TimeSpan.FromSeconds 5.) |> wait |> required
+        Expect.equal ((readSettings agent |> fst).Model) "next" "not limited to the startup model array"
+        Expect.isFalse (File.Exists(Path.Combine(folder,"turn-start.request.json"))) "setting an idle pair does not generate")
     testCase "pending preflight is busy and interrupt prevents turn/start" <| fun () -> withFixture pending (fun node agent folder _ ->
         agent.PinStartAsync(node,Some "3.0.1")() |> wait |> required |> ignore
         agent.Send(box(RunTurn(StartTurn,box "must wait",0L,None))) |> required |> ignore
