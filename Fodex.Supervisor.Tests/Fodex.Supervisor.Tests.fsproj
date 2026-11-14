@@ -135,6 +135,12 @@
     <Compile Include="ParticipantOperationsFodexFunV405Tests.fsx"><Link>fodexFun/SharedCache/ParticipantOperationsFodexFunV405Tests.fsx</Link></Compile>
     <Compile Include="ReActTraceV302Tests.fsx"><Link>fodexFun/SharedCache/ReActTraceV302Tests.fsx</Link></Compile>
     <Compile Include="ReActLoopHandlerV405Tests.fsx"><Link>fodexFun/SharedCache/ReActLoopHandlerV405Tests.fsx</Link></Compile>
+    <Compile Include="SharedCacheMcpFodexFunV100Tests.fsx"><Link>fodexFun/SharedCache/SharedCacheMcpFodexFunV100Tests.fsx</Link></Compile>
+    <Compile Include="NativeAgyModelCatalogFodexFunV301Tests.fsx"><Link>fodexFun/NativeAgyModelCatalog/NativeAgyModelCatalogFodexFunV301Tests.fsx</Link></Compile>
+    <Compile Include="NativeModelCatalogFodexFunV302Tests.fsx"><Link>fodexFun/NativeModelCatalog/NativeModelCatalogFodexFunV302Tests.fsx</Link></Compile>
+    <Compile Include="NativeModelDirectoryFodexFunV100Tests.fsx"><Link>fodexFun/NativeModelDirectory/NativeModelDirectoryFodexFunV100Tests.fsx</Link></Compile>
+    <Compile Include="NativeSettingsFodexFunV301Tests.fsx"><Link>fodexFun/NativeSettings/NativeSettingsFodexFunV301Tests.fsx</Link></Compile>
+    <Compile Include="NativeAgySettingsFodexFunV302Tests.fsx"><Link>fodexFun/NativeAgySettings/NativeAgySettingsFodexFunV302Tests.fsx</Link></Compile>
     <Compile Include="ReActDataStoreV403Tests.fsx"><Link>fodexFun/SharedCache/ReActDataStoreV403Tests.fsx</Link></Compile>
     <Compile Include="ReActJsonV302Tests.fsx"><Link>fodexFun/SharedCache/ReActJsonV302Tests.fsx</Link></Compile>
     <Compile Include="ReActTopologyFodexFunV302Tests.fsx"><Link>fodexFun/SharedCache/ReActTopologyFodexFunV302Tests.fsx</Link></Compile>

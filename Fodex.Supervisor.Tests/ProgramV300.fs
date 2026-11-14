@@ -34,6 +34,12 @@ let main argv =
                 ParticipantOperationsFodexFunV405Tests.tests
                 ReActTraceV302Tests.tests
                 ReActLoopHandlerV405Tests.tests
+                SharedCacheMcpFodexFunV100Tests.tests
+                NativeAgyModelCatalogFodexFunV301Tests.tests
+                NativeModelCatalogFodexFunV302Tests.tests
+                NativeModelDirectoryFodexFunV100Tests.tests
+                NativeSettingsFodexFunV301Tests.tests
+                NativeAgySettingsFodexFunV302Tests.tests
                 ReActCheckpointFodexFunV301Tests.tests
                 ReActJsonV301Tests.tests; ReActTopologyFodexFunV301Tests.tests
                 ReActJsonV302Tests.tests; ReActTopologyFodexFunV302Tests.tests

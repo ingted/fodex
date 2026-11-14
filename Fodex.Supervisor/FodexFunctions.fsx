@@ -72,6 +72,12 @@ module FodexFunctions =
             ReActDataStoreV402.Definitions.builtins
             ReActDataStoreV403.Definitions.builtins
             SharedCacheFodexFunV100.Definitions.builtins
+            NativeAgyModelCatalogFodexFunV301.Definitions.builtins
+            NativeModelCatalogFodexFunV302.Definitions.builtins
+            NativeModelDirectoryFodexFunV100.Definitions.builtins
+            NativeSettingsFodexFunV301.Definitions.builtins
+            NativeAgySettingsFodexFunV302.Definitions.builtins
+            SharedCacheMcpFodexFunV100.Definitions.builtins
             ParticipantOperationsFodexFunV405.Definitions.builtins
             ParticipantHandoverFodexFunV400.Definitions.builtins
             ParticipantHandoverFodexFunV401.Definitions.builtins

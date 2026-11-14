@@ -75,6 +75,9 @@
     <Compile Include="NativeOwnershipLeaseFodexFunV302.fsx"><Link>fodexFun/NativeOwnership/NativeOwnershipLeaseFodexFunV302.fsx</Link></Compile>
     <Compile Include="CodexAppServerV100.fsx"><Link>fodexFun/CodexAppServer/CodexAppServerV100.fsx</Link></Compile>
     <Compile Include="CodexAppServerV101.fsx"><Link>fodexFun/CodexAppServer/CodexAppServerV101.fsx</Link></Compile>
+    <Compile Include="NativeAgyModelCatalogFodexFunV301.fsx"><Link>fodexFun/NativeAgyModelCatalog/NativeAgyModelCatalogFodexFunV301.fsx</Link></Compile>
+    <Compile Include="NativeModelCatalogFodexFunV302.fsx"><Link>fodexFun/NativeModelCatalog/NativeModelCatalogFodexFunV302.fsx</Link></Compile>
+    <Compile Include="NativeModelDirectoryFodexFunV100.fsx"><Link>fodexFun/NativeModelDirectory/NativeModelDirectoryFodexFunV100.fsx</Link></Compile>
     <Compile Include="NativeAgentV200.fsx"><Link>fodexFun/NativeAgent/NativeAgentV200.fsx</Link></Compile>
     <Compile Include="NativeAgentV201.fsx"><Link>fodexFun/NativeAgent/NativeAgentV201.fsx</Link></Compile>
     <Compile Include="NativeAppServerV202.fsx"><Link>fodexFun/NativeAppServer/NativeAppServerV202.fsx</Link></Compile>
@@ -85,6 +88,7 @@
     <Compile Include="NativeAppServerV208.fsx"><Link>fodexFun/NativeAppServer/NativeAppServerV208.fsx</Link></Compile>
     <Compile Include="NativeAgentV208.fsx"><Link>fodexFun/NativeAgent/NativeAgentV208.fsx</Link></Compile>
     <Compile Include="NativeSettingsFodexFunV300.fsx"><Link>fodexFun/NativeSettings/NativeSettingsFodexFunV300.fsx</Link></Compile>
+    <Compile Include="NativeSettingsFodexFunV301.fsx"><Link>fodexFun/NativeSettings/NativeSettingsFodexFunV301.fsx</Link></Compile>
     <Compile Include="NativeCompactFodexFunV300.fsx"><Link>fodexFun/NativeCompact/NativeCompactFodexFunV300.fsx</Link></Compile>
     <Compile Include="NativeCompactFodexFunV301.fsx"><Link>fodexFun/NativeCompact/NativeCompactFodexFunV301.fsx</Link></Compile>
     <Compile Include="ParticipantListingFodexFunV300.fsx"><Link>fodexFun/ParticipantListing/ParticipantListingFodexFunV300.fsx</Link></Compile>
@@ -166,6 +170,7 @@
     <Compile Include="ParticipantOperationsFodexFunV403.fsx"><Link>fodexFun/ParticipantOperations/ParticipantOperationsFodexFunV403.fsx</Link></Compile>
     <Compile Include="ParticipantOperationsFodexFunV404.fsx"><Link>fodexFun/ParticipantOperations/ParticipantOperationsFodexFunV404.fsx</Link></Compile>
     <Compile Include="NativeAgySettingsFodexFunV301.fsx"><Link>fodexFun/NativeAgySettings/NativeAgySettingsFodexFunV301.fsx</Link></Compile>
+    <Compile Include="NativeAgySettingsFodexFunV302.fsx"><Link>fodexFun/NativeAgySettings/NativeAgySettingsFodexFunV302.fsx</Link></Compile>
     <Compile Include="NativeAppServerV303.fsx"><Link>fodexFun/NativeAppServer/NativeAppServerV303.fsx</Link></Compile>
     <Compile Include="NativeAgyFodexFunV303.fsx"><Link>fodexFun/NativeAgy/NativeAgyFodexFunV303.fsx</Link></Compile>
     <Compile Include="NativeAgentV303.fsx"><Link>fodexFun/NativeAgent/NativeAgentV303.fsx</Link></Compile>
@@ -223,6 +228,7 @@
     <Compile Include="ServiceSupervisorFodexFunV102.fsx"><Link>fodexFun/ServiceSupervisor/ServiceSupervisorFodexFunV102.fsx</Link></Compile>
     <Compile Include="ServiceSupervisorFodexFunV103.fsx"><Link>fodexFun/ServiceSupervisor/ServiceSupervisorFodexFunV103.fsx</Link></Compile>
     <Compile Include="ServiceMcpFodexFunV100.fsx"><Link>fodexFun/Service/ServiceMcpFodexFunV100.fsx</Link></Compile>
+    <Compile Include="SharedCacheMcpFodexFunV100.fsx"><Link>fodexFun/SharedCache/SharedCacheMcpFodexFunV100.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV100.fsx"><Link>fodexFun/Service/ServiceHostFodexFunV100.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV101.fsx"><Link>fodexFun/Service/ServiceHostFodexFunV101.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV102.fsx"><Link>fodexFun/ServiceHost/ServiceHostFodexFunV102.fsx</Link></Compile>
