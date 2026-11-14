@@ -78,15 +78,17 @@ let tests=testList "Service MCP V101" [
             client.CallToolAsync(name,values,cancellationToken=cancel.Token).AsTask() |> wait |> resultText
         try
             let names=client.ListToolsAsync(cancellationToken=cancel.Token).AsTask() |> wait |> Seq.map(fun tool -> tool.Name) |> Set.ofSeq
-            for name in ["list_native_models";"set_native_model";"cache_create";"cache_read";"cache_update";"cache_delete"] do Expect.isTrue (names.Contains name) name
+            Expect.equal names.Count 9 "seven existing wrapper tools plus exactly two model controls"
+            for name in ["list_models";"set_native_model"] do Expect.isTrue (names.Contains name) name
+            Expect.isFalse (names.Contains "cache_create") "cache tools stay on their dedicated host"
             Expect.isFalse (names.Contains "asset_import") "HTTP cannot impersonate a same-host filesystem caller"
-            let id=Guid.NewGuid().ToString("D")
-            let args=["key",box "sdk";"value",box "value";"operationId",box id]
-            Expect.equal (call "cache_create" args) (call "cache_create" args) "SDK retry uses original durable receipt"
-            Expect.stringContains (call "cache_read" ["key",box "sdk"]) "value" "same SQL-backed scope"
-            Expect.stringContains (call "list_native_models" ["provider",box "codex";"forceRefresh",box true]) "known" "new typed model operation"
+            Expect.stringContains (call "list_models" ["provider",box "codex";"forceRefresh",box true]) "known" "new typed model operation"
             use listed=json(call "list_wrappers" [])
             Expect.equal (listed.RootElement.GetProperty("data").GetArrayLength()) 0 "no native or wrapper startup"
+            let sid=Guid.NewGuid().ToString("D")
+            call "create_wrapper" ["arguments",box [||];"wrapperSid",box sid] |> ignore
+            use changed=json(call "set_native_model" ["wrapperSid",box sid;"model",box "known";"effort",box "low"])
+            Expect.isTrue (changed.RootElement.GetProperty("ok").GetBoolean()) "cold Main setting uses the owner without generation"
         finally
             client.DisposeAsync().AsTask() |> waitUnit
             host.DisposeAsync().AsTask() |> waitUnit)

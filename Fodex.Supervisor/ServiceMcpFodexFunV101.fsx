@@ -66,7 +66,7 @@ type ServiceToolsV101(supervisor:IActorRef) =
         ServiceMcpRequestV101.send supervisor (ServiceProtocolFodexFunV100.request "close" (Guid.Parse wrapperSid)) ct
 
     /// 明確的service控制工具，不以send_prompt偽裝設定；不建立native session。
-    [<McpServerTool(Name="list_native_models");Description("List a provider's actual current model catalog without creating a wrapper or generation. fresh=false identifies a stale display-only snapshot; stale data cannot validate model changes.")>]
+    [<McpServerTool(Name="list_models");Description("List a provider's actual current model catalog without creating a wrapper or generation. fresh=false identifies a stale display-only snapshot; stale data cannot validate model changes.")>]
     member _.Models(provider:string,[<Optional;DefaultParameterValue(true)>] forceRefresh:bool,ct:CancellationToken)=
         let request=ServiceProtocolFodexFunV101.request "models" Guid.Empty
         ServiceMcpRequestV101.send supervisor {request with text=JsonSerializer.Serialize {|provider=provider;forceRefresh=forceRefresh|}} ct
@@ -74,19 +74,6 @@ type ServiceToolsV101(supervisor:IActorRef) =
     member _.Model(wrapperSid:string,model:string,effort:string,ct:CancellationToken)=
         let request=ServiceProtocolFodexFunV101.request "set_model" (Guid.Parse wrapperSid)
         ServiceMcpRequestV101.send supervisor {request with text=JsonSerializer.Serialize {|model=model;effort=effort|}} ct
-    member _.Cache(action:string,key:string,value:string,operationId:string,ct:CancellationToken)=
-        let request=ServiceProtocolFodexFunV101.request "cache" Guid.Empty
-        let id=if String.IsNullOrWhiteSpace operationId then request.id else Guid.Parse(operationId).ToString("D")
-        ServiceMcpRequestV101.send supervisor {request with id=id;text=JsonSerializer.Serialize {|action=action;key=key;value=value|}} ct
-    [<McpServerTool(Name="cache_create");Description("Create a shared text key. Conflicts if it exists. Reuse operationId on retries. Keys are ordinal and cannot end with whitespace; values max1MiB UTF-8.")>]
-    member self.CacheCreate(key:string,value:string,[<Optional;DefaultParameterValue("")>] operationId:string,ct:CancellationToken)=self.Cache("c",key,value,operationId,ct)
-    [<McpServerTool(Name="cache_read");Description("Read an existing shared text key and committed revision without generating or appending events.")>]
-    member self.CacheRead(key:string,ct:CancellationToken)=self.Cache("r",key,null,"",ct)
-    [<McpServerTool(Name="cache_update");Description("Update an existing shared text key. Reuse operationId on retries; NotFound if absent.")>]
-    member self.CacheUpdate(key:string,value:string,[<Optional;DefaultParameterValue("")>] operationId:string,ct:CancellationToken)=self.Cache("u",key,value,operationId,ct)
-    [<McpServerTool(Name="cache_delete");Description("Delete a shared text key with a durable tombstone. Reuse operationId on retries; does not delete wrappers or history.")>]
-    member self.CacheDelete(key:string,[<Optional;DefaultParameterValue("")>] operationId:string,ct:CancellationToken)=self.Cache("d",key,null,operationId,ct)
-
 // asset_import是本機Akka client的檔案交接，不對HTTP客戶端暴露service本機路徑讀取能力。
 module ServiceMcpFodexFunV101 =
     let version=System.Version(1,0,1)
