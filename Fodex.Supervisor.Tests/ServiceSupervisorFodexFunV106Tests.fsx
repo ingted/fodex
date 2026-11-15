@@ -108,7 +108,9 @@ let tests=testSequenced <| testList "Service request recovery V106" [
             use empty=JsonDocument.Parse(ask second (ServiceProtocolFodexFunV101.request "list" Guid.Empty))
             Expect.equal (empty.RootElement.GetProperty("data").GetArrayLength()) 0 "receipt lookup does not create live resources"
             ask second (ServiceProtocolFodexFunV101.request "create" sid) |> ignore
-            ask second close |> ignore
+            use replay=JsonDocument.Parse(ask second close)
+            Expect.equal (replay.RootElement.GetProperty("kind").GetString()) "operation" "historical receipt cannot certify the replacement's cleanup"
+            Expect.equal (replay.RootElement.GetProperty("data").GetProperty("state").GetString()) "Indeterminate" "caller must retain ownership of the still-live replacement"
             use live=JsonDocument.Parse(ask second (ServiceProtocolFodexFunV101.request "list" Guid.Empty))
             Expect.equal (live.RootElement.GetProperty("data").GetArrayLength()) 1 "old close cannot dispose replacement"
         finally stop second)

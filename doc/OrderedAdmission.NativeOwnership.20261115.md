@@ -42,3 +42,5 @@ receipt 仍有原本的 incarnation 與 request-id fencing。重播舊 receipt �
 Proc package 的既有測試另通過：owned Job 5／5、local I/O 10／10、舊 consumer binary compatibility 1／1。NuGet 官方 flat-container 已可查得 1.572.17。正式 Provider runHost、混合停機、GW custody cutover 與真 LINE 驗收仍在後續階段，未宣告完成。
 
 同日 19:25，12 份本代測試 `.fsx` 均已由獨立 `dotnet fsi --exec` 執行，合計同一組 **53／53 通過**。初次 FSI 檢查發現 compact 測試缺直接套件引用，補上 `#r "nuget: FAkka.Proc.Supervisor, [1.572.17]"` 後通過；未以編譯專案成功代替 FSI 驗證。
+
+19:49 補上 Provider 接線揭露的 receipt 邊界：同一 WSID 若已有新 bridge incarnation，重播先前已完成的 close 只能回 `operation/Indeterminate`，不能再回帶退出保證的 `closed`。歷史 receipt 本身不改，且沒有 live replacement 時仍可由 parent 查得原 receipt。這避免 Provider 把舊證據套到仍存活的新 wrapper。修正後 Debug build、recovery 4／4、host 2／2、recovery FSI 4／4 通過。

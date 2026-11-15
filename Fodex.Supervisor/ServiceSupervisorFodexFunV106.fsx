@@ -179,6 +179,12 @@ module ServiceSupervisorFodexFunV106 =
                                         do! cleanup()
                                         cleaned<-true
                                         return Error sqlError
+                                    | Ok value when value.Operations[0].State="Completed" && value.Operations[0].Incarnation<>owner ->
+                                        // A caller may recover the historical receipt through the
+                                        // parent when no live bridge exists. Once a replacement is
+                                        // attached, that receipt cannot attest to THIS resource.
+                                        let previous={value.Operations[0] with State="Indeterminate";Detail="Historical close receipt; current wrapper incarnation remains live"}
+                                        return Ok("operation",observation previous |> required)
                                     | Ok value when value.Operations[0].State="Completed" ->
                                         use data=JsonDocument.Parse value.Operations[0].Observation
                                         return Ok("closed",data.RootElement.Clone())
