@@ -65,6 +65,9 @@ let main argv =
                 ServiceSubmitFodexFunV100Tests.tests
                 ServiceRequestRecoveryV105Tests.tests
                 ServiceHostFodexFunV107Tests.tests
+                ServiceWrapperFodexFunV106Tests.tests
+                ServiceSupervisorFodexFunV106Tests.tests
+                ServiceHostFodexFunV108Tests.tests
                 ReActCheckpointFodexFunV301Tests.tests
                 ReActJsonV301Tests.tests; ReActTopologyFodexFunV301Tests.tests
                 ReActJsonV302Tests.tests; ReActTopologyFodexFunV302Tests.tests
@@ -73,7 +76,15 @@ let main argv =
                 ReActJsonV200Tests.tests; ReActDataStoreV200Tests.tests; ReActDataStoreV300Tests.tests
                 ProcSupervisorV201Tests.tests; NLogLoggingTests.tests
                 NativeProcessFodexFunV301Tests.tests
-                NativeProcessFodexFunV302Tests.tests; NativeOwnershipLeaseFodexFunV302Tests.tests; WrapperAgentV406Tests.tests
+                NativeProcessFodexFunV302Tests.tests; NativeProcessFodexFunV303Tests.tests
+                NativeExecV305Tests.tests
+                NativeAppServerV305Tests.tests
+                NativeAgyFodexFunV305Tests.tests
+                FodexFunRegistrationV410Tests.tests
+                WrapperAgentV410Tests.tests
+                ParticipantManagerFodexFunV406Tests.tests
+                FodexAgentFodexFunV411Tests.tests
+                NativeCompactFodexFunV303Tests.tests; NativeOwnershipLeaseFodexFunV302Tests.tests; WrapperAgentV406Tests.tests
                 NativeCompactFodexFunV301Tests.tests
                 NativeCompactFodexFunV302Tests.tests
                 NativeModelCatalogFodexFunV301Tests.tests

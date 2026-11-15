@@ -71,6 +71,7 @@
     <Compile Include="ProcSupervisorV201.fsx"><Link>fodexFun/ProcSupervisor/ProcSupervisorV201.fsx</Link></Compile>
     <Compile Include="NativeProcessFodexFunV301.fsx"><Link>fodexFun/NativeProcess/NativeProcessFodexFunV301.fsx</Link></Compile>
     <Compile Include="NativeProcessFodexFunV302.fsx"><Link>fodexFun/NativeProcess/NativeProcessFodexFunV302.fsx</Link></Compile>
+    <Compile Include="NativeProcessFodexFunV303.fsx"><Link>fodexFun/NativeProcess/NativeProcessFodexFunV303.fsx</Link></Compile>
     <Compile Include="NativeCommandFodexFunV100.fsx"><Link>fodexFun/NativeCommand/NativeCommandFodexFunV100.fsx</Link></Compile>
     <Compile Include="NativeOwnershipLeaseFodexFunV302.fsx"><Link>fodexFun/NativeOwnership/NativeOwnershipLeaseFodexFunV302.fsx</Link></Compile>
     <Compile Include="CodexAppServerV100.fsx"><Link>fodexFun/CodexAppServer/CodexAppServerV100.fsx</Link></Compile>
@@ -260,6 +261,17 @@
     <Compile Include="ServiceHostFodexFunV105.fsx"><Link>fodexFun/ServiceHost/ServiceHostFodexFunV105.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV106.fsx"><Link>fodexFun/ServiceHost/ServiceHostFodexFunV106.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV107.fsx"><Link>fodexFun/ServiceHost/ServiceHostFodexFunV107.fsx</Link></Compile>
+    <Compile Include="NativeCompactFodexFunV303.fsx"><Link>fodexFun/NativeCompact/NativeCompactFodexFunV303.fsx</Link></Compile>
+    <Compile Include="NativeAppServerV305.fsx"><Link>fodexFun/NativeAppServer/NativeAppServerV305.fsx</Link></Compile>
+    <Compile Include="NativeAgentV305.fsx"><Link>fodexFun/NativeExec/NativeAgentV305.fsx</Link></Compile>
+    <Compile Include="NativeAgyFodexFunV305.fsx"><Link>fodexFun/NativeAgy/NativeAgyFodexFunV305.fsx</Link></Compile>
+    <Compile Include="FodexFunRegistrationV410.fsx"><Link>fodexFun/FodexFunRegistration/FodexFunRegistrationV410.fsx</Link></Compile>
+    <Compile Include="WrapperAgentV410.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV410.fsx</Link></Compile>
+    <Compile Include="ParticipantManagerFodexFunV406.fsx"><Link>fodexFun/ParticipantManager/ParticipantManagerFodexFunV406.fsx</Link></Compile>
+    <Compile Include="FodexAgentFodexFunV411.fsx"><Link>fodexFun/FodexAgent/FodexAgentFodexFunV411.fsx</Link></Compile>
+    <Compile Include="ServiceWrapperFodexFunV106.fsx"><Link>fodexFun/ServiceWrapper/ServiceWrapperFodexFunV106.fsx</Link></Compile>
+    <Compile Include="ServiceSupervisorFodexFunV106.fsx"><Link>fodexFun/ServiceSupervisor/ServiceSupervisorFodexFunV106.fsx</Link></Compile>
+    <Compile Include="ServiceHostFodexFunV108.fsx"><Link>fodexFun/ServiceHost/ServiceHostFodexFunV108.fsx</Link></Compile>
     <Compile Include="FodexFunctions.fsx" />
     <Compile Include="FodexAgent.fsx" />
     <None Include="FodexEntry.fsx"><Link>Archive/FodexEntry.fsx</Link></None>
@@ -299,7 +311,8 @@
     <None Include="ProgramV410.fs"><Link>Archive/ProgramV410.fs</Link></None>
     <None Include="ProgramV411.fs"><Link>Archive/ProgramV411.fs</Link></None>
     <None Include="ProgramV412.fs"><Link>Archive/ProgramV412.fs</Link></None>
-    <Compile Include="ProgramV413.fs" />
+    <None Include="ProgramV413.fs"><Link>Archive/entrypoint/ProgramV413.fs</Link></None>
+    <Compile Include="ProgramV414.fs" />
     <!-- Link changes only the project view; explicit TargetPath preserves runtime config lookup. -->
     <None Include="NLog.conf" CopyToOutputDirectory="PreserveNewest"><Link>Archive/NLog.conf</Link><TargetPath>NLog.conf</TargetPath></None>
     <None Include="NLog.M017.conf" CopyToOutputDirectory="PreserveNewest"><Link>Demo/NLog.M017.conf</Link><TargetPath>NLog.M017.conf</TargetPath></None>
@@ -399,7 +412,7 @@
     <PackageReference Include="ModelContextProtocol.AspNetCore" Version="2.3.0" />
     <PackageReference Update="FSharp.Core" Version="10.1.402" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
-    <PackageReference Include="FAkka.Proc.Supervisor" Version="[1.572.12]" />
+    <PackageReference Include="FAkka.Proc.Supervisor" Version="[1.572.17]" />
     <!-- 直接使用既有 transitive 版本的純資料 JSON serializer，明列依賴以避免間接漂移。 -->
     <PackageReference Include="FAkka.FsPickler.Json" Version="10.2.2" />
   </ItemGroup>

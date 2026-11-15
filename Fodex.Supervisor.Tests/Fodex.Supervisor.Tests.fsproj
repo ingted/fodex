@@ -174,6 +174,7 @@
     <Compile Include="FodexAgentFodexFunV409Tests.fsx"><Link>fodexFun/FodexAgent/FodexAgentFodexFunV409Tests.fsx</Link></Compile>
     <Compile Include="NativeProcessFodexFunV301Tests.fsx"><Link>fodexFun/NativeProcess/NativeProcessFodexFunV301Tests.fsx</Link></Compile>
     <Compile Include="NativeProcessFodexFunV302Tests.fsx"><Link>fodexFun/NativeProcess/NativeProcessFodexFunV302Tests.fsx</Link></Compile>
+    <Compile Include="NativeProcessFodexFunV303Tests.fsx"><Link>fodexFun/NativeProcess/NativeProcessFodexFunV303Tests.fsx</Link></Compile>
     <Compile Include="NativeOwnershipLeaseFodexFunV302Tests.fsx"><Link>fodexFun/NativeOwnership/NativeOwnershipLeaseFodexFunV302Tests.fsx</Link></Compile>
     <Compile Include="NativeAgyFodexFunV301Tests.fsx"><Link>fodexFun/NativeAgy/NativeAgyFodexFunV301Tests.fsx</Link></Compile>
     <Compile Include="WrapperAgentV406Tests.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV406Tests.fsx</Link></Compile>
@@ -276,6 +277,18 @@
     <Compile Include="NativeCompactFodexFunV302Tests.fsx"><Link>fodexFun/NativeCompact/NativeCompactFodexFunV302Tests.fsx</Link></Compile>
     <Compile Include="WrapperAgentV407Tests.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV407Tests.fsx</Link></Compile>
     <Compile Include="ParticipantManagerFodexFunV403Tests.fsx"><Link>fodexFun/ParticipantManager/ParticipantManagerFodexFunV403Tests.fsx</Link></Compile>
+    <Compile Include="NativeExecV305Tests.fsx"><Link>NativeOwnership/NativeExecV305Tests.fsx</Link></Compile>
+    <Compile Include="NativeAppServerV305Tests.fsx"><Link>NativeOwnership/NativeAppServerV305Tests.fsx</Link></Compile>
+    <Compile Include="NativeAgyFodexFunV305Tests.fsx"><Link>NativeOwnership/NativeAgyFodexFunV305Tests.fsx</Link></Compile>
+    <Compile Include="FodexFunRegistrationV410Tests.fsx"><Link>NativeOwnership/FodexFunRegistrationV410Tests.fsx</Link></Compile>
+    <Compile Include="NativeOwnerTestSupportV410.fsx"><Link>NativeOwnership/NativeOwnerTestSupportV410.fsx</Link></Compile>
+    <Compile Include="WrapperAgentV410Tests.fsx"><Link>NativeOwnership/WrapperAgentV410Tests.fsx</Link></Compile>
+    <Compile Include="ParticipantManagerFodexFunV406Tests.fsx"><Link>NativeOwnership/ParticipantManagerFodexFunV406Tests.fsx</Link></Compile>
+    <Compile Include="FodexAgentFodexFunV411Tests.fsx"><Link>NativeOwnership/FodexAgentFodexFunV411Tests.fsx</Link></Compile>
+    <Compile Include="NativeCompactFodexFunV303Tests.fsx"><Link>NativeOwnership/NativeCompactFodexFunV303Tests.fsx</Link></Compile>
+    <Compile Include="ServiceWrapperFodexFunV106Tests.fsx"><Link>NativeOwnership/ServiceWrapperFodexFunV106Tests.fsx</Link></Compile>
+    <Compile Include="ServiceSupervisorFodexFunV106Tests.fsx"><Link>NativeOwnership/ServiceSupervisorFodexFunV106Tests.fsx</Link></Compile>
+    <Compile Include="ServiceHostFodexFunV108Tests.fsx"><Link>NativeOwnership/ServiceHostFodexFunV108Tests.fsx</Link></Compile>
     <Compile Include="ProgramV300.fs" />
     <None Include="TestCases.BeforeRefactor.md" />
   </ItemGroup>

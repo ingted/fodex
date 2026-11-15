@@ -25,6 +25,7 @@ module FodexFunctions =
             NativeOutputFodexFunV301.Definitions.builtins
             NativeProcessFodexFunV301.Definitions.builtins
             NativeProcessFodexFunV302.Definitions.builtins
+            NativeProcessFodexFunV303.Definitions.builtins
             NativeCommandFodexFunV100.Definitions.builtins
             NativeOwnershipLeaseFodexFunV302.Definitions.builtins
             WrapperCommandFodexFunV300.Definitions.builtins
@@ -44,6 +45,7 @@ module FodexFunctions =
             NativeCompactFodexFunV300.Definitions.builtins
             NativeCompactFodexFunV301.Definitions.builtins
             NativeCompactFodexFunV302.Definitions.builtins
+            NativeCompactFodexFunV303.Definitions.builtins
             ParticipantListingFodexFunV300.Definitions.builtins
             ParticipantListingFodexFunV301.Definitions.builtins
             NativeModelCatalogFodexFunV300.Definitions.builtins
@@ -85,20 +87,30 @@ module FodexFunctions =
             ServiceProtocolFodexFunV101.Definitions.builtins
             ParticipantHandoverFodexFunV402.Definitions.builtins
             NativeAgyV304.Definitions.builtins
+            NativeAgyV305.Definitions.builtins
             NativeAppServerV304.Definitions.builtins
+            NativeAppServerV305.Definitions.builtins
             NativeExecV304.Definitions.builtins
+            NativeExecV305.Definitions.builtins
             FodexFunRegistrationV409.Definitions.builtins
+            FodexFunRegistrationV410.Definitions.builtins
             WrapperAgentV409.Definitions.builtins
+            WrapperAgentV410.Definitions.builtins
             ParticipantManagerFodexFunV405.Definitions.builtins
+            ParticipantManagerFodexFunV406.Definitions.builtins
             FodexAgentFodexFunV410.Definitions.builtins
+            FodexAgentFodexFunV411.Definitions.builtins
             ConsolePolicyFodexFunV410.Definitions.builtins
             ConsoleHostFodexFunV410.Definitions.builtins
             ServiceWrapperFodexFunV105.Definitions.builtins
+            ServiceWrapperFodexFunV106.Definitions.builtins
             ServiceRequestStoreFodexFunV100.Definitions.builtins
             ServiceProtocolFodexFunV102.Definitions.builtins
             ServiceSubmitFodexFunV100.Definitions.builtins
             ServiceSupervisorFodexFunV105.Definitions.builtins
+            ServiceSupervisorFodexFunV106.Definitions.builtins
             ServiceHostFodexFunV107.Definitions.builtins
+            ServiceHostFodexFunV108.Definitions.builtins
             NativeInfoFodexFunV100.Definitions.builtins
             ParticipantOperationsFodexFunV405.Definitions.builtins
             ParticipantHandoverFodexFunV400.Definitions.builtins
