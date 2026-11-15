@@ -18,12 +18,14 @@ open Fodex.Supervisor.Contracts.Concepts
 [<CLIMutable>]
 type ServiceOperationV100 = {
     Wrapper:Guid; Id:string; Operation:string; Text:string; Hash:string; Generates:bool
-    State:string; Owner:Guid; Epoch:int64; After:int64; Cause:int64
+    State:string; Owner:Guid; Incarnation:Guid; Epoch:int64; After:int64; Cause:int64
     Acknowledgement:string; Observation:string; Detail:string }
 
 type ServiceOperationCommandV100 =
     | ReserveServiceOperation of operation:string * text:string * generates:bool
+    | ReserveServiceClose of incarnation:Guid
     | ClaimServiceOperation of owner:Guid
+    | ClaimServiceClose of incarnation:Guid
     | RecordServiceOperationCause of owner:Guid * epoch:int64 * cause:int64
     | AcceptServiceOperation of owner:Guid * epoch:int64 * ack:string * after:int64 * cause:int64 option
     | FinishServiceOperation of owner:Guid * epoch:int64 * observation:string
@@ -99,14 +101,26 @@ END
                             let op=if op="send_wait" then "send" else op
                             if not(List.contains op ["send";"set_model";"asset_import"]) then invalidArg "operation" "Unsupported durable service operation"
                             Some {Wrapper=sid;Id=id;Operation=op;Text=text;Hash=hash op text;Generates=generates;State="Queued";
-                                  Owner=Guid.Empty;Epoch=0L;After=0L;Cause=0L;Acknowledgement="";Observation="";Detail=""}
+                                  Owner=Guid.Empty;Incarnation=Guid.Empty;Epoch=0L;After=0L;Cause=0L;Acknowledgement="";Observation="";Detail=""}
+                        | ReserveServiceClose incarnation,None ->
+                            if incarnation=Guid.Empty then invalidArg "incarnation" "Close requires a live bridge incarnation"
+                            Some {Wrapper=sid;Id=id;Operation="close";Text="";Hash=hash "close" "";Generates=false;State="Queued";
+                                  Owner=Guid.Empty;Incarnation=incarnation;Epoch=0L;After=0L;Cause=0L;Acknowledgement="";Observation="";Detail=""}
+                        | ReserveServiceClose _,Some value ->
+                            if value.Operation<>"close" then invalidArg "id" "Operation id already belongs to another operation"
+                            Some value
                         | ReserveServiceOperation(op,text,generates),Some value ->
                             let op=if op="send_wait" then "send" else op
                             if value.Hash<>hash op text then invalidArg "id" "Operation id already belongs to a different payload"
                             Some value
                         | ClaimServiceOperation owner,Some value when value.State="Queued" ->
+                            if value.Operation="close" then invalidArg "operation" "Close requires its original bridge incarnation"
                             if owner=Guid.Empty then invalidArg "owner" "Claim requires an owner"
                             Some {value with State="DispatchStarted";Owner=owner;Epoch=value.Epoch+1L}
+                        | ClaimServiceClose incarnation,Some value when value.Operation="close" && value.Incarnation=incarnation && value.State<>"Completed" ->
+                            // Dispose retry is safe only while this exact bridge still owns cleanup.
+                            // A replacement bridge must never apply an old close to new resources.
+                            Some {value with State="DispatchStarted";Owner=incarnation;Epoch=value.Epoch+1L;Detail=""}
                         | RecordServiceOperationCause(owner,epoch,cause),Some value when owned owner epoch value && value.State="DispatchStarted" ->
                             if cause<=0L || (value.Cause>0L && value.Cause<>cause) then invalidArg "cause" "Recorded cause is immutable"
                             Some {value with After=cause-1L;Cause=cause}

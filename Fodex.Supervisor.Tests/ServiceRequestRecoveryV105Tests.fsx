@@ -92,6 +92,25 @@ let stop root=
 
 [<Tests>]
 let tests=testSequenced <| testList "Service request recovery V105" [
+    testCase "closed receipt survives lost acknowledgement and cannot close a replacement" <| fun () -> withRecovery(fun _ _ sid _ create _ ->
+        let first=create()
+        ask first (ServiceProtocolFodexFunV101.request "create" sid) |> ignore
+        let close=ServiceProtocolFodexFunV101.request "close" sid
+        let original=ask first close
+        use closed=JsonDocument.Parse original
+        Expect.equal (closed.RootElement.GetProperty("kind").GetString()) "closed" "close committed before acknowledgement"
+        stop first
+        let second=create()
+        try
+            use recovered=JsonDocument.Parse(ask second close)
+            Expect.equal (recovered.RootElement.GetProperty("data").GetRawText()) (closed.RootElement.GetProperty("data").GetRawText()) "same receipt without recreating wrapper"
+            use empty=JsonDocument.Parse(ask second (ServiceProtocolFodexFunV101.request "list" Guid.Empty))
+            Expect.equal (empty.RootElement.GetProperty("data").GetArrayLength()) 0 "receipt lookup does not create live resources"
+            ask second (ServiceProtocolFodexFunV101.request "create" sid) |> ignore
+            ask second close |> ignore
+            use live=JsonDocument.Parse(ask second (ServiceProtocolFodexFunV101.request "list" Guid.Empty))
+            Expect.equal (live.RootElement.GetProperty("data").GetArrayLength()) 1 "old close cannot dispose replacement"
+        finally stop second)
     testCase "failed journal restore still permits owned resource cleanup" <| fun () ->
         let unavailable cs=
             let value=Microsoft.Data.SqlClient.SqlConnectionStringBuilder cs

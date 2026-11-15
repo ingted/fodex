@@ -24,6 +24,7 @@ type ServiceJournalMessageV105 =
     | JournalRestoredV105 of Result<ServiceOperationV100 array,exn>
     | JournalAcceptedV105 of string*Result<ServiceOperationV100,exn>
     | JournalReplyV105 of ServiceRequestV100*IActorRef*string*Result<JsonElement,exn>
+    | JournalCloseFinishedV105 of ServiceRequestV100*IActorRef*bool*string*Result<JsonElement,exn>
 
 /// 1.0.5 保留 wire v1，request/ACK/cause/terminal observation 改由 SQL journal 負責恢復。
 [<AutoOpen>]
@@ -168,8 +169,61 @@ module ServiceSupervisorFodexFunV105 =
                         | None ->
                             write recipient self request "accepted" {|requestId=request.id;after=submission.After;acknowledgement=submission.Accepted.Value|}
 
+                    /// Close receipts belong to this bridge's incarnation. A late duplicate can
+                    /// read an old receipt, but cannot dispose a replacement wrapper with the same SID.
+                    /// Cleanup still runs if SQL is down; in that case callers get an error, never a
+                    /// fabricated durable ACK. Physical cleanup success permits host shutdown.
+                    let close request recipient (cleanup:unit -> Task) =
+                        if stopping then fail recipient self request (ObjectDisposedException "Wrapper is closing") else
+                        stopping<-true
+                        task {
+                            let mutable cleaned=false
+                            let mutable claimed:ServiceOperationV100 option=None
+                            let! result=task {
+                                try
+                                    let! reserved=journal request.id (ReserveServiceClose owner)
+                                    match reserved with
+                                    | Error sqlError ->
+                                        controlCancellation.Cancel()
+                                        do! cleanup()
+                                        cleaned<-true
+                                        return Error sqlError
+                                    | Ok value when value.Operations[0].State="Completed" ->
+                                        use data=JsonDocument.Parse value.Operations[0].Observation
+                                        return Ok("closed",data.RootElement.Clone())
+                                    | Ok value when value.Operations[0].Incarnation<>owner ->
+                                        let previous={value.Operations[0] with State="Indeterminate";Detail="Close belongs to a former bridge incarnation; replacement resources were not touched"}
+                                        return Ok("operation",observation previous |> required)
+                                    | Ok _ ->
+                                        let! acquired=journal request.id (ClaimServiceClose owner)
+                                        let acquired=acquired |> required
+                                        if not acquired.Changed then invalidOp "Close dispatch ownership was not acquired"
+                                        let row=acquired.Operations[0]
+                                        claimed<-Some row
+                                        controlCancellation.Cancel()
+                                        do! cleanup()
+                                        cleaned<-true
+                                        let data=JsonSerializer.SerializeToElement {|retainedHistory=true;cleanupCompleted=true;incarnation=owner|}
+                                        let! saved=journal request.id (FinishServiceOperation(owner,row.Epoch,data.GetRawText()))
+                                        let receipt=saved |> required |> fun value -> value.Operations[0]
+                                        if receipt.State<>"Completed" then invalidOp "Close completion was not committed"
+                                        return Ok("closed",data)
+                                with error ->
+                                    match claimed with
+                                    | Some row when not cleaned ->
+                                        let! marked=journal request.id (MarkServiceOperationUncertain(owner,row.Epoch,error.Message))
+                                        match marked with
+                                        | Error sqlError -> return Error(AggregateException(error,sqlError) :> exn)
+                                        | Ok _ -> return Error error
+                                    | _ -> return Error error }
+                            let kind,data=match result with Ok(kind,data) -> kind,Ok data | Error error -> "closed",Error error
+                            post(JournalCloseFinishedV105(request,recipient,cleaned,kind,data)) } |> ignore
+
                     let rec handle request recipient (prepared:ServiceOperationV100 option option) =
-                        if failedCreation.IsSome then
+                        if request.op="close" && (resource.IsSome || failedCreation.IsSome) then
+                            let cleanup=match failedCreation with Some value -> (fun () -> value.RetryCleanup() :> Task) | None -> let _,_,dispose=legacy() in dispose
+                            close request recipient cleanup
+                        elif failedCreation.IsSome then
                             if request.op="close" && not stopping then
                                 stopping<-true
                                 closing.Add((request,recipient))
@@ -347,7 +401,7 @@ module ServiceSupervisorFodexFunV105 =
                                 for request,recipient in queued do handle request recipient None
                                 // 只有確定尚未派送的 Queued 可恢復；Claim 的 SQL CAS 才授權執行。
                                 for value in values do
-                                    if value.State="Queued" then
+                                    if value.State="Queued" && value.Operation<>"close" then
                                         let request={ServiceProtocolFodexFunV101.request value.Operation sid with id=value.Id;text=value.Text}
                                         handle request ActorRefs.Nobody (Some(Some value))
                             | JournalAcceptedV105(id,Error error) -> post(ServiceAccepted(id,Error error))
@@ -371,6 +425,9 @@ module ServiceSupervisorFodexFunV105 =
                                     pump()
                             | JournalReplyV105(request,recipient,kind,result) ->
                                 match result with Ok data -> write recipient self request kind data | Error error -> fail recipient self request error
+                            | JournalCloseFinishedV105(request,recipient,cleaned,kind,result) ->
+                                match result with Ok data -> write recipient self request kind data | Error error -> fail recipient self request error
+                                if cleaned then post(ServiceClosed(Ok())) else stopping<-false
                         | :? ServiceControlMessageV104 as (ServiceControlCompletedV104(request,recipient,result)) ->
                             pendingControls.Remove request.id |> ignore
                             if stopping then fail recipient self request (ObjectDisposedException "Wrapper is closing") else
@@ -514,7 +571,30 @@ module ServiceSupervisorFodexFunV105 =
                             | _ ->
                                 match wrappers.TryGetValue request.sid with
                                 | true,child -> child.Tell(text,recipient)
+                                | _ when request.op="close" || request.op="receive" ->
+                                    // 關閉 ACK 遺失後只讀原 receipt，不能為了查詢而重建 wrapper。
+                                    let self=mailbox.Self
+                                    task {
+                                        let id=if request.op="close" then request.id else request.requestId
+                                        let! result=FodexFunBinding.invokeAsync store (cs,request.sid,id,ReadServiceOperation)
+                                        let reply=
+                                            try
+                                                let rows=(required result).Operations
+                                                if rows.Length=0 then invalidOp "Unknown durable operation; no wrapper was created"
+                                                let row=rows[0]
+                                                if request.op="close" && row.Operation<>"close" then invalidOp "Operation ID belongs to a different operation"
+                                                if row.State="Completed" then
+                                                    use data=JsonDocument.Parse row.Observation
+                                                    (if row.Operation="close" then "closed" elif row.Generates then "events" else row.Operation),Ok(data.RootElement.Clone())
+                                                else "operation",Ok(observation {row with State="Indeterminate"} |> required)
+                                            with error -> "operation",Error error
+                                        let kind,data=reply
+                                        self.Tell(JournalReplyV105(request,recipient,kind,data),self) } |> ignore
                                 | _ -> fail recipient mailbox.Self request (KeyNotFoundException "Unknown live wrapper SID; create it to restore from the configured database")
+                    | :? ServiceJournalMessageV105 as (JournalReplyV105(request,recipient,kind,result)) ->
+                        match result with
+                        | Ok data -> write recipient mailbox.Self request kind data
+                        | Error error -> fail recipient mailbox.Self request error
                     | :? ServiceControlMessageV104 as (ServiceControlCompletedV104(request,recipient,result)) ->
                         match result with
                         | Ok data -> write recipient mailbox.Self request request.op data
