@@ -60,6 +60,11 @@ let main argv =
                 ServiceSupervisorFodexFunV104Tests.tests
                 ServiceMcpFodexFunV101Tests.tests
                 ServiceHostFodexFunV106Tests.tests
+                ServiceRequestStoreFodexFunV100Tests.tests
+                ServiceProtocolFodexFunV102Tests.tests
+                ServiceSubmitFodexFunV100Tests.tests
+                ServiceRequestRecoveryV105Tests.tests
+                ServiceHostFodexFunV107Tests.tests
                 ReActCheckpointFodexFunV301Tests.tests
                 ReActJsonV301Tests.tests; ReActTopologyFodexFunV301Tests.tests
                 ReActJsonV302Tests.tests; ReActTopologyFodexFunV302Tests.tests

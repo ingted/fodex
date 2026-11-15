@@ -94,6 +94,11 @@ module FodexFunctions =
             ConsolePolicyFodexFunV410.Definitions.builtins
             ConsoleHostFodexFunV410.Definitions.builtins
             ServiceWrapperFodexFunV105.Definitions.builtins
+            ServiceRequestStoreFodexFunV100.Definitions.builtins
+            ServiceProtocolFodexFunV102.Definitions.builtins
+            ServiceSubmitFodexFunV100.Definitions.builtins
+            ServiceSupervisorFodexFunV105.Definitions.builtins
+            ServiceHostFodexFunV107.Definitions.builtins
             NativeInfoFodexFunV100.Definitions.builtins
             ParticipantOperationsFodexFunV405.Definitions.builtins
             ParticipantHandoverFodexFunV400.Definitions.builtins
