@@ -1,0 +1,219 @@
+{
+  "observedUtc": "2026-11-15T14:13:03.891543+00:00",
+  "health": {
+    "ObservedUtc": "2026-11-15T14:07:30.9904277Z",
+    "UnsignedCustodyStatus": 403,
+    "RnHealth": 200,
+    "Listeners": [
+      {
+        "LocalPort": 21824,
+        "OwningProcess": 29520
+      },
+      {
+        "LocalPort": 15979,
+        "OwningProcess": 33936
+      },
+      {
+        "LocalPort": 8797,
+        "OwningProcess": 42964
+      }
+    ],
+    "LanCustodyStatus": 403,
+    "GwHealth": 200
+  },
+  "custodySeal": {
+    "Ok": true,
+    "Reason": "",
+    "EntityId": "line-webhook:d9System_test2",
+    "Token": null,
+    "Phase": "Sealed",
+    "PendingCount": 0,
+    "BarrierSequence": 782,
+    "PersistenceId": "ptc-gw-line-webhook-admission-v1",
+    "CorrelationIdSha256": "f5b0d31c885ba9056269a0fd1531a40a48220fa28a2ee022668d7ab362a57ebc",
+    "EvidenceProjection": "Public cutover correlation identifier omitted; SHA256 retained. This is not an authentication credential."
+  },
+  "custodyResume": {
+    "Ok": true,
+    "Reason": "",
+    "EntityId": "line-webhook:d9System_test2",
+    "Token": null,
+    "Phase": "Resumed",
+    "PendingCount": 0,
+    "BarrierSequence": 782,
+    "PersistenceId": "ptc-gw-line-webhook-admission-v1",
+    "CorrelationIdSha256": "f5b0d31c885ba9056269a0fd1531a40a48220fa28a2ee022668d7ab362a57ebc",
+    "EvidenceProjection": "Public cutover correlation identifier omitted; SHA256 retained. This is not an authentication credential."
+  },
+  "rn": {
+    "revision": 82,
+    "generatorConfiguration": {
+      "ProcessingMode": "OrderedAdmissionV1",
+      "Binding": {
+        "LogicalBindingId": "fodex-line-v3-ordered",
+        "BindingRevision": 1,
+        "ProviderId": "fodex-line-v3",
+        "StorageIdentity": "fodex-line-v3:fdd758ab14de43fa934de7d792c4eeda",
+        "ActorCatalogKey": "",
+        "ActorAddress": "akka.tcp://PulseTradeCommResourceNode@127.0.0.1:15979/user/line-fodex-v3-ordered"
+      },
+      "AuthorizedProviderIds": [
+        "fodex-line-v3"
+      ],
+      "Profile": {
+        "AdmissionWorkers": 4,
+        "ResultWorkers": 4,
+        "OutcomeWorkers": 2,
+        "MediaWorkers": 2,
+        "ProbeTimeoutMs": 3000,
+        "ProbeLeaseMs": 15000,
+        "AdmitTimeoutMs": 10000,
+        "AdmissionLeaseMs": 30000,
+        "PendingDelaysMs": [
+          1000,
+          2000,
+          5000
+        ],
+        "OutageMaxDelayMs": 30000,
+        "Limits": {
+          "EnvelopeMaxBytes": 65536,
+          "ChunkRawMaxBytes": 32768,
+          "InlineContentMaxBytes": 16384,
+          "MaxOutputUnitBytes": 1048576,
+          "MaxMessagesPerUnit": 4,
+          "MaxResultBytesPerOrigin": 8388608,
+          "MaxPagesPerOrigin": 64
+        },
+        "RetainedResultBytesPerAccount": 1073741824,
+        "ConversationOutstanding": 64,
+        "AccountOutstanding": 1024,
+        "BusinessAutoGcEnabled": false
+      }
+    },
+    "diagnostics": {
+      "activeWorkSample": [],
+      "observedAtUtc": "2026-11-15T14:06:12.2492389+00:00",
+      "outcomeBacklogSample": [],
+      "routeMedia": [],
+      "routeSubject": null,
+      "rowLimitPerSection": 64
+    }
+  },
+  "remainingServiceWrappers": [
+    {
+      "sid": "5cb79437-354d-4118-a57c-a985a24485cb",
+      "supervisee": "akka.tcp://fodex-line@127.0.0.1:21824/user/fodex-supervisor/wrapper-5cb79437354d4118a57ca985a24485cb#946811126"
+    }
+  ],
+  "historicalCodexTreeBeforeProviderRestart": [
+    {
+      "ProcessId": 29520,
+      "ParentProcessId": 38096,
+      "Name": "Fodex.Supervisor.exe",
+      "CreationDate": "2026-11-15T21:06:58.294412+08:00"
+    },
+    {
+      "ProcessId": 72736,
+      "ParentProcessId": 29520,
+      "Name": "conhost.exe",
+      "CreationDate": "2026-11-15T21:06:58.299467+08:00"
+    },
+    {
+      "ProcessId": 11384,
+      "ParentProcessId": 29520,
+      "Name": "codex.exe",
+      "CreationDate": "2026-11-15T21:29:37.533974+08:00"
+    },
+    {
+      "ProcessId": 75992,
+      "ParentProcessId": 11384,
+      "Name": "conhost.exe",
+      "CreationDate": "2026-11-15T21:29:37.536388+08:00"
+    },
+    {
+      "ProcessId": 81552,
+      "ParentProcessId": 11384,
+      "Name": "node_repl.exe",
+      "CreationDate": "2026-11-15T21:29:38.965343+08:00"
+    },
+    {
+      "ProcessId": 81560,
+      "ParentProcessId": 11384,
+      "Name": "node.exe",
+      "CreationDate": "2026-11-15T21:29:38.966529+08:00"
+    },
+    {
+      "ProcessId": 81568,
+      "ParentProcessId": 11384,
+      "Name": "node.exe",
+      "CreationDate": "2026-11-15T21:29:38.967828+08:00"
+    },
+    {
+      "ProcessId": 81576,
+      "ParentProcessId": 81552,
+      "Name": "conhost.exe",
+      "CreationDate": "2026-11-15T21:29:38.971614+08:00"
+    },
+    {
+      "ProcessId": 81584,
+      "ParentProcessId": 81560,
+      "Name": "conhost.exe",
+      "CreationDate": "2026-11-15T21:29:38.973096+08:00"
+    },
+    {
+      "ProcessId": 81592,
+      "ParentProcessId": 81568,
+      "Name": "conhost.exe",
+      "CreationDate": "2026-11-15T21:29:38.977168+08:00"
+    }
+  ],
+  "historicalCodexTreeBeforeDrop": [
+    {
+      "ProcessId": 11384,
+      "ParentProcessId": 29520,
+      "Name": "codex.exe",
+      "CreationDate": "2026-11-15T21:29:37.533974+08:00"
+    },
+    {
+      "ProcessId": 75992,
+      "ParentProcessId": 11384,
+      "Name": "conhost.exe",
+      "CreationDate": "2026-11-15T21:29:37.536388+08:00"
+    },
+    {
+      "ProcessId": 81552,
+      "ParentProcessId": 11384,
+      "Name": "node_repl.exe",
+      "CreationDate": "2026-11-15T21:29:38.965343+08:00"
+    },
+    {
+      "ProcessId": 81576,
+      "ParentProcessId": 81552,
+      "Name": "conhost.exe",
+      "CreationDate": "2026-11-15T21:29:38.971614+08:00"
+    },
+    {
+      "ProcessId": 81568,
+      "ParentProcessId": 11384,
+      "Name": "codex-code-mode-host.exe",
+      "CreationDate": "2026-11-15T21:43:52.965304+08:00"
+    },
+    {
+      "ProcessId": 71736,
+      "ParentProcessId": 81568,
+      "Name": "conhost.exe",
+      "CreationDate": "2026-11-15T21:43:52.967611+08:00"
+    }
+  ],
+  "codexDropProof": {
+    "Inspected": 6,
+    "ObservedUtc": "2026-11-15T14:04:17.7288459Z",
+    "Remaining": 0,
+    "RemainingPids": []
+  },
+  "testProcessesRemaining": 0,
+  "limits": [
+    "Unknown/HTTP-indeterminate cases use isolated fixtures; no real LINE transmission failure was induced.",
+    "FSI startup CPU remains separately observed; steady-worker measurements do not claim startup optimization."
+  ]
+}

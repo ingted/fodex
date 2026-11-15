@@ -1,0 +1,164 @@
+[
+  {
+    "messageId": "640751040023232583",
+    "direction": "received",
+    "timestampUtc": "2026-11-15T13:18:05.315+00:00",
+    "senderHint": "d9System_test2",
+    "kind": "text",
+    "text": "FDX_ORDERED_20261115_A\n",
+    "imageCount": 0,
+    "originalChars": 23,
+    "truncated": false,
+    "evidenceSource": "line-first-next-read.log"
+  },
+  {
+    "messageId": "640751912220360894",
+    "direction": "received",
+    "timestampUtc": "2026-11-15T13:26:45.198+00:00",
+    "senderHint": "d9System_test2",
+    "kind": "text",
+    "text": "指定的模型錯誤，該 native 為 agy",
+    "imageCount": 0,
+    "originalChars": 22,
+    "truncated": false,
+    "evidenceSource": "line-model-and-create-read.log"
+  },
+  {
+    "messageId": "640752109436272934",
+    "direction": "received",
+    "timestampUtc": "2026-11-15T13:28:42.808+00:00",
+    "senderHint": "d9System_test2",
+    "kind": "text",
+    "text": "Topic=POCOrderedCodex SID=09235dcf-913e-49e1-afb2-b4c9264179db status=Ready",
+    "imageCount": 0,
+    "originalChars": 75,
+    "truncated": false,
+    "evidenceSource": "line-after-ordered-restart-read.log"
+  },
+  {
+    "messageId": "640752239224816214",
+    "direction": "received",
+    "timestampUtc": "2026-11-15T13:30:00.245+00:00",
+    "senderHint": "d9System_test2",
+    "kind": "text",
+    "text": "FDX_ORDERED_CODEX_20261115_A\n\n已保留標記。本批僅收到第一段文字，尚無圖片。請接著傳送兩張圖片與第二段文字，收到後會簡短說明圖片內容。",
+    "imageCount": 0,
+    "originalChars": 81,
+    "truncated": false,
+    "evidenceSource": "line-after-ordered-restart-read.log"
+  },
+  {
+    "messageId": "640753655925965440",
+    "direction": "received",
+    "timestampUtc": "2026-11-15T13:44:04.676+00:00",
+    "senderHint": "d9System_test2",
+    "kind": "text",
+    "text": "FDX_ORDERED_R2_20261115_A\nFDX_ORDERED_R2_20261115_B\n\n兩張圖片內容相同：左側是圓形黑色「d」標誌，旁邊有灰色盾牌與白色星形符號；右側文字為「d9System_test2」，其中「d9」為綠色，其餘為黑色。",
+    "imageCount": 0,
+    "originalChars": 128,
+    "truncated": false,
+    "evidenceSource": "line-recovery-and-r2-read.log"
+  },
+  {
+    "messageId": "640753728689275324",
+    "direction": "received",
+    "timestampUtc": "2026-11-15T13:44:48.021+00:00",
+    "senderHint": "d9System_test2",
+    "kind": "text",
+    "text": "Topic=POCOrderedCodex model=gpt-6.1-sol effort=low",
+    "imageCount": 0,
+    "originalChars": 50,
+    "truncated": false,
+    "evidenceSource": "line-controls-next-final-read.log"
+  },
+  {
+    "messageId": "640754003667845531",
+    "direction": "received",
+    "timestampUtc": "2026-11-15T13:47:31.907+00:00",
+    "senderHint": "d9System_test2",
+    "kind": "text",
+    "text": "Topic=main SID=ab9e97c5-dd95-4a12-8489-1369429ba71a status=MigrationAmbiguous\nTopic=legacy-2D9D5F06-4A68-4B03-808D-4F651CAA13FD SID=2d9d5f06-4a68-4b03-808d-4f651caa13fd status=MigrationAmbiguous\nTopic=legacy-0F2F4247-C163-41B0-8419-8A573D06D84A SID=0f2f4247-c163-41b0-8419-8a573d06d84a status=MigrationAmbiguous\nTopic=POC1114AGY SID=5cb79437-354d-4118-a57c-a985a24485cb status=Ready\nTopic=POC1114Codex SID=83ef32b4-52de-4dad-b407-ff552c6b5c85 status=Ready\nTopic=POCOrderedCodex SID=09235dcf-913e-49e1-afb2-b4c9264179db status=Ready",
+    "imageCount": 0,
+    "originalChars": 531,
+    "truncated": false,
+    "evidenceSource": "line-controls-next-final-read.log"
+  },
+  {
+    "messageId": "640754026585260525",
+    "direction": "received",
+    "timestampUtc": "2026-11-15T13:47:45.594+00:00",
+    "senderHint": "d9System_test2",
+    "kind": "text",
+    "text": "Topic=POCOrderedCodex model=gpt-6.1-sol effort=high",
+    "imageCount": 0,
+    "originalChars": 51,
+    "truncated": false,
+    "evidenceSource": "line-controls-next-final-read.log"
+  },
+  {
+    "messageId": "640755036523069579",
+    "direction": "received",
+    "timestampUtc": "2026-11-15T13:57:47.522+00:00",
+    "senderHint": "d9System_test2",
+    "kind": "text",
+    "text": "LINE 指令格式錯誤。一次指定目標請使用 **[Topic 或 SID] message；控制參數含空白時請加雙引號。",
+    "imageCount": 0,
+    "originalChars": 60,
+    "truncated": false,
+    "evidenceSource": "line-controls-next-final-read.log"
+  },
+  {
+    "messageId": "640755226626490405",
+    "text": "Selected Topic=POCOrderedCodex SID=09235dcf-913e-49e1-afb2-b4c9264179db",
+    "direction": "received",
+    "evidenceSource": "line-next-codex-complete.log"
+  },
+  {
+    "messageId": "640755236608147610",
+    "text": "FDX_CONTROL_TIMING_20261115",
+    "direction": "received",
+    "evidenceSource": "line-next-codex-complete.log"
+  },
+  {
+    "messageId": "640755429093147071",
+    "text": "FDX_ORDERED_MIX_20261115_A：已收到您的標記。目前此批次訊息僅包含本段文字，尚未接收到隨後的兩張圖片與第二段文字（目前無圖片附件）。請繼續傳送圖片與文字，收到後將立即為您檢視並簡短說明看到的圖片內容。\n",
+    "direction": "received",
+    "evidenceSource": "line-next-agy-vision.log"
+  },
+  {
+    "messageId": "640755433069871362",
+    "text": "FDX_ORDERED_MIX_20261115_A\nFDX_ORDERED_MIX_20261115_B\n\n關於圖片字樣與符號說明：\n目前接收到的批次訊息中（包含先前標記 A 與本次標記 B），傳送內容僅有純文字訊息，並未夾帶任何圖片檔案或影像附件（無圖片輸入）。因此系統無法檢視圖片，未能讀取圖片中的字樣與符號。若需分析圖中內容，請重新傳送圖片附件。\n",
+    "direction": "received",
+    "evidenceSource": "line-next-agy-vision.log"
+  },
+  {
+    "messageId": "640755437884932506",
+    "text": "FDX_ORDERED_MIX_20261115_A\nFDX_ORDERED_MIX_20261115_B\n\n圖片中的字樣與符號說明如下：\n\n1. 左側圓形圖示：圓形徽章內有一個黑色斜體英文字母「d」，下方附有一行微型小字。\n2. 中間符號：灰色盾牌圖樣，盾牌內部帶有一個白色的五角星符號。\n3. 文字字樣：盾牌右側標示「d9System_test2」，其中「d9」為綠色字樣，後方的「System_test2」為黑色字樣。\n",
+    "direction": "received",
+    "evidenceSource": "line-next-agy-vision.log"
+  },
+  {
+    "messageId": "640755441910939789",
+    "text": "FDX_ORDERED_MIX_20261115_A\nFDX_ORDERED_MIX_20261115_B\n\n已檢視本次傳送的圖片，內容中的符號與字樣說明如下：\n\n1. 左側圓形圖示：圓形徽章內有一個黑色斜體英文字母「d」，下方附有一行微型小字「d9span」。\n2. 中間符號：灰色盾牌圖樣，盾牌內部有一個白色的五角星符號。\n3. 文字字樣：盾牌右側顯示「d9System_test2」，其中「d9」呈現綠色字樣，後續的「System_test2」呈現黑色字樣。\n",
+    "direction": "received",
+    "evidenceSource": "line-next-agy-vision.log"
+  },
+  {
+    "messageId": "640755446373679504",
+    "text": "FDX_ORDERED_MIX_20261115_A\nFDX_ORDERED_MIX_20261115_B\n\n本批次依序讀取 sequence 12 與 sequence 13 的兩張圖片，內容均為相同圖樣，符號與字樣說明如下：\n\n1. 左側圓形圖示：圓形徽章內有一個黑色斜體英文字母「d」，下方附有一行微型小字「d9span」。\n2. 中間符號：灰色盾牌圖樣，盾牌內部帶有一個白色的五角星符號。\n3. 文字字樣：盾牌右側標示「d9System_test2」，其中「d9」為綠色字樣，後續的「System_test2」為黑色字樣。\n",
+    "direction": "received",
+    "evidenceSource": "line-next-agy-vision.log"
+  },
+  {
+    "messageId": "640755605975334930",
+    "direction": "received",
+    "timestampUtc": "2026-11-15T14:03:26.824+00:00",
+    "senderHint": "d9System_test2",
+    "kind": "text",
+    "text": "Dropped Topic=POCOrderedCodex SID=09235dcf-913e-49e1-afb2-b4c9264179db",
+    "imageCount": 0,
+    "originalChars": 70,
+    "truncated": false,
+    "evidenceSource": "line-drop-final-read.log"
+  }
+]

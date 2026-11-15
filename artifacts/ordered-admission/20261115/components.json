@@ -1,0 +1,39 @@
+{
+  "fodexCompiledSource": "2e15ced",
+  "gatewayPayloadSource": "7ade29970",
+  "providerSource": "8851ac0c4",
+  "installerSource": "89f980a8a",
+  "deployment": {
+    "Utc": "2026-11-15T13:06:54.9551661Z",
+    "Backup": "F:\\fodex\\Fodex.Supervisor\\bin\\CLI.before-V414-20261115",
+    "SourceCommit": "2e15ced",
+    "OldDll": "2A83EBFCF8B2898618A27BBB6A99BED40800F8CB1DC163CD888E38260B92FD37",
+    "NewDll": "B184D3E13A2DEF8081DB9488891815341006B3A4C5A05B92961B37D1C5580CD1"
+  },
+  "files": {
+    "fodexDll": {
+      "path": "F:/fodex/Fodex.Supervisor/bin/CLI/Fodex.Supervisor.dll",
+      "sha256": "B184D3E13A2DEF8081DB9488891815341006B3A4C5A05B92961B37D1C5580CD1"
+    },
+    "procSupervisorDll": {
+      "path": "F:/fodex/Fodex.Supervisor/bin/CLI/Akka.Proc.Supervisor.dll",
+      "sha256": "4710ECFE09AFF25B42B277ED3F9F4B021B7854522F68DF0FD3E6ECDD13F577F3"
+    },
+    "gatewayDll": {
+      "path": "G:/PulseTrade.fs/deployment/services/prod/PulseTradeCommGatewayActive/releases/20261115-custody-0.2.18/PulseTrade.Comm.GW.Host.dll",
+      "sha256": "DFE32358EF6FCBF706C70C06AF5B3789FC7D7DFA6A5D4281AE24FA753D8D0D77"
+    },
+    "gatewayManifest": {
+      "path": "G:/PulseTrade.fs/deployment/services/prod/PulseTradeCommGatewayActive/manifests/20261115-custody-0.2.18.json",
+      "sha256": "C8C044A6D2388780733B3D00B62117E8D2271B348FE12C668B52D217B0F526D5"
+    },
+    "procPackage": {
+      "path": "G:/PulseTrade.fs/Libs/Akka.Proc.Supervisor/bin/Release/FAkka.Proc.Supervisor.1.572.17.nupkg",
+      "sha256": "0EF3F383ED121B4992381F453DCA9810D4CC7B28ECA8908F7FD474F873E3DA83"
+    },
+    "durableProxyPackage": {
+      "path": "G:/PulseTrade.fs/Libs/PulseTrade.Comm/src/PulseTrade.Comm.ResourceNode.DurableProxy/bin/Release/PulseTrade.Comm.ResourceNode.DurableProxy.0.2.18.nupkg",
+      "sha256": "D5DAE78E1F3DB2F36BCF4EBB6F901E01C5142C12A31FFBB24E4DB3F38B26B5D2"
+    }
+  }
+}

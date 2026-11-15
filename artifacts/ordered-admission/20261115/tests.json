@@ -1,0 +1,295 @@
+{
+  "results": [
+    {
+      "source": "ordered-sql-27.stdout.log",
+      "executed": 27,
+      "passed": 27,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:03:53.8051667",
+      "rawSha256": "4FBB8CCFB02FB0009E1577CBEA86042DE1D4D14A6EC1D26813EDD1B69E03776A"
+    },
+    {
+      "source": "cutover-dispatch-regression.log",
+      "executed": 106,
+      "passed": 106,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:01:20.2225813",
+      "rawSha256": "AEFCC880B4EBD2646487CD4D5B7E73A7F32EBDAFF762701FFE9654A4332A7FD6"
+    },
+    {
+      "source": "gw-retirement-tests.log",
+      "executed": 12,
+      "passed": 12,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:06.8705626",
+      "rawSha256": "129B89A3F6240CA75C0FFA63775285788543ADA4B5E298A1BDC29760B1D894D6"
+    },
+    {
+      "source": "rejection-command-tests.log",
+      "executed": 10,
+      "passed": 10,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:00.1450109",
+      "rawSha256": "C5A2FB82CCE07085B1BB7ACAA12D666F07E2AEDBA58CB3640B0BF497DAC370D0"
+    },
+    {
+      "source": "owned-generation-0.log",
+      "executed": 16,
+      "passed": 16,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:28.0368141",
+      "rawSha256": "75B398CBBF2B240447C0B7F86E193A3607A83996336D275DAF2E4A509138BAA9"
+    },
+    {
+      "source": "owned-generation-1.log",
+      "executed": 4,
+      "passed": 4,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:05.2746984",
+      "rawSha256": "2C297762C04D750B6714F8815F3FBB772274AF132AA74758677B895CEDBB16A1"
+    },
+    {
+      "source": "owned-generation-2.log",
+      "executed": 4,
+      "passed": 4,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:07.2289920",
+      "rawSha256": "7BE90BE9045DA69083BACA548EB55165D601AFB1B513B9C0FDB1E1F1BDA09512"
+    },
+    {
+      "source": "owned-generation-3.log",
+      "executed": 5,
+      "passed": 5,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:03.9521086",
+      "rawSha256": "A44041D7965A2F8A3B7D6B64053B3C249033752FADF30F25DA258C3FB451D2E6"
+    },
+    {
+      "source": "owned-generation-4.log",
+      "executed": 5,
+      "passed": 5,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:17.0335490",
+      "rawSha256": "7E99CFBFCD5F42ECDC25BB56BCF70B71639954533D3D72FB1D194FEA226C2EAA"
+    },
+    {
+      "source": "owned-generation-5.log",
+      "executed": 5,
+      "passed": 5,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:20.0764657",
+      "rawSha256": "41F34A63CED923E3DC199717DB0AE6601E816BB5E6F5C9EDE1F1AADD7ECAA6FF"
+    },
+    {
+      "source": "owned-generation-6.log",
+      "executed": 4,
+      "passed": 4,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:12.9631937",
+      "rawSha256": "38F65EA3ECAF9592B6D96D00A986F29CCAA5637A2B1F3216BECF3737EC5BB60A"
+    },
+    {
+      "source": "owned-generation-7.log",
+      "executed": 4,
+      "passed": 4,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:06.6926732",
+      "rawSha256": "22E7EA770A7E1F812BD29D4ED13FE26E61339FE982915968109F2079F0823DD2"
+    },
+    {
+      "source": "owned-generation-8.log",
+      "executed": 4,
+      "passed": 4,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:04.9942578",
+      "rawSha256": "C430C02670450B0FD750D2B269B8C53DEF152ED84873439BCB986EA63C9782C3"
+    },
+    {
+      "source": "owned-generation-9.log",
+      "executed": 2,
+      "passed": 2,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:09.6943469",
+      "rawSha256": "14328FB232E5B91C9AF5C051A698BCA5DCCFA876C4F9044ACBCEB9210DEF6FC4"
+    },
+    {
+      "source": "fsi-FodexAgentFodexFunV411Tests.log",
+      "executed": 4,
+      "passed": 4,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:20.9725595",
+      "rawSha256": "AD0013E309F7A64C3DA7733B09ABB08D169DD9AF80C5ADD10FCC52E07E966C9A"
+    },
+    {
+      "source": "fsi-FodexFunRegistrationV410Tests.log",
+      "executed": 5,
+      "passed": 5,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:35.2610573",
+      "rawSha256": "E8FF77CBE2BA4596FC781604A612B507D77BF185D5ABD8D6EC7F210D80BC5DC5"
+    },
+    {
+      "source": "fsi-NativeAgyFodexFunV305Tests.log",
+      "executed": 7,
+      "passed": 7,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:14.6935450",
+      "rawSha256": "53C87CA86DB3226F8870172B257B2818A4674B884061B45ADAAB137DF625BE99"
+    },
+    {
+      "source": "fsi-NativeAppServerV305Tests.log",
+      "executed": 4,
+      "passed": 4,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:10.0006688",
+      "rawSha256": "9A48E92EADE9DF11E2E972C0EB943F5701F53C80132C6B3B999F3762ED117E65"
+    },
+    {
+      "source": "fsi-NativeCompactFodexFunV303Tests.log",
+      "executed": 4,
+      "passed": 4,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:06.9544506",
+      "rawSha256": "6E0F1D9E0E9EFD344DD32228F1C6F58E995228FDDDEADEDA9D5C27AD03146AA5"
+    },
+    {
+      "source": "fsi-NativeExecV305Tests.log",
+      "executed": 5,
+      "passed": 5,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:10.9849787",
+      "rawSha256": "3222742DC4AD340B74C0226E2B6069A26605B2D6DE48D67371F0C5608ABDC012"
+    },
+    {
+      "source": "fsi-NativeProcessFodexFunV303Tests.log",
+      "executed": 4,
+      "passed": 4,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:07.0182786",
+      "rawSha256": "3FFAE028A248A8A7ACBF5B86C1C0053504D71162576C2E8A68E031C9F1A261D1"
+    },
+    {
+      "source": "fsi-ParticipantManagerFodexFunV406Tests.log",
+      "executed": 5,
+      "passed": 5,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:30.9919819",
+      "rawSha256": "F9943CEE4D0712C521BA2A10F91D7C4E7E963EAA4EE97E06199EA7994FB374A4"
+    },
+    {
+      "source": "fsi-ServiceHostFodexFunV108Tests.log",
+      "executed": 2,
+      "passed": 2,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:10.7146016",
+      "rawSha256": "E485F2068B2B857208FD37CB452EE1529DE924EFB2F21B4493D63C17AB07DA1A"
+    },
+    {
+      "source": "fsi-ServiceSupervisorFodexFunV106Tests.log",
+      "executed": 4,
+      "passed": 4,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:04.6596312",
+      "rawSha256": "5604D359B2F399D5D3A4C870FE336B72C55F395D75960173EE854A294DC71AE9"
+    },
+    {
+      "source": "fsi-ServiceWrapperFodexFunV106Tests.log",
+      "executed": 4,
+      "passed": 4,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:06.5061815",
+      "rawSha256": "BC660720CC2E54CFBA8FC58CAAFD5CD525FE9FEBD6DBA229451064B6E4F6523B"
+    },
+    {
+      "source": "fsi-WrapperAgentV410Tests.log",
+      "executed": 5,
+      "passed": 5,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:48.1587130",
+      "rawSha256": "72DD63DF2D2FE6AD27E1B5CCEDDDBD2F2697B72DA2282F15FCAAF02D927911BA"
+    },
+    {
+      "source": "proc17-owned-tests.log",
+      "executed": 5,
+      "passed": 5,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:03.3820666",
+      "rawSha256": "6973D2A1AAADF91D62CD3DE2F1E55EE2EDC5F99E1E309BE2033DAA8A3FCAD921"
+    },
+    {
+      "source": "proc17-io-tests.log",
+      "executed": 10,
+      "passed": 10,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:05.8998779",
+      "rawSha256": "1E40E84573450F155AF919EF3B20279789BB2BB90055D8B9150BC40D698A854F"
+    },
+    {
+      "source": "proc17-abi-tests.log",
+      "executed": 1,
+      "passed": 1,
+      "ignored": 0,
+      "failed": 0,
+      "errored": 0,
+      "duration": "00:00:02.0015413",
+      "rawSha256": "6A7263D9504B7EBF049FCD0495E94C9D93FC4753CCA5EDAAAC7C225E4E92F7A1"
+    }
+  ],
+  "scope": "SQL/actor/process fixtures and compiled/FSI tests; not all cases are LINE end-to-end."
+}
