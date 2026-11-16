@@ -28,6 +28,10 @@ module FodexFunctions =
             ServiceSupervisorFodexFunV107.Definitions.builtins
             ServiceMcpFodexFunV102.Definitions.builtins
             ServiceHostFodexFunV109.Definitions.builtins
+            FodexAgentFodexFunV413.Definitions.builtins
+            ConsoleHostFodexFunV412.Definitions.builtins
+            ServiceWrapperFodexFunV108.Definitions.builtins
+            ServiceHostFodexFunV110.Definitions.builtins
             ReActJsonV301.Definitions.builtins
             ReActJsonV302.Definitions.builtins
             ReActTraceV302.Definitions.builtins

@@ -288,6 +288,10 @@
     <Compile Include="ServiceSupervisorFodexFunV107.fsx"><Link>fodexFun/ServiceSupervisorFodexFun/ServiceSupervisorFodexFunV107.fsx</Link></Compile>
     <Compile Include="ServiceMcpFodexFunV102.fsx"><Link>fodexFun/ServiceMcpFodexFun/ServiceMcpFodexFunV102.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV109.fsx"><Link>fodexFun/ServiceHostFodexFun/ServiceHostFodexFunV109.fsx</Link></Compile>
+    <Compile Include="FodexAgentFodexFunV413.fsx"><Link>fodexFun/FodexAgentFodexFun/FodexAgentFodexFunV413.fsx</Link></Compile>
+    <Compile Include="ConsoleHostFodexFunV412.fsx"><Link>fodexFun/ConsoleHostFodexFun/ConsoleHostFodexFunV412.fsx</Link></Compile>
+    <Compile Include="ServiceWrapperFodexFunV108.fsx"><Link>fodexFun/ServiceWrapperFodexFun/ServiceWrapperFodexFunV108.fsx</Link></Compile>
+    <Compile Include="ServiceHostFodexFunV110.fsx"><Link>fodexFun/ServiceHostFodexFun/ServiceHostFodexFunV110.fsx</Link></Compile>
     <Compile Include="FodexFunctions.fsx" />
     <Compile Include="FodexAgent.fsx" />
     <None Include="FodexEntry.fsx"><Link>Archive/FodexEntry.fsx</Link></None>
@@ -329,7 +333,8 @@
     <None Include="ProgramV412.fs"><Link>Archive/ProgramV412.fs</Link></None>
     <None Include="ProgramV413.fs"><Link>Archive/entrypoint/ProgramV413.fs</Link></None>
     <None Include="ProgramV414.fs"><Link>Archive/ProgramV414.fs</Link></None>
-    <Compile Include="ProgramV415.fs" />
+    <None Include="ProgramV415.fs"><Link>Archive/ProgramV415.fs</Link></None>
+    <Compile Include="ProgramV416.fs" />
     <!-- Link changes only the project view; explicit TargetPath preserves runtime config lookup. -->
     <None Include="NLog.conf" CopyToOutputDirectory="PreserveNewest"><Link>Archive/NLog.conf</Link><TargetPath>NLog.conf</TargetPath></None>
     <None Include="NLog.M017.conf" CopyToOutputDirectory="PreserveNewest"><Link>Demo/NLog.M017.conf</Link><TargetPath>NLog.M017.conf</TargetPath></None>

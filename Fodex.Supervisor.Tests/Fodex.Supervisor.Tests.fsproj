@@ -306,6 +306,11 @@
     <Compile Include="ServiceSupervisorFodexFunV107Tests.fsx" />
     <Compile Include="ServiceMcpFodexFunV102Tests.fsx" />
     <Compile Include="ServiceHostFodexFunV109Tests.fsx" />
+
+    <Compile Include="FodexAgentFodexFunV413Tests.fsx" />
+    <Compile Include="ConsoleHostFodexFunV412Tests.fsx" />
+    <Compile Include="ServiceWrapperFodexFunV108Tests.fsx" />
+    <Compile Include="ServiceHostFodexFunV110Tests.fsx" />
     <Compile Include="ProgramV300.fs" />
     <None Include="TestCases.BeforeRefactor.md" />
   </ItemGroup>
