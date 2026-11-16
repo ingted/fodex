@@ -5,13 +5,29 @@
 namespace Fodex.Supervisor
 
 /// 唯一的內建宣告初始化，不是另一個 wrapper entrypoint，也不擁有 actor／session。
-/// 例：在 host entrypoint 或第一次 createWrapper 前呼叫 FodexFunctions.initialize()。
+/// Registry bootstrap 在首次使用時載入本清單；呼叫端不需手動註冊。
 /// AutoOpen 只控制名稱可見性；必須明確 evaluate 各 module 的 builtins，才會宣告 q。
 /// Lazy 保證同一組件只接線一次；此處不讀 DB、不 eval q、不建立 ActorSystem。
 [<AutoOpen>]
 module FodexFunctions =
     let builtins =
         [|
+            NativeProcessFodexFunV304.Definitions.builtins
+            ServiceProtocolFodexFunV103.Definitions.builtins
+            NativeCompactFodexFunV304.Definitions.builtins
+            NativeAppServerV306.Definitions.builtins
+            NativeExecV306.Definitions.builtins
+            NativeAgyV306.Definitions.builtins
+            WrapperAgentV411.Definitions.builtins
+            FodexFunRegistrationV411.Definitions.builtins
+            ParticipantManagerFodexFunV407.Definitions.builtins
+            FodexAgentFodexFunV412.Definitions.builtins
+            ConsoleHostFodexFunV411.Definitions.builtins
+            ServiceRequestStoreFodexFunV101.Definitions.builtins
+            ServiceWrapperFodexFunV107.Definitions.builtins
+            ServiceSupervisorFodexFunV107.Definitions.builtins
+            ServiceMcpFodexFunV102.Definitions.builtins
+            ServiceHostFodexFunV109.Definitions.builtins
             ReActJsonV301.Definitions.builtins
             ReActJsonV302.Definitions.builtins
             ReActTraceV302.Definitions.builtins
@@ -192,3 +208,9 @@ module FodexFunctions =
     /// 不帶 node：Versioned(node,target) 在後續 lookup 時才選擇 node 分區並讀其 SQL 設定。
     /// 重複呼叫不覆寫 registry、不重新註冊或換掉使用中的 pin。
     let initialize () = initialization.Value
+
+    /// Official pre-node lookup initializes declarations on first use. Entrypoints
+    /// select a version through this helper and never manually register functions.
+    let pinBase<'Input,'Output> version target =
+        initialization.Value
+        ConsolePolicyFodexFunV403.pinBase<'Input,'Output> version target

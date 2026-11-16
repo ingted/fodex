@@ -289,6 +289,23 @@
     <Compile Include="ServiceWrapperFodexFunV106Tests.fsx"><Link>NativeOwnership/ServiceWrapperFodexFunV106Tests.fsx</Link></Compile>
     <Compile Include="ServiceSupervisorFodexFunV106Tests.fsx"><Link>NativeOwnership/ServiceSupervisorFodexFunV106Tests.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV108Tests.fsx"><Link>NativeOwnership/ServiceHostFodexFunV108Tests.fsx</Link></Compile>
+    <Compile Include="NativeProcessFodexFunV304Tests.fsx"><Link>1116/NativeProcessFodexFunV304Tests.fsx</Link></Compile>
+    <Compile Include="ServiceProtocolFodexFunV103Tests.fsx"><Link>1116/ServiceProtocolFodexFunV103Tests.fsx</Link></Compile>
+    <Compile Include="ServiceRequestStoreFodexFunV101Tests.fsx"><Link>1116/ServiceRequestStoreFodexFunV101Tests.fsx</Link></Compile>
+    <Compile Include="FodexAgentFodexFunV412Tests.fsx"><Link>1116/FodexAgentFodexFunV412Tests.fsx</Link></Compile>
+    <Compile Include="NativeAgyFodexFunV306Tests.fsx" />
+    <Compile Include="NativeExecV306Tests.fsx" />
+    <Compile Include="NativeAppServerV306Tests.fsx" />
+    <Compile Include="NativeCompactFodexFunV304Tests.fsx" />
+    <Compile Include="NativeOwnerTestSupportV411.fsx" />
+    <Compile Include="WrapperAgentV411Tests.fsx" />
+    <Compile Include="ParticipantManagerFodexFunV407Tests.fsx" />
+    <Compile Include="FodexFunRegistrationV411Tests.fsx" />
+    <Compile Include="ConsoleHostFodexFunV411Tests.fsx" />
+    <Compile Include="ServiceWrapperFodexFunV107Tests.fsx" />
+    <Compile Include="ServiceSupervisorFodexFunV107Tests.fsx" />
+    <Compile Include="ServiceMcpFodexFunV102Tests.fsx" />
+    <Compile Include="ServiceHostFodexFunV109Tests.fsx" />
     <Compile Include="ProgramV300.fs" />
     <None Include="TestCases.BeforeRefactor.md" />
   </ItemGroup>

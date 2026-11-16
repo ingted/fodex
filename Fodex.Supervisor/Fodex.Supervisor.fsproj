@@ -272,6 +272,22 @@
     <Compile Include="ServiceWrapperFodexFunV106.fsx"><Link>fodexFun/ServiceWrapper/ServiceWrapperFodexFunV106.fsx</Link></Compile>
     <Compile Include="ServiceSupervisorFodexFunV106.fsx"><Link>fodexFun/ServiceSupervisor/ServiceSupervisorFodexFunV106.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV108.fsx"><Link>fodexFun/ServiceHost/ServiceHostFodexFunV108.fsx</Link></Compile>
+    <Compile Include="NativeProcessFodexFunV304.fsx"><Link>fodexFun/NativeProcessFodexFun/NativeProcessFodexFunV304.fsx</Link></Compile>
+    <Compile Include="ServiceProtocolFodexFunV103.fsx"><Link>fodexFun/ServiceProtocolFodexFun/ServiceProtocolFodexFunV103.fsx</Link></Compile>
+    <Compile Include="NativeCompactFodexFunV304.fsx"><Link>fodexFun/NativeCompactFodexFun/NativeCompactFodexFunV304.fsx</Link></Compile>
+    <Compile Include="NativeAppServerV306.fsx"><Link>fodexFun/NativeAppServer/NativeAppServerV306.fsx</Link></Compile>
+    <Compile Include="NativeAgentV306.fsx"><Link>fodexFun/NativeAgent/NativeAgentV306.fsx</Link></Compile>
+    <Compile Include="NativeAgyFodexFunV306.fsx"><Link>fodexFun/NativeAgyFodexFun/NativeAgyFodexFunV306.fsx</Link></Compile>
+    <Compile Include="WrapperAgentV411.fsx"><Link>fodexFun/WrapperAgent/WrapperAgentV411.fsx</Link></Compile>
+    <Compile Include="FodexFunRegistrationV411.fsx"><Link>fodexFun/FodexFunRegistration/FodexFunRegistrationV411.fsx</Link></Compile>
+    <Compile Include="ParticipantManagerFodexFunV407.fsx"><Link>fodexFun/ParticipantManagerFodexFun/ParticipantManagerFodexFunV407.fsx</Link></Compile>
+    <Compile Include="FodexAgentFodexFunV412.fsx"><Link>fodexFun/FodexAgentFodexFun/FodexAgentFodexFunV412.fsx</Link></Compile>
+    <Compile Include="ConsoleHostFodexFunV411.fsx"><Link>fodexFun/ConsoleHost/ConsoleHostFodexFunV411.fsx</Link></Compile>
+    <Compile Include="ServiceRequestStoreFodexFunV101.fsx"><Link>fodexFun/ServiceRequestStoreFodexFun/ServiceRequestStoreFodexFunV101.fsx</Link></Compile>
+    <Compile Include="ServiceWrapperFodexFunV107.fsx"><Link>fodexFun/ServiceWrapperFodexFun/ServiceWrapperFodexFunV107.fsx</Link></Compile>
+    <Compile Include="ServiceSupervisorFodexFunV107.fsx"><Link>fodexFun/ServiceSupervisorFodexFun/ServiceSupervisorFodexFunV107.fsx</Link></Compile>
+    <Compile Include="ServiceMcpFodexFunV102.fsx"><Link>fodexFun/ServiceMcpFodexFun/ServiceMcpFodexFunV102.fsx</Link></Compile>
+    <Compile Include="ServiceHostFodexFunV109.fsx"><Link>fodexFun/ServiceHostFodexFun/ServiceHostFodexFunV109.fsx</Link></Compile>
     <Compile Include="FodexFunctions.fsx" />
     <Compile Include="FodexAgent.fsx" />
     <None Include="FodexEntry.fsx"><Link>Archive/FodexEntry.fsx</Link></None>
@@ -312,7 +328,8 @@
     <None Include="ProgramV411.fs"><Link>Archive/ProgramV411.fs</Link></None>
     <None Include="ProgramV412.fs"><Link>Archive/ProgramV412.fs</Link></None>
     <None Include="ProgramV413.fs"><Link>Archive/entrypoint/ProgramV413.fs</Link></None>
-    <Compile Include="ProgramV414.fs" />
+    <None Include="ProgramV414.fs"><Link>Archive/ProgramV414.fs</Link></None>
+    <Compile Include="ProgramV415.fs" />
     <!-- Link changes only the project view; explicit TargetPath preserves runtime config lookup. -->
     <None Include="NLog.conf" CopyToOutputDirectory="PreserveNewest"><Link>Archive/NLog.conf</Link><TargetPath>NLog.conf</TargetPath></None>
     <None Include="NLog.M017.conf" CopyToOutputDirectory="PreserveNewest"><Link>Demo/NLog.M017.conf</Link><TargetPath>NLog.M017.conf</TargetPath></None>
