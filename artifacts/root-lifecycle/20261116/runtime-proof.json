@@ -1,0 +1,298 @@
+{
+  "asOfUtc": "2026-11-16T01:13:27.873Z",
+  "source": {
+    "fodex": "2c1e7049cfeb2e60672cdd72127f4380cfc71030",
+    "provider": "7202372fd",
+    "entrypoint": "ProgramV415.fs",
+    "cliSha256": "F61A08E462CEC38707B4C3D77A371EC705F276A713A92F83A691DBF9AE087685"
+  },
+  "tests": {
+    "releaseBuild": true,
+    "debugBuild": true,
+    "compiledNewExpecto": 63,
+    "standaloneFsiFiles": 16,
+    "visualStudioDiscovery": true,
+    "lineCommands": 11,
+    "orderedSql": 34,
+    "outerAdapterLifecycle": 6,
+    "legacyRootsAndBatches": 15
+  },
+  "runtime": {
+    "asOfUtc": "2026-11-16T01:11:58.3943118Z",
+    "listeners": [
+      {
+        "LocalPort": 21824,
+        "OwningProcess": 65764
+      },
+      {
+        "LocalPort": 15979,
+        "OwningProcess": 48260
+      }
+    ],
+    "hosts": [
+      {
+        "ProcessId": 65764,
+        "ParentProcessId": 78004,
+        "Name": "Fodex.Supervisor.exe",
+        "CreationDate": "2026-11-16T08:58:32.056024+08:00"
+      },
+      {
+        "ProcessId": 48260,
+        "ParentProcessId": 68348,
+        "Name": "dotnet.exe",
+        "CreationDate": "2026-11-16T08:58:37.543365+08:00"
+      }
+    ],
+    "fodexDescendants": [
+      {
+        "ProcessId": 63420,
+        "ParentProcessId": 65764,
+        "Name": "conhost.exe",
+        "CreationDate": "2026-11-16T08:58:32.059371+08:00"
+      }
+    ],
+    "windowsServices": [
+      {
+        "Name": "PulseTradeCommResourceNode",
+        "State": "Running",
+        "ProcessId": 81104
+      },
+      {
+        "Name": "PulseTradeCommGatewayActive",
+        "State": "Running",
+        "ProcessId": 8588
+      }
+    ]
+  },
+  "restart": {
+    "nativeBindings": [
+      {
+        "Address": "",
+        "AgentType": "codex",
+        "CodexSessionId": "01a1e1d8-2e59-7431-8045-5cd7a8fbdab9",
+        "ParticipantId": 2,
+        "SessionGeneration": 0,
+        "SessionId": "06b37f83-c4aa-48c7-aa44-85a265437f74"
+      },
+      {
+        "Address": "",
+        "AgentType": "agy",
+        "CodexSessionId": "6ff375b3-4fce-48aa-939a-1178b594fc14",
+        "ParticipantId": 2,
+        "SessionGeneration": 0,
+        "SessionId": "d8ce03d7-0945-436f-8abf-eed6147f2871"
+      }
+    ],
+    "sameNativeBindings": true,
+    "resumedResults": [
+      {
+        "provider": "codex",
+        "completed": true,
+        "ends": [
+          {
+            "streamId": 30,
+            "text": "FDX1116_CODEX_A"
+          }
+        ]
+      },
+      {
+        "provider": "agy",
+        "completed": true,
+        "ends": [
+          {
+            "streamId": 34,
+            "text": "FDX1116_AGY_A\n"
+          }
+        ]
+      }
+    ],
+    "provider": true,
+    "fodex": true,
+    "resourceNode": true,
+    "gateway": true,
+    "previousServicePid": 30840,
+    "previousProviderPid": 69872,
+    "previousRnPid": 75380,
+    "previousGwPid": 42964
+  },
+  "force": {
+    "closed": {
+      "cleanupCompleted": true,
+      "incarnation": "2bde7a83-5304-4b86-bbd4-ef0084b4e124",
+      "nativeCleanupConfirmed": true,
+      "nativeCleanupScope": "wrapper-owned-windows-job-v303",
+      "retainedHistory": true
+    },
+    "receiptSavedAtUtc": "2026-11-16T01:04:21.380Z",
+    "before": {
+      "codex": [
+        {
+          "ProcessId": 65488,
+          "ParentProcessId": 65764,
+          "Name": "codex.exe",
+          "CreationDate": "2026-11-16T09:02:37.064213+08:00"
+        },
+        {
+          "ProcessId": 75808,
+          "ParentProcessId": 65488,
+          "Name": "conhost.exe",
+          "CreationDate": "2026-11-16T09:02:37.06675+08:00"
+        },
+        {
+          "ProcessId": 2388,
+          "ParentProcessId": 65488,
+          "Name": "node.exe",
+          "CreationDate": "2026-11-16T09:02:37.574183+08:00"
+        },
+        {
+          "ProcessId": 75292,
+          "ParentProcessId": 65488,
+          "Name": "node.exe",
+          "CreationDate": "2026-11-16T09:02:37.575535+08:00"
+        },
+        {
+          "ProcessId": 77664,
+          "ParentProcessId": 65488,
+          "Name": "node_repl.exe",
+          "CreationDate": "2026-11-16T09:02:37.57661+08:00"
+        },
+        {
+          "ProcessId": 74488,
+          "ParentProcessId": 2388,
+          "Name": "conhost.exe",
+          "CreationDate": "2026-11-16T09:02:37.586597+08:00"
+        },
+        {
+          "ProcessId": 70348,
+          "ParentProcessId": 77664,
+          "Name": "conhost.exe",
+          "CreationDate": "2026-11-16T09:02:37.58811+08:00"
+        },
+        {
+          "ProcessId": 44228,
+          "ParentProcessId": 75292,
+          "Name": "conhost.exe",
+          "CreationDate": "2026-11-16T09:02:37.588124+08:00"
+        },
+        {
+          "ProcessId": 72216,
+          "ParentProcessId": 75292,
+          "Name": "cmd.exe",
+          "CreationDate": "2026-11-16T09:02:39.260148+08:00"
+        },
+        {
+          "ProcessId": 67300,
+          "ParentProcessId": 72216,
+          "Name": "node.exe",
+          "CreationDate": "2026-11-16T09:02:39.285426+08:00"
+        },
+        {
+          "ProcessId": 58768,
+          "ParentProcessId": 2388,
+          "Name": "cmd.exe",
+          "CreationDate": "2026-11-16T09:02:39.289594+08:00"
+        },
+        {
+          "ProcessId": 35284,
+          "ParentProcessId": 58768,
+          "Name": "node.exe",
+          "CreationDate": "2026-11-16T09:02:39.311718+08:00"
+        },
+        {
+          "ProcessId": 59864,
+          "ParentProcessId": 67300,
+          "Name": "node.exe",
+          "CreationDate": "2026-11-16T09:02:40.31488+08:00"
+        },
+        {
+          "ProcessId": 46336,
+          "ParentProcessId": 65488,
+          "Name": "codex-code-mode-host.exe",
+          "CreationDate": "2026-11-16T09:02:43.941436+08:00"
+        },
+        {
+          "ProcessId": 54704,
+          "ParentProcessId": 46336,
+          "Name": "conhost.exe",
+          "CreationDate": "2026-11-16T09:02:43.947445+08:00"
+        },
+        {
+          "ProcessId": 59404,
+          "ParentProcessId": 65488,
+          "Name": "pwsh.exe",
+          "CreationDate": "2026-11-16T09:02:44.080611+08:00"
+        },
+        {
+          "ProcessId": 23456,
+          "ParentProcessId": 59404,
+          "Name": "conhost.exe",
+          "CreationDate": "2026-11-16T09:02:44.083763+08:00"
+        },
+        {
+          "ProcessId": 60540,
+          "ParentProcessId": 59404,
+          "Name": "pwsh.exe",
+          "CreationDate": "2026-11-16T09:02:44.951743+08:00"
+        }
+      ],
+      "servicePid": 65764,
+      "agy": [
+        {
+          "ProcessId": 18504,
+          "ParentProcessId": 65764,
+          "Name": "agy.exe",
+          "CreationDate": "2026-11-16T09:02:45.759989+08:00"
+        },
+        {
+          "ProcessId": 74196,
+          "ParentProcessId": 18504,
+          "Name": "conhost.exe",
+          "CreationDate": "2026-11-16T09:02:45.764815+08:00"
+        },
+        {
+          "ProcessId": 74136,
+          "ParentProcessId": 18504,
+          "Name": "pwsh.exe",
+          "CreationDate": "2026-11-16T09:02:57.876514+08:00"
+        },
+        {
+          "ProcessId": 74784,
+          "ParentProcessId": 74136,
+          "Name": "pwsh.exe",
+          "CreationDate": "2026-11-16T09:02:58.524823+08:00"
+        }
+      ]
+    },
+    "codexSameCimBirthSurvivors": 0,
+    "otherOriginalTurn": {
+      "completed": true,
+      "ends": [
+        {
+          "streamId": 46,
+          "text": "已執行指令，正在等待完成...\nFDX1116_LONG_DONE\n"
+        }
+      ]
+    },
+    "birthCheckCorrection": "CIM CreationDate precision differs from Process.StartTime by 4 ticks on the service. Final survivor checks use CIM on both sides. Do not use the superseded cross-API equality result."
+  },
+  "normalClose": {
+    "cleanupCompleted": true,
+    "incarnation": "c60a601a-e0ec-48f7-812f-1ceba72bf858",
+    "nativeCleanupConfirmed": true,
+    "nativeCleanupScope": "wrapper-owned-windows-job-v303",
+    "retainedHistory": true
+  },
+  "cleanup": {
+    "serviceLiveWrappers": [],
+    "userRootsUnchanged": true,
+    "userRootCount": 7,
+    "selectionsBefore": [],
+    "selectionsAfter": [],
+    "activeOrdered": []
+  },
+  "lineEndToEnd": {
+    "status": "blocked",
+    "reason": "Existing Chrome CDP 127.0.0.1:9222 ECONNREFUSED. User asked to restore the existing logged-in browser; no new Chrome was started.",
+    "lineMessageIds": []
+  }
+}

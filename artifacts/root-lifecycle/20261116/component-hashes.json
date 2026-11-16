@@ -1,0 +1,10 @@
+{
+  "F:/fodex/Fodex.Supervisor/bin/CLI/Fodex.Supervisor.dll": "f61a08e462cec38707b4c3d77a371ec705f276a713a92f83a691dbf9ae087685",
+  "G:/PulseTrade.fs/misc/Start-LineFodexV3.ps1": "858d1451c8be8bf4d4820ef60f5290b9fc40d4955d6795e8e8c43c3901c91185",
+  "G:/PulseTrade.fs/misc/line_bot_rn_nuget.multimedia.multisession.fodex.v3.fsx": "43b2d6b4217709f0058529371fb6d3bc34846bf4fbc7f175ddb876643ca00fce",
+  "G:/PulseTrade.fs/misc/line_provider_fodex_v3_line.fsx": "92719837f871ac7a1a9892e7ab078efe27135f5b3f6581e255420c1b36f0d6a7",
+  "G:/PulseTrade.fs/misc/line_provider_fodex_v3_service.fsx": "b7042a867b39a4f34e643939bc8121653c0408e12e8d5248d0ed4e23569da3ee",
+  "G:/PulseTrade.fs/misc/line_provider_fodex_v3_ordered_admission.fsx": "0d9fa6b3605d68a6e34ad9358b083f5cfbb9411919cd1b3939003defe74be8fd",
+  "G:/PulseTrade.fs/misc/line_provider_fodex_v3_ordered_controls.fsx": "b3fe0f27ff32ef55a1c3589e78bd9b9a27abbb613d59302d5484b102ef655a5d",
+  "G:/PulseTrade.fs/misc/line_provider_fodex_v3_store_async.fsx": "9caadcf45736e1e5ae9239b1f1d1ed0aa611404c9114c20330ed017048c80573"
+}
