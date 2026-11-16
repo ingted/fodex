@@ -1,0 +1,35 @@
+{
+  "source": "38ac61d916bea99414f580b6b9131b0a5c9348c6",
+  "suite": "Supervisor.1116",
+  "initial": {
+    "summary": "[10:58:05 INF] EXPECTO! 76 tests run in 00:04:03.2283845 for Supervisor.1116 – 75 passed, 0 ignored, 0 failed, 1 errored.  <Expecto>",
+    "failedFixtureTrace": "FIXTURE_ACTION_FAILED System.TimeoutException    at WrapperAgentV411Tests.tests@33-1D.Invoke(IAgent`2 wrapper, String _arg2, String folder, Channel`1 _arg1) in F:\\fodex\\Fodex.Supervisor.Tests\\WrapperAgentV411Tests.fsx:line 34\r\n   at NativeOwnerTestSupportV411.withOwner@53-1.Invoke(ActorSystem node) in F:\\fodex\\Fodex.Supervisor.Tests\\NativeOwnerTestSupportV411.fsx:line 98\r\n   at ImplementationTestSupportV300.withNode[a](FSharpFunc`2 action) in F:\\fodex\\Fodex.Supervisor.Tests\\ImplementationTestSupportV300.fsx:line 55\r\n[10:56:05 ERR] Supervisor.1116.Wrapper model owner V411.root Stop closes mixed wrapper raw AGY exec descendants and can Start again errored in 00:00:36.3020000 <Expecto>\r\nSystem.TimeoutException: The operation has timed out.\r\n   at WrapperAgentV411Tests.tests@33-1D.Invoke(IAgent`2 wrapper, String _arg2, String folder, Channel`1 _arg1) in F:\\fodex\\Fodex.Supervisor.Tests\\WrapperAgentV411Tests.fsx:line 34\r\n   at NativeOwnerTestSupportV411.withOwner@53-1.Invoke(ActorSystem node) in F:\\fodex\\Fodex.Supervisor.Tests\\NativeOwnerTestSupportV411.fsx:line 98\r\n   at ImplementationTestSupportV300.withNode[a](FSharpFunc`2 action) in F:\\fodex\\Fodex.Supervisor.Tests\\ImplementationTestSupportV300.fsx:line 55\r\n   at NativeOwnerTestSupportV411.withOwner@53.Invoke(String cs) in F:\\fodex\\Fodex.Supervisor.Tests\\NativeOwnerTestSupportV411.fsx:line 53\r\n   at QuotationTestScope.withDatabase[a](String prefix, FSharpFunc`2 action) in F:\\fodex\\Fodex.Supervisor.Tests\\QuotationTestScope.fsx:line 46\r\n   at NativeOwnerTestSupportV411.withOwner[a](FSharpFunc`2 action) in F:\\fodex\\Fodex.Supervisor.Tests\\NativeOwnerTestSupportV411.fsx:line 53\r\n   at WrapperAgentV411Tests.tests@33.Invoke(Unit unitVar0) in F:\\fodex\\Fodex.Supervisor.Tests\\WrapperAgentV411Tests.fsx:line 33\r\n   at Expecto.Impl.execTestAsync@584-1.Invoke(Unit unitVar)\r\n   at Microsoft.FSharp.Control.AsyncPrimitives.CallThenInvoke[T,TResult](AsyncActivation`1 ctxt, TResult result1, FSharpFunc`2 part2) in D:\\a\\_work\\1\\s\\src\\fsharp\\src\\FSharp.Core\\async.fs:line 509\r\n   at Microsoft.FSharp.Control.Trampoline.Execute(FSharpFunc`2 firstAction) in D:\\a\\_work\\1\\s\\src\\fsharp\\src\\FSharp.Core\\async.fs:line 112\r\n[INFO][11/16/2026 02:57:21.367Z][Thread 0007][remoting (akka://fdx-console-410-83a3d21a391444f887746adec7b9fc99)] Remoting shut down\r\n[INFO][11/16/2026 02:57:21.367Z][Thread 0007][remoting-terminator] Remoting shut down.\r\n[INFO][11/16/2026 02:57:39.792Z][Thread 0070][remoting (akka://fdx-host109-8b8742803508461f8319f136611e708e)] Remoting shut down\r\n[INFO][11/16/2026 02:57:39.792Z][Thread 0070][remoting-terminator] Remoting shut down.\r\n[INFO][11/16/2026 02:57:39.796Z][Thread 0070][remoting-terminator] Remoting shut down.\r"
+  },
+  "isolatedRetry": {
+    "summary": "[10:59:09 INF] EXPECTO! 1 tests run in 00:00:33.3223440 for Supervisor.1116.Wrapper model owner V411.root Stop closes mixed wrapper raw AGY exec descendants and can Start again – 1 passed, 0 ignored, 0 failed, 0 errored. Success! <Expecto>"
+  },
+  "final": {
+    "command": "dotnet Fodex.Supervisor.Tests.dll --filter-test-list 1116 --sequenced --summary",
+    "summary": "[11:06:07 INF] EXPECTO! 76 tests run in 00:03:00.8342563 for Supervisor.1116 – 76 passed, 0 ignored, 0 failed, 0 errored. Success! <Expecto>"
+  },
+  "standalone": [
+    {
+      "file": "FodexAgentFodexFunV413Tests.fsx",
+      "summary": "[11:02:22 INF] EXPECTO! 6 tests run in 00:00:22.6348113 for 1116 FodexAgent V413 shared entry – 6 passed, 0 ignored, 0 failed, 0 errored. Success! <Expecto>"
+    },
+    {
+      "file": "ConsoleHostFodexFunV412Tests.fsx",
+      "summary": "[11:02:31 INF] EXPECTO! 1 tests run in 00:00:02.0337450 for Console host V412.headless help remains offline and resume retains cache endpoint – 1 passed, 0 ignored, 0 failed, 0 errored. Success! <Expecto>"
+    },
+    {
+      "file": "ServiceWrapperFodexFunV108Tests.fsx",
+      "summary": "[11:02:45 INF] EXPECTO! 4 tests run in 00:00:06.9330637 for Service wrapper V108 – 4 passed, 0 ignored, 0 failed, 0 errored. Success! <Expecto>"
+    },
+    {
+      "file": "ServiceHostFodexFunV110Tests.fsx",
+      "summary": "[11:03:05 INF] EXPECTO! 2 tests run in 00:00:12.2369156 for Service host V110 – 2 passed, 0 ignored, 0 failed, 0 errored. Success! <Expecto>"
+    }
+  ],
+  "assertionsAndTimeoutsChanged": false,
+  "firstTimeoutRootCause": "not confirmed"
+}

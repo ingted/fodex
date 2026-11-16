@@ -1,10 +1,16 @@
 {
-  "F:/fodex/Fodex.Supervisor/bin/CLI/Fodex.Supervisor.dll": "f61a08e462cec38707b4c3d77a371ec705f276a713a92f83a691dbf9ae087685",
+  "F:/fodex/Fodex.Supervisor/bin/CLI/Fodex.Supervisor.dll": "d9a4591bfb9590b989596b780b160c512b6a2a6967f67933e4f36558c75d84af",
   "G:/PulseTrade.fs/misc/Start-LineFodexV3.ps1": "858d1451c8be8bf4d4820ef60f5290b9fc40d4955d6795e8e8c43c3901c91185",
   "G:/PulseTrade.fs/misc/line_bot_rn_nuget.multimedia.multisession.fodex.v3.fsx": "43b2d6b4217709f0058529371fb6d3bc34846bf4fbc7f175ddb876643ca00fce",
   "G:/PulseTrade.fs/misc/line_provider_fodex_v3_line.fsx": "92719837f871ac7a1a9892e7ab078efe27135f5b3f6581e255420c1b36f0d6a7",
   "G:/PulseTrade.fs/misc/line_provider_fodex_v3_service.fsx": "b7042a867b39a4f34e643939bc8121653c0408e12e8d5248d0ed4e23569da3ee",
   "G:/PulseTrade.fs/misc/line_provider_fodex_v3_ordered_admission.fsx": "0d9fa6b3605d68a6e34ad9358b083f5cfbb9411919cd1b3939003defe74be8fd",
   "G:/PulseTrade.fs/misc/line_provider_fodex_v3_ordered_controls.fsx": "b3fe0f27ff32ef55a1c3589e78bd9b9a27abbb613d59302d5484b102ef655a5d",
-  "G:/PulseTrade.fs/misc/line_provider_fodex_v3_store_async.fsx": "9caadcf45736e1e5ae9239b1f1d1ed0aa611404c9114c20330ed017048c80573"
+  "G:/PulseTrade.fs/misc/line_provider_fodex_v3_store_async.fsx": "9caadcf45736e1e5ae9239b1f1d1ed0aa611404c9114c20330ed017048c80573",
+  "F:/fodex/Fodex.Supervisor/FodexAgentFodexFunV413.fsx": "039caffff48811ed81bd50aeae61ccaa8402cc01d7c69ca7eb141fcbe4074c2f",
+  "F:/fodex/Fodex.Supervisor/ConsoleHostFodexFunV412.fsx": "f11a9be0890c910aa71649c8b59fce1e315e306e1331b7c96b5a9f9b669d202d",
+  "F:/fodex/Fodex.Supervisor/ServiceWrapperFodexFunV108.fsx": "374e2a10e233417faa48bab2a717c053be6a51ec47a3b3beaf026d526bf35eac",
+  "F:/fodex/Fodex.Supervisor/ServiceHostFodexFunV110.fsx": "8582fd6bda2c19a43db2fa8cc89fdb49205027f247e6975a388520cc41cfdb9d",
+  "F:/fodex/Fodex.Supervisor/ProgramV416.fs": "ada4c48c18e0bdf5abdfc231736eab2a964c4f97cac110b1043f1786a0b11ab2",
+  "F:/fodex/Fodex.Supervisor/FodexFunctions.fsx": "ea96cbaefd467b7b25c471b3f3d034605ded96977ac5df6854280e8906c33018"
 }

@@ -291,8 +291,9 @@
     "activeOrdered": []
   },
   "lineEndToEnd": {
-    "status": "blocked",
-    "reason": "Existing Chrome CDP 127.0.0.1:9222 ECONNREFUSED. User asked to restore the existing logged-in browser; no new Chrome was started.",
-    "lineMessageIds": []
+    "status": "passed",
+    "asOfUtc": "2026-11-16T03:25:54.364Z",
+    "evidence": "line-proof.json",
+    "note": "The older runtime/source/tests sections retain the earlier service-only run. Current V416 LINE proof is separate."
   }
 }
