@@ -311,6 +311,11 @@
     <Compile Include="ConsoleHostFodexFunV412Tests.fsx" />
     <Compile Include="ServiceWrapperFodexFunV108Tests.fsx" />
     <Compile Include="ServiceHostFodexFunV110Tests.fsx" />
+    <Compile Include="LineV4CoreTestSupport.fsx" />
+    <Compile Include="ServiceObservedWrapperFodexFunV100Tests.fsx" />
+    <Compile Include="ServiceHostOnNodeFodexFunV100Tests.fsx" />
+    <Compile Include="ConsoleFrontendFodexFunV100Tests.fsx" />
+    <Compile Include="ConversationProjectionFodexFunV100Tests.fsx" />
     <Compile Include="ProgramV300.fs" />
     <None Include="TestCases.BeforeRefactor.md" />
   </ItemGroup>

@@ -12,6 +12,7 @@ let main argv =
     | Some serving -> serving.GetAwaiter().GetResult()
     | None ->
         testList "Supervisor" [
+            testList "LineV4Core" [ ServiceObservedWrapperFodexFunV100Tests.tests; ServiceHostOnNodeFodexFunV100Tests.tests; ConsoleFrontendFodexFunV100Tests.tests; ConversationProjectionFodexFunV100Tests.tests ]
             testList "1116" [ FodexAgentFodexFunV413Tests.tests; ConsoleHostFodexFunV412Tests.tests; ServiceWrapperFodexFunV108Tests.tests; ServiceHostFodexFunV110Tests.tests; NativeAgyFodexFunV306Tests.tests; NativeExecV306Tests.tests; NativeAppServerV306Tests.tests; NativeCompactFodexFunV304Tests.tests; WrapperAgentV411Tests.tests; ParticipantManagerFodexFunV407Tests.tests; FodexFunRegistrationV411Tests.tests; ConsoleHostFodexFunV411Tests.tests; ServiceWrapperFodexFunV107Tests.tests; ServiceSupervisorFodexFunV107Tests.tests; ServiceMcpFodexFunV102Tests.tests; ServiceHostFodexFunV109Tests.tests; FodexAgentFodexFunV412Tests.tests; NativeProcessFodexFunV304Tests.tests; ServiceProtocolFodexFunV103Tests.tests; ServiceRequestStoreFodexFunV101Tests.tests ]
             testList "Infrastructure" [
                 FodexAgentFodexFunV409Tests.tests

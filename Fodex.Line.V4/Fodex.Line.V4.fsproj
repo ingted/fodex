@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>Fodex.Line.V4</AssemblyName>
+    <LangVersion>preview</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Fodex.Supervisor.Contract/LoggerAdapter.fsx" Link="LoggerAdapter.fsx" />
+    <Compile Include="$(USERPROFILE)/.codex/lib/ParseLine.fsx" Link="ParseLine.fsx" />
+    <Compile Include="LineV4SharedCore.fsx" />
+    <Compile Include="LineV4Options.fsx" />
+    <Compile Include="LineV4Platform.fsx" />
+    <Compile Include="LineV4Media.fsx" />
+    <Compile Include="LineV4Node.fsx" />
+    <Compile Include="LineV4Commands.fsx" />
+    <Compile Include="LineV4Protocol.fsx" />
+    <Compile Include="LineV4Transport.fsx" />
+    <Compile Include="LineV4StoreContract.fsx" />
+    <Compile Include="LineV4StoreAsync.fsx" />
+    <Compile Include="LineV4Focus.fsx" />
+    <Compile Include="LineV4Registry.fsx" />
+    <Compile Include="LineV4LegacyStore.fsx" />
+    <Compile Include="LineV4Service.fsx" />
+    <Compile Include="LineV4Batch.fsx" />
+    <Compile Include="LineV4Images.fsx" />
+    <Compile Include="LineV4OrderedOutput.fsx" />
+    <Compile Include="LineV4CliTranscript.fsx" />
+    <Compile Include="LineV4OrderedStore.fsx" />
+    <Compile Include="LineV4OrderedAdmission.fsx" />
+    <Compile Include="LineV4OrderedWorkStore.fsx" />
+    <Compile Include="LineV4OrderedNative.fsx" />
+    <Compile Include="LineV4OrderedExecution.fsx" />
+    <Compile Include="LineV4OrderedControls.fsx" />
+    <Compile Include="LineV4OrderedWorker.fsx" />
+    <Compile Include="LineV4OrderedMaterialize.fsx" />
+    <Compile Include="LineV4OrderedActor.fsx" />
+    <Compile Include="LineV4OrderedHost.fsx" />
+    <Compile Include="LineV4Lifecycle.fsx" />
+    <Compile Include="LineV4Host.fsx" />
+    <Compile Include="Program.fs" />
+    <None Include="LineV4References.fsx" />
+    <None Include="SourceProvenance.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Fodex.Supervisor/Fodex.Supervisor.fsproj" />
+    <PackageReference Include="Akka" Version="[1.5.74]" />
+    <PackageReference Include="Akka.Remote" Version="[1.5.74]" />
+    <PackageReference Include="Akka.Cluster" Version="[1.5.74]" />
+    <PackageReference Include="FAkka.Argu" Version="[10.2.1]" />
+    <PackageReference Include="FAkka.FCell2" Version="[10.2.3]" />
+    <PackageReference Include="PulseTrade.Comm.ResourceNode.Line" Version="[0.1.14]" />
+    <PackageReference Include="PulseTrade.Comm.ResourceNode.Dynamic" Version="[0.1.7]" />
+    <PackageReference Include="PulseTrade.Comm.ResourceNode.DurableProxy" Version="[0.2.14]" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="[4.1.3]" />
+    <PackageReference Include="FAkka.FSharp.Quotations.Evaluator" Version="[2.2.2]" />
+    <PackageReference Include="FSharp.Compiler.Service" Version="[43.12.403]" />
+    <PackageReference Update="FSharp.Core" Version="10.1.403" />
+  </ItemGroup>
+</Project>

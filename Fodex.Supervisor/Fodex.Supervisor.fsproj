@@ -292,6 +292,10 @@
     <Compile Include="ConsoleHostFodexFunV412.fsx"><Link>fodexFun/ConsoleHostFodexFun/ConsoleHostFodexFunV412.fsx</Link></Compile>
     <Compile Include="ServiceWrapperFodexFunV108.fsx"><Link>fodexFun/ServiceWrapperFodexFun/ServiceWrapperFodexFunV108.fsx</Link></Compile>
     <Compile Include="ServiceHostFodexFunV110.fsx"><Link>fodexFun/ServiceHostFodexFun/ServiceHostFodexFunV110.fsx</Link></Compile>
+    <Compile Include="ServiceObservedWrapperFodexFunV100.fsx"><Link>fodexFun/ServiceObservedWrapperFodexFunV100/V100.fsx</Link></Compile>
+    <Compile Include="ServiceHostOnNodeFodexFunV100.fsx"><Link>fodexFun/ServiceHostOnNodeFodexFunV100/V100.fsx</Link></Compile>
+    <Compile Include="ConsoleFrontendFodexFunV100.fsx"><Link>fodexFun/ConsoleFrontendFodexFunV100/V100.fsx</Link></Compile>
+    <Compile Include="ConversationProjectionFodexFunV100.fsx"><Link>fodexFun/ConversationProjectionFodexFunV100/V100.fsx</Link></Compile>
     <Compile Include="FodexFunctions.fsx" />
     <Compile Include="FodexAgent.fsx" />
     <None Include="FodexEntry.fsx"><Link>Archive/FodexEntry.fsx</Link></None>

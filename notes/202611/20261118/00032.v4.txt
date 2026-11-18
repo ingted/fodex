@@ -1,0 +1,408 @@
+1. 我希望在 v3 的基礎上能有一版 v4 cli 工具 (.exe) ( `ptc line 專案 + line provider RN node 腳本 + fodex.supervisor 專案` RFC)，這個 v4 執行 (.exe 加入 PATH env 之後，任意啟動 actorsystem 的 node port 都不同，預設 PulseTradeCommResourceNode@127.0.0.1:15979，對應 d9System_test2) 之後會跟直接執行現有的 fodex 有相同的 cli 體驗，`同時` fodex.supervisor 的 IO 跟 LINE Provider 共用，也就是 cli 可以維持 fodex.supervisor 的 prompt input (stdin)，也可以是由 line provider 將 line officical account 的 message 送進來(line app)。
+
+2. 另外現有的 spa host line tab page 請確保一樣會看到歷史對話。 (目前正在修 )
+3. v4 的 stdout 維持 fodex 的效果 (能夠 /show) 但 line provider 來的訊息也要視為 main wrapper 收到的 cli input 呈現
+4. 承 3. line provider 方面要嘛 /next 要能取走 cli 的對話(prompt + generated content 但是不要包含 /show on 的那些 tool calling stdout) 要嘛跟著下一個 line account 收到的 message 的回應一併送回
+
+上述有點複雜，請先詳細描述你對需求的理解
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+• 我的理解是：v4 要成為一個可直接執行的 Fodex CLI，同時接受終端與 LINE 輸入；兩邊操作同一個 wrapper、同一份對話歷史，以及該 wrapper 當前的 main native
+  session。
+
+  因此，在終端問到一半，可以拿手機繼續；LINE 收到的訊息與生成結果，也會同步出現在終端。
+
+  1. v4 的啟動與執行方式
+
+  • 提供可加入 PATH 的 .exe，從任意工作目錄啟動，保有現有 Fodex CLI 的使用體驗。
+  • v3 腳本中的正式功能需要整理成可編譯的模組，由 v4 入口組裝。
+  • 使用者的工作目錄可以是 native 的任務目錄；Provider 設定、持久化資料與服務資源的位置，則須有穩定的解析方式。
+  • LINE RN 預設使用 PulseTradeCommResourceNode@127.0.0.1:15979，對應 account d9System_test2。
+  • 同機不同 ActorSystem 必須使用不同監聽埠，並公布實際地址。port 是執行時位置，wrapper SID 才是持久身分；換 port 不應造成另開對話。
+
+  不過，不同 port 只解決網路衝突。同一個 LINE account／conversation 若被兩份 v4 同時接管，仍須有明確的歸屬規則，否則會重複生成、搶回覆。
+
+  2. CLI 與 LINE 真正共用的範圍
+
+  目標資料流是：
+
+  CLI stdin ─────────┐
+                     ├─→ 同一 wrapper 的輸入入口
+  LINE → Provider ───┘       → IAgent／ReActLoop
+                             → main native／participants
+
+  對話事件 ─→ 持久化 ─┬─→ CLI 顯示
+                    └─→ LINE 待交付內容
+
+  native stdout／stderr ─→ 獨立的 /show、/trace 通道
+
+  共用包含：
+
+  • wrapper SID、main native、participants 與 FGL graph。
+  • prompt 的受理順序、來源、關聯的生成內容及完成狀態。
+  • cancel、restart、compact、模型切換等既有 wrapper 行為。
+
+  兩邊同時輸入時，必須經同一個受理入口決定順序，沿用 wrapper 的中斷／接續政策。每筆 prompt 要能對回自己的生成內容，不能單靠時間先後配對。
+
+  目前 CLI 入口 (Fodex.Supervisor/ConsoleHostFodexFunV412.fsx:56) 與 service 是分開組裝的；v4 需要把 Console 顯示／輸入與 wrapper 的建立責任整理開，讓
+  Provider 接到 CLI 正在操作的那個 wrapper。
+
+  3. 終端上看到的效果
+
+  現有 Fodex 的輸入、生成輸出與 /show 操作繼續保留。
+
+  LINE 訊息經 Provider 受理後，終端應明確呈現它也是輸入，例如：
+
+  [LINE · d9System_test2 · Topic=main]
+  請接著分析剛才那段程式
+
+  ……main wrapper 的生成內容……
+
+  fdx.261119143025>
+
+  顯示上需要保留來源與目標，避免使用者不知道這輪生成由誰觸發。若使用者正在終端打字，LINE 訊息或生成輸出插入時，要保留尚未送出的文字並重畫 prompt。
+
+  這個顯示動作本身不能再次提交 prompt，否則會形成重複生成或迴圈。
+
+  4. LINE 能領取 CLI 產生的對話
+
+  假設終端完成：
+
+  CLI prompt：請分析 A
+  生成內容：A 的問題是……
+
+  LINE 必須能取得這一段的 prompt＋生成內容。你提出的兩種方式，我理解為交付策略：
+
+  • /next：主動領取尚未交付到 LINE 的內容。
+  • 下一則 LINE 訊息：將尚未交付的 CLI 對話，與這次 LINE 回應一起送回。
+
+  兩種方式應使用同一份待交付紀錄，避免 /next 領過一次，下一次普通訊息又附上相同內容。我傾向先把 /next 定成基本行為，再決定是否預設自動夾帶。
+
+  這裡有幾個必要語意：
+
+  • CLI 已顯示，不代表 LINE 已交付。 兩者的讀取／交付進度分開保存。
+  • 「取走」是更新 LINE 的交付進度，FGL／SQL 歷史仍保留。
+  • 只納入目標 wrapper 面向使用者的對話文字；碎片與完整訊息要合併去重。
+  • /show 的 native stdout、stderr、工具執行輸出不進 LINE 對話。
+  • /next 讀取保存的內容，不再呼叫模型生成一遍。
+  • 超過 LINE 回覆容量時分頁；逾時或交付狀態不明時，依 RN 的交付紀錄處理，不能提前吞掉待交付資料。
+  • 延續你之前的要求，使用 LINE 回覆機會，不新增付費 Push。
+
+  現有 v3 nextReply (G:/PulseTrade.fs/misc/line_provider_fodex_v3_protocol.fsx:107) 主要組合尚未交付的完整回答。v4 還需要把對應的原始 CLI prompt、來源與生成內
+  容一起組成對話，這部分確實需要擴充。
+
+  5. SPA Line tab 的歷史
+
+  我理解你的最低要求是：v4 上線後，既有 LINE 歷史、新收到的 LINE 訊息，以及實際送出的回覆，都仍能由 SPA 原本的歷史介面看到。
+
+  因此 Provider 必須繼續走 PTC 正式的訊息保存與交付流程；不能因為共用 Fodex IO，就只把內容留在 Fodex graph。
+
+  我也傾向讓 SPA 顯示 CLI 來源的對話，並標記：
+
+  • 來源是 CLI 還是 LINE。
+  • 對應 Topic／wrapper SID。
+  • 是否已交付到 LINE。
+
+  其中「CLI 內容尚未送到 LINE 時，SPA 就能看到」是我提出的擴充理解，需要你確認。它應保留 CLI 來源，不能冒充 LINE 收到的訊息。你提到正在修的歷史頁面，也需要列
+  為 RFC 的對接與驗收項目。
+
+  6. 三個部分的責任
+
+   部分                         我理解應負責的工作
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   Fodex.Supervisor             同一 wrapper 接受不同來源輸入、執行與控制 participant、保存對話事件、提供訂閱／歷史讀取，維持對話與 raw stdio 分離
+  ───────────────────────────  ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   LINE Provider RN／v4 宿主    account／conversation／Topic 與 wrapper 的對應、LINE 命令及媒體轉換、Console 接線、待交付對話組合
+  ───────────────────────────  ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   PTC LINE                     LINE 接收、OrderedAdmission、回覆與交付狀態、訊息歷史，以及 SPA 所使用的正式查詢資料
+
+  MCP 或 LINE adapter 的操作仍應透過 IAgent／ReActLoop 等正式能力完成。Fodex 的能力若有缺口，就補回實作專案及版本化 FodexFun，避免再把 orchestration 堆進
+  Provider。
+
+  目前最需要先確認的是三個邊界：
+
+  1. CLI 綁哪個 root？
+     我先理解為 CLI 綁定一個明確的 wrapper，LINE 指向該 wrapper 時共用 IO；LINE 的其他 Topic 繼續獨立存在。LINE 執行 **setagent 時，是否也要同步切換 CLI 的操
+     作目標？
+
+  2. 重複啟動 v4 的意思？
+     是要再開一個終端接入同一套 LINE／wrapper，還是建立另一套獨立綁定？前者可以共享對話，但必須由同一個 Provider owner 接收該 LINE 對話。
+
+  3. 關閉終端後，LINE 要不要繼續服務？
+     若 /exit 要連 Provider、wrapper 一起正常關閉，v4 可以由這個前景程序持有資源；若 LINE 必須繼續在線，就需要常駐宿主與可連接／離開的 Console。這會直接影響
+     v4 的程序架構。
+
+  Worked for 3m 37s • 12:24 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex_btw
+  ← for agents · ? for shortcuts                                                                                                    ⚠ 2 warnings · f2 to view
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1. 同一個 LINE account／conversation 若被兩份 v4 同時接管 => 這不是在 pts line 管理介面設定的嗎? 一個 line account 只對應一個 actor address?
+
+2. v4 需要把 Console 顯示／輸入與 wrapper 的建立責任整理開，讓 Provider 接到 CLI 正在操作的那個 wrapper => IAgent.Send 不保序，也就是 line app 跟 fodex 可能同時 send ，但是進到 actor 順序性就保證了對吧?
+
+3. LINE 訊息經 Provider 受理後，終端應明確呈現它也是輸入 => fodex cli 只 show 這是輸入 (只是他是來自 line provider)，不應該由 cli 輸入? 這樣不會有你說的 `再次提交 prompt` 問題?
+
+4. 接續 3.，相對的 cli 的 prompt 訊息被 /next 取回或隨著下一次 line app 的輸入被一次送去，就如你說的他只能作為 line account 的訊息的一部份，無法是也不應該是 line user 訊息，我的認知沒錯對吧?
+
+5. LINE 執行 **setagent 時，是否也要同步切換 CLI 的操作目標 => 同 v3 概念，是的，v4 cli 啟動時預設起在 15979，同一個 actorsystem 應該要能起多個 wrapper => 如果現有規格無法支援這樣的操作，或者必須要改過才能支援，請告知
+
+6. 重複啟動 v4 -> 一個 v4 instance 只能對應一個 line account (透過管理介面綁定 actor)，所以理論上如果 **newagent，那麼管理介面綁定的 actor 是要負責根據 sid 丟正確的 wrapper，這要有封裝性，不應該讓 ptc 的 line 系列專案處理這件事情 => 請確認是否有完全理解
+
+7. 關閉終端後，LINE 要不要繼續服務 -> 不了...就像 v3 腳本，停了 line bot 就不會動了 => 我們是說同一件事情嗎?
+
+
+
+
+
+
+
+
+
+
+
+
+• 有，這次界線清楚了。v4 是一個前景 CLI instance，對應一個 LINE account；同一個 ActorSystem 裡管理多個 wrapper，CLI 與 LINE 共用選取狀態及 wrapper IO。
+
+  1. account→actor 綁定由 PTC 管理介面負責，你說得對。
+
+     已核對現有設定：每個 account 有一份 generator configuration，其中是一個 Binding，以 actor address 或 catalog key 指向 Provider 入口。現有設定 (G:/
+     PulseTrade.fs/Libs/PulseTrade.Comm/src/PulseTrade.Comm.ResourceNode.Line/LineGeneratorSettings.fs:19)
+
+     因此 v4 不需要另造 account 接管機制。第二份 v4 使用不同 node port，再由管理介面綁定它所服務的 account。建立或切換 wrapper 都不需要更改管理介面的 actor
+     address。
+
+  2. 對，以同一個目標 actor 的 mailbox 受理順序為準。
+
+     CLI 與 LINE 可以同時透過 IAgent 送入訊息，actor 逐筆處理。精確地說：
+      • 不同 sender 同時發送，沒有「誰先按 Enter 就必然先處理」的全域順序。
+      • 使用一般 FIFO mailbox 時，進入該 mailbox 後依排入順序處理。
+      • actor 若啟動非同步工作後繼續收訊，受理順序不等於工作完成順序；既有 cancel／steer／排程仍由 wrapper 處理。Akka.NET 官方說明
+
+     另外，IAgent.Send 是封裝入口，保序能力取決於其實作；不能一概說它必然不保序。v4 應確保兩種來源走同一條正式 actor 路徑。
+
+     **setagent 與後續 prompt 也要在共同的路由狀態下受理，當下固定目標 SID，避免非同步執行到一半又被新的 selection 改送別處。
+
+  3. 對，LINE 輸入在 CLI 上只做顯示。
+
+     正確流程是：
+
+     LINE → Provider → wrapper 受理
+                           └→ 通知 Console 顯示「來自 LINE 的輸入」
+
+     Console 不把這段文字塞進 stdin，也不重新呼叫 Send。因此依照這個設計，就沒有再次提交 prompt 的問題。顯示與提交是兩個明確分開的操作。
+
+  4. 你的認知正確。
+
+     CLI prompt 在 Fodex 對話裡是人類輸入；當它被 /next 帶回 LINE 時，則是 LINE official account 發出的一則訊息中的引用內容，例如：
+
+     [CLI 輸入]
+     請分析這段程式。
+
+     [Agent 回覆]
+     ……
+
+     它不會成為 LINE user 的訊息，SPA 也不能把它保存成假的 LINE inbound。原始來源仍是 CLI，LINE 端保存的是 account 實際送出的回覆。/show 的 raw stdout／stderr     繼續排除。
+
+  5. 同一個 ActorSystem 建立多個 wrapper，現有核心已支援；CLI 還需要改。
+
+     已核對現有 supervisor：它持有 Dictionary<Guid,IActorRef>，依 SID 建立及找到各 wrapper 的 bridge，全部使用傳入的同一個 ActorSystem。現有多 wrapper 路徑
+     (Fodex.Supervisor/ServiceSupervisorFodexFunV107.fsx:534)
+
+     目前需要補的是：
+      • 現有 Console host 固定持有一個 session／factory，須改為操作「目前選取的 wrapper」。
+      • LINE **setagent 成功後，要更新 CLI 使用的同一份 selection，並讓終端明確顯示新目標。
+      • Console 的對話輸出與 /show 訂閱，需要隨目標切換。
+      • 現有 v3 RN 與外部 Fodex service 的組裝，要調整成 v4 可使用既有 ActorSystem 的組裝方式。
+
+     不需要為每個 wrapper 建立 ActorSystem 或分配 node port。 缺的是 host／Console 接線，核心的多 wrapper 能力已存在。
+
+  6. 完全理解：SID／Topic 路由由 v4 封裝，PTC 不負責選 wrapper。
+
+     PTC 管理設定
+         LINE account → v4 的固定入口 actor
+                                 │
+                          v4 解析命令與目標
+                                 │
+                   conversation／Topic／SID 對應
+                                 │
+                          對應 wrapper 的 IAgent
+
+     **newagent 在 v4 內建立新 root wrapper並保存對應；**setagent 修改目前選取；指定 SID 的訊息則送往該 SID。
+
+     PTC LINE 系列繼續負責接收、保存、交付及其通用協定。它不需要知道 Fodex 的 **newagent／**setagent 語意，也不需要持有 Fodex 的 wrapper registry。
+
+  7. 是，同一件事情：v4 停止，這個 account 的 bot 處理就停止。
+
+     不需要另外留下常駐背景宿主。正常 /exit 或 Ctrl+C 應停止受理、收尾所持有的 wrappers／native 程序，再終止 ActorSystem 與 executable；共用的 PTC 服務不因此
+     停止。
+
+     退出與 dropagent 要區分：退出保留 SID、對應與歷史，供下次恢復；dropagent 才是從可用 agent 名冊移除。
+
+  另有一個範圍要在 RFC 明確寫下：一個 LINE account 可以有多個 LINE conversation，而 v3 的 selection 是按 conversation 保存。 我會保留這個隔離；CLI 應跟隨哪個
+  conversation 的 **setagent，仍需要定義，不能直接把所有群組／私訊的 selection 合併成 account 全域值。
+
+  Worked for 2m 19s • 12:46 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex_btw
+  ← for agents · ? for shortcuts
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+撰寫給 workhorse 的 agent 一份完整的 F:\fodex\notes\202611\20261119\00033.v4.RFC.1119任務.md
+   1. 請詳細依據上述討論撰寫 SD (spec/SA 請 IMPLICIT 隱含於 SD 內容)
+   2. 考量現有程式碼與特別是你提到的 `現有 Console host 固定持有一個 session／factory，須改為操作「目前選取的 wrapper」` gap
+   3. 盡可能在不更動 fodex.supervisor 既有已經驗證過邏輯的架構下，以我們的 dynamic version 架構提供新版 fodexFun 達成 (懂我意思嗎?)
+   4. SD 要針對 `ptc line 專案 + line provider RN node 腳本 + fodex.supervisor 專案` 請精確分三個 SECTION 說明新刪修細節
+
+
+讓 workhorse agent 能正確理解，在降智情況下也能按圖索驥完成 v4 開發/RFC/refactor
+
+先確認我們有 ALIGN 再開始撰寫文件
+
+
+
+
+• 懂。你要的是：保留已驗證的 Fodex 核心行為，以新增、可選版本的 FodexFun 完成 v4 組裝；讓 workhorse 按明確的檔案、版本、資料流與測試步驟開發。
+
+  我會依以下理解撰寫，先不建立文件。
+
+  1. 優先重用既有邏輯，再新增版本
+
+     wrapper／native／ReActLoop、持久化、關閉與恢復等已驗證功能，優先透過 registry 取用既有版本。需要改行為時新增 FodexFun 版本，保留舊檔與舊版本；新版入口明
+     確選版，避免新版本註冊後意外改變 v3 的行為。
+
+     不藉這次整合重新發明 Application／runtime 組裝層。Contract 有缺口才提出具體變更及理由，不預設需要修改。
+
+  2. Console 的核心改動是「目前選取的 wrapper」
+
+     現有 Console host 捕捉單一 session／factory；新版應將輸入送往當下選取的 wrapper，受理時固定目標，後續切換不能改變已受理工作的去向。
+
+     LINE **setagent 與 CLI 使用同一份選取狀態；顯示訂閱、/show、prompt 目標資訊也要正確切換。LINE 輸入的終端呈現只走顯示，不重新送件。
+
+     單一 ActorSystem 管理多個 wrapper 已有基礎，不重造這項能力。
+
+  3. 文件精確分成三個 SECTION
+
+      SECTION                                新刪修範圍
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      PTC LINE 專案                          核對 account→Provider actor 綁定、OrderedAdmission、交付與歷史／SPA 路徑。只提出必要的通用能力變更；Fodex SID／
+                                             Topic／wrapper 選擇不放進 PTC。現有能力足夠的部分明確寫「沿用」。
+     ─────────────────────────────────────  ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+      LINE Provider RN node 腳本／v4 宿主    將正式能力編譯化；account／conversation／Topic／SID 路由、CLI 共用選取、LINE 輸入顯示、CLI 對話的 /next／隨回覆
+                                             交付、ActorSystem 與 executable 的啟停組裝。
+     ─────────────────────────────────────  ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+      Fodex.Supervisor 專案                  新版 Console FodexFun、可共用既有 ActorSystem 的組裝、對話與 stdio 訂閱、必要的歷史讀取能力；經 IAgent／
+                                             ReActLoop composition 重用既有執行核心。
+
+     每一節內直接包含設計與驗收，不另立 Spec／SA 章節。
+
+  4. SD 必須足以直接施工
+
+     每個修改項目都會交代：
+      • 現有檔案與函數、目前資料流及具體缺口。
+      • 新檔名／module、registry target、版本、輸入輸出與引用的既有版本。
+      • 哪個 actor／instance 擁有狀態，訊息如何流動及何時持久化。
+      • 正常、競爭、失敗、重啟與關閉流程。
+      • 對應 Expecto、獨立 FSI、VS Test Explorer 與真 CLI／LINE／SPA 驗收。
+      • 實作順序、部署接線、v3 回歸範圍及可判定的完成條件。
+
+     exe 由哪個專案產出、Provider 如何編譯引用，也會在讀碼後於 SD 定案，不留到實作階段臨時決策。
+
+  目前只剩一個會直接影響 SD 的未定義點：同一 account 有多個 LINE conversation 時，CLI 跟隨哪個 conversation？
+
+  我的建議是：
+
+  • 成功執行 **setagent 的 conversation，成為 CLI 當前操作的 conversation，並切到指定 wrapper。
+  • 其他 conversation 的普通訊息仍送往各自選取的 wrapper，顯示時標明來源，不自動搶走 CLI 焦點。
+  • 各 conversation 的選取／預設繼續獨立保存。
+
+  這個焦點規則符合你的意思嗎？ 另外，CLI 在第一則 LINE 訊息到來前建立的初始 wrapper，要歸入哪個 conversation，也必須隨此規則明確定義。
+
+  Worked for 1m 20s • 12:57 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex_btw
+  ← for agents · ? for shortcuts                                                                                                    ⚠ 2 warnings · f2 to view
+
+
+
+
+
+
+
+
+
+› 你觀察一下現在的 PTCS LINE tab page 相關實作，理論上應該是同一個 LLM session 通到底，不同的 line group 區分，另外目前針對 user 只回復 NorthPole 不回覆其他
+  user (所以不同 group 如果沒有 NorthPole 目前應該是有某種 drop 機制)
+
+  如果這點沒問題的話，請開始撰寫文件
+
+• 已完成 00033.v4.RFC.1119任務.md (notes/202611/20261119/00033.v4.RFC.1119任務.md)。
+
+  確認結果：
+
+  • 不同 LINE group 分開；同一 group 選定的 wrapper 持續沿用其 native session。
+  • 非 NorthPole 不進模型，但目前仍可能收到固定拒絕文字。文件已將 v4 改用 Ignore 靜默略過列為必修。
+
+  文件依指定分成三個 SECTION，包含檔案修改、版本化 FodexFun、CLI／LINE 共用流程、恢復與交付狀態，以及 66 項驗收點。本輪只完成文件，尚未修改產品程式。
+
+  Worked for 22m 53s • 1:35 AM
+
+
+› Ask Codex to do anything
+
+  GPT-6-Astra max · F:\fodex · fodex_btw
+  ← for agents · ? for shortcuts  

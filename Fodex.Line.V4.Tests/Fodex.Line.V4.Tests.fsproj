@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <OutputType>Exe</OutputType>
+    <LangVersion>preview</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <IsTestProject>true</IsTestProject>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Fodex.Supervisor.Contract/LoggerAdapter.fsx" Link="LoggerAdapter.fsx" />
+    <Compile Include="../Fodex.Supervisor.Tests/QuotationTestScope.fsx" Link="QuotationTestScope.fsx" />
+    <Compile Include="Fixtures/LineV3SchemaFixture.fsx" />
+    <Compile Include="LineV4TestSupport.fsx" />
+    <Compile Include="LineV4ScopeTests.fsx" />
+    <Compile Include="LineV4FocusTests.fsx" />
+    <Compile Include="LineV4DeliveryTestSupport.fsx" />
+    <Compile Include="LineV4DeliverySqlTests.fsx" />
+    <Compile Include="LineV4CliTranscriptTests.fsx" />
+    <Compile Include="LineV4RecoverySqlTests.fsx" />
+    <Compile Include="LineV4HostTests.fsx" />
+    <Compile Include="Program.fs" />
+    <ProjectReference Include="../Fodex.Line.V4/Fodex.Line.V4.fsproj" />
+    <PackageReference Include="Expecto" Version="11.1.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" Version="0.16.1" />
+    <PackageReference Include="FAkka.FSharp.Quotations.Evaluator" Version="[2.2.2]" />
+    <PackageReference Include="FSharp.Compiler.Service" Version="[43.12.403]" />
+    <PackageReference Update="FSharp.Core" Version="10.1.403" />
+  </ItemGroup>
+</Project>

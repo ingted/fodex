@@ -12,6 +12,10 @@ namespace Fodex.Supervisor
 module FodexFunctions =
     let builtins =
         [|
+            ServiceObservedWrapperFodexFunV100.Definitions.builtins
+            ServiceHostOnNodeFodexFunV100.Definitions.builtins
+            ConsoleFrontendFodexFunV100.Definitions.builtins
+            ConversationProjectionFodexFunV100.Definitions.builtins
             NativeProcessFodexFunV304.Definitions.builtins
             ServiceProtocolFodexFunV103.Definitions.builtins
             NativeCompactFodexFunV304.Definitions.builtins

@@ -1,0 +1,46 @@
+› [WARNING][11/16/2026 03:14:12.863Z][Thread 0016][akka.tcp://PulseTradeCommResourceNode@127.0.0.1:15979/user/line-v3-ordered-worker] Ordered work 09801642-
+  a768-42d9-9c18-d3941cf979dc deferred: ordered-root-owner-busy
+
+  這是什麼問題?
+
+
+• 我先對照這筆時間與 work ID，確認它是否屬於當時的 force 驗收，以及後續有沒有完成。
+
+• Ran Read-CodexStdout { rg -n -m 8 'ordered-root-owner-busy|09801642-a768-42d9-9c18-d3941cf979dc' 'G:/PulseTrade.fs/misc/
+  │ line_provider_fodex_v3_ordered_execution.fsx' 'G:/PulseTrade.fs/misc/line_provider_fodex_v3_ordered_work_store.fsx' 'G:/PulseTrade.fs/misc/
+  │ line_provider_fodex_v3_ordered_store.fsx' 'G:/PulseTrade.fs/deployment/process/dev/line-fodex-v3/output/startup/fodex-line.15979.host.log'; rg -n -m 6
+  │ … +1 line
+  └ G:/PulseTrade.fs/deployment/process/dev/line-fodex-v3/output/startup/fodex-line.15979.host.log:236:[WARNING][11/16/2026 03:14:12.863Z][Thread 0016]
+    [akka.tcp://PulseTradeCommResourceNode@127.0.0.1:15979/user/line-v3-ordered-worker] Ordered work 09801642-a768-42d9-9c18-d3941cf979dc deferred:
+    ordered-root-owner-busy
+    +7 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg -n -C 4 -g 'line_provider_fodex_v3*.fsx' 'ordered-root-owner-busy' G:/PulseTrade.fs/misc; rg -n -C 3
+  │ '09801642-a768-42d9-9c18-d3941cf979dc' 'G:/PulseTrade.fs/deployment/process/dev/line-fodex-v3/output/startup/fodex-line.15979.host.log'; rg -n -m 4
+  │ 'OrderedAdmission|root-owner|LINE.*root|existing Chrome LINE' 'C:/Users/Administrator/.codex/memories/MEMORY.md'; rg -n 'WorkId|AdmissionId|Id=|
+  │ … +1 line
+  └ G:/PulseTrade.fs/misc\line_provider_fodex_v3_store_async.fsx-446-        let owned=new OwnedSqlConnection(connection,sessionLock=resource)
+    G:/PulseTrade.fs/misc\line_provider_fodex_v3_store_async.fsx-447-        try
+    G:/PulseTrade.fs/misc\line_provider_fodex_v3_store_async.fsx-448-            let db=connection,None
+    +14 lines (ctrl+t to view transcript)
+
+• Ran Read-CodexStdout { rg -n -C 3 'Acquire_c|ordered-root-owner:' 'G:/PulseTrade.fs/misc/line_provider_fodex_v3_store_async.fsx'; rg -n -C 3 'deferred:|
+  │ DeferWork|defer|Retry|LeaseUntil' 'G:/PulseTrade.fs/misc/line_provider_fodex_v3_ordered_execution.fsx' | Select-Object -First 65;
+  │ $env:FSharpCoreImplicitPackageVersion='10.1.403'; $sqlProbe=@'
+  │ … +19 lines
+  └ Exception: C:\Users\Administrator\.codex\lib\Read-CodexStdout.ps1:150
+    Line |
+     150 |          throw "Captured command failed with exit code $exitCode. $($d …
+    +24 lines (ctrl+t to view transcript)
+
+• 這筆表示：該工作當下拿不到 wrapper 的 SQL 排他鎖，因此延後執行。這個鎖用來避免同一個 wrapper 被多個 worker 同時操作。
+
+  我已對照你貼的 work ID，確認它屬於 11/16 的生成中 force 關閉驗收：
+
+  • 當時同一個 wrapper 正在關閉。
+  • 約 0.3 秒後，關閉已記錄成功，原批次變為 Cancelled。
+  • 現在該 work 為 Terminal，Attempts=1，已收尾。
+
+  所以這一筆是短暫鎖競爭。若同一 work 持續出現這個警告、一直無法到達 Terminal，才需要追查鎖沒有釋放或工作卡住的原因。
+
+  Worked for 1m 46s • 7:06 AM

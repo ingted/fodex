@@ -39,6 +39,8 @@
   <Project Path="Fodex.Supervisor.Contract.Tests/Fodex.Supervisor.Contract.Tests.fsproj" />
   <Project Path="Fodex.Supervisor.Tests/Fodex.Supervisor.Tests.fsproj" />
   <Project Path="Fodex.Supervisor/Fodex.Supervisor.fsproj" />
+  <Project Path="Fodex.Line.V4/Fodex.Line.V4.fsproj" />
+  <Project Path="Fodex.Line.V4.Tests/Fodex.Line.V4.Tests.fsproj" />
   <Folder Name="/Archive/" />
   <Folder Name="/Archive/20261031/">
     <File Path="Fodex.Supervisor.Contract/archive/20261031/Fodex.Supervisor/WrapperIAgentDemo.M010.R001.fsx" />
