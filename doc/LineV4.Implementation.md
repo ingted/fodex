@@ -210,6 +210,12 @@ Release build 成功，完整 v4 tests **40/40 passed**（presentation 8 項）�
 
 新增零 argv 三個正式路徑與單選項 override 的回歸後，最終 Release **42/42 passed**。曾評估的 auto-discovery fixture 語法問題已修復，但該支線與 fixture 均已依使用者要求移除，最終只驗預設 argstring。接下來以 exe、零參數、release 工作目錄驗正式啟動，並追蹤原 789987 及前述 private／group 輸入顯示。
 
+最終已部署 immutable `4991413-20261119-cliinfo`，231 檔逐一核 SHA256；managed DLL=`96E1B57A8400FA92753CCC437D27D8B79B6C47D29CAB78D8CB9E8F79E54C0EFC`。實際 process argv=[]、OS cwd=該 release，直接使用完整 default argstring；native 視窗顯示 4.0.2.0／approvedBindings=1、shared state／bindings，15979／18825 均由新版持有。current／launch／candidate／run 已同步，launch.Arguments=[]；沒有啟動 wrapper 或 runtime launch.json 載入支線。舊錯誤啟動 process 僅有兩個 owned processes，已核對身分後停止，沒有重啟 RN／GW／SPA。現保留新版、a13f94c、8486141 共三版。
+
+原 789987 的 RN sequence 110 已處於 Conflict／ordered-binding-not-approved，既有 worker 不會自動重開，所以它會擋住同 conversation 的 sequence 111（agent 一次新送的驗收訊息）。既有官方恢復函數只處理 BlockedAuthorization；依 G AGENTS 缺正式入口須先確認，已提出一筆 CAS 修復並取得使用者明確同意。執行前再核 approved binding 1、原 route／sequence／fingerprint、head=110、無有效 lease、無 admission receipt／output、Fodex BatchItems=0；同 account applock 與 transaction 下只把該筆 Conflict 改 Pending。原 route／payload／sequence 未變，之後原 worker 使 110／111 均 Admitted／Result Ready，BatchItems 各 1，原 model batch 按序合併兩則 789987。SQL 與 receipt 在 `line-789987-recovery.sql`／`.json`，不是清空或重送模型。
+
+真人 LINE 驗收：test001／test002 的輸入顯示正確 `[LINE][test001][NorthPole]`／`[LINE][test002][NorthPole]`，CLI 回覆各自正確 marker。先前 token 延遲的既存結果由每群一次 `/next` 續取，LINE DOM 實際確認 marker；private 的 789987 亦經 `/next` 收到已保存回答，沒有重新生成模型。最後依序在 private 發 hi、等回答後發 123321，LINE 與 CLI 都收到「嗨！有什麼我可以幫你的？」及「收到：123321。」；CLI 精確為 `[LINE][NorthPole]` 輸入與 `[d9System_test2][83ef32b4]` 回答，兩則分行，無 Prompt accepted／raw JSON／envelope。已截取並檢查實際 native window 圖像，文字／prompt 可讀無重疊；畫面上方是先前 show on 的歷史 buffer，完成後 private、test001、test002 的 show 均 off，labels off、cliinfo ALL off。focus 還原 private，LINE draft 空白及原本空白 search 亦還原。完整最新結果在 `cliinfo-validation.json`／`cliinfo-live.png`；真人 LINE 與 source／unit 的證據分開記錄。
+
 ## SECTION 3 — Fodex
 
 已新增以下實作與對應 Expecto tests，接入正式編譯順序及 first-use builtins：
