@@ -226,6 +226,14 @@ Release build 通過（0 errors）；全部 43/43 tests passed。獨立原生 co
 
 正式 dotnet publish 共 231 檔，離線 help 第一行 Fodex LINE v4 4.0.3.0，managed DLL SHA256=808731DE55408AF0938260D28CB812DF4DACB91624697BEFAAED7A522F087B51。部署切換與實際新版視窗驗證另補交付紀錄。
 
+### 2026-11-20：4.0.3 已部署與實際 v4 視窗驗收
+
+來源 `0d2ac98` 已 commit/push；使用者刪除最舊 8486141 後，已部署 immutable `0d2ac98-20261120-cursor-reentry`，231 檔逐一核 SHA256。current／launch／candidate 與 runbook 已同步，G repo commit `a7d7079dd` 已 push；同 target 保留 a13f94c、4991413 與新版共三版。實際啟動零 argv、release cwd，畫面顯示 4.0.3.0、approvedBindings=1 與原 shared state／bindings；15979／18825 正常，Management revision84／bindingRevision1 保留，沒有重綁或 SQL 修復。
+
+舊 v4 的原視窗確認沒有未送 input；正常 Ctrl+C 關閉超過 35s 預算後，依使用者既有授權僅結束舊 v4／conhost。已留 cursor-reentry-cutover-stop.json，未把本次停止宣稱正常退出。共用 RN／GW／SPA 保持原 Running／PID，未重啟。
+
+實際新版 v4 視窗刻意隱藏游標後，送出 /labels off 返回 prompt 會恢復 Visible=true／Size15；另一輪短 prompt 送出後再隱藏，收到 CURSOR_ROUNDTRIP_V403_OK 正式回答與新 prompt，再次恢復底線。native screenshot 已實際檢視，底線可見。正式證據位於 artifacts/line-v4/20261120/cursor-reentry-live-command.json、cursor-reentry-live-background.json、cursor-reentry-live.png 與 cursor-reentry-validation.json。此處補上新版正式視窗證據，取代前段尚未切換的狀態；沒有把最初隱藏來源不明改寫為已證明。
+
 ## SECTION 3 — Fodex
 
 已新增以下實作與對應 Expecto tests，接入正式編譯順序及 first-use builtins：
