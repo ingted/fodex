@@ -186,6 +186,12 @@ v4 的 RN node 補接既有 `ActorLogging.config`；啟動時先載入 applicati
 
 部署尚未切換：同 target 已有三版；待退役的 `239ae81-20261119-display-fix` 已確認 current／launch／run、process／service／task 引用均為 0，230 檔、無 reparse point，但 agent 的 literal-path Remove-Item 被自動核准審查以 blocked by policy 拒絕。已請使用者刪除此精確目錄；不改用其他 API 繞過，也不超過三版建立新版。現行 `8486141-20261119-console-input` 與 `239ae81-20261119-asset-root-fix` 保留，正式視窗／LINE 驗收需在切換後另記。
 
+使用者完成刪除後，已將 231 檔候選逐一核 hash、複製並驗證為 immutable `a13f94c-20261119-console-output`，更新 G current／launch／candidate manifest／run identity，現在共保留三版。使用者明確授權實驗中的 v4 process 可由 agent 自行停止；本次 pending admissions=0，核對 PID＋birth＋exe 後終止舊 v4 及其完整 owned tree，確認沒有剩餘子行程且端口釋放，再啟動新版。沒有重啟 PTC 共用服務或更動 management revision 84／binding revision 1。
+
+新版正式視窗第一行為 `Fodex LINE v4 4.0.1.0`，15979／18825 均由新版持有。透過既有 9222 LINE Chrome、核 receiver=`d9System_test2` 並保留空白 draft 後只送一次測試訊息，實際收到 `V4_OUTPUT_2611192225_OK`；UI Automation 確認 input observation 是中文原文且無 userPayload envelope，labels on 的答案為前綴、事件標題、正文同行。native 啟動 banner 與原 severity Warning 實際寫入每日診斷檔，整個 console buffer 無 Native process stderr；show on 仍可見獨立 raw notifications。
+
+再由相同既有 native-console INPUT_RECORD 方式送入 `/show(ALL) off`、`/labels off`，核對兩個狀態確認後才在 LINE 發 `hi`。正式 CLI 與真人 LINE 均出現 `嗨！有什麼我可以幫你的？`；CLI 行為 `[d9System_test2][83ef32b4] 嗨！有什麼我可以幫你的？`，本輪沒有新增 raw JSON。已截取並實際檢查 native window 畫面，輸入／答案／prompt 清楚可讀，無重疊。SQL 確認 main N=2 仍 resume `01a1f0a4-cbd5-79e0-9581-caf3bb46ea4d`；兩筆 LINE admission 均 Terminal。結果、as-of process identity 與 screenshot 在 `console-output-validation.json`／`console-output-live.png`；目前視窗保留 show off／labels off。測試 driver 初次誤用 redirected standard-input handle 未寫入任何命令，確認 console 沒有該指令後，改沿既有 CreateFileW(CONIN$) 路徑才成功注入，產品程式未因此修改。
+
 ## SECTION 3 — Fodex
 
 已新增以下實作與對應 Expecto tests，接入正式編譯順序及 first-use builtins：
