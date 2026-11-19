@@ -25,15 +25,18 @@ type Argument =
         member _.Usage="Shared CLI/LINE v4 host; deployment identity and paths are startup configuration."
 
 let parser=ArgumentParser.Create<Argument>(programName="Fodex.Line.V4")
+
 /// FSI users edit this text. The executable parses argv only, with sparse defaults.
 let defaultArgumentsText="""
 --line-account d9System_test2 --akkaport 15979 --cluster-host 127.0.0.1
 --bootstrap-health-url http://127.0.0.1:8799/resource-node/healthz
 --line-catalog G:/PulseTrade.fs/deployment/services/prod/PulseTradeCommResourceNode/config/line-catalog.json
---data-directory state --bindings config/ordered-bindings.json
+--data-directory G:/PulseTrade.fs/deployment/process/dev/Fodex.Line.V4/shared-cli-line/state
+--bindings G:/PulseTrade.fs/deployment/process/dev/Fodex.Line.V4/shared-cli-line/config/ordered-bindings.json
 --allowed-line-reply-user-id U8075ab9e46cfe73a095ee1340d5fbd61
 --cache-url http://127.0.0.1:18825/mcp --sql-server localhost --database FodexM018
---working-directory G:/PulseTrade.fs --output-directory output --shutdown-seconds 30
+--working-directory G:/PulseTrade.fs
+--output-directory G:/PulseTrade.fs/deployment/process/dev/Fodex.Line.V4/shared-cli-line/output --shutdown-seconds 30
 --mainagent-type agy --subagent-type codex --subagent-mode wrapper --labels true
 """
 let defaults=parser.ParseCommandLine(global.PL.parseLine [|' '|] (Some '"') None true (defaultArgumentsText.ReplaceLineEndings(" ")))

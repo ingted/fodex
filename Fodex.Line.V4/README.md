@@ -18,6 +18,8 @@ Evaluator 固定 2.2.2、FCS 固定 43.12.403、v4 的 FSharp.Core 固定 10.1.4
 
 4.0.2 的 LINE 輸入格式為 `[LINE][發話者] 原文`，群組為 `[LINE][群組][發話者] 原文`；名稱與原文取自該 account／route 的正式 inbound projection，每個 batch item 分別顯示，圖片仍以 `[圖片]` 表示。名稱查詢在背景進行，完成後先印輸入再釋放該 wrapper 的回答；查不到名稱時明示未知，不猜 NorthPole，也不將 metadata 加入 model envelope。
 
+直接雙擊 exe 即使用完整 `defaultArgumentsText`；state／output／bindings 預設為 shared-cli-line 的正式絕對路徑，不需另外帶參數、載入 launch.json 或經過啟動 wrapper。automation argv 只覆寫明確指定的個別選項，其他預設保留。4.0.1 的舊相對預設會在無參數時誤讀 release 自己的目錄，可能形成 `approvedBindings=0`；本版已修正預設 argstring 本身。
+
 CLI 自身資訊使用 `/cliinfo(<Participant>) <種類> on|off`。例如 `/cliinfo(ALL) accepted off` 只關閉接單提示；`/cliinfo(ALL) ALL off` 關閉所有 CLI 資訊，亦接受原本的 `/cliinfo(ALL) off` 簡寫。種類為 `accepted`（Prompt accepted 與 CLI Accepted receipt）、`wrapper`（其他 wrapper StdOut）、`command`（CLI 指令結果）、`status`（focus 狀態）、`ALL`。預設開啟；規則以最後一次符合者為準，ALL／ALL 會重設舊覆寫。Participant 沿用既有 ALL／N／range／list parser；ALL 為整個 CLI，數字選擇只作用於當前 focus 的 wrapper，以事件來源 N 判斷，wrapper 提示是 N=1。設定指令本身的確認、錯誤與未確認操作警示保留。正式回答、LINE 輸入、`/show` raw output、`/labels` metadata 與 JSON typed events 不受此開關影響。
 
 啟動前由部署流程準備 `config/ordered-bindings.json`。檔案只接受正式 readback 的 account、logicalBindingId、bindingRevision；不從收到的 Header 自動學習授權。空清單拒絕全部 binding。不得把 RN 設定 revision 與 protocol bindingRevision 混用。

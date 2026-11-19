@@ -206,6 +206,10 @@ Release build 成功，完整 v4 tests **40/40 passed**（presentation 8 項）�
 
 實作已由 `dc8f5dd` commit/push，8 檔 strict UTF-8／無 BOM／NUL／replacement，敏感掃描 High=0／Medium=0。正式 publish 候選共 231 檔，managed DLL SHA256=`C22BCFEF850825EF881B5F7CCDDACADCF037E424022D481DEDAD65F04A992D89`，離線 help 第一行 `Fodex LINE v4 4.0.2.0`。檔案清單與實際回歸／只讀 names 證據保存於 `artifacts/line-v4/20261119/cliinfo-candidate.manifest.json`、`cliinfo-validation.json`。已請使用者清除精確的舊 asset-root-fix 目錄，或明確允許本輪暫時保留四版；收到必要回覆前不切換現行指標或假稱已做新版真人 LINE 驗收。
 
+使用者已清除舊 asset-root-fix；另報告直接雙擊 a13f94c 的 exe 後，LINE 789987 在 CLI 無反應。實際無參數 process 的畫面為 approvedBindings=0，state／bindings 指向 release 自己的相對目錄；原訊息 route `fb622a0e-cd2e-4720-aafa-5e0c35d538a8` 有 RN inbound，Fodex BatchItems=0，尚未進模型。依使用者再次確認的原意，無參數必須直接使用完整 defaultArgumentsText：已把 state／output／bindings 預設改成 shared-cli-line 的正式絕對路徑。沒有留下額外 starter、啟動 wrapper 或自動讀 launch.json 的支線；explicit argv 繼續逐選項 sparse override。
+
+新增零 argv 三個正式路徑與單選項 override 的回歸後，最終 Release **42/42 passed**。曾評估的 auto-discovery fixture 語法問題已修復，但該支線與 fixture 均已依使用者要求移除，最終只驗預設 argstring。接下來以 exe、零參數、release 工作目錄驗正式啟動，並追蹤原 789987 及前述 private／group 輸入顯示。
+
 ## SECTION 3 — Fodex
 
 已新增以下實作與對應 Expecto tests，接入正式編譯順序及 first-use builtins：

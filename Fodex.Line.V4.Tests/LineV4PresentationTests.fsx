@@ -22,6 +22,15 @@ let readActiveLog path =
 
 [<Tests>]
 let tests=testSequenced <| testList "LINE v4 presentation" [
+    testCase "zero argv uses the complete default argstring with shared deployment paths and sparse overrides" <| fun () ->
+        let parsed=LineV4Options.parser.ParseCommandLine [||]
+        let root="G:/PulseTrade.fs/deployment/process/dev/Fodex.Line.V4/shared-cli-line"
+        Expect.equal (LineV4Options.choose parsed <@ LineV4Options.Data_Directory @> |> Path.GetFullPath) (Path.GetFullPath(root+"/state")) "zero-argument state is shared"
+        Expect.equal (LineV4Options.choose parsed <@ LineV4Options.Bindings @> |> Path.GetFullPath) (Path.GetFullPath(root+"/config/ordered-bindings.json")) "zero-argument binding is approved deployment config"
+        Expect.equal (LineV4Options.choose parsed <@ LineV4Options.Output_Directory @> |> Path.GetFullPath) (Path.GetFullPath(root+"/output")) "zero-argument output is shared"
+        let explicit=LineV4Options.parser.ParseCommandLine [|"--data-directory";"E:/deletable/override"|]
+        Expect.equal (LineV4Options.choose explicit <@ LineV4Options.Data_Directory @>) "E:/deletable/override" "explicit one-option override"
+        Expect.equal (LineV4Options.choose explicit <@ LineV4Options.Bindings @>) (root+"/config/ordered-bindings.json") "other defaults retained"
     testCase "slow and out-of-order name reads preserve each input-answer pair without blocking other groups" <| fun () ->
         let visible=ResizeArray<string>()
         let display=LineV4Presentation.InputDisplay(visible.Add)
