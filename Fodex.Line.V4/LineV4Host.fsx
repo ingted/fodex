@@ -24,6 +24,7 @@ open LineV4StoreContract
 open LineV4StoreAsync
 open LineV4OrderedStore
 open LineV4OrderedNative
+open LineV4Batch
 module Options=LineV4Options
 module Commands=LineV4Commands
 module Wire=LineV4Protocol
@@ -57,6 +58,7 @@ type DisplayEvent =
     | Edge of Guid*ReActDataStream<string>
     | Native of Guid*NativeOutputBatchV300
     | LineAccepted of Guid*Guid*string
+    | LineInputReady of Guid*Guid*string array
     | FocusChanged
     | ProjectionDue
     | DrainDisplay of TaskCompletionSource<unit>
@@ -81,6 +83,10 @@ let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextW
     let cs=Options.connectionString options
     let json=options.Contains ConsoleArgumentV405.Json
     let mutable labels=if options.GetResult ConsoleArgumentV405.Labels then 1 else 0
+    let infoGate=obj()
+    let mutable infoRules:LineV4CliInfo.Rule list=[]
+    let infoEnabled wrapper number kind=lock infoGate (fun () -> LineV4CliInfo.enabled infoRules wrapper number kind)
+    let cliReply wrapper kind text=Ok(if infoEnabled wrapper 1L kind then Some text else None)
     let data=Options.choose parsed <@ Options.Data_Directory @> |> Options.resolvePath
     let catalog=Options.choose parsed <@ Options.Line_Catalog @> |> Options.resolvePath
     let bindingsPath=Options.choose parsed <@ Options.Bindings @> |> Options.resolvePath
@@ -97,6 +103,7 @@ let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextW
     let backlog=Queue<bool*string>()
     let mutable display:(bool -> string -> unit) option=None
     let post show text=lock displayGate (fun () ->
+        let text=LineV4Presentation.completeLine text
         match display with
         | Some print -> print show text
         | None when backlog.Count<256 -> backlog.Enqueue(show,text)
@@ -176,18 +183,21 @@ let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextW
                 lock displayGate (fun () ->
                     if target.FocusRevision>focusRevision then
                         focusRevision<-target.FocusRevision
-                        post true (sprintf "[LINE focus] account=%s conversation=%s WSID=%O" account target.Conversation target.WrapperId))
-            | None -> post true "尚未選定 LINE conversation。使用 /line_context 列出，或 /line_context(ID) 選擇。"
+                        if infoEnabled (Some target.WrapperId) 1L LineV4CliInfo.Status then
+                            post true (sprintf "[LINE focus] account=%s conversation=%s WSID=%O" account target.Conversation target.WrapperId))
+            | None -> if infoEnabled None 0L LineV4CliInfo.Status then post true "尚未選定 LINE conversation。使用 /line_context 列出，或 /line_context(ID) 選擇。"
             }
+        let lineDisplay=LineV4Presentation.InputDisplay(post true)
         let observer=startDisplay system (fun message ->
                 try
                     match message with
                     | Edge(sid,((source,_,event) as edge)) ->
                         match source with
                         | ReActEndpoint.Participant(1L,(wrapper,_)) when wrapper=sid ->
-                            match format(json,Volatile.Read(&labels)<>0,edge) |> required with
+                            let visible=json || (LineV4CliInfo.eventKind event |> Option.forall(infoEnabled (Some sid) 1L))
+                            match (if visible then format(json,Volatile.Read(&labels)<>0,edge) |> required else None) with
                             | Some text when json -> eventPost false text
-                            | Some text -> post true (sprintf "[%s][%s] %s" account (sid.ToString("N").Substring(0,8)) text)
+                            | Some text -> lineDisplay.Answer(sid,sprintf "[%s][%s] %s" account (sid.ToString("N").Substring(0,8)) text)
                             | None -> ()
                             match event with AgentEnd _ -> scheduleCompletion sid edge | _ -> ()
                         | _ -> ()
@@ -195,10 +205,28 @@ let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextW
                     | LineAccepted(sid,id,prompt) ->
                         if json then eventPost false (JsonSerializer.Serialize {|kind="input_observed";source="Line";account=account;wrapperId=sid;operationId=id;prompt=prompt|})
                         else
-                            let text=LineV4Presentation.lineInput prompt |> Option.defaultWith(fun () ->
-                                logger.Warn("Cannot display LINE input envelope; WSID={0} operation={1}",sid,id)
-                                "[LINE 訊息格式無法顯示；內容已送入 wrapper]")
-                            post true (sprintf "%s [LINE 輸入] %s" (LineV4Presentation.prefix account sid) text)
+                            lineDisplay.Begin(sid,id)
+                            track(task {
+                                let! lines=task {
+                                    try
+                                        use timeout=CancellationTokenSource.CreateLinkedTokenSource ct
+                                        timeout.CancelAfter(TimeSpan.FromSeconds 10.)
+                                        let! head,members=store.BaseStore.ReadBatchAsync(id,timeout.Token)
+                                        if head.Mapping.WrapperId<>sid then invalidOp "LINE display wrapper differs from accepted batch"
+                                        let lines=ResizeArray<string>()
+                                        for item in members do
+                                            let! input=reader.ReadInputDisplayAsync(item.RouteId,timeout.Token)
+                                            match input with
+                                            | Some value -> lines.Add(LineV4Presentation.formatLineInput value)
+                                            | None -> invalidOp "Accepted LINE route has no inbound display projection"
+                                        return lines.ToArray()
+                                    with error ->
+                                        logger.Warn(error,"Cannot read LINE display names; WSID={0} operation={1}",sid,id)
+                                        let body=LineV4Presentation.lineInput prompt |> Option.defaultValue "[LINE 訊息格式無法顯示；內容已送入 wrapper]"
+                                        return [|LineV4Presentation.formatLineInput {GroupName=None;SenderName="";Text=body}|] }
+                                notify(LineInputReady(sid,id,lines)) })
+                    | LineInputReady(sid,id,lines) ->
+                        lineDisplay.Ready(sid,id,lines)
                     | FocusChanged -> track(announceFocus())
                     | ProjectionDue -> if projections.IsEmpty then scheduleScan None
                     | DrainDisplay completion -> completion.TrySetResult() |> ignore
@@ -276,6 +304,19 @@ let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextW
         let poll=system.Scheduler.ScheduleTellRepeatedlyCancelable(TimeSpan.FromSeconds 5.,TimeSpan.FromSeconds 5.,observer,ProjectionDue,ActorRefs.NoSender)
         let submit (text:string,token:CancellationToken)=task {
             try
+                let info=LineV4CliInfo.parse(ctx,text) |> required
+                if info.IsSome then
+                    let selector,kind,enabled=info.Value
+                    let! target=task {
+                        match selector with
+                        | ParticipantSelectorV300.All -> return LineV4CliInfo.EveryParticipant
+                        | _ ->
+                            let! focus=LineV4Focus.freezeAsync focusActor token
+                            let focus=focus |> Option.defaultWith(fun () -> invalidOp "Select a conversation before configuring participant CLI info")
+                            return LineV4CliInfo.InWrapper(focus.WrapperId,selector) }
+                    lock infoGate (fun () -> infoRules<-LineV4CliInfo.update infoRules target kind enabled)
+                    return Ok(Some(sprintf "[console] cliinfo(%s) %s=%s" (LineV4CliInfo.selectorText selector) (LineV4CliInfo.kindName kind) (if enabled then "on" else "off")))
+                else
                 let context=Regex.Match(text.Trim(),@"^/line_context(?:\(([^)]+)\))?$")
                 if context.Success then
                     let arguments=if context.Groups[1].Success then [|"--conversation";context.Groups[1].Value|] else [||]
@@ -286,13 +327,13 @@ let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextW
                         return Ok None
                     | None ->
                         let! page=reader.ConversationsAsync(None,token)
-                        return Ok(Some(page.Items |> List.map(fun item -> sprintf "%d %s (%s)" item.ConversationId item.DisplayName item.SourceType) |> String.concat "\n"))
+                        return cliReply None LineV4CliInfo.Command (page.Items |> List.map(fun item -> sprintf "%d %s (%s)" item.ConversationId item.DisplayName item.SourceType) |> String.concat "\n")
                 else
                 let parseLabels=FodexFunctions.pinBase<UniContext*string,bool option> "4.0.5" ConsoleOutputFodexFunV405.targetLabels
                 match parseLabels(ctx,text) |> required with
                 | Some enabled ->
                     Volatile.Write(&labels,if enabled then 1 else 0)
-                    return Ok(Some(sprintf "[console] labels=%b" enabled))
+                    return cliReply None LineV4CliInfo.Command (sprintf "[console] labels=%b" enabled)
                 | None ->
                     let! frozen=LineV4Focus.freezeAsync focusActor token
                     let target=frozen |> Option.defaultWith(fun () -> invalidOp "請先用 /line_context(ID) 選定 conversation；本次輸入未受理。")
@@ -308,10 +349,10 @@ let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextW
                         match reply,bound,kind with
                         | Some text,_,_ ->
                             do! announceFocus()
-                            return Ok(Some text)
+                            return cliReply (Some target.WrapperId) LineV4CliInfo.Command text
                         | None,Some root,"Provision" ->
                             do! logicalCreate root token
-                            return Ok(Some(sprintf "Topic=%s SID=%O status=Ready" root.Topic root.Mapping.WrapperId))
+                            return cliReply (Some root.Mapping.WrapperId) LineV4CliInfo.Command (sprintf "Topic=%s SID=%O status=Ready" root.Topic root.Mapping.WrapperId)
                         | None,Some root,"Drop" ->
                             let force=match command with Commands.Dropagent(_,force) -> force | _ -> false
                             let! closed=lifecycle root operationId token (fun () -> native.CloseAsync(root.Mapping.WrapperId,operationId,force,token))
@@ -322,7 +363,7 @@ let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextW
                                     do! admissionLock db token
                                     do! LineV4OrderedControls.cancelPendingInTransaction store endpoint.Execution db root operationId token
                                     do! LineV4OrderedControls.tombstoneInTransaction db root operationId token })
-                                return Ok(Some(sprintf "Dropped Topic=%s SID=%O" root.Topic root.Mapping.WrapperId))
+                                return cliReply (Some root.Mapping.WrapperId) LineV4CliInfo.Command (sprintf "Dropped Topic=%s SID=%O" root.Topic root.Mapping.WrapperId)
                             | _ -> return Ok(Some(sprintf "Close 未確認；保留 WSID=%O operation=%O 供恢復。" root.Mapping.WrapperId operationId))
                         | None,Some root,"Model" ->
                             let name,effort=match command with Commands.Model(_,name,effort) -> name,effort | _ -> invalidOp "Expected model command"
@@ -332,7 +373,7 @@ let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextW
                             | ControlCompleted _ ->
                                 do! store.BaseStore.UpdateRootArgumentsAsync(root,Commands.updatePair (root.Arguments |> Option.get) name effort,token)
                                 do! store.UseTransactionAsync(token,fun db -> execute db token "UPDATE dbo.LineFodexV3Sessions SET OrderedControlId=NULL,OrderedControlState=NULL WHERE WrapperId=@w AND Generation=@g AND OrderedControlId=@id" ["@w",box root.Mapping.WrapperId;"@g",box root.Mapping.Generation;"@id",box operationId])
-                                return Ok(Some "Model updated")
+                                return cliReply (Some root.Mapping.WrapperId) LineV4CliInfo.Command "Model updated"
                             | _ -> return Ok(Some(sprintf "Model operation=%O 尚未確認；未重送。" operationId))
                         | None,_,"Query" ->
                             let operation,payload=match command with
@@ -343,7 +384,7 @@ let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextW
                                                   | Commands.Cache_D k -> "cache",JsonSerializer.SerializeToElement {|action="d";key=k|}
                                                   | _ -> invalidOp "Unsupported query"
                             let! value=call({Wire.request operation Guid.Empty with id=operationId.ToString("N");text=payload.GetRawText()},token)
-                            return Ok(Some(if operation="models" then Commands.catalogPages value |> String.concat "\n" else value.GetRawText()))
+                            return cliReply (Some target.WrapperId) LineV4CliInfo.Command (if operation="models" then Commands.catalogPages value |> String.concat "\n" else value.GetRawText())
                         | _ -> return invalidOp "Unsupported registry decision"
                     | command ->
                         let! roots=store.BaseStore.ListRootsAsync(target.Conversation,token)
@@ -366,7 +407,8 @@ let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextW
                             let accepted=sendAccepted operationId acknowledgement
                             if generates then scheduleScan (Some root.Mapping.WrapperId)
                             if not accepted && generates then do! transcripts.MarkUncertainAsync(operationId,CancellationToken.None)
-                            return Ok(Some(sprintf "%s WSID=%O operation=%O" (if accepted then "Accepted" else "Pending acknowledgement; input was not resent") root.Mapping.WrapperId operationId))
+                            let text=sprintf "%s WSID=%O operation=%O" (if accepted then "Accepted" else "Pending acknowledgement; input was not resent") root.Mapping.WrapperId operationId
+                            return if accepted then cliReply (Some root.Mapping.WrapperId) LineV4CliInfo.Accepted text else Ok(Some text)
                         with error ->
                             if generates then do! transcripts.MarkUncertainAsync(operationId,CancellationToken.None)
                             return Error error

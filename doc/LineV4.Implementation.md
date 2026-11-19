@@ -192,6 +192,18 @@ v4 的 RN node 補接既有 `ActorLogging.config`；啟動時先載入 applicati
 
 再由相同既有 native-console INPUT_RECORD 方式送入 `/show(ALL) off`、`/labels off`，核對兩個狀態確認後才在 LINE 發 `hi`。正式 CLI 與真人 LINE 均出現 `嗨！有什麼我可以幫你的？`；CLI 行為 `[d9System_test2][83ef32b4] 嗨！有什麼我可以幫你的？`，本輪沒有新增 raw JSON。已截取並實際檢查 native window 畫面，輸入／答案／prompt 清楚可讀，無重疊。SQL 確認 main N=2 仍 resume `01a1f0a4-cbd5-79e0-9581-caf3bb46ea4d`；兩筆 LINE admission 均 Terminal。結果、as-of process identity 與 screenshot 在 `console-output-validation.json`／`console-output-live.png`；目前視窗保留 show off／labels off。測試 driver 初次誤用 redirected standard-input handle 未寫入任何命令，確認 console 沒有該指令後，改沿既有 CreateFileW(CONIN$) 路徑才成功注入，產品程式未因此修改。
 
+### 2026-11-19：4.0.2 CLI info 與 LINE 發話者顯示
+
+依使用者補充，採 `/cliinfo(<Participant>) <種類> on/off`，接單提示種類命名 `accepted`；其他 CLI 資訊分為 wrapper／command／status，另有 ALL。控制只在 v4 呈現端，原 typed event、service journal、JSON event stream、`/show` 與 `/labels` 的責任維持。ALL 為全部 wrappers，數字／range／list 沿用既有 Argu participant parser 並綁當前 focus wrapper；資訊以事件來源 N 判斷，root wrapper 提示為 N=1。成功接單訊息可隱藏，正式回答、錯誤與 pending／uncertain 警示不被吞掉。
+
+LINE batch 依正式 BatchItems 讀取原 route，再由既有 RouteEventReader 的 account authority 查 PTC inbound projection，取該則訊息的 group／sender display name 及原文。顯示為 `[LINE][NorthPole] hi` 或 `[LINE][test001][NorthPole] 123321`，不把 NorthPole 寫死、不從 prompt 採信名稱、不改模型 envelope。查詢不阻塞 display actor；接受訊息後暫存該 wrapper 的回答呈現，名稱 ready 後先印 LINE 輸入再印回答。metadata 失敗／timeout 保留明確未知名稱與原有正文，錯誤記入 NLog。每個呈現 block 明確補足 LF／CRLF 邊界，避免後續前綴接在上一則回答尾端；原始歷史文字不改寫。
+
+本輪實際測試、live names、candidate hash、部署與真人 LINE 驗收結果於確認後另追加。
+
+Release build 成功，完整 v4 tests **40/40 passed**（presentation 8 項）；新增 Argu／原 participant selector、種類隔離、不同 wrapper 規則隔離、ALL reset、正式回答／錯誤保留、群組前綴與換行保真。初期 extension scope 與 quoteTokens 輸入型別的 build 錯誤已修正。透過新編譯的官方 RouteEventReader 對既存 route 做只讀查詢，已實際讀到 private 的 NorthPole／123321，以及 test001／test002 的 NorthPole 與正確 group display name；此階段未發 LINE、未呼叫模型。真正視窗與 LINE 來回另於部署後驗收。
+
+補上連續兩輪且名稱回讀逆序的回歸後，最終完整 Release **41/41 passed**（presentation 9 項）。每個 wrapper 的 accepted input／following output 配對排隊，後一輪名字先 ready 也不超越前一輪；其他群組仍可即時顯示，重複 ready 不重印輸入。來源與候選已備妥；部署舊 asset-root-fix 的 retire 前檢查為 process／service／task／current／launch／run／candidate 引用均 0、230 檔且無 reparse，但 literal-path Remove-Item 再次被自動核准以 blocked by policy 拒絕，需由使用者完成清理才可維持同 target 三版上限。現行 4.0.1 視窗尚未切換。
+
 ## SECTION 3 — Fodex
 
 已新增以下實作與對應 Expecto tests，接入正式編譯順序及 first-use builtins：

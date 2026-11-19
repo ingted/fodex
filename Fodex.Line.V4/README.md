@@ -16,6 +16,10 @@ Evaluator 固定 2.2.2、FCS 固定 43.12.403、v4 的 FSharp.Core 固定 10.1.4
 
 4.0.1 啟動第一行顯示版號；`--json` 的版號寫 stderr，維持 stdout 的 event JSONL。RN 使用既有 Akka→NLog backend，`NLog.LineV4.config` 將診斷寫到 `--output-directory/logs/diagnostics.YYYY-MM-DD.log`，沒有 Console target；wrapper IO trace 保留獨立檔案。`/show` 仍只控制 native raw I/O，即時輸出標示 `[native I/O]`，不控制正式答案。一般 LINE 輸入只顯示原文及 `[圖片]`，不印 model envelope；`--json` 保留原有 `input_observed.prompt`。V406 完成訊息將 label 與正文放在同一行，`/labels off` 可隱藏 label。
 
+4.0.2 的 LINE 輸入格式為 `[LINE][發話者] 原文`，群組為 `[LINE][群組][發話者] 原文`；名稱與原文取自該 account／route 的正式 inbound projection，每個 batch item 分別顯示，圖片仍以 `[圖片]` 表示。名稱查詢在背景進行，完成後先印輸入再釋放該 wrapper 的回答；查不到名稱時明示未知，不猜 NorthPole，也不將 metadata 加入 model envelope。
+
+CLI 自身資訊使用 `/cliinfo(<Participant>) <種類> on|off`。例如 `/cliinfo(ALL) accepted off` 只關閉接單提示；`/cliinfo(ALL) ALL off` 關閉所有 CLI 資訊，亦接受原本的 `/cliinfo(ALL) off` 簡寫。種類為 `accepted`（Prompt accepted 與 CLI Accepted receipt）、`wrapper`（其他 wrapper StdOut）、`command`（CLI 指令結果）、`status`（focus 狀態）、`ALL`。預設開啟；規則以最後一次符合者為準，ALL／ALL 會重設舊覆寫。Participant 沿用既有 ALL／N／range／list parser；ALL 為整個 CLI，數字選擇只作用於當前 focus 的 wrapper，以事件來源 N 判斷，wrapper 提示是 N=1。設定指令本身的確認、錯誤與未確認操作警示保留。正式回答、LINE 輸入、`/show` raw output、`/labels` metadata 與 JSON typed events 不受此開關影響。
+
 啟動前由部署流程準備 `config/ordered-bindings.json`。檔案只接受正式 readback 的 account、logicalBindingId、bindingRevision；不從收到的 Header 自動學習授權。空清單拒絕全部 binding。不得把 RN 設定 revision 與 protocol bindingRevision 混用。
 
 預設 account 為 `d9System_test2`、Akka port 15979、endpoint 為 `/user/line-fodex-v4-ordered`；持久 provider id 保留 `fodex-line-v3`，StorageIdentity 由既有 SQL authority 讀取。RN catalog 沿既有正式 `line-catalog.json`。相對 data／bindings／output 路徑以 executable 目錄解析；native working directory 由 `--working-directory` 獨立指定。

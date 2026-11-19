@@ -22,6 +22,57 @@ let readActiveLog path =
 
 [<Tests>]
 let tests=testSequenced <| testList "LINE v4 presentation" [
+    testCase "slow and out-of-order name reads preserve each input-answer pair without blocking other groups" <| fun () ->
+        let visible=ResizeArray<string>()
+        let display=LineV4Presentation.InputDisplay(visible.Add)
+        let first,other=Guid.NewGuid(),Guid.NewGuid()
+        let a,b=Guid.NewGuid(),Guid.NewGuid()
+        display.Begin(first,a)
+        display.Answer(first,"answer A")
+        display.Begin(first,b)
+        display.Answer(first,"answer B")
+        display.Ready(first,b,[|"input B"|])
+        display.Answer(other,"other group")
+        Expect.sequenceEqual visible ["other group"] "another group is independent; later names do not overtake the first input"
+        display.Ready(first,a,[|"input A"|])
+        display.Ready(first,a,[|"duplicate ready"|])
+        display.Answer(first,"next answer")
+        Expect.sequenceEqual visible ["other group";"input A";"answer A";"input B";"answer B";"next answer"] "pair order, no duplicate ready, and no stuck gate"
+    testCase "cliinfo uses Argu and the existing participant selector grammar" <| fun () ->
+        let parse text=LineV4CliInfo.parse(LineV4HostTests.ctx,text) |> Result.defaultWith raise
+        Expect.equal (parse "/cliinfo(ALL) accepted off") (Some(ParticipantSelectorV300.All,LineV4CliInfo.Accepted,false)) "named acceptance kind"
+        Expect.equal (parse "/cliinfo(ALL) off") (Some(ParticipantSelectorV300.All,LineV4CliInfo.All,false)) "original ALL shorthand"
+        Expect.equal (parse "/cliinfo(1,3) wrapper on") (Some(ParticipantSelectorV300.Numbers [1L;3L],LineV4CliInfo.Wrapper,true)) "existing list selector"
+        Expect.equal (parse "/cliinfo(2..4) command off") (Some(ParticipantSelectorV300.Range(2L,4L),LineV4CliInfo.Command,false)) "existing range selector"
+        Expect.equal (parse "ordinary prompt") None "model input stays model input"
+        for text in ["/cliinfo(ALL) unknown off";"/cliinfo(ALL) accepted maybe";"/cliinfo(0) accepted off";"/cliinfo(ALL) accepted off extra"] do
+            Expect.isError (LineV4CliInfo.parse(LineV4HostTests.ctx,text)) "invalid controls cannot reach a model"
+    testCase "cliinfo rules distinguish kinds and keep focused participant settings out of another wrapper" <| fun () ->
+        let first,second=Guid.NewGuid(),Guid.NewGuid()
+        let rules=LineV4CliInfo.update [] LineV4CliInfo.EveryParticipant LineV4CliInfo.Accepted false
+        Expect.isFalse (LineV4CliInfo.enabled rules (Some first) 1L LineV4CliInfo.Accepted) "accepted hidden"
+        Expect.isTrue (LineV4CliInfo.enabled rules (Some first) 1L LineV4CliInfo.Wrapper) "other kinds stay visible"
+        let local=LineV4CliInfo.update rules (LineV4CliInfo.InWrapper(first,ParticipantSelectorV300.Number 1L)) LineV4CliInfo.Accepted true
+        Expect.isTrue (LineV4CliInfo.enabled local (Some first) 1L LineV4CliInfo.Accepted) "later local override"
+        Expect.isFalse (LineV4CliInfo.enabled local (Some second) 1L LineV4CliInfo.Accepted) "other group remains hidden"
+        let allOff=LineV4CliInfo.update local LineV4CliInfo.EveryParticipant LineV4CliInfo.All false
+        Expect.isTrue ([LineV4CliInfo.Accepted;LineV4CliInfo.Wrapper;LineV4CliInfo.Command;LineV4CliInfo.Status] |> List.forall(fun kind -> not(LineV4CliInfo.enabled allOff (Some first) 1L kind))) "ALL resets older overrides"
+        Expect.equal (LineV4CliInfo.eventKind(StdOut(1L,0L,"Prompt accepted for main"))) (Some LineV4CliInfo.Accepted) "typed wrapper notice category"
+        Expect.equal (LineV4CliInfo.eventKind(AgentWork(1L,0L,MessageCompleted("answer","answer")))) None "answer has no CLI information category"
+        Expect.equal (LineV4CliInfo.eventKind(StdErr(1L,0L,"failure"))) None "errors stay visible"
+    testCase "LINE input uses the projected sender and inserts a group only for grouped conversations" <| fun () ->
+        let direct:LineV4Presentation.LineInput={GroupName=None;SenderName="NorthPole";Text="hi"}
+        Expect.equal (LineV4Presentation.formatLineInput direct) "[LINE][NorthPole] hi" "private message"
+        Expect.equal (LineV4Presentation.formatLineInput {direct with GroupName=Some "test001";Text="123321"}) "[LINE][test001][NorthPole] 123321" "real group name position"
+        Expect.equal (LineV4Presentation.formatLineInput {direct with GroupName=Some "test002";SenderName="另一位";Text="321123"}) "[LINE][test002][另一位] 321123" "names belong to each projected message"
+    testCase "missing names are explicit and display line boundaries preserve bodies" <| fun () ->
+        let input:LineV4Presentation.LineInput={GroupName=Some "";SenderName="\u001b";Text="甲\n\n乙"}
+        Expect.equal (LineV4Presentation.formatLineInput input) "[LINE][未命名群組][未知使用者] 甲\n\n乙" "no fabricated sender and no body rewriting"
+        for body in ["answer";"answer\r";"answer\n";"answer\r\n"] do
+            let block=LineV4Presentation.completeLine body
+            Expect.isTrue (block.EndsWith '\n') "every displayed block reaches the next physical line"
+            Expect.stringStarts block body "body characters are retained"
+        Expect.equal (LineV4Presentation.completeLine "") "" "empty command callbacks do not add blank lines"
     testCase "LINE display decodes the envelope once per layer and preserves original Unicode and literal escapes" <| fun () ->
         let original="現在幾點\nC:\\new\\test 與字面 \\u4F60 😀"
         let prompt=envelope [|{|sequence=104L;``type``="text";text=original|}|]

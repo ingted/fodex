@@ -145,6 +145,24 @@ type RouteEventReader(catalogPath:string,expectedAccount:string) =
         use store=LineStore.create config
         return store.ConnectionString }
 
+    /// Read names and original input from the official inbound projection for this
+    /// exact route/account. No profile refresh and no prompt-provided display names.
+    member _.ReadInputDisplayAsync(route:Guid,ct:CancellationToken)=task {
+        use! store=storeForRoute route ct
+        use connection=new SqlConnection(store.ConnectionString)
+        do! connection.OpenAsync ct
+        use command=new SqlCommand("SELECT c.SourceType,c.DisplayName,i.DisplayName,m.MessageType,m.TextContent FROM dbo.PtcLineRouteMessageV1 r JOIN dbo.PtcLineMessageV1 m ON m.MessageId=r.MessageId JOIN dbo.PtcLineConversationV1 c ON c.ConversationId=m.ConversationId JOIN dbo.PtcLineIdentityV1 i ON i.IdentityId=m.SenderIdentityId WHERE r.RouteHandle=@route AND r.Direction='in' AND r.MessageOrdinal=0 AND c.Account=@account AND i.Account=@account",connection)
+        command.CommandTimeout<-10
+        addParameter command "@route" route
+        addParameter command "@account" expectedAccount
+        use! rows=command.ExecuteReaderAsync ct
+        let! found=rows.ReadAsync ct
+        if not found then return None else
+        let name index=if rows.IsDBNull index then "" else rows.GetString index
+        return Some({GroupName=(if name 0="group" || name 0="room" then Some(name 1) else None)
+                     SenderName=name 2
+                     Text=(if name 3="text" then name 4 else "[圖片]")}:LineV4Presentation.LineInput) }
+
     member this.FindConversationAsync(id:int64,ct)=
         let rec find cursor=task {
             let! page=this.ConversationsAsync(cursor,ct)
