@@ -49,6 +49,7 @@ let underRootAsync (sql:AsyncStore) owner (root:RootSession) ct body=task {
 /// renew callback for bounded per-item work; it must not wait indefinitely for media.
 type MaterializeBatch = BatchHead*BatchMember array*(unit->Task<unit>)*CancellationToken -> Task<string option>
 exception MaterializationFailed of string
+exception MaterializationPending
 
 type Execution(work:WorkStore,native:OrderedNative,materialize:MaterializeBatch) =
     let store=work.Store
@@ -114,7 +115,10 @@ type Execution(work:WorkStore,native:OrderedNative,materialize:MaterializeBatch)
             do! create lease target ct
             do! materializing.WaitAsync ct
             let! prepared=task {
-                try return! materialize(head,members,(fun () -> work.RenewAsync(lease,ct)),ct)
+                // Members of one batch share route-owned temporary paths. Keep
+                // the existing physical root lease through import so a second
+                // materializer cannot remove a file while its first import runs.
+                try return! underRoot lease target ct (fun () -> materialize(head,members,(fun () -> work.RenewAsync(lease,ct)),ct))
                 finally materializing.Release() |> ignore }
             match prepared with
             | None -> ()

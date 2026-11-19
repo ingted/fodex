@@ -9,6 +9,7 @@ open System.Threading.Tasks
 open System.Net
 open System.Net.Sockets
 open Expecto
+open Akka.Actor
 open LoggerUtil
 open FodexLoggerAdapter
 open Fodex.Supervisor
@@ -19,6 +20,39 @@ let ctx:UniContext={logger=toUL(UniversalLogger<_>(NLog.LogManager.GetLogger "Li
 
 [<Tests>]
 let tests=testSequenced <| testList "LINE v4 host closure" [
+    testCase "normal console keeps the editor writer identity; JSON keeps diagnostics separate and restores stdout on failure" <| fun () ->
+        let originalOutput,originalError=Console.Out,Console.Error
+        use output=new IO.StringWriter()
+        use diagnostics=new IO.StringWriter()
+        try
+            Console.SetOut output
+            Console.SetError diagnostics
+            let physicalWriter=Console.Out
+            LineV4Console.withSession false (fun () ->
+                Expect.isTrue (Object.ReferenceEquals(Console.Out,physicalWriter)) "normal editor capability probe sees its actual writer"
+                Console.Write("normal-routing-sentinel"))
+            Expect.throws (fun () -> LineV4Console.withSession true (fun () ->
+                Console.Write("diagnostic-routing-sentinel")
+                physicalWriter.Write("json-routing-sentinel")
+                failwith "fixture-startup-failure")) "startup failure propagates"
+            Expect.isTrue (Object.ReferenceEquals(Console.Out,physicalWriter)) "failure restores caller stdout"
+            Expect.stringContains (output.ToString()) "normal-routing-sentinel" "normal output reaches stdout"
+            Expect.stringContains (output.ToString()) "json-routing-sentinel" "explicit JSON channel reaches stdout"
+            Expect.isFalse ((output.ToString()).Contains("diagnostic-routing-sentinel")) "diagnostics do not corrupt JSONL"
+            Expect.stringContains (diagnostics.ToString()) "diagnostic-routing-sentinel" "incidental JSON-mode output reaches stderr"
+        finally
+            Console.SetOut originalOutput
+            Console.SetError originalError
+    testCase "display actor starts with its bounded mailbox and acknowledges the drain barrier" <| fun () ->
+        use node=ActorSystem.Create("line-v4-display-test-"+Guid.NewGuid().ToString("N"))
+        try
+            let display=LineV4Host.startDisplay node (function
+                | LineV4Host.DrainDisplay completion -> completion.TrySetResult() |> ignore
+                | _ -> ())
+            let completion=TaskCompletionSource<unit>(TaskCreationOptions.RunContinuationsAsynchronously)
+            display.Tell(LineV4Host.DrainDisplay completion)
+            completion.Task.WaitAsync(TimeSpan.FromSeconds 3.) |> wait
+        finally node.Terminate().GetAwaiter().GetResult()
     testCase "Evaluator 2.2.2 and FCS 43.12.403 evaluate and invoke the actual core quotation" <| fun () ->
         let operation=FodexFunctions.pinBase<ReActParticipantSessionId*int64 option*ReActDataStream<string> array,CompletedConversationTurnV100 array> "1.0.0" "Conversation.ProjectCompleted"
         let session=Guid.NewGuid(),None
@@ -32,6 +66,24 @@ let tests=testSequenced <| testList "LINE v4 host closure" [
         Expect.equal (common.GetResult ConsoleArgumentV405.Native_Adapter) "app-server" "provider typed defaults"
         Expect.equal (common.GetResult ConsoleArgumentV405.Subagent_Type,common.GetResult ConsoleArgumentV405.Subagent_Mode) ("agy","raw") "sub defaults preserved"
         Expect.equal (common.GetResult ConsoleArgumentV405.Working_Directory) "F:\\fodex" "explicit native cwd"
+    testCase "asset root follows the explicit data directory and process configuration is restored on failure" <| fun () ->
+        let name="FODEX_LINE_IMAGE_ROOT"
+        let previous=Environment.GetEnvironmentVariable name
+        let directory=IO.Path.Combine(IO.Path.GetTempPath(),"v4-image-root-"+Guid.NewGuid().ToString("N"))
+        let parsed=LineV4Options.parser.ParseCommandLine [|"--data-directory";directory|]
+        let expected=IO.Path.Combine(directory,"native-images")
+        try
+            Environment.SetEnvironmentVariable(name,null,EnvironmentVariableTarget.Process)
+            Expect.throws (fun () ->
+                LineV4Options.withNativeImageRoot parsed (fun () ->
+                    Expect.equal (Environment.GetEnvironmentVariable name) expected "asset service and materializer share one root"
+                    failwith "fixture-host-startup-failed")) "startup failure propagates"
+            Expect.isNull (Environment.GetEnvironmentVariable name) "failed startup restores inherited configuration"
+            Environment.SetEnvironmentVariable(name,IO.Path.Combine(directory,"other"),EnvironmentVariableTarget.Process)
+            let mutable started=false
+            Expect.throws (fun () -> LineV4Options.withNativeImageRoot parsed (fun () -> started<-true)) "conflicting root fails before hosting"
+            Expect.isFalse started "conflicting configuration cannot start a host"
+        finally Environment.SetEnvironmentVariable(name,previous,EnvironmentVariableTarget.Process)
     testCase "LINE input display waits for the matching service ACK and never resends pending sends" <| fun () ->
         let id,sid=Guid.NewGuid(),Guid.NewGuid()
         let mutable calls=0

@@ -294,6 +294,7 @@
     <Compile Include="ServiceHostFodexFunV110.fsx"><Link>fodexFun/ServiceHostFodexFun/ServiceHostFodexFunV110.fsx</Link></Compile>
     <Compile Include="ServiceObservedWrapperFodexFunV100.fsx"><Link>fodexFun/ServiceObservedWrapperFodexFunV100/V100.fsx</Link></Compile>
     <Compile Include="ServiceHostOnNodeFodexFunV100.fsx"><Link>fodexFun/ServiceHostOnNodeFodexFunV100/V100.fsx</Link></Compile>
+    <Compile Include="ServiceAssetReconciliationFodexFunV100.fsx" />
     <Compile Include="ConsoleFrontendFodexFunV100.fsx"><Link>fodexFun/ConsoleFrontendFodexFunV100/V100.fsx</Link></Compile>
     <Compile Include="ConversationProjectionFodexFunV100.fsx"><Link>fodexFun/ConversationProjectionFodexFunV100/V100.fsx</Link></Compile>
     <Compile Include="FodexFunctions.fsx" />

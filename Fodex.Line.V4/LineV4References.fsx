@@ -16,3 +16,5 @@
 #r "Fodex.Supervisor.Contracts.dll"
 #r "Fodex.Supervisor.dll"
 #r "Fodex.Line.V4.dll"
+#load "../Fodex.Supervisor/FsiRuntimeResolver.fsx"
+FsiRuntimeResolver.install(System.IO.Path.Combine(__SOURCE_DIRECTORY__,"bin/Debug/net10.0/win-x64/Fodex.Line.V4.dll"))

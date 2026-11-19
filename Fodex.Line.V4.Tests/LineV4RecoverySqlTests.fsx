@@ -109,6 +109,38 @@ let tests=testSequenced <| testList "LINE v4 recovery SQL" [
         Expect.equal dispatched 1 "one lifecycle action after physical release"
         let recovered=store.RootAsync(conversation,root.Mapping.WrapperId,ct) |> wait |> Option.get
         Expect.equal recovered.Mapping root.Mapping "release does not allocate a replacement WSID or SID")
+    testCase "batch materialization holds the physical root lease through asset import and releases it while pending" <| fun () -> withDatabase(fun cs ->
+        let store,admission=setup cs
+        let h,i,raw=eventRequest store "group-a" (Some "authorized-id") 2L "fixture image batch"
+        admission.AcceptAsync(h,i,"test",raw,ct) |> wait |> ignore
+        let work=LineV4OrderedWorkStore.WorkStore store
+        work.InitializeAsync ct |> finish
+        execute cs "UPDATE dbo.LineFodexV3Batches SET DueAtUtc=DATEADD(second,-1,SYSUTCDATETIME()); UPDATE dbo.LineFodexV3OrderedAdmissions SET DueAt=DATEADD(second,-1,SYSUTCDATETIME()) WHERE Kind='BatchMember'" []
+        let origin=scalar cs "SELECT Origin FROM dbo.LineFodexV3OrderedAdmissions WHERE Kind='BatchMember'" |> unbox<Guid>
+        let lease=work.ClaimAsync(origin,Guid.NewGuid(),ct) |> wait |> Option.get
+        let calls=ResizeArray<string>()
+        let native=LineV4OrderedNative.OrderedNative(fun (request,_) ->
+            calls.Add request.op
+            if request.op<>"create" then failtest "pending materialization must not send a prompt"
+            Task.FromResult(JsonSerializer.SerializeToElement {|json=true|}))
+        let mutable imported=false
+        let materialize:LineV4OrderedExecution.MaterializeBatch=fun (head,_,_,token) -> task {
+            let! target=store.BaseStore.RootAsync(head.Mapping.Conversation,head.Mapping.WrapperId,token)
+            let mutable blocked=false
+            try
+                let! other=store.BaseStore.AcquireOrderedAsync(target.Value.Mapping,Guid.NewGuid(),token)
+                do! store.BaseStore.ReleaseAsync(other,true,token)
+            with :? InvalidOperationException -> blocked<-true
+            Expect.isTrue blocked "another process cannot materialize the same route-owned files"
+            imported<-true
+            return None }
+        LineV4OrderedExecution.Execution(work,native,materialize).BatchAsync(lease,ct) |> finish
+        Expect.isTrue imported "the actual batch execution reached materialization"
+        Expect.equal (calls.ToArray()) [|"create"|] "pending assets never dispatch native generation"
+        let target=LineV4DeliveryTestSupport.root store
+        let held=store.BaseStore.AcquireOrderedAsync(target.Mapping,Guid.NewGuid(),ct) |> wait
+        store.BaseStore.ReleaseAsync(held,true,ct) |> finish
+        Expect.equal (scalar cs "SELECT COUNT(*) FROM dbo.LineFodexV3Batches WHERE PreparedPrompt IS NOT NULL" |> Convert.ToInt32) 0 "pending is durable without freezing an incomplete prompt")
 ]
 #if INTERACTIVE
 if runTestsWithCLIArgs [] [||] tests<>0 then failwith "LineV4RecoverySqlTests failed"

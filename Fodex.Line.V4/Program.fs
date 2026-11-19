@@ -28,9 +28,10 @@ let main argv=
                             forceExit()
                         with :? OperationCanceledException -> () } |> ignore)
             Console.CancelKeyPress.AddHandler handler
-            Console.SetOut Console.Error
             try
-                match LineV4Host.run options Console.In standardOutput Console.Error cancellation.Token |> _.GetAwaiter().GetResult() with
+                match LineV4Console.withSession (options.Contains LineV4Options.Argument.Json) (fun () ->
+                        try LineV4Options.withNativeImageRoot options (fun () -> LineV4Host.run options Console.In standardOutput Console.Error cancellation.Token |> _.GetAwaiter().GetResult())
+                        finally NLog.LogManager.Flush(TimeSpan.FromSeconds 1.)) with
                 | Ok code -> code
                 | Error (:? AggregateException as error) when error.Message.StartsWith("LINE v4 shutdown incomplete",StringComparison.Ordinal) ->
                     Console.Error.WriteLine("LINE_V4_CLEANUP_FAILED: "+error.Message)
@@ -39,6 +40,5 @@ let main argv=
             finally
                 finished.Cancel()
                 Console.CancelKeyPress.RemoveHandler handler
-                NLog.LogManager.Flush(TimeSpan.FromSeconds 1.)
                 Console.SetOut standardOutput
     with error -> Console.Error.WriteLine(error.Message);1

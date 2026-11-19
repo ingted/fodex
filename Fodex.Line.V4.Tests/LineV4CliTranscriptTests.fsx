@@ -97,6 +97,18 @@ let tests=testSequenced <| testList "LINE v4 CLI transcript" [
         persist node cs turn.Session 0L [|ReActEndpoint.Human,root,HumanInit(1L,HumanPrompt "unconfirmed");root,ReActEndpoint.Human,AgentEnd(2L,1L,Message "must not guess")|]
         transcript.ProjectAsync(None,ct) |> finish
         Expect.isEmpty (fragments store turn.OperationId) "journal does not prove correlation"))
+    testCase "SendAll journal correlation does not confuse its CLI command with the expanded draft prompt" <| fun () -> withDatabase(fun cs -> withNode(fun node ->
+        let store,_=setup cs
+        let transcript,turn=prepare node cs store "/wrapper_sendall" "/wrapper_sendall" 1L true
+        let root=ReActEndpoint.Participant(1L,turn.Session)
+        persist node cs turn.Session 0L [|ReActEndpoint.Human,root,HumanInit(1L,HumanPrompt "expanded draft one\nexpanded draft two");root,ReActEndpoint.Human,AgentEnd(2L,1L,Message "draft answer")|]
+        transcript.ProjectAsync(None,ct) |> finish
+        let rows=fragments store turn.OperationId
+        Expect.equal rows.Length 1 "service operation cause is the correlation authority"
+        let text,_,state=rows[0]
+        Expect.stringContains text "使用者：/wrapper_sendall" "original CLI command remains intact"
+        Expect.stringContains text "Agent：draft answer" "full public completion is attached to the same operation"
+        Expect.equal state "Pending" "completion remains pending until a real LINE carrier is accepted"))
     testCase "V20 cancelled partial turn emits no delta transcript and can still correlate later feedback" <| fun () -> withDatabase(fun cs -> withNode(fun node ->
         let store,_=setup cs
         let transcript,turn=prepare node cs store "cancelled original prompt" "cancelled original prompt" 1L true

@@ -14,6 +14,7 @@
     <Compile Include="../Fodex.Supervisor.Contract/LoggerAdapter.fsx" Link="LoggerAdapter.fsx" />
     <Compile Include="$(USERPROFILE)/.codex/lib/ParseLine.fsx" Link="ParseLine.fsx" />
     <Compile Include="LineV4SharedCore.fsx" />
+    <Compile Include="LineV4Console.fsx" />
     <Compile Include="LineV4Options.fsx" />
     <Compile Include="LineV4Platform.fsx" />
     <Compile Include="LineV4Media.fsx" />
@@ -57,7 +58,6 @@
     <PackageReference Include="PulseTrade.Comm.ResourceNode.Line" Version="[0.1.14]" />
     <PackageReference Include="PulseTrade.Comm.ResourceNode.Dynamic" Version="[0.1.7]" />
     <PackageReference Include="PulseTrade.Comm.ResourceNode.DurableProxy" Version="[0.2.14]" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="[4.1.3]" />
     <PackageReference Include="FAkka.FSharp.Quotations.Evaluator" Version="[2.2.2]" />
     <PackageReference Include="FSharp.Compiler.Service" Version="[43.12.403]" />
     <PackageReference Update="FSharp.Core" Version="10.1.403" />

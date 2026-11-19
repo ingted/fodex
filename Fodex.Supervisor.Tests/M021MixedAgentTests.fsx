@@ -1,5 +1,13 @@
 #if INTERACTIVE
+#if LINE_V4_CLOSURE
+#load "../Fodex.Line.V4/LineV4References.fsx"
+#r "FSharp.FGL.dll"
+#r "FSharp.FGL.ArrayAdjacencyGraph.dll"
+#load "../Fodex.Supervisor.Contract/LoggerAdapter.fsx"
+#load @"C:\Users\Administrator\.codex\lib\ParseLine.fsx"
+#else
 #load "../Fodex.Supervisor/M021References.fsx"
+#endif
 #r "nuget: Expecto, 11.1.1"
 #else
 module M021MixedAgentTests
@@ -29,6 +37,7 @@ type MatrixArgument =
     | Sql_Server of string | Database of string | Working_Directory of string | Output_Directory of string
     | Codex_Model of string | Codex_Effort of string | Agy_Model of string | Agy_Effort of string
     | Main_Provider of string | Hub_Port of int | Timeout_Seconds of int
+    | Fodex_Version of string | Execute_Live
     interface IArgParserTemplate with member _.Usage = "M021 real-provider matrix; main always is a wrapper."
 
 let parser = ArgumentParser.Create<MatrixArgument>(programName="M021")
@@ -121,7 +130,8 @@ let runCase (options:ParseResults<MatrixArgument>) provider =
                     ParticipantArgumentV402.Sub_Codex_Effort(options.GetResult Codex_Effort)
                     ParticipantArgumentV402.Sub_Agy_Model(options.GetResult Agy_Model)
                     ParticipantArgumentV402.Sub_Agy_Effort(options.GetResult Agy_Effort)]) ]
-            let instance = FodexAgent<string,obj>.Load((node,cs,sid,models,transport,url,ignore,sink),version="4.0.2") |> required
+            let factoryVersion=options.TryGetResult Fodex_Version |> Option.defaultValue "4.0.2"
+            let instance = FodexAgent<string,obj>.Load((node,cs,sid,models,transport,url,ignore,sink),version=factoryVersion) |> required
             factory <- Some instance
             let graphOwner = instance.CreateReActLoop(node,arguments,ctx) |> required
             loop <- Some graphOwner

@@ -14,6 +14,7 @@ module FodexFunctions =
         [|
             ServiceObservedWrapperFodexFunV100.Definitions.builtins
             ServiceHostOnNodeFodexFunV100.Definitions.builtins
+            ServiceAssetReconciliationFodexFunV100.Definitions.builtins
             ConsoleFrontendFodexFunV100.Definitions.builtins
             ConversationProjectionFodexFunV100.Definitions.builtins
             NativeProcessFodexFunV304.Definitions.builtins

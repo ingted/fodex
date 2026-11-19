@@ -22,6 +22,10 @@ module G = PulseTrade.Comm.ResourceNode.Line.LineGeneratorProtocol
 module Media = PulseTrade.Comm.ResourceNode.Line.LineGeneratorMedia
 module Commands = LineV4Commands
 
+let pendingMaterialization (work:Task<string option>)=task {
+    try return! work
+    with MaterializationPending -> return None }
+
 /// stage is a short authoritative readiness read, image reads existing JPEG bytes,
 /// register imports a verified file through service asset_import with RouteId.
 /// No delegate may invoke a model. Example: Pending image => None, send count zero.
@@ -85,4 +89,4 @@ let prepare imageRoot
         envelope["fodexAssets"]<-JsonSerializer.SerializeToNode(assets.ToArray())
         envelope["localImagePaths"]<-JsonSerializer.SerializeToNode(assets |> Seq.map _.path |> Seq.toArray)
         if assets.Count>0 then envelope["instruction"]<-JsonValue.Create(envelope["instruction"].GetValue<string>()+" 請先逐一用 view_image 讀取 localImagePaths 所有圖片，再回答本批完整內容。")
-        return Some(envelope.ToJsonString()) }
+        return Some(envelope.ToJsonString()) } |> pendingMaterialization

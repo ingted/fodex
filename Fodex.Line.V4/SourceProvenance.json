@@ -1,0 +1,122 @@
+[
+  {
+    "target": "LineV4Protocol.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_protocol.fsx",
+    "sourceSha256": "4D7B2711110A4C3C22CAFB814B06FA0B04FAB1BB8C0A2AD99AA162FAFE327D55"
+  },
+  {
+    "target": "LineV4Transport.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_transport.fsx",
+    "sourceSha256": "D8CDD494C56118EA31470BBC2122F9036BBF38C6005A2C51B523EFE7BB0E054F"
+  },
+  {
+    "target": "LineV4Commands.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_commands.fsx",
+    "sourceSha256": "BBA7DCB2BE44017E3CF5526F26A00A94D094ACBEB9DA96B2C50F098DE701AD8C"
+  },
+  {
+    "target": "LineV4StoreContract.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_store_contract.fsx",
+    "sourceSha256": "DFF09D2E26C469A0130A49E10660FD0D85B400C40428EF4F9F3D3B9C07EFA7E7"
+  },
+  {
+    "target": "LineV4StoreAsync.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_store_async.fsx",
+    "sourceSha256": "9CAADCF45736E1E5AE9239B1F1D1ED0AA611404C9114C20330ED017048C80573"
+  },
+  {
+    "target": "LineV4LegacyStore.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_store.fsx",
+    "sourceSha256": "D6627027D2303B573774723CC6A9E0E0B9780DCF0825F88B12EB44C2056A5F4D"
+  },
+  {
+    "target": "LineV4Service.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_service.fsx",
+    "sourceSha256": "B7042A867B39A4F34E643939BC8121653C0408E12E8D5248D0ED4E23569DA3EE"
+  },
+  {
+    "target": "LineV4Batch.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_batch.fsx",
+    "sourceSha256": "CD42672D3561D51BB40A79E662D9EE6F78C8B28D30D3AB6198B7556339321879"
+  },
+  {
+    "target": "LineV4Images.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_images.fsx",
+    "sourceSha256": "9152D1362AAFC1E3BEFC3C9D7D5008CDBF6E80F5EF197FA2536115640B6AE359"
+  },
+  {
+    "target": "LineV4OrderedOutput.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_ordered_output.fsx",
+    "sourceSha256": "BAE5D650DA6990AF940A02BE97CA79A8A1F03AF9A20046A861FDCB5053BB3C87"
+  },
+  {
+    "target": "LineV4OrderedStore.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_ordered_store.fsx",
+    "sourceSha256": "D1B2FF7C250F3A03B70FAA566F4E8EBF6DAA0B32396E2A85B84A9F3F3BB7D5D1"
+  },
+  {
+    "target": "LineV4OrderedAdmission.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_ordered_admission.fsx",
+    "sourceSha256": "0D9FA6B3605D68A6E34AD9358B083F5CFBB9411919CD1B3939003DEFE74BE8FD"
+  },
+  {
+    "target": "LineV4OrderedWorkStore.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_ordered_work_store.fsx",
+    "sourceSha256": "815E5AD862A90A5ACF02C7528659E268721619649EDA0A312CE18E32CBDD447C"
+  },
+  {
+    "target": "LineV4OrderedNative.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_ordered_native.fsx",
+    "sourceSha256": "95B2CA21E8DA6856CFE7ECBCC35C567FD0EE455F4AABF2AB9B590EEA563FBAF2"
+  },
+  {
+    "target": "LineV4OrderedExecution.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_ordered_execution.fsx",
+    "sourceSha256": "FA5EFB7376630AC48CC396B01CF952C8FEA42F648659688DBA74932BBD7CD071"
+  },
+  {
+    "target": "LineV4OrderedControls.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_ordered_controls.fsx",
+    "sourceSha256": "B3FE0F27FF32EF55A1C3589E78BD9B9A27ABBB613D59302D5484B102EF655A5D"
+  },
+  {
+    "target": "LineV4OrderedWorker.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_ordered_worker.fsx",
+    "sourceSha256": "7B266BD415EB6E4AD5586CECCF61F24D9671352B3EBE9821A09FB0EC9ABBFD94"
+  },
+  {
+    "target": "LineV4OrderedMaterialize.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_ordered_materialize.fsx",
+    "sourceSha256": "54E0AEA4B0201D143B7F8466E6CF4BAF678CDCAD5269BB594832A12EA0075732"
+  },
+  {
+    "target": "LineV4OrderedActor.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_ordered_actor.fsx",
+    "sourceSha256": "06BC5CFD72D67EE0A4F3DA2A7FB4AB9FC9EAB5D68DBE5DF91BED92E533F59CE4"
+  },
+  {
+    "target": "LineV4OrderedHost.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_ordered_host.fsx",
+    "sourceSha256": "E67160B407DC932B050963CF59DD74F14FD6E687745DDE421DBFB053A5475770"
+  },
+  {
+    "target": "LineV4SharedCore.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_almighty_core.fsx",
+    "sourceSha256": "A25608430DF371075A609A9BB85B9BFA08AA25320726EB89AB2C5AE0C9FB78BE"
+  },
+  {
+    "target": "LineV4SharedCore.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_shared.fsx",
+    "sourceSha256": "E1270EA6697992C839AA08F56EBED1F871AEC7F6C8D42C36B29C5E8F198278EC"
+  },
+  {
+    "target": "LineV4Platform.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_shared.fsx",
+    "sourceSha256": "E1270EA6697992C839AA08F56EBED1F871AEC7F6C8D42C36B29C5E8F198278EC"
+  },
+  {
+    "target": "LineV4Media.fsx",
+    "source": "G:/PulseTrade.fs/misc/line_provider_fodex_v3_shared.fsx",
+    "sourceSha256": "E1270EA6697992C839AA08F56EBED1F871AEC7F6C8D42C36B29C5E8F198278EC"
+  }
+]

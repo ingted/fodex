@@ -13,10 +13,6 @@ open Microsoft.Data.SqlClient
 open Akka.Actor
 open PersistedConcurrentSortedList.Type
 open PulseTrade.Comm.ResourceNode.Dynamic
-open SixLabors.ImageSharp
-open SixLabors.ImageSharp.Formats.Jpeg
-open SixLabors.ImageSharp.PixelFormats
-open SixLabors.ImageSharp.Processing
 open LineV4Platform
 let imageMaxDimension=1600
 let jpegQuality=75
@@ -79,29 +75,11 @@ let parseUtc value =
     | true, parsed -> parsed
     | _ -> invalidOp "line-capability-time-invalid"
 
-let previewJpeg (original: byte array) =
-    if original.Length <= previewMaxBytes then Array.copy original
-    else
-        use image = Image.Load original
-        let attempts = [ 1200, 70; 900, 60; 640, 50; 480, 40; 320, 35 ]
-        let rec encode (remaining: (int * int) list) =
-            match remaining with
-            | [] -> invalidOp "line-image-preview-too-large"
-            | (dimension, quality) :: tail ->
-                let largest = max image.Width image.Height
-                if largest > dimension then
-                    let ratio = float dimension / float largest
-                    let width = max 1 (int (Math.Round(float image.Width * ratio)))
-                    let height = max 1 (int (Math.Round(float image.Height * ratio)))
-                    image.Mutate(Action<IImageProcessingContext>(fun context -> context.Resize(width, height) |> ignore))
-                use output = new MemoryStream()
-                image.Save(output, JpegEncoder(Quality = quality))
-                let bytes = output.ToArray()
-                if bytes.Length <= previewMaxBytes then bytes
-                else
-                    CryptographicOperations.ZeroMemory(bytes.AsSpan())
-                    encode tail
-        encode attempts
+/// Thumbnail generation is deferred from the CLI/LINE integration scope.
+/// Existing eligible JPEGs pass through unchanged; a future encoder belongs here.
+let tryPreviewJpeg (original: byte array) =
+    if original.Length <= previewMaxBytes then Some(Array.copy original)
+    else None
 
 type ImageStorage =
     { TryReadMedia: string * string -> byte array option
@@ -251,6 +229,8 @@ type ImageProviderStore(storage: ImageStorage) =
         lock gate (fun () ->
             let route = readyRoute |> Option.defaultWith (fun () -> invalidOp "line-image-provider-not-ready")
             if not (images.ContainsKey mediaId) then invalidOp "line-image-media-unavailable"
+            if images[mediaId].Bytes.Length > previewMaxBytes then
+                raise(NotSupportedException "line-image-preview-generation-deferred")
             let originUri = Uri(route.ExternalOrigin, UriKind.Absolute)
             if originUri.Scheme <> Uri.UriSchemeHttps then invalidOp "line-image-external-origin-must-be-https"
             let origin = route.ExternalOrigin.TrimEnd('/')
@@ -341,37 +321,42 @@ type ImageProviderStore(storage: ImageStorage) =
             | Result.Error status -> empty status
             | Result.Ok binding ->
                 let original = readImage binding
-                let selected = if variant = "original" then original else previewJpeg original
-                if not (Object.ReferenceEquals(original, selected)) then CryptographicOperations.ZeroMemory(original.AsSpan())
-                let hash = sha256Hex selected
-                let headers =
-                    Map.ofList
-                        [ "etag", [ "\"" + hash + "\"" ]
-                          "cache-control", [ "private, no-store" ] ]
-                if isHead then
-                    let length = int64 selected.Length
-                    CryptographicOperations.ZeroMemory(selected.AsSpan())
-                    { StatusCode = 200
-                      ContentType = Some "image/jpeg"
-                      DeclaredLength = length
-                      Sha256Hex = Some hash
-                      BodyHandle = None
-                      Headers = headers }
-                else
-                    lock gate (fun () ->
-                        if streams.Count >= maxOpenStreams || openBytes + int64 selected.Length > maxOpenBytes then
-                            CryptographicOperations.ZeroMemory(selected.AsSpan())
-                            empty 503
-                        else
-                            let streamId = Guid.NewGuid().ToString("N")
-                            streams.Add(streamId, { RequestId = requestId; Bytes = selected })
-                            openBytes <- openBytes + int64 selected.Length
-                            { StatusCode = 200
-                              ContentType = Some "image/jpeg"
-                              DeclaredLength = int64 selected.Length
-                              Sha256Hex = Some hash
-                              BodyHandle = Some streamId
-                              Headers = headers })
+                let selected = if variant = "original" then Some original else tryPreviewJpeg original
+                match selected with
+                | None ->
+                    CryptographicOperations.ZeroMemory(original.AsSpan())
+                    empty 501
+                | Some selected ->
+                    if not (Object.ReferenceEquals(original, selected)) then CryptographicOperations.ZeroMemory(original.AsSpan())
+                    let hash = sha256Hex selected
+                    let headers =
+                        Map.ofList
+                            [ "etag", [ "\"" + hash + "\"" ]
+                              "cache-control", [ "private, no-store" ] ]
+                    if isHead then
+                        let length = int64 selected.Length
+                        CryptographicOperations.ZeroMemory(selected.AsSpan())
+                        { StatusCode = 200
+                          ContentType = Some "image/jpeg"
+                          DeclaredLength = length
+                          Sha256Hex = Some hash
+                          BodyHandle = None
+                          Headers = headers }
+                    else
+                        lock gate (fun () ->
+                            if streams.Count >= maxOpenStreams || openBytes + int64 selected.Length > maxOpenBytes then
+                                CryptographicOperations.ZeroMemory(selected.AsSpan())
+                                empty 503
+                            else
+                                let streamId = Guid.NewGuid().ToString("N")
+                                streams.Add(streamId, { RequestId = requestId; Bytes = selected })
+                                openBytes <- openBytes + int64 selected.Length
+                                { StatusCode = 200
+                                  ContentType = Some "image/jpeg"
+                                  DeclaredLength = int64 selected.Length
+                                  Sha256Hex = Some hash
+                                  BodyHandle = Some streamId
+                                  Headers = headers })
         if variant <> "original" && variant <> "preview" then empty 404
         else openValidVariant ()
 

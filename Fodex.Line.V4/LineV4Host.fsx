@@ -61,6 +61,16 @@ type DisplayEvent =
     | ProjectionDue
     | DrainDisplay of TaskCompletionSource<unit>
 
+type DisplayActor(receive:DisplayEvent -> unit) as self =
+    inherit ReceiveActor()
+    do self.Receive<DisplayEvent>(fun message -> receive message)
+
+let startDisplay (system:ActorSystem) receive =
+    // FunActor requires an unbounded stash mailbox. This display-only actor
+    // needs no stash, so ReceiveActor preserves the bounded notification queue.
+    system.Settings.InjectTopLevelFallback(ConfigurationFactory.ParseString "line-v4-display {mailbox-type=\"Akka.Dispatch.BoundedMailbox, Akka\",mailbox-capacity=1024,mailbox-push-timeout-time=0s}")
+    system.ActorOf(Props.Create(fun () -> DisplayActor receive).WithMailbox("line-v4-display"),"line-v4-display")
+
 /// Owns composition only. Service supervisor V107 is the sole wrapper manager;
 /// every input uses its local JSON bridge and the same IAgent/native session.
 let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextWriter) (diagnostics:TextWriter) (ct:CancellationToken) = task {
@@ -169,11 +179,7 @@ let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextW
                         post true (sprintf "[LINE focus] account=%s conversation=%s WSID=%O" account target.Conversation target.WrapperId))
             | None -> post true "尚未選定 LINE conversation。使用 /line_context 列出，或 /line_context(ID) 選擇。"
             }
-        system.Settings.InjectTopLevelFallback(ConfigurationFactory.ParseString "line-v4-display {mailbox-type=\"Akka.Dispatch.BoundedMailbox, Akka\",mailbox-capacity=1024,mailbox-push-timeout-time=0s}")
-        let observer=spawnOpt system "line-v4-display" (fun (mailbox:Actor<DisplayEvent>) ->
-            let actorCtx=ActorLogging.withLogger ctx (Akka.Event.Logging.GetLogger mailbox.Context)
-            let rec receive ()=actor {
-                let! message=mailbox.Receive()
+        let observer=startDisplay system (fun message ->
                 try
                     match message with
                     | Edge(sid,((source,_,event) as edge)) ->
@@ -181,7 +187,7 @@ let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextW
                         | ReActEndpoint.Participant(1L,(wrapper,_)) when wrapper=sid ->
                             match format(json,Volatile.Read(&labels)<>0,edge) |> required with
                             | Some text when json -> eventPost false text
-                            | Some text -> post true (sprintf "[account=%s WSID=%s] %s" account (sid.ToString("N").Substring(0,8)) text)
+                            | Some text -> post true (sprintf "[%s][%s] %s" account (sid.ToString("N").Substring(0,8)) text)
                             | None -> ()
                             match event with AgentEnd _ -> scheduleCompletion sid edge | _ -> ()
                         | _ -> ()
@@ -192,9 +198,7 @@ let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextW
                     | FocusChanged -> track(announceFocus())
                     | ProjectionDue -> if projections.IsEmpty then scheduleScan None
                     | DrainDisplay completion -> completion.TrySetResult() |> ignore
-                with error -> actorCtx.logger.Error(sprintf "Console notification failed: %s" error.Message)
-                return! receive() }
-            receive()) [SpawnOption.Mailbox "line-v4-display"]
+                with error -> logger.Error(error,"Console notification failed"))
         eventActor<-Some observer
         observerOwner<-Some observer
         let! mediaConnection=reader.MediaConnectionStringAsync ct
@@ -213,8 +217,23 @@ let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextW
                  | :? PulseTrade.Comm.ResourceNode.Dynamic.ProviderRegistrationRejected as rejected -> mediaReady.TrySetException(InvalidOperationException rejected.ReasonCode) |> ignore
                  | _ -> ()} |> ignore
         do! mediaReady.Task.WaitAsync(TimeSpan.FromSeconds 30.,ct)
-        let materialize=LineV4OrderedMaterialize.prepare (Path.Combine(data,"native-images")) reader.ReadContentStateAsync reader.ReadImageAsync
-                            (fun (sid,id,payload,token) -> call({Wire.request "asset_import" sid with id=id.ToString("N");text=payload.GetRawText()},token))
+        let materialize=LineV4OrderedMaterialize.prepare (Options.nativeImageRoot parsed) reader.ReadContentStateAsync reader.ReadImageAsync
+                            (fun (sid,id,payload,token) -> task {
+                                let text=payload.GetRawText()
+                                let! data=call({Wire.request "asset_import" sid with id=id.ToString("N");text=text},token)
+                                let mutable state=Unchecked.defaultof<JsonElement>
+                                if data.TryGetProperty("state",&state) then
+                                    match state.GetString() with
+                                    | "Queued" | "DispatchStarted" -> return raise LineV4OrderedExecution.MaterializationPending
+                                    | "Indeterminate" ->
+                                        let recover=FodexFunBinding.pin<ServiceAssetReconciliationInputV100,Task<Result<SharedAssetReferenceV100,exn>>>
+                                                        system (Some "1.0.0") ServiceAssetReconciliationFodexFunV100.target
+                                        let! repaired=FodexFunBinding.invokeAsync recover
+                                                          {Node=system;ConnectionString=cs;WrapperId=sid;OperationId=id.ToString("N");ImportJson=text
+                                                           ArtifactRoot=options.GetResult ConsoleArgumentV405.Output_Directory;AllowedImageRoot=Options.nativeImageRoot parsed;Cancellation=token}
+                                        return JsonSerializer.SerializeToElement(required repaired)
+                                    | _ -> return invalidOp("Asset import is not complete: "+state.GetString())
+                                else return data })
         let owner=Guid.NewGuid()
         let! endpoint=LineV4OrderedHost.start system settings "fodex-line-v3" allowed owner bindings reader.ReadMetadataAsync materialize call
                           (fun (sid,id,prompt) -> notify(LineAccepted(sid,id,prompt))) (fun () -> notify FocusChanged)
@@ -329,7 +348,7 @@ let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextW
                         let command=parse(ctx,body) |> required
                         let localCancel=match command with WrapperCommandV300.Cancel _ | WrapperCommandV300.StopMain | WrapperCommandV300.StopParticipants _ -> true | _ -> false
                         if not localCancel then do! logicalCreate root token
-                        let generates=match command with WrapperCommandV300.Immediate _ | WrapperCommandV300.Cot _ | WrapperCommandV300.Compact | WrapperCommandV300.Subagents _ | WrapperCommandV300.SubagentsWithType _ -> true | _ -> false
+                        let generates=match command with WrapperCommandV300.Immediate _ | WrapperCommandV300.Cot _ | WrapperCommandV300.Compact | WrapperCommandV300.Subagents _ | WrapperCommandV300.SubagentsWithType _ | WrapperCommandV300.SendAll -> true | _ -> false
                         if generates then
                             let turn:LineV4CliTranscript.CliTurn=
                                 {OperationId=operationId;Account=account

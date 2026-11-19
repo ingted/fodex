@@ -40,6 +40,20 @@ let defaults=parser.ParseCommandLine(global.PL.parseLine [|' '|] (Some '"') None
 let resolvePath (value:string)=Path.GetFullPath(if Path.IsPathRooted value then value else Path.Combine(AppContext.BaseDirectory,value))
 let choose (parsed:ParseResults<Argument>) (selector:Quotations.Expr<'T -> Argument>)=parsed.TryGetResult selector |> Option.orElseWith(fun () -> defaults.TryGetResult selector) |> Option.get
 
+let nativeImageRoot parsed=Path.Combine(choose parsed <@ Data_Directory @> |> resolvePath,"native-images")
+/// V107 already reads this process-local, non-secret configuration. One v4
+/// process owns its service; derive it from the same explicit data directory.
+let withNativeImageRoot parsed action =
+    let name="FODEX_LINE_IMAGE_ROOT"
+    let previous=Environment.GetEnvironmentVariable name
+    let expected=nativeImageRoot parsed
+    if not(String.IsNullOrWhiteSpace previous) &&
+       not(String.Equals(Path.GetFullPath previous,expected,StringComparison.OrdinalIgnoreCase)) then
+        invalidOp "FODEX_LINE_IMAGE_ROOT must match the configured data-directory/native-images"
+    Environment.SetEnvironmentVariable(name,expected,EnvironmentVariableTarget.Process)
+    try action()
+    finally Environment.SetEnvironmentVariable(name,previous,EnvironmentVariableTarget.Process)
+
 /// Map typed common options back through the existing policy, retaining provider defaults
 /// and quoting semantics. No alternate argument grammar or FSI startup runs here.
 let common (ctx:UniContext) (parsed:ParseResults<Argument>) =

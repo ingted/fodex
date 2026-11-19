@@ -316,6 +316,7 @@
     <Compile Include="ServiceHostOnNodeFodexFunV100Tests.fsx" />
     <Compile Include="ConsoleFrontendFodexFunV100Tests.fsx" />
     <Compile Include="ConversationProjectionFodexFunV100Tests.fsx" />
+    <Compile Include="ServiceAssetReconciliationFodexFunV100Tests.fsx" />
     <Compile Include="ProgramV300.fs" />
     <None Include="TestCases.BeforeRefactor.md" />
   </ItemGroup>
