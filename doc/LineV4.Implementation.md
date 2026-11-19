@@ -180,6 +180,12 @@ v4 的 RN node 補接既有 `ActorLogging.config`；啟動時先載入 applicati
 
 本輪的實際測試、immutable release、切換與 LINE 驗收結果另追加；此段為來源修正說明，不把尚未切換的候選寫成正式執行版本。
 
+來源修正已由 `a13f94c` commit/push。Release build 與完整 v4 tests **36/36 passed**；raw hub 實際切換 show 與 labels 四種組合，正式答案維持可讀、單行答案的前綴同行，舊 V405／JSON typed edge／段落換行均保留。native stderr owner 的真 Akka→NLog 回歸證實診斷檔含原 Warning，捕捉 stdout／stderr 均為 0 字元，獨立 FODEX_IO trace 亦保真。首次 fixture 讀取活躍 NLog 檔的 sharing、測試型別引用與 JSON 泛型推斷錯誤已修復，最終測試無 skipped／failed／errored。
+
+候選由正式 publish 建立，共 **231 檔**，managed DLL SHA256=`78FE7972E4C8192AB8C636971987005E88204D17B0CE8A6769F9BA52DDCFAC06`；離線 executable `--help` exit=0，stdout 第一行為 `Fodex LINE v4 4.0.1.0`、stderr=0 bytes。候選清單與驗證摘要見 `artifacts/line-v4/20261119/console-output-candidate.manifest.json`、`console-output-validation.json`。來源檔案敏感掃描 High=0／Medium=0，15 個變更文字檔 strict UTF-8、無 BOM／NUL／replacement character。
+
+部署尚未切換：同 target 已有三版；待退役的 `239ae81-20261119-display-fix` 已確認 current／launch／run、process／service／task 引用均為 0，230 檔、無 reparse point，但 agent 的 literal-path Remove-Item 被自動核准審查以 blocked by policy 拒絕。已請使用者刪除此精確目錄；不改用其他 API 繞過，也不超過三版建立新版。現行 `8486141-20261119-console-input` 與 `239ae81-20261119-asset-root-fix` 保留，正式視窗／LINE 驗收需在切換後另記。
+
 ## SECTION 3 — Fodex
 
 已新增以下實作與對應 Expecto tests，接入正式編譯順序及 first-use builtins：
