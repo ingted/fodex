@@ -158,6 +158,18 @@ Checkpoint `9c9f3b4e0aa7e2ed6099d1f1be8b46bffc493177` 已 commit/push，27 個�
 
 bin 的受限逐檔刪除也遭自動審核拒絕，沒有執行刪除。個人暫存中的 `E:/deletable/fodex/1119-v4/Cleanup-SupervisorBin.ps1` 與 `bin-cleanup-plan.json` 已準備供使用者執行，腳本先驗界線／檔案時戳／無 reparse／無使用引用／歷史 archive hash，才刪舊產物，最後驗保留 CLI exe／DLL hash。腳本語法已驗證，但未冒稱清理完成；若成功會產生 `artifacts/line-v4/20261119/bin-cleanup-receipt.json`。
 
+### 2026-11-19 Console 修正版已啟動並由使用者確認
+
+使用者完成兩處清理後已重新盤點：Supervisor/bin 僅剩 CLI、Debug、Release，25 個舊目錄／4,615 檔已清除，logical bytes=2,283,006,719（約 2.13 GiB）；保留 CLI exe／DLL 的 SHA256 與清理前完全一致，3 個歷史檔的 archive hash 亦一致。`bin-cleanup-receipt.json` 為使用者執行清理腳本後的實際結果，不把 agent 先前被拒絕的動作寫成已執行。使用者亦移除了 deployment 的 no-thumbnail 失敗候選。
+
+已由正式 dotnet publish 建立 immutable `8486141-20261119-console-input`，230 檔逐一與已測候選比 SHA256，完全一致；目前保留此版、asset-root-fix 與 display-fix 共三版。已更新 current／launch／candidate manifest，維持同 data/output、15979／18825、Management revision 84／protocol bindingRevision 1，未重新綁定或清 SQL。新 process 實際載入該 release 的 managed DLL，SHA256=`E69AD649ED3A6F782C178AABFE6781CC098DC1434CDFCD84E2DBED9441FD2936`，兩個 listener 均由該 process 持有。runtime PID／birth 見 `console-input-run.json`，不以歷史 PID 當存活證明。
+
+本版已套用一般事件前綴 `[d9System_test2][83ef32b4]`，以及原 stdout identity／底線 cursor size=15／退出還原的修正，仍使用與舊 standalone 共用的 V405 editor，沒有另起 FSI 或另造 reader。使用者在新開正式視窗實際輸入後回覆「看得到底線游標」；因此此項現在有真人正式視窗的確認，取代前段尚未驗收狀態，不再只用 Visible 旗標或自有 smoke 推論。
+
+Chrome 依使用者要求經既有 `G:/PulseTrade.fs/misc/Start-Chrome-Line.fsx` 開啟 9222，沿原 `LocalAppData/PulseTrade/ChromeLine/9222` profile；CDP HTTP=200、既有 LINE extension page 存在，使用者確認 LINE 已開。未另開無關 profile。RN 正式 bootstrap health `8799/resource-node/healthz`=200；RN／GW／SPA 均維持原服務。泛用 `/health` 並非該 RN endpoint，曾回 404，未將此錯誤 URL 當服務故障或藉此重啟服務。
+
+新結果保存於 `console-input-acceptance.json`；先前 source-only／未啟用與清理被擋狀態為當時 checkpoint，以上為目前交付狀態。整份 RFC 尚缺的性能對照／P08 其他互動邊界仍依前段列示，本次不擴大 PASS 範圍。
+
 ## SECTION 3 — Fodex
 
 已新增以下實作與對應 Expecto tests，接入正式編譯順序及 first-use builtins：
