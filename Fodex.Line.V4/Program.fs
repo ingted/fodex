@@ -8,8 +8,12 @@ let main argv=
     let standardOutput=Console.Out
     try
         let options=LineV4Options.parser.ParseCommandLine(argv,raiseOnUsage=false)
+        let version=typeof<LineV4Options.Argument>.Assembly.GetName().Version
+        let banner=sprintf "Fodex LINE v4 %O" version
+        (if options.Contains LineV4Options.Argument.Json then Console.Error else standardOutput).WriteLine banner
         if options.IsUsageRequested then Console.WriteLine(LineV4Options.parser.PrintUsage());0
         else
+            LineV4Logging.configure (LineV4Options.choose options <@ LineV4Options.Output_Directory @> |> LineV4Options.resolvePath)
             use cancellation=new CancellationTokenSource()
             use finished=new CancellationTokenSource()
             let mutable signals=0

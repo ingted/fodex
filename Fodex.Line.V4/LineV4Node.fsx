@@ -40,6 +40,7 @@ let start (options:ProviderClusterOptions) (ct:CancellationToken) = task {
     let! bootstrap=ProviderCluster.resolveBootstrapAddressAsync http options
     let address=bootstrap |> Result.defaultWith(fun reason -> invalidOp("RN bootstrap failed: "+reason))
     let config=ConfigurationFactory.ParseString("akka.cluster.seed-nodes=["+System.Text.Json.JsonSerializer.Serialize(address.ToString())+"]")
+                   .WithFallback(Fodex.Supervisor.ActorLogging.config)
                    .WithFallback(ActorArguFCell2StringSerialization.config())
                    .WithFallback(ConfigurationFactory.ParseString "akka.cluster.failure-detector.acceptable-heartbeat-pause=9s")
                    .WithFallback(ProviderCluster.config options)

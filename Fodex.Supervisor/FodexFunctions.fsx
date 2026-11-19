@@ -85,6 +85,7 @@ module FodexFunctions =
             ConsoleInputFodexFunV300.Definitions.builtins
             ConsoleOutputFodexFunV300.Definitions.builtins
             ConsoleOutputFodexFunV405.Definitions.builtins
+            ConsoleOutputFodexFunV406.Definitions.builtins
             OrderHubFodexFunV301.Definitions.builtins
             SubagentFodexFunV301.Definitions.builtins
             SubagentFodexFunV302.Definitions.builtins

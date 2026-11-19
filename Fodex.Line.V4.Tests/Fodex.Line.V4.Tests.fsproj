@@ -21,6 +21,7 @@
     <Compile Include="LineV4CliTranscriptTests.fsx" />
     <Compile Include="LineV4RecoverySqlTests.fsx" />
     <Compile Include="LineV4HostTests.fsx" />
+    <Compile Include="LineV4PresentationTests.fsx" />
     <Compile Include="LineV4MediaTests.fsx" />
     <Compile Include="Program.fs" />
     <ProjectReference Include="../Fodex.Line.V4/Fodex.Line.V4.fsproj" />

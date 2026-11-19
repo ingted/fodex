@@ -170,6 +170,16 @@ Chrome 依使用者要求經既有 `G:/PulseTrade.fs/misc/Start-Chrome-Line.fsx`
 
 新結果保存於 `console-input-acceptance.json`；先前 source-only／未啟用與清理被擋狀態為當時 checkpoint，以上為目前交付狀態。整份 RFC 尚缺的性能對照／P08 其他互動邊界仍依前段列示，本次不擴大 PASS 範圍。
 
+### 2026-11-19：4.0.1 診斷與輸入輸出呈現修正
+
+v4 的 RN node 補接既有 `ActorLogging.config`；啟動時先載入 application 專用 `NLog.LineV4.config`，將診斷寫入 output/logs 的每日檔案，不使用 Console target。`NativeProcessFodexFunV301` 保留原始 Warning severity；修正 logger 接線，不以吞 stderr 或降 severity 掩蓋問題。`FODEX_IO` trace 與 `/show` 的 native output hub 繼續獨立。
+
+一般 LINE input observation 解碼已知 envelope 的 userPayload batch，依 sequence 顯示原文與圖片 placeholder；送入模型的 envelope、operation identity 與持久化內容不變。啟動第一行提供 application 4.0.1 版號，JSON mode 的版號留在 stderr。
+
+「hi」案例的 SQL stream 910 為 wrapper→Human MessageCompleted，913 為帶完整相同文字的 AgentEnd；目前舊視窗 UI Automation 也找到完成標題及答案，並非 native 漏交。原 `/labels on` 將標題與答案拆行，使正文沒有同一行的帳號／WSID 前綴；新增 `ConsoleOutputFodexFunV406`（4.0.6）只調整完成訊息的標題同行呈現，v4 明確 pin 新版。V405 舊版保留，JSON typed edge、段落及結尾換行維持原契約。raw output 另標 `[native I/O]`，避免誤認為正式答案。
+
+本輪的實際測試、immutable release、切換與 LINE 驗收結果另追加；此段為來源修正說明，不把尚未切換的候選寫成正式執行版本。
+
 ## SECTION 3 — Fodex
 
 已新增以下實作與對應 Expecto tests，接入正式編譯順序及 first-use builtins：

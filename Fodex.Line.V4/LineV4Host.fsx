@@ -140,7 +140,7 @@ let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextW
              MainAgentType=options.GetResult ConsoleArgumentV405.Mainagent_Type;NativeAdapter=options.GetResult ConsoleArgumentV405.Native_Adapter
              NativeDefaults=Some options;WaitSlice=TimeSpan.FromSeconds 20.;TurnTimeout=TimeSpan.FromMinutes 20.}
         LineV4Transport.validate settings
-        let format=FodexFunctions.pinBase<bool*bool*ReActDataStream<string>,string option> "4.0.5" ConsoleOutputFodexFunV405.targetStream
+        let format=FodexFunctions.pinBase<bool*bool*ReActDataStream<string>,string option> "4.0.6" ConsoleOutputFodexFunV406.targetStream
         let raw=FodexFunctions.pinBase<bool*NativeOutputBatchV300,string> "4.0.5" ConsoleOutputFodexFunV405.targetNativeFormat
         let eventPost,eventDrain=FodexFunBinding.pin<ActorSystem*UniContext*(bool -> string -> unit),ConsolePrinterV403>
                                       system (Some "4.0.3") ConsolePrinterFodexFunV403.target
@@ -191,10 +191,14 @@ let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextW
                             | None -> ()
                             match event with AgentEnd _ -> scheduleCompletion sid edge | _ -> ()
                         | _ -> ()
-                    | Native(sid,batch) -> post true (sprintf "[WSID=%s] %s" (sid.ToString("N").Substring(0,8)) (raw(Volatile.Read(&labels)<>0,batch) |> required))
+                    | Native(sid,batch) -> post true (sprintf "%s [native I/O]\n%s" (LineV4Presentation.prefix account sid) (raw(Volatile.Read(&labels)<>0,batch) |> required))
                     | LineAccepted(sid,id,prompt) ->
                         if json then eventPost false (JsonSerializer.Serialize {|kind="input_observed";source="Line";account=account;wrapperId=sid;operationId=id;prompt=prompt|})
-                        else post true (sprintf "[LINE 輸入 account=%s WSID=%O operation=%O]\n%s" account sid id prompt)
+                        else
+                            let text=LineV4Presentation.lineInput prompt |> Option.defaultWith(fun () ->
+                                logger.Warn("Cannot display LINE input envelope; WSID={0} operation={1}",sid,id)
+                                "[LINE 訊息格式無法顯示；內容已送入 wrapper]")
+                            post true (sprintf "%s [LINE 輸入] %s" (LineV4Presentation.prefix account sid) text)
                     | FocusChanged -> track(announceFocus())
                     | ProjectionDue -> if projections.IsEmpty then scheduleScan None
                     | DrainDisplay completion -> completion.TrySetResult() |> ignore

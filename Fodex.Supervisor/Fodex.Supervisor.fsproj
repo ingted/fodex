@@ -138,6 +138,7 @@
     <Compile Include="ConsoleInputFodexFunV300.fsx"><Link>fodexFun/ConsoleInput/ConsoleInputFodexFunV300.fsx</Link></Compile>
     <Compile Include="ConsoleOutputFodexFunV300.fsx"><Link>fodexFun/ConsoleOutput/ConsoleOutputFodexFunV300.fsx</Link></Compile>
     <Compile Include="ConsoleOutputFodexFunV405.fsx"><Link>fodexFun/ConsoleOutput/ConsoleOutputFodexFunV405.fsx</Link></Compile>
+    <Compile Include="ConsoleOutputFodexFunV406.fsx"><Link>fodexFun/ConsoleOutput/ConsoleOutputFodexFunV406.fsx</Link></Compile>
     <Compile Include="OrderHubSupportV100.fsx"><Link>fodexFun/OrderHubSupport/OrderHubSupportV100.fsx</Link></Compile>
     <Compile Include="OrderHubV103.fsx"><Link>fodexFun/OrderHub/OrderHubV103.fsx</Link></Compile>
     <Compile Include="OrderHubV300.fsx"><Link>fodexFun/OrderHub/OrderHubV300.fsx</Link></Compile>

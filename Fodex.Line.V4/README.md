@@ -14,6 +14,8 @@ Evaluator 固定 2.2.2、FCS 固定 43.12.403、v4 的 FSharp.Core 固定 10.1.4
 
 執行目錄為 `bin/<configuration>/net10.0/win-x64/`。`--help` 可離線顯示全部 Argu options，不建立 node、不讀 LINE 設定或啟動 native。預設值集中在 [LineV4Options.fsx](LineV4Options.fsx) 的 `defaultArgumentsText`。編譯時使用本機既有 `$HOME/.codex/lib/ParseLine.fsx`；執行時沒有 runtime FSI。
 
+4.0.1 啟動第一行顯示版號；`--json` 的版號寫 stderr，維持 stdout 的 event JSONL。RN 使用既有 Akka→NLog backend，`NLog.LineV4.config` 將診斷寫到 `--output-directory/logs/diagnostics.YYYY-MM-DD.log`，沒有 Console target；wrapper IO trace 保留獨立檔案。`/show` 仍只控制 native raw I/O，即時輸出標示 `[native I/O]`，不控制正式答案。一般 LINE 輸入只顯示原文及 `[圖片]`，不印 model envelope；`--json` 保留原有 `input_observed.prompt`。V406 完成訊息將 label 與正文放在同一行，`/labels off` 可隱藏 label。
+
 啟動前由部署流程準備 `config/ordered-bindings.json`。檔案只接受正式 readback 的 account、logicalBindingId、bindingRevision；不從收到的 Header 自動學習授權。空清單拒絕全部 binding。不得把 RN 設定 revision 與 protocol bindingRevision 混用。
 
 預設 account 為 `d9System_test2`、Akka port 15979、endpoint 為 `/user/line-fodex-v4-ordered`；持久 provider id 保留 `fodex-line-v3`，StorageIdentity 由既有 SQL authority 讀取。RN catalog 沿既有正式 `line-catalog.json`。相對 data／bindings／output 路徑以 executable 目錄解析；native working directory 由 `--working-directory` 獨立指定。

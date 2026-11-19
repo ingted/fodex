@@ -5,6 +5,7 @@
     <SelfContained>false</SelfContained>
     <OutputType>Exe</OutputType>
     <AssemblyName>Fodex.Line.V4</AssemblyName>
+    <Version>4.0.1</Version>
     <LangVersion>preview</LangVersion>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GenerateProgramFile>false</GenerateProgramFile>
@@ -16,6 +17,8 @@
     <Compile Include="LineV4SharedCore.fsx" />
     <Compile Include="LineV4Console.fsx" />
     <Compile Include="LineV4Options.fsx" />
+    <Compile Include="LineV4Logging.fsx" />
+    <Compile Include="LineV4Presentation.fsx" />
     <Compile Include="LineV4Platform.fsx" />
     <Compile Include="LineV4Media.fsx" />
     <Compile Include="LineV4Node.fsx" />
@@ -47,6 +50,7 @@
     <Compile Include="Program.fs" />
     <None Include="LineV4References.fsx" />
     <None Include="SourceProvenance.json" />
+    <None Include="NLog.LineV4.config" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../Fodex.Supervisor/Fodex.Supervisor.fsproj" />
