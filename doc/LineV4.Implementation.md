@@ -148,6 +148,16 @@ Release Host 回歸 **7/7 passed**，既有 M018 input quotation **10/10 passed*
 
 使用者要求大改前先 commit/push。本 checkpoint 保存目前程式、測試、來源 provenance 與施工文件；不包含個人暫存、build outputs、執行中 SQL 或無關變更。先完成此 checkpoint，再繼續輸入端排查。
 
+### 2026-11-19 Console 切換與 bin 清理狀態
+
+Checkpoint `9c9f3b4e0aa7e2ed6099d1f1be8b46bffc493177` 已 commit/push，27 個任務檔，Release **32/32 passed**，敏感掃描 High=0／Medium=0。後續小修明確指定 15% 字元高度的底線游標並在退出時還原原 size；Host 回歸 **7/7 passed**，自有實體 console 的插入／左移／中文多行／背景重畫／原 size 還原亦通過。候選 managed DLL SHA256=`E69AD649ED3A6F782C178AABFE6781CC098DC1434CDFCD84E2DBED9441FD2936`。這些仍不等於使用者正式視窗的底線已驗收。
+
+使用者已自行 exit v4；即時檢查 process count=0、15979／18825 listeners=0。移除最早失敗的 `239ae81-20261119-no-thumbnail` 候選以符合最多三版保留時，自動審核拒絕了刪除，僅回報 blocked by policy；包括分開驗證零 process／service／task／catalog 引用後的固定路徑刪除仍被拒絕。使用者改為自行處理 deployment；agent 不切換 current pointer，待候選數量符合原規則後再啟動新版。
+
+使用者另授權清理 `Fodex.Supervisor/bin`。只讀盤點 28 個頂層目錄；保留 CLI（使用者指定對照版）、Debug、Release，另外 25 個舊 CLI／milestone 產物共 4,615 檔、2,283,006,719 bytes。沒有 tracked files、process／service／task 或已載入 module 引用舊目錄，也沒有 reparse point。其中 3 個歷史 exit／control log／resume 檔已複製到 `artifacts/bin-retirement/20261119/CLI.before-V409-20261112-1423/artifacts/` 並逐檔核 hash。
+
+bin 的受限逐檔刪除也遭自動審核拒絕，沒有執行刪除。個人暫存中的 `E:/deletable/fodex/1119-v4/Cleanup-SupervisorBin.ps1` 與 `bin-cleanup-plan.json` 已準備供使用者執行，腳本先驗界線／檔案時戳／無 reparse／無使用引用／歷史 archive hash，才刪舊產物，最後驗保留 CLI exe／DLL hash。腳本語法已驗證，但未冒稱清理完成；若成功會產生 `artifacts/line-v4/20261119/bin-cleanup-receipt.json`。
+
 ## SECTION 3 — Fodex
 
 已新增以下實作與對應 Expecto tests，接入正式編譯順序及 first-use builtins：
