@@ -30,7 +30,7 @@ CLI 自身資訊使用 `/cliinfo(<Participant>) <種類> on|off`。例如 `/clii
 
 ## 使用 CLI 與 LINE
 
-實體 console 啟動時明確顯示系統游標。一般模式保留原本的 Console.Out，讓既有互動 editor 能正確辨識鍵盤 console；只有 JSON 模式將額外 console 訊息與日誌 flush 送往 diagnostics。退出或啟動失敗時恢復原 stdout 與游標可見性。
+4.0.3 的互動 editor 在每次讀取 prompt、按鍵編輯與背景輸出重畫後，確保系統游標可見且維持 15% 高度的底線；不只在啟動時設定。沿用原 V405 的輸入、insert／replace、多行與畫面排版，由 `Console.CreateInteractive` 4.0.7 與 `Console.RunFrontend` 1.0.1 接入。一般模式保留原本的 Console.Out，讓既有 editor 正確辨識鍵盤 console；重新導向的輸入輸出不操作實體游標。退出或啟動失敗時恢復原 stdout、游標大小與可見性。
 
 一般事件的來源前綴使用 `[account][WSID 前八碼]`，例如 `[d9System_test2][83ef32b4]`。
 

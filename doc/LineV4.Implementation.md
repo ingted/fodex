@@ -216,6 +216,16 @@ Release build 成功，完整 v4 tests **40/40 passed**（presentation 8 項）�
 
 真人 LINE 驗收：test001／test002 的輸入顯示正確 `[LINE][test001][NorthPole]`／`[LINE][test002][NorthPole]`，CLI 回覆各自正確 marker。先前 token 延遲的既存結果由每群一次 `/next` 續取，LINE DOM 實際確認 marker；private 的 789987 亦經 `/next` 收到已保存回答，沒有重新生成模型。最後依序在 private 發 hi、等回答後發 123321，LINE 與 CLI 都收到「嗨！有什麼我可以幫你的？」及「收到：123321。」；CLI 精確為 `[LINE][NorthPole]` 輸入與 `[d9System_test2][83ef32b4]` 回答，兩則分行，無 Prompt accepted／raw JSON／envelope。已截取並檢查實際 native window 圖像，文字／prompt 可讀無重疊；畫面上方是先前 show on 的歷史 buffer，完成後 private、test001、test002 的 show 均 off，labels off、cliinfo ALL off。focus 還原 private，LINE draft 空白及原本空白 search 亦還原。完整最新結果在 `cliinfo-validation.json`／`cliinfo-live.png`；真人 LINE 與 source／unit 的證據分開記錄。
 
+### 2026-11-20：4.0.3 prompt 重入時恢復底線游標
+
+使用者回報啟動時有底線、執行後返回 prompt 消失。本輪在現行 4.0.2 的實體 console 讀到 Visible=false、Size=15，游標仍在 viewport 內；原地恢復後，重新啟動、短指令及一次真實模型回答均未穩定重現隱藏來源，因此不宣稱已證明是哪個外部動作將其隱藏。已定位的缺口是游標只由 LineV4Console.withSession 在啟動時設定，editor 重新讀取、編輯與背景重畫不再維護它。
+
+新增 versioned ConsoleOutputFodexFunV407（Console.CreateInteractive 4.0.7）及 ConsoleFrontendFodexFunV101（Console.RunFrontend 1.0.1），v4 host 明確 pin 新版。V407 沿用 V405 的 input／output 身分探測、read／write、insert／replace 與多行排版，在讀取、按鍵編輯及背景輸出邊界確保 Visible=true、Size=15；不新增 timer。舊版與 standalone CLI 均保留。重新導向的 reader／writer 不呼叫實體 console API，session finally 仍還原原設定。App 版號為 4.0.3。
+
+Release build 通過（0 errors）；全部 43/43 tests passed。獨立原生 console 回歸刻意在初次 prompt、按鍵編輯、背景輸出、第二次 prompt、多行 prompt 與第三次 prompt 隱藏游標，V405 六項皆失敗、V407 六項皆通過；兩版均讀到 abc 與中文兩行，V407 亦確認左移、EOF 及離開還原原 visibility／size。正式證據為 artifacts/line-v4/20261120/cursor-reentry-v405.json 與 cursor-reentry-v407.json；這是實體 editor 回歸，尚不等於新版正式 v4 視窗已驗收。
+
+正式 dotnet publish 共 231 檔，離線 help 第一行 Fodex LINE v4 4.0.3.0，managed DLL SHA256=808731DE55408AF0938260D28CB812DF4DACB91624697BEFAAED7A522F087B51。部署切換與實際新版視窗驗證另補交付紀錄。
+
 ## SECTION 3 — Fodex
 
 已新增以下實作與對應 Expecto tests，接入正式編譯順序及 first-use builtins：

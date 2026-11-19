@@ -20,6 +20,15 @@ let ctx:UniContext={logger=toUL(UniversalLogger<_>(NLog.LogManager.GetLogger "Li
 
 [<Tests>]
 let tests=testSequenced <| testList "LINE v4 host closure" [
+    testCase "cursor-owning editor quotation preserves the redirected reader writer fallback" <| fun () ->
+        use input=new IO.StringReader("fallback input\n")
+        use output=new IO.StringWriter()
+        let create=FodexFunctions.pinBase<ConsoleEditorInputV405,(unit -> string)*(bool -> string -> unit)*bool> "4.0.7" ConsoleOutputFodexFunV407.target
+        let read,write,physical=create(ctx,input,output,(fun () -> "fixture> "),ConsoleInputFodexFunV300.edit) |> Result.defaultWith raise
+        Expect.isFalse physical "redirected streams cannot invoke physical cursor APIs"
+        Expect.equal (read()) "fallback input" "reader unchanged"
+        write true "background output"
+        Expect.stringContains (output.ToString()) "background output" "writer unchanged"
     testCase "normal console keeps the editor writer identity; JSON keeps diagnostics separate and restores stdout on failure" <| fun () ->
         let originalOutput,originalError=Console.Out,Console.Error
         use output=new IO.StringWriter()

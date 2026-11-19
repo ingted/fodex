@@ -5,7 +5,7 @@
     <SelfContained>false</SelfContained>
     <OutputType>Exe</OutputType>
     <AssemblyName>Fodex.Line.V4</AssemblyName>
-    <Version>4.0.2</Version>
+    <Version>4.0.3</Version>
     <LangVersion>preview</LangVersion>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GenerateProgramFile>false</GenerateProgramFile>

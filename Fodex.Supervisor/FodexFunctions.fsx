@@ -16,6 +16,7 @@ module FodexFunctions =
             ServiceHostOnNodeFodexFunV100.Definitions.builtins
             ServiceAssetReconciliationFodexFunV100.Definitions.builtins
             ConsoleFrontendFodexFunV100.Definitions.builtins
+            ConsoleFrontendFodexFunV101.Definitions.builtins
             ConversationProjectionFodexFunV100.Definitions.builtins
             NativeProcessFodexFunV304.Definitions.builtins
             ServiceProtocolFodexFunV103.Definitions.builtins
@@ -86,6 +87,7 @@ module FodexFunctions =
             ConsoleOutputFodexFunV300.Definitions.builtins
             ConsoleOutputFodexFunV405.Definitions.builtins
             ConsoleOutputFodexFunV406.Definitions.builtins
+            ConsoleOutputFodexFunV407.Definitions.builtins
             OrderHubFodexFunV301.Definitions.builtins
             SubagentFodexFunV301.Definitions.builtins
             SubagentFodexFunV302.Definitions.builtins

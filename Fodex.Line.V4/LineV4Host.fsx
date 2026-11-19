@@ -415,7 +415,7 @@ let run (parsed:ParseResults<Options.Argument>) (input:TextReader) (output:TextW
             with error -> return Error error }
         diagnostics.WriteLine(sprintf "LINE_V4 account=%s node=%O endpoint=%s storage=%s approvedBindings=%d data=%s catalog=%s bindings=%s" account cluster.Cluster.SelfAddress (endpoint.Endpoint.Path.ToStringWithAddress(cluster.Cluster.SelfAddress)) endpoint.Descriptor.StorageIdentity bindings.Length data catalog bindingsPath)
         diagnostics.Flush()
-        let frontend=FodexFunctions.pinBase<ConsoleFrontendInputV100,Task<Result<int,exn>>> "1.0.0" "Console.RunFrontend"
+        let frontend=FodexFunctions.pinBase<ConsoleFrontendInputV100,Task<Result<int,exn>>> "1.0.1" "Console.RunFrontend"
         let! code=FodexFunBinding.invokeAsync frontend (system,ctx,options,input,output,diagnostics,submit,attach,ct)
         result<-required code
         poll.Cancel()

@@ -139,6 +139,7 @@
     <Compile Include="ConsoleOutputFodexFunV300.fsx"><Link>fodexFun/ConsoleOutput/ConsoleOutputFodexFunV300.fsx</Link></Compile>
     <Compile Include="ConsoleOutputFodexFunV405.fsx"><Link>fodexFun/ConsoleOutput/ConsoleOutputFodexFunV405.fsx</Link></Compile>
     <Compile Include="ConsoleOutputFodexFunV406.fsx"><Link>fodexFun/ConsoleOutput/ConsoleOutputFodexFunV406.fsx</Link></Compile>
+    <Compile Include="ConsoleOutputFodexFunV407.fsx"><Link>fodexFun/ConsoleOutput/ConsoleOutputFodexFunV407.fsx</Link></Compile>
     <Compile Include="OrderHubSupportV100.fsx"><Link>fodexFun/OrderHubSupport/OrderHubSupportV100.fsx</Link></Compile>
     <Compile Include="OrderHubV103.fsx"><Link>fodexFun/OrderHub/OrderHubV103.fsx</Link></Compile>
     <Compile Include="OrderHubV300.fsx"><Link>fodexFun/OrderHub/OrderHubV300.fsx</Link></Compile>
@@ -297,6 +298,7 @@
     <Compile Include="ServiceHostOnNodeFodexFunV100.fsx"><Link>fodexFun/ServiceHostOnNodeFodexFunV100/V100.fsx</Link></Compile>
     <Compile Include="ServiceAssetReconciliationFodexFunV100.fsx" />
     <Compile Include="ConsoleFrontendFodexFunV100.fsx"><Link>fodexFun/ConsoleFrontendFodexFunV100/V100.fsx</Link></Compile>
+    <Compile Include="ConsoleFrontendFodexFunV101.fsx"><Link>fodexFun/ConsoleFrontendFodexFunV101/V101.fsx</Link></Compile>
     <Compile Include="ConversationProjectionFodexFunV100.fsx"><Link>fodexFun/ConversationProjectionFodexFunV100/V100.fsx</Link></Compile>
     <Compile Include="FodexFunctions.fsx" />
     <Compile Include="FodexAgent.fsx" />
