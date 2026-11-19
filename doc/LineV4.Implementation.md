@@ -204,6 +204,8 @@ Release build 成功，完整 v4 tests **40/40 passed**（presentation 8 項）�
 
 補上連續兩輪且名稱回讀逆序的回歸後，最終完整 Release **41/41 passed**（presentation 9 項）。每個 wrapper 的 accepted input／following output 配對排隊，後一輪名字先 ready 也不超越前一輪；其他群組仍可即時顯示，重複 ready 不重印輸入。來源與候選已備妥；部署舊 asset-root-fix 的 retire 前檢查為 process／service／task／current／launch／run／candidate 引用均 0、230 檔且無 reparse，但 literal-path Remove-Item 再次被自動核准以 blocked by policy 拒絕，需由使用者完成清理才可維持同 target 三版上限。現行 4.0.1 視窗尚未切換。
 
+實作已由 `dc8f5dd` commit/push，8 檔 strict UTF-8／無 BOM／NUL／replacement，敏感掃描 High=0／Medium=0。正式 publish 候選共 231 檔，managed DLL SHA256=`C22BCFEF850825EF881B5F7CCDDACADCF037E424022D481DEDAD65F04A992D89`，離線 help 第一行 `Fodex LINE v4 4.0.2.0`。檔案清單與實際回歸／只讀 names 證據保存於 `artifacts/line-v4/20261119/cliinfo-candidate.manifest.json`、`cliinfo-validation.json`。已請使用者清除精確的舊 asset-root-fix 目錄，或明確允許本輪暫時保留四版；收到必要回覆前不切換現行指標或假稱已做新版真人 LINE 驗收。
+
 ## SECTION 3 — Fodex
 
 已新增以下實作與對應 Expecto tests，接入正式編譯順序及 first-use builtins：
