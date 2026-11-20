@@ -209,6 +209,8 @@
     <Compile Include="FodexAgentFodexFunV408.fsx"><Link>fodexFun/FodexAgent/FodexAgentFodexFunV408.fsx</Link></Compile>
     <Compile Include="FodexAgentFodexFunV409.fsx"><Link>fodexFun/FodexAgent/FodexAgentFodexFunV409.fsx</Link></Compile>
     <Compile Include="ConsolePolicyFodexFunV403.fsx"><Link>fodexFun/Console/ConsolePolicyFodexFunV403.fsx</Link></Compile>
+    <Compile Include="ConsolePromptHistoryV100.fsx" />
+    <Compile Include="ConsoleOutputFodexFunV408.fsx" />
     <Compile Include="ConsolePrinterFodexFunV403.fsx"><Link>fodexFun/Console/ConsolePrinterFodexFunV403.fsx</Link></Compile>
     <Compile Include="ConsoleHostFodexFunV403.fsx"><Link>fodexFun/Console/ConsoleHostFodexFunV403.fsx</Link></Compile>
     <Compile Include="ConsolePolicyFodexFunV404.fsx"><Link>fodexFun/Console/ConsolePolicyFodexFunV404.fsx</Link></Compile>
@@ -299,6 +301,7 @@
     <Compile Include="ServiceAssetReconciliationFodexFunV100.fsx" />
     <Compile Include="ConsoleFrontendFodexFunV100.fsx"><Link>fodexFun/ConsoleFrontendFodexFunV100/V100.fsx</Link></Compile>
     <Compile Include="ConsoleFrontendFodexFunV101.fsx"><Link>fodexFun/ConsoleFrontendFodexFunV101/V101.fsx</Link></Compile>
+    <Compile Include="ConsoleFrontendFodexFunV102.fsx" />
     <Compile Include="ConversationProjectionFodexFunV100.fsx"><Link>fodexFun/ConversationProjectionFodexFunV100/V100.fsx</Link></Compile>
     <Compile Include="FodexFunctions.fsx" />
     <Compile Include="FodexAgent.fsx" />

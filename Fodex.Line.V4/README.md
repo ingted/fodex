@@ -32,6 +32,10 @@ CLI 自身資訊使用 `/cliinfo(<Participant>) <種類> on|off`。例如 `/clii
 
 4.0.3 的互動 editor 在每次讀取 prompt、按鍵編輯與背景輸出重畫後，確保系統游標可見且維持 15% 高度的底線；不只在啟動時設定。沿用原 V405 的輸入、insert／replace、多行與畫面排版，由 `Console.CreateInteractive` 4.0.7 與 `Console.RunFrontend` 1.0.1 接入。一般模式保留原本的 Console.Out，讓既有 editor 正確辨識鍵盤 console；重新導向的輸入輸出不操作實體游標。退出或啟動失敗時恢復原 stdout、游標大小與可見性。
 
+4.0.4 支援 CLI prompt 歷史：↑ 取上一個（較舊）、↓ 取下一個（較新），兩端循環；第一次 ↑ 從最新開始，第一次 ↓ 從最舊開始。取回的是整份已用 `;;` 提交的輸入，包含多行與 CLI 指令，能繼續編輯，仍須在獨立一行輸入 `;;` 才送出；取回本身不會呼叫模型。Enter／Shift+Enter 可新增一行，尚未送出的整份內容會保留在 editor。
+
+歷史保存於 executable 同一層的 `prompt-history.json`（UTF-8 JSON，Version=1、Prompts 為字串陣列），重新啟動會載入；`;;` 分隔符、空白輸入與 EOF／取消時的半成品不記錄。這是整個本機 CLI 的輸入歷史，跨目前選取的 wrappers 共用，不混入 LINE 輸入或模型回覆。檔案以同目錄 temporary＋atomic replace 保存；讀取損毀或寫入失敗會明示錯誤並保留記憶體操作，損毀原檔不覆蓋。此檔為使用者的可變資料，不屬於 immutable publish manifest，也不進 Git；升版或退役舊 release 前須保留並複製至新版 exe 同一層。
+
 一般事件的來源前綴使用 `[account][WSID 前八碼]`，例如 `[d9System_test2][83ef32b4]`。
 
 `/line_context` 列出該 account 的正式 conversation；`/line_context(ID)` 明確選定。啟動時先使用 `--line-conversation ID`，否則恢復有效持久焦點，或採唯一有效名冊；多個 group 時保留未選定。普通 LINE 訊息不搶走 CLI 焦點；成功的 LINE `**setagent` 於提交後通知焦點更新。

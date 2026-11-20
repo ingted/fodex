@@ -234,6 +234,16 @@ Release build 通過（0 errors）；全部 43/43 tests passed。獨立原生 co
 
 實際新版 v4 視窗刻意隱藏游標後，送出 /labels off 返回 prompt 會恢復 Visible=true／Size15；另一輪短 prompt 送出後再隱藏，收到 CURSOR_ROUNDTRIP_V403_OK 正式回答與新 prompt，再次恢復底線。native screenshot 已實際檢視，底線可見。正式證據位於 artifacts/line-v4/20261120/cursor-reentry-live-command.json、cursor-reentry-live-background.json、cursor-reentry-live.png 與 cursor-reentry-validation.json。此處補上新版正式視窗證據，取代前段尚未切換的狀態；沒有把最初隱藏來源不明改寫為已證明。
 
+### 2026-11-20：4.0.4 CLI prompt 歷史與上下鍵循環
+
+依使用者要求，↑／↓ 取回上一個／下一個已提交的完整 CLI prompt，首尾循環；預設第一次 ↑ 為最新、第一次 ↓ 為最舊。包含本機指令及多行，跨本機 CLI 所選 wrappers 共用；LINE 輸入與模型回覆不加入。取回只編輯不送出，仍用獨立一行 ;; 提交；空白、分隔符與 EOF／取消半成品不記錄。
+
+原 V405 將 Enter 分割成 Console.ReadSubmission 外部累積的多個片段，無法完整替換已開始的多行草稿。新增 versioned Console.CreateSubmissionEditor 4.0.8，將整份待提交內容保留在同一 buffer，Enter／Shift+Enter 換行，;; 最終提交；保留既有 Unicode／中文 cell、左右／Home／End、刪除、背景重畫與 V407 底線恢復政策。新增 Console.RunFrontend 1.0.2 pin 新版，V100／V101 與舊 editor 留存；redirected stdin 沿用原 ReadSubmission 4.0.3。App 版號 4.0.4。
+
+ConsolePromptHistoryV100 以 executable 同層 prompt-history.json 保存 Version=1／Prompts（UTF-8、可直接閱讀中文），重新啟動載入；同目錄唯一 temporary＋atomic replace，延用現有 receipt storage 的檔案替換模式。損毀檔保留、明示錯誤，仍可使用記憶體歷史；寫入錯誤亦明示，不導致 prompt 遺失。此為使用者可變資料，不進 Git／publish manifest，升版與退役 release 前須保留並複製至新版 binary 根目錄。
+
+Release build 通過；正式 suite 50/50 passed，包含新增 7 項 persistence／雙向循環／多行編輯／空歷史／損毀保留／寫入失敗／EOF 測試。實體 console 八項回歸亦全部通過：多行取回、首尾循環、中文 cell 左移與插入、背景重畫、游標恢復、JSON reload／EOF 半成品不入歷史及退出還原。證據 artifacts/line-v4/20261120/prompt-history-physical.json。正式 publish 為 4.0.4.0，managed DLL SHA256=4D609E37D1690CE6CD9739BB2A34967082DF496FC846FB9E4EAACDFF99CA986F；正式 v4 視窗尚未切換。
+
 ## SECTION 3 — Fodex
 
 已新增以下實作與對應 Expecto tests，接入正式編譯順序及 first-use builtins：
